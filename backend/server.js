@@ -11,10 +11,24 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
+
+// CORS Configuration - Hybrid Architecture
+// Allow both cloud frontend and local frontend
+const allowedOrigins = [
+  process.env.CLOUD_FRONTEND_URL || 'https://lv-campus-connect.pages.dev',
+  process.env.LOCAL_FRONTEND_URL || 'http://localhost:5173',
+  process.env.FRONTEND_URL || 'http://localhost:5173', // Legacy support
+  'http://localhost:5173', // Always allow local development
+  'http://127.0.0.1:5173'  // Alternative localhost
+];
+
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST']
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true
   }
 });
 const PORT = process.env.PORT || 5000;
@@ -22,9 +36,20 @@ const PORT = process.env.PORT || 5000;
 // Connect to MongoDB Atlas
 connectDB();
 
-// Middleware
+// Middleware - Dynamic CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('✅ CORS allowed for origin:', origin);
+      callback(null, true);
+    } else {
+      console.warn('⚠️ CORS blocked for origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));

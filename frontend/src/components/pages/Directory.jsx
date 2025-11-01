@@ -4,6 +4,7 @@ import DirectoryLayout from '../layouts/DirectoryLayout';
 import { KioskLayout } from '../layouts';
 import { FaLocationDot } from 'react-icons/fa6';
 import { io } from 'socket.io-client';
+import API_CONFIG from '../../config/api';
 
 const Directory = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -15,7 +16,7 @@ const Directory = () => {
 
   // Initialize Socket.io connection for real-time updates
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(API_CONFIG.getKioskUrl());
     setSocket(newSocket);
 
     // Join kiosk room for real-time updates
@@ -39,7 +40,7 @@ const Directory = () => {
 
   const fetchOffices = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/database/office');
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/database/office`);
       if (response.ok) {
         const data = await response.json();
         const officeList = Array.isArray(data) ? data : (data.records || []);
@@ -56,7 +57,7 @@ const Directory = () => {
 
   const fetchCharts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/database/chart');
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/database/chart`);
       if (response.ok) {
         const data = await response.json();
         const chartList = Array.isArray(data) ? data : (data.records || []);

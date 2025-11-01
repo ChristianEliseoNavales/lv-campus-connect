@@ -8,6 +8,7 @@ import { useSocket } from '../../contexts/SocketContext';
 import { useOptimizedFetch } from '../../hooks/useOptimizedFetch';
 import { useToast, ToastContainer } from '../ui/Toast';
 import QRCode from 'qrcode';
+import API_CONFIG from '../../config/api';
 
 
 
@@ -387,7 +388,7 @@ const Queue = () => {
     try {
       setOfficeStatus(prev => ({ ...prev, [department]: { ...prev[department], loading: true } }));
 
-      const response = await fetch(`http://localhost:5000/api/public/office-status/${department}`);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/office-status/${department}`);
       const data = await response.json();
 
       setOfficeStatus(prev => ({
@@ -409,7 +410,7 @@ const Queue = () => {
   // Optimized fetch available services with caching
   const fetchAvailableServices = useCallback(async (department) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/public/services/${department}`);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/services/${department}`);
       const data = await response.json();
 
       setAvailableServices(prev => ({
@@ -427,7 +428,7 @@ const Queue = () => {
   // Fetch department location
   const fetchDepartmentLocation = useCallback(async (department) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/settings/location/${department}`);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/settings/location/${department}`);
       const data = await response.json();
 
       setDepartmentLocations(prev => ({
@@ -834,8 +835,8 @@ const Queue = () => {
 
       console.log('🖨️  Sending print request:', receiptData);
 
-      // Call backend print API
-      const response = await fetch('http://localhost:5000/api/printer/print-receipt', {
+      // Call backend print API (always use local backend for printing)
+      const response = await fetch(`${API_CONFIG.getPrintUrl()}/api/printer/print-receipt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -878,7 +879,7 @@ const Queue = () => {
     // Submit rating to backend if we have a queue ID
     if (queueResult?.queueId) {
       try {
-        const response = await fetch(`http://localhost:5000/api/public/queue/${queueResult.queueId}/rating`, {
+        const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/queue/${queueResult.queueId}/rating`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -942,9 +943,10 @@ const Queue = () => {
 
       console.log('📤 [FRONTEND] Enroll submission payload:', JSON.stringify(submissionData, null, 2));
 
-      // Submit to backend API
-      console.log('🌐 [FRONTEND] Making API request to:', 'http://localhost:5000/api/public/queue');
-      const response = await fetch('http://localhost:5000/api/public/queue', {
+      // Submit to backend API (use local backend for kiosk operations)
+      const apiUrl = `${API_CONFIG.getKioskUrl()}/api/public/queue`;
+      console.log('🌐 [FRONTEND] Making API request to:', apiUrl);
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1040,9 +1042,10 @@ const Queue = () => {
       console.log('📤 [FRONTEND] Final submission payload:', JSON.stringify(submissionData, null, 2));
       console.log('📤 [FRONTEND] Payload size:', JSON.stringify(submissionData).length, 'characters');
 
-      // Submit to backend API
-      console.log('🌐 [FRONTEND] Making API request to:', 'http://localhost:5000/api/public/queue');
-      const response = await fetch('http://localhost:5000/api/public/queue', {
+      // Submit to backend API (use local backend for kiosk operations)
+      const apiUrl = `${API_CONFIG.getKioskUrl()}/api/public/queue`;
+      console.log('🌐 [FRONTEND] Making API request to:', apiUrl);
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

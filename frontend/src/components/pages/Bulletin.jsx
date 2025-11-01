@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { MdClose } from 'react-icons/md';
 import { io } from 'socket.io-client';
+import API_CONFIG from '../../config/api';
 
 const Bulletin = () => {
   const [currentPage, setCurrentPage] = useState(0);
@@ -14,7 +15,7 @@ const Bulletin = () => {
   const fetchBulletins = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/database/bulletin');
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/database/bulletin`);
       if (response.ok) {
         const data = await response.json();
         const bulletinList = Array.isArray(data) ? data : (data.records || []);
@@ -31,7 +32,7 @@ const Bulletin = () => {
 
   // Initialize Socket.io connection and fetch bulletins
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(API_CONFIG.getKioskUrl());
     setSocket(newSocket);
 
     // Join kiosk room for real-time updates
@@ -89,7 +90,7 @@ const Bulletin = () => {
 
   // Helper function to get media URL
   const getMediaUrl = (bulletin) => {
-    return bulletin.image?.secure_url || bulletin.image?.url || `http://localhost:5000/${bulletin.image?.path}`;
+    return bulletin.image?.secure_url || bulletin.image?.url || `${API_CONFIG.getKioskUrl()}/${bulletin.image?.path}`;
   };
 
   // Helper function to check if media is video

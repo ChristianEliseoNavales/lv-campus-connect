@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  MdRefresh, 
-  MdAdd, 
-  MdEdit, 
-  MdDelete, 
+import {
+  MdRefresh,
+  MdAdd,
+  MdEdit,
+  MdDelete,
   MdDeleteSweep,
   MdSearch,
   MdWarning,
@@ -11,6 +11,7 @@ import {
   MdTableChart
 } from 'react-icons/md';
 import { useToast, ToastContainer } from '../../../ui/Toast';
+import API_CONFIG from '../../../../config/api';
 import {
   EditRecordModal,
   DeleteRecordModal,
@@ -61,7 +62,7 @@ const DatabaseManager = () => {
         ...(search && { search })
       });
 
-      const response = await fetch(`http://localhost:5000/api/database/${selectedModel.toLowerCase()}?${params}`);
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}?${params}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch ${selectedModel} records`);
@@ -144,9 +145,9 @@ const DatabaseManager = () => {
     
     try {
       const method = editingRecord ? 'PUT' : 'POST';
-      const url = editingRecord 
-        ? `http://localhost:5000/api/database/${selectedModel.toLowerCase()}/${editingRecord._id}`
-        : `http://localhost:5000/api/database/${selectedModel.toLowerCase()}`;
+      const url = editingRecord
+        ? `${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}/${editingRecord._id}`
+        : `${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}`;
 
       const response = await fetch(url, {
         method,
@@ -200,7 +201,7 @@ const DatabaseManager = () => {
     });
 
     try {
-      const url = `http://localhost:5000/api/database/${selectedModel.toLowerCase()}/${deletingRecord._id}`;
+      const url = `${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}/${deletingRecord._id}`;
       console.log('🌐 DELETE URL:', url);
 
       const response = await fetch(url, {
@@ -244,7 +245,7 @@ const DatabaseManager = () => {
     console.log('🗑️ Attempting to delete all records for model:', selectedModel);
 
     try {
-      const url = `http://localhost:5000/api/database/${selectedModel.toLowerCase()}/delete-all`;
+      const url = `${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}/delete-all`;
       console.log('🌐 DELETE ALL URL:', url);
 
       const response = await fetch(url, {

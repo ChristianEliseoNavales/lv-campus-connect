@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import API_CONFIG from '../../config/api';
 
 import {
   Card,
@@ -228,8 +229,8 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
         if (roleForChart === 'super_admin') {
           // Fetch data for both departments
           const [registrarResponse, admissionsResponse] = await Promise.all([
-            fetch(`http://localhost:5000/api/analytics/area-chart/registrar?timeRange=${timeRange}`),
-            fetch(`http://localhost:5000/api/analytics/area-chart/admissions?timeRange=${timeRange}`)
+            fetch(`${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/registrar?timeRange=${timeRange}`),
+            fetch(`${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/admissions?timeRange=${timeRange}`)
           ]);
 
           if (!registrarResponse.ok || !admissionsResponse.ok) {
@@ -273,7 +274,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
           }
 
           const response = await fetch(
-            `http://localhost:5000/api/analytics/area-chart/${department}?timeRange=${timeRange}`
+            `${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/${department}?timeRange=${timeRange}`
           );
 
           if (!response.ok) {

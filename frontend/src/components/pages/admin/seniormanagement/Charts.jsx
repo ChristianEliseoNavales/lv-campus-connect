@@ -5,6 +5,7 @@ import { AiOutlineMinusCircle } from 'react-icons/ai';
 import { MdClose } from 'react-icons/md';
 import { useToast, ToastContainer } from '../../../ui/Toast';
 import { io } from 'socket.io-client';
+import API_CONFIG from '../../../../config/api';
 
 const Charts = () => {
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,7 @@ const Charts = () => {
 
   // Initialize Socket.io connection
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(API_CONFIG.getAdminUrl());
     setSocket(newSocket);
 
     // Join admin room for real-time updates
@@ -45,7 +46,7 @@ const Charts = () => {
 
   const fetchOffices = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/database/office');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/office`);
       if (response.ok) {
         const data = await response.json();
         const officeList = Array.isArray(data) ? data : (data.records || []);
@@ -62,7 +63,7 @@ const Charts = () => {
   const fetchCharts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/database/chart');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/chart`);
       if (response.ok) {
         const data = await response.json();
         const chartList = Array.isArray(data) ? data : (data.records || []);
@@ -158,7 +159,7 @@ const Charts = () => {
       formData.append('file', uploadFile);
 
       // Upload file to backend (Cloudinary)
-      const uploadResponse = await fetch('http://localhost:5000/api/charts/upload', {
+      const uploadResponse = await fetch(`${API_CONFIG.getAdminUrl()}/api/charts/upload`, {
         method: 'POST',
         body: formData
       });
@@ -188,7 +189,7 @@ const Charts = () => {
         }
       };
 
-      const createResponse = await fetch('http://localhost:5000/api/database/chart', {
+      const createResponse = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/chart`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(chartData)
@@ -197,7 +198,7 @@ const Charts = () => {
       if (createResponse.ok) {
         // Update office email if provided
         if (officeEmail && officeEmail !== selectedOffice.officeEmail) {
-          await fetch(`http://localhost:5000/api/database/office/${selectedOfficeId}`, {
+          await fetch(`${API_CONFIG.getAdminUrl()}/api/database/office/${selectedOfficeId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ officeEmail })
@@ -232,13 +233,13 @@ const Charts = () => {
       // Delete from Cloudinary first
       if (chartToDelete?.image?.public_id) {
         const publicIdEncoded = encodeURIComponent(chartToDelete.image.public_id);
-        await fetch(`http://localhost:5000/api/charts/delete/${publicIdEncoded}`, {
+        await fetch(`${API_CONFIG.getAdminUrl()}/api/charts/delete/${publicIdEncoded}`, {
           method: 'DELETE'
         });
       }
 
       // Delete from database
-      const response = await fetch(`http://localhost:5000/api/database/chart/${selectedChartId}`, {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/chart/${selectedChartId}`, {
         method: 'DELETE'
       });
 
@@ -260,7 +261,7 @@ const Charts = () => {
 
   // Helper function to get media URL
   const getMediaUrl = (chart) => {
-    return chart.image?.secure_url || chart.image?.url || `http://localhost:5000/${chart.image?.path}`;
+    return chart.image?.secure_url || chart.image?.url || `${API_CONFIG.getAdminUrl()}/${chart.image?.path}`;
   };
 
   const openFullscreen = (chart) => {

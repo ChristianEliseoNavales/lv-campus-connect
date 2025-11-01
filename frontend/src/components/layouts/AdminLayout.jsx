@@ -22,6 +22,7 @@ import { BiSolidNotepad } from 'react-icons/bi';
 import { useSocket } from '../../contexts/SocketContext';
 import { useOptimizedFetch } from '../../hooks/useOptimizedFetch';
 import { ToastContainer, useToast } from '../ui/Toast';
+import API_CONFIG from '../../config/api';
 
 const AdminLayout = ({ children }) => {
   const { user, signOut } = useAuth();
@@ -67,7 +68,7 @@ const AdminLayout = ({ children }) => {
 
   // Use optimized fetch for windows data
   const { data: windowsData, refetch: refetchWindows } = useOptimizedFetch(
-    department ? `http://localhost:5000/api/windows/${department}` : null,
+    department ? `${API_CONFIG.getAdminUrl()}/api/windows/${department}` : null,
     {
       dependencies: [department],
       cacheKey: `windows-${department}`,

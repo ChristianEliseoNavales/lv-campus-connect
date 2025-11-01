@@ -4,6 +4,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMinusCircle } from 'react
 import { LuSettings2 } from 'react-icons/lu';
 import { io } from 'socket.io-client';
 import { useToast, ToastContainer, ConfirmModal } from '../../../ui';
+import API_CONFIG from '../../../../config/api';
 
 // Utility functions for change detection
 const deepEqual = (obj1, obj2) => {
@@ -633,7 +634,7 @@ const Settings = () => {
 
   // Initialize Socket.io connection
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(API_CONFIG.getAdminUrl());
     setSocket(newSocket);
 
     // Join admin room for real-time updates
@@ -713,7 +714,7 @@ const Settings = () => {
 
   const fetchQueueSettings = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/settings/queue/registrar');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/settings/queue/registrar`);
       if (response.ok) {
         const data = await response.json();
         setIsQueueingEnabled(data.isEnabled);
@@ -725,7 +726,7 @@ const Settings = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/services/registrar');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/services/registrar`);
       if (response.ok) {
         const data = await response.json();
         setServices(data);
@@ -737,7 +738,7 @@ const Settings = () => {
 
   const fetchWindows = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/windows/registrar');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/windows/registrar`);
       if (response.ok) {
         const data = await response.json();
         setWindows(data);
@@ -782,7 +783,7 @@ const Settings = () => {
   const fetchAdminUsers = async () => {
     try {
       setAdminUsersLoading(true);
-      const response = await fetch('http://localhost:5000/api/users/by-role/registrar_admin');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/users/by-role/registrar_admin`);
       if (response.ok) {
         const data = await response.json();
         setAdminUsers(data);
@@ -800,7 +801,7 @@ const Settings = () => {
 
   const fetchLocationSettings = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/settings/location/registrar');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/settings/location/registrar`);
       if (response.ok) {
         const data = await response.json();
         setLocationText(data.location || '');
@@ -821,7 +822,7 @@ const Settings = () => {
       setIsToggling(true);
       const newState = !isQueueingEnabled;
 
-      const response = await fetch('http://localhost:5000/api/settings/queue/registrar/toggle', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/settings/queue/registrar/toggle`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -876,7 +877,7 @@ const Settings = () => {
 
     try {
       setIsUpdatingLocation(true);
-      const response = await fetch('http://localhost:5000/api/settings/location/registrar', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/settings/location/registrar`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1044,7 +1045,7 @@ const Settings = () => {
     try {
       if (editingWindow) {
         // Edit existing window
-        const response = await fetch(`http://localhost:5000/api/windows/${editingWindow.id}`, {
+        const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/windows/${editingWindow.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1067,7 +1068,7 @@ const Settings = () => {
         }
       } else {
         // Add new window
-        const response = await fetch('http://localhost:5000/api/windows', {
+        const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/windows`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1128,7 +1129,7 @@ const Settings = () => {
     setServiceErrors({});
 
     try {
-      const response = await fetch('http://localhost:5000/api/services', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/services`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1164,7 +1165,7 @@ const Settings = () => {
 
   const handleToggleServiceVisibility = async (serviceId, currentActive) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/services/${serviceId}/toggle`, {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/services/${serviceId}/toggle`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1223,7 +1224,7 @@ const Settings = () => {
     if (!service) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/services/${serviceId}`, {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/services/${serviceId}`, {
         method: 'DELETE',
       });
 
@@ -1241,7 +1242,7 @@ const Settings = () => {
 
   const handleToggleWindow = async (windowId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/windows/${windowId}/toggle`, {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/windows/${windowId}/toggle`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1289,7 +1290,7 @@ const Settings = () => {
     if (!windowToRemove) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/windows/${windowId}`, {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/windows/${windowId}`, {
         method: 'DELETE',
       });
 

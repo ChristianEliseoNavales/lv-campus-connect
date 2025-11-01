@@ -6,6 +6,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { RoleAwareAreaChart } from '../../ui/AreaChart';
 import { ChartPieLegend } from '../../ui/PieChart';
 import DepartmentDonutChart from '../../ui/DepartmentDonutChart';
+import API_CONFIG from '../../../config/api';
 
 const MISAdminDashboard = () => {
   const { user } = useAuth();
@@ -28,25 +29,27 @@ const MISAdminDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         // Fetch system-wide data for MIS Super Admin
-        const usersResponse = await fetch('http://localhost:5000/api/users');
+        const baseUrl = API_CONFIG.getAdminUrl();
+
+        const usersResponse = await fetch(`${baseUrl}/api/users`);
         const users = usersResponse.ok ? await usersResponse.json() : [];
 
         // Fetch all windows data
-        const registrarResponse = await fetch('http://localhost:5000/api/windows/registrar');
-        const admissionsResponse = await fetch('http://localhost:5000/api/windows/admissions');
+        const registrarResponse = await fetch(`${baseUrl}/api/windows/registrar`);
+        const admissionsResponse = await fetch(`${baseUrl}/api/windows/admissions`);
         const registrarWindows = registrarResponse.ok ? await registrarResponse.json() : [];
         const admissionsWindows = admissionsResponse.ok ? await admissionsResponse.json() : [];
 
         // Fetch active sessions
-        const sessionsResponse = await fetch('http://localhost:5000/api/analytics/active-sessions');
+        const sessionsResponse = await fetch(`${baseUrl}/api/analytics/active-sessions`);
         const sessionsData = sessionsResponse.ok ? await sessionsResponse.json() : { data: [] };
 
         // Fetch kiosk ratings summary
-        const ratingsResponse = await fetch('http://localhost:5000/api/analytics/queue-ratings-summary');
+        const ratingsResponse = await fetch(`${baseUrl}/api/analytics/queue-ratings-summary`);
         const ratingsData = ratingsResponse.ok ? await ratingsResponse.json() : { data: { totalRatings: 0, averageRating: 0 } };
 
         // Fetch queue distribution by department
-        const departmentResponse = await fetch('http://localhost:5000/api/analytics/queue-by-department');
+        const departmentResponse = await fetch(`${baseUrl}/api/analytics/queue-by-department`);
         const departmentData = departmentResponse.ok ? await departmentResponse.json() : { data: [] };
 
         // Stats based on actual data

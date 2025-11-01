@@ -26,6 +26,12 @@ export default defineConfig({
     port: 4173,
     strictPort: true
   },
+  build: {
+    // Ensure case-sensitive imports are enforced
+    rollupOptions: {
+      external: [],
+    }
+  },
   // Optimize dependencies for better HMR
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom']

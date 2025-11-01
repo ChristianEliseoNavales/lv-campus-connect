@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { useAuth } from '../../../contexts/AuthContext';
 import { RoleAwareAreaChart } from '../../ui/AreaChart';
 import { ChartPieLegend } from '../../ui/PieChart';
+import API_CONFIG from '../../../config/api';
 
 const RegistrarAdminDashboard = () => {
   const { user } = useAuth();
@@ -24,12 +25,14 @@ const RegistrarAdminDashboard = () => {
   // Extract fetchDashboardData function to be reusable
   const fetchDashboardData = useCallback(async () => {
     try {
+      const baseUrl = API_CONFIG.getAdminUrl();
+
       // Fetch windows data
-      const windowsResponse = await fetch('http://localhost:5000/api/windows/registrar');
+      const windowsResponse = await fetch(`${baseUrl}/api/windows/registrar`);
       const windows = windowsResponse.ok ? await windowsResponse.json() : [];
 
       // Fetch table data for analytics (visits, turnaround time)
-      const tableResponse = await fetch('http://localhost:5000/api/analytics/dashboard-table-data/registrar');
+      const tableResponse = await fetch(`${baseUrl}/api/analytics/dashboard-table-data/registrar`);
       const tableResult = tableResponse.ok ? await tableResponse.json() : { data: { windows: [], todayVisits: 0, averageTurnaroundTime: '0 mins' } };
 
       // Transform windows data to match dashboard table format
@@ -111,7 +114,8 @@ const RegistrarAdminDashboard = () => {
 
   // Initialize Socket.io connection for real-time updates
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const socketUrl = API_CONFIG.getAdminUrl();
+    const newSocket = io(socketUrl);
     setSocket(newSocket);
 
     // Join admin room for real-time updates

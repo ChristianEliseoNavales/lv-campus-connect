@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
+import API_CONFIG from '../../config/api';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -18,7 +19,11 @@ const Home = () => {
 
   // Initialize Socket.io connection
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    // Use local backend for kiosk pages
+    const socketUrl = API_CONFIG.getKioskUrl();
+    console.log('🔌 Home page connecting to Socket.io:', socketUrl);
+
+    const newSocket = io(socketUrl);
     setSocket(newSocket);
 
     // Join kiosk room for real-time updates
@@ -59,7 +64,7 @@ const Home = () => {
           setSectionLoading(prev => ({ ...prev, [department]: true }));
         }
 
-        const response = await fetch(`http://localhost:5000/api/public/queue/${department}`);
+        const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/queue/${department}`);
         const data = await response.json();
 
         // Ensure windows is always an array

@@ -12,6 +12,7 @@ import {
 import {
   ChartContainer,
 } from "@/components/ui/chart";
+import API_CONFIG from "../../config/api";
 
 // LVCampusConnect System colors for pie chart
 const serviceColors = [
@@ -149,9 +150,11 @@ export function ChartPieLegend({ userRole, timeRange = '3months' }) {
         setError(null);
 
         // Use combined endpoint for super admin, department-specific for others
+        // Admin pages use cloud backend
+        const baseUrl = API_CONFIG.getAdminUrl();
         const endpoint = isSuperAdmin
-          ? `http://localhost:5000/api/analytics/pie-chart/combined?timeRange=${timeRange}`
-          : `http://localhost:5000/api/analytics/pie-chart/${department}?timeRange=${timeRange}`;
+          ? `${baseUrl}/api/analytics/pie-chart/combined?timeRange=${timeRange}`
+          : `${baseUrl}/api/analytics/pie-chart/${department}?timeRange=${timeRange}`;
 
         const response = await fetch(endpoint);
 

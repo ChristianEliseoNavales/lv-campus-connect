@@ -4,6 +4,7 @@ import { IoMdRefresh } from 'react-icons/io';
 import { useToast, ToastContainer, DatePicker } from '../../../ui';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
+import API_CONFIG from '../../../../config/api';
 
 // Define initial state outside component to prevent recreation
 const INITIAL_URL_STATE = {
@@ -48,14 +49,14 @@ const Ratings = () => {
     errorShownRef.current = false;
 
     try {
-      let url = 'http://localhost:5000/api/ratings';
+      let url = `${API_CONFIG.getAdminUrl()}/api/ratings`;
       const params = new URLSearchParams();
-      
+
       if (dateParam) {
         params.append('startDate', dateParam);
         params.append('endDate', dateParam);
       }
-      
+
       if (params.toString()) {
         url += `?${params.toString()}`;
       }

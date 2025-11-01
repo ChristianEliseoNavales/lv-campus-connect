@@ -1,11 +1,102 @@
-// API Configuration
-// This file centralizes all API endpoint configurations
+/**
+ * API Configuration for LVCampusConnect System
+ * Hybrid Architecture: Cloud Backend + Local Backend
+ *
+ * Architecture:
+ * - Cloud Backend: Used by Admin interface (accessible from anywhere)
+ * - Local Backend: Used by Kiosk interface (for printing and queue submission)
+ * - Both backends connect to the same MongoDB Atlas database
+ */
 
-// Get API base URL from environment variable or default to localhost
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Backend URLs from environment variables
+const CLOUD_BACKEND_URL = import.meta.env.VITE_CLOUD_BACKEND_URL || 'https://lvcampusconnect-backend.onrender.com';
+const LOCAL_BACKEND_URL = import.meta.env.VITE_LOCAL_BACKEND_URL || 'http://localhost:5000';
 
-// Socket.io connection URL (same as API base URL)
-export const SOCKET_URL = API_BASE_URL;
+/**
+ * Detect if the current page is a kiosk page
+ * Kiosk pages are public-facing pages that don't require authentication
+ */
+const isKioskPage = () => {
+  const path = window.location.pathname;
+
+  // Kiosk pages (public interface)
+  const kioskPages = [
+    '/',
+    '/kiosk',
+    '/queue',
+    '/bulletin',
+    '/directory',
+    '/map',
+    '/faqs',
+    '/portalqueue'
+  ];
+
+  return kioskPages.some(page => path === page || path.startsWith(page));
+};
+
+/**
+ * Detect if the current page is an admin page
+ * Admin pages require authentication and use cloud backend
+ */
+const isAdminPage = () => {
+  const path = window.location.pathname;
+  return path.startsWith('/admin') || path.startsWith('/login');
+};
+
+/**
+ * Get the appropriate backend URL based on the operation type
+ *
+ * @param {string} operation - The type of operation ('kiosk', 'admin', 'print', 'default')
+ * @returns {string} The backend URL to use
+ */
+const getBackendUrl = (operation = 'default') => {
+  // Explicit operation types
+  if (operation === 'kiosk' || operation === 'print') {
+    console.log('🖥️ Using LOCAL backend for:', operation);
+    return LOCAL_BACKEND_URL;
+  }
+
+  if (operation === 'admin') {
+    console.log('☁️ Using CLOUD backend for:', operation);
+    return CLOUD_BACKEND_URL;
+  }
+
+  // Auto-detect based on current page
+  if (isKioskPage()) {
+    console.log('🖥️ Using LOCAL backend (kiosk page detected)');
+    return LOCAL_BACKEND_URL;
+  }
+
+  if (isAdminPage()) {
+    console.log('☁️ Using CLOUD backend (admin page detected)');
+    return CLOUD_BACKEND_URL;
+  }
+
+  // Default: Use cloud backend for general operations
+  console.log('☁️ Using CLOUD backend (default)');
+  return CLOUD_BACKEND_URL;
+};
+
+/**
+ * Get Socket.io URL based on context
+ * - Kiosk pages connect to local backend for real-time updates
+ * - Admin pages connect to cloud backend for real-time updates
+ */
+const getSocketUrl = () => {
+  if (isKioskPage()) {
+    console.log('🔌 Socket.io: Connecting to LOCAL backend');
+    return LOCAL_BACKEND_URL;
+  }
+
+  console.log('🔌 Socket.io: Connecting to CLOUD backend');
+  return CLOUD_BACKEND_URL;
+};
+
+// Get API base URL (dynamic based on context)
+export const API_BASE_URL = getBackendUrl();
+
+// Socket.io connection URL (dynamic based on context)
+export const SOCKET_URL = getSocketUrl();
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -63,10 +154,42 @@ export const buildURL = (baseUrl, params = {}) => {
   return url.toString();
 };
 
-export default {
+/**
+ * API Configuration Object
+ */
+const API_CONFIG = {
+  // Backend URLs
+  CLOUD_BACKEND: CLOUD_BACKEND_URL,
+  LOCAL_BACKEND: LOCAL_BACKEND_URL,
+
+  // Dynamic URLs (based on context)
   API_BASE_URL,
   SOCKET_URL,
+
+  // Helper functions
+  isKiosk: isKioskPage,
+  isAdmin: isAdminPage,
+  getBackendUrl,
+  getSocketUrl,
+
+  // Convenience methods for common operations
+  getKioskUrl: () => LOCAL_BACKEND_URL,
+  getAdminUrl: () => CLOUD_BACKEND_URL,
+  getPrintUrl: () => LOCAL_BACKEND_URL,
+
+  // API Endpoints
   API_ENDPOINTS,
   buildURL,
 };
+
+// Log configuration on load
+console.log('🌐 API Configuration loaded:');
+console.log('  - Cloud Backend:', CLOUD_BACKEND_URL);
+console.log('  - Local Backend:', LOCAL_BACKEND_URL);
+console.log('  - Current Page:', window.location.pathname);
+console.log('  - Is Kiosk Page:', isKioskPage());
+console.log('  - Is Admin Page:', isAdminPage());
+console.log('  - Active Backend:', getBackendUrl());
+
+export default API_CONFIG;
 

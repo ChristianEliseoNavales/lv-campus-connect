@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { getPhilippineDate } from '../../../../utils/philippineTimezone';
+import API_CONFIG from '../../../../config/api';
 
 const RegistrarQueueMonitor = () => {
   // State for real-time date/time display
@@ -16,7 +17,7 @@ const RegistrarQueueMonitor = () => {
   // Fetch queue monitor data from Registrar API
   const fetchQueueData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/analytics/queue-monitor/registrar');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/analytics/queue-monitor/registrar`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch registrar queue data');
@@ -90,7 +91,7 @@ const RegistrarQueueMonitor = () => {
 
   // Initialize Socket.io connection and fetch initial data
   useEffect(() => {
-    const socket = io('http://localhost:5000');
+    const socket = io(API_CONFIG.getAdminUrl());
 
     // Join registrar admin room for real-time updates
     socket.emit('join-room', 'admin-registrar');

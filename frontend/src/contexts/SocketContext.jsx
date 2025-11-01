@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import API_CONFIG from '../config/api';
 
 const SocketContext = createContext();
 
@@ -18,7 +19,11 @@ export const SocketProvider = ({ children }) => {
 
   // Initialize single Socket.io connection
   useEffect(() => {
-    const newSocket = io('http://localhost:5000', {
+    // Use dynamic Socket URL based on context (kiosk vs admin)
+    const socketUrl = API_CONFIG.getSocketUrl();
+    console.log('🔌 Initializing Socket.io connection to:', socketUrl);
+
+    const newSocket = io(socketUrl, {
       autoConnect: true,
       reconnection: true,
       reconnectionDelay: 1000,

@@ -5,6 +5,7 @@ import { AiOutlineMinusCircle } from 'react-icons/ai';
 import { MdClose } from 'react-icons/md';
 import { useToast, ToastContainer } from '../../../ui/Toast';
 import { io } from 'socket.io-client';
+import API_CONFIG from '../../../../config/api';
 
 const Bulletin = () => {
   const [loading, setLoading] = useState(true);
@@ -23,7 +24,7 @@ const Bulletin = () => {
 
   // Initialize Socket.io connection
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(API_CONFIG.getAdminUrl());
     setSocket(newSocket);
 
     // Join admin room for real-time updates
@@ -42,7 +43,7 @@ const Bulletin = () => {
   const fetchBulletins = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/database/bulletin');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin`);
       if (response.ok) {
         const data = await response.json();
         // Handle both array response and paginated response
@@ -128,7 +129,7 @@ const Bulletin = () => {
       formData.append('file', uploadFile);
 
       // Upload file to backend
-      const uploadResponse = await fetch('http://localhost:5000/api/bulletin/upload', {
+      const uploadResponse = await fetch(`${API_CONFIG.getAdminUrl()}/api/bulletin/upload`, {
         method: 'POST',
         body: formData
       });
@@ -162,7 +163,7 @@ const Bulletin = () => {
         authorEmail: 'system@lvcc.edu'
       };
 
-      const createResponse = await fetch('http://localhost:5000/api/database/bulletin', {
+      const createResponse = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bulletinData)
@@ -195,7 +196,7 @@ const Bulletin = () => {
       if (bulletinToDelete && bulletinToDelete.image?.public_id) {
         // Delete from Cloudinary first
         const cloudinaryDeleteResponse = await fetch(
-          `http://localhost:5000/api/bulletin/delete/${encodeURIComponent(bulletinToDelete.image.public_id)}`,
+          `${API_CONFIG.getAdminUrl()}/api/bulletin/delete/${encodeURIComponent(bulletinToDelete.image.public_id)}`,
           { method: 'DELETE' }
         );
 
@@ -205,7 +206,7 @@ const Bulletin = () => {
       }
 
       // Delete from database
-      const response = await fetch(`http://localhost:5000/api/database/bulletin/${selectedBulletinId}`, {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin/${selectedBulletinId}`, {
         method: 'DELETE'
       });
 
@@ -227,7 +228,7 @@ const Bulletin = () => {
 
   // Helper function to get media URL
   const getMediaUrl = (bulletin) => {
-    return bulletin.image?.secure_url || bulletin.image?.url || `http://localhost:5000/${bulletin.image?.path}`;
+    return bulletin.image?.secure_url || bulletin.image?.url || `${API_CONFIG.getAdminUrl()}/${bulletin.image?.path}`;
   };
 
   // Helper function to check if media is video
@@ -287,7 +288,7 @@ const Bulletin = () => {
               // Check if bulletin is a video
               const isVideo = bulletin.image?.resource_type === 'video' ||
                              (bulletin.image?.mimeType && bulletin.image.mimeType.startsWith('video/'));
-              const mediaUrl = bulletin.image?.secure_url || bulletin.image?.url || `http://localhost:5000/${bulletin.image?.path}`;
+              const mediaUrl = bulletin.image?.secure_url || bulletin.image?.url || `${API_CONFIG.getAdminUrl()}/${bulletin.image?.path}`;
 
               return (
                 <div key={bulletin._id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden h-64 bg-white hover:shadow-lg transition-shadow relative group">

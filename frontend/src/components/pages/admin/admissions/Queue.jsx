@@ -5,6 +5,7 @@ import { IoMdRefresh } from 'react-icons/io';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useToast, ToastContainer } from '../../../ui/Toast';
 import textToSpeechService from '../../../../utils/textToSpeech';
+import API_CONFIG from '../../../../config/api';
 
 const Queue = () => {
   const { windowId } = useParams();
@@ -45,7 +46,7 @@ const Queue = () => {
   useEffect(() => {
     const fetchWindowData = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/windows/admissions`);
+        const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/windows/admissions`);
         const windows = await response.json();
         const window = windows.find(w => w.id === windowId);
         setWindowData(window);
@@ -67,7 +68,7 @@ const Queue = () => {
   const fetchQueueData = async () => {
     try {
       // Build URL with service filtering if window data is available
-      let url = 'http://localhost:5000/api/public/queue-data/admissions';
+      let url = `${API_CONFIG.getAdminUrl()}/api/public/queue-data/admissions`;
 
       if (windowData?.serviceIds && windowData.serviceIds.length > 0) {
         // Get the first service ID for filtering (windows can have multiple services now)
@@ -139,7 +140,7 @@ const Queue = () => {
 
   // Initialize Socket.io connection and fetch initial data
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(API_CONFIG.getAdminUrl());
     setSocket(newSocket);
 
     // Join admin room for real-time updates
@@ -259,7 +260,7 @@ const Queue = () => {
 
     try {
       const action = isWindowServing ? 'pause' : 'resume';
-      const response = await fetch('http://localhost:5000/api/public/queue/stop', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/stop`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -309,7 +310,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, next: true }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/public/queue/next', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/next`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -373,7 +374,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, recall: true }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/public/queue/recall', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/recall`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -420,7 +421,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, previous: true }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/public/queue/previous', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/previous`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -484,7 +485,7 @@ const Queue = () => {
     // Fetch available windows for transfer
     try {
       setTransferLoading(true);
-      const response = await fetch(`http://localhost:5000/api/public/queue/windows/${windowData.office}`);
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/windows/${windowData.office}`);
       const result = await response.json();
 
       if (response.ok && result.success) {
@@ -515,7 +516,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, transfer: true }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/public/queue/transfer', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/transfer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -577,7 +578,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, skip: true }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/public/queue/skip', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/skip`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -649,7 +650,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, requeueAll: true }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/public/queue/requeue-all', {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/requeue-all`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

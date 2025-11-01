@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSocket } from '../../contexts/SocketContext';
+import API_CONFIG from '../../config/api';
 
 const PortalQueue = () => {
   const [searchParams] = useSearchParams();
@@ -36,7 +37,7 @@ const PortalQueue = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/public/queue-lookup/${queueId}`);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/queue-lookup/${queueId}`);
       const result = await response.json();
 
       if (response.ok && result.success) {

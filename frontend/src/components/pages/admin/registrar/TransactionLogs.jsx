@@ -6,6 +6,7 @@ import { PiNotePencilDuotone } from 'react-icons/pi';
 import { useToast, ToastContainer, DatePicker } from '../../../ui';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
+import API_CONFIG from '../../../../config/api';
 
 // Define initial state outside component to prevent recreation
 const INITIAL_URL_STATE = {
@@ -56,7 +57,7 @@ const TransactionLogs = () => {
     errorShownRef.current = false; // Reset error shown flag
 
     try {
-      const url = `http://localhost:5000/api/transactions/registrar${dateParam ? `?date=${dateParam}` : ''}`;
+      const url = `${API_CONFIG.getAdminUrl()}/api/transactions/registrar${dateParam ? `?date=${dateParam}` : ''}`;
 
       const response = await fetch(url);
 
@@ -185,7 +186,7 @@ const TransactionLogs = () => {
 
     setSavingRemarks(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/transactions/${selectedLog.id}/remarks`, {
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/transactions/${selectedLog.id}/remarks`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ remarks: remarksValue })

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { getPhilippineDate } from '../../../../utils/philippineTimezone';
+import API_CONFIG from '../../../../config/api';
 
 const AdmissionsQueueMonitor = () => {
   // State for real-time date/time display
@@ -16,7 +17,7 @@ const AdmissionsQueueMonitor = () => {
   // Fetch queue monitor data from Admissions API
   const fetchQueueData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/analytics/queue-monitor/admissions');
+      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/analytics/queue-monitor/admissions`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch admissions queue data');
@@ -90,7 +91,7 @@ const AdmissionsQueueMonitor = () => {
 
   // Initialize Socket.io connection and fetch initial data
   useEffect(() => {
-    const socket = io('http://localhost:5000');
+    const socket = io(API_CONFIG.getAdminUrl());
 
     // Join admissions admin room for real-time updates
     socket.emit('join-room', 'admin-admissions');
