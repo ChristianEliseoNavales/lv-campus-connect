@@ -3,6 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const router = express.Router();
 const Settings = require('../models/Settings');
+const { AuditService } = require('../middleware/auditMiddleware');
 
 const SETTINGS_FILE = path.join(__dirname, '../data/settings.json');
 
@@ -62,6 +63,15 @@ router.put('/queue/:department/toggle', async (req, res) => {
     const { isEnabled } = req.body;
 
     if (typeof isEnabled !== 'boolean') {
+      await AuditService.logSettings({
+        user: req.user,
+        action: 'SETTINGS_UPDATE',
+        settingName: `${department} Queue Toggle`,
+        req,
+        success: false,
+        errorMessage: 'isEnabled must be a boolean'
+      });
+
       return res.status(400).json({ error: 'isEnabled must be a boolean' });
     }
 
@@ -69,8 +79,20 @@ router.put('/queue/:department/toggle', async (req, res) => {
     const settings = await readSettings();
 
     if (!settings.queueSystem[department]) {
+      await AuditService.logSettings({
+        user: req.user,
+        action: 'SETTINGS_UPDATE',
+        settingName: `${department} Queue Toggle`,
+        req,
+        success: false,
+        errorMessage: 'Department not found'
+      });
+
       return res.status(404).json({ error: 'Department not found' });
     }
+
+    // Store old value for audit trail
+    const oldValue = settings.queueSystem[department].isEnabled;
 
     settings.queueSystem[department].isEnabled = isEnabled;
     settings.queueSystem[department].lastUpdated = new Date().toISOString();
@@ -83,18 +105,29 @@ router.put('/queue/:department/toggle', async (req, res) => {
       mongoSettings = new Settings();
     }
 
-    // Ensure departmentSettings exists
-    if (!mongoSettings.departmentSettings) {
-      mongoSettings.departmentSettings = {};
+    // Ensure officeSettings exists
+    if (!mongoSettings.officeSettings) {
+      mongoSettings.officeSettings = {};
     }
 
-    // Update the specific department's isEnabled status
-    if (!mongoSettings.departmentSettings[department]) {
-      mongoSettings.departmentSettings[department] = {};
+    // Update the specific office's isEnabled status
+    if (!mongoSettings.officeSettings[department]) {
+      mongoSettings.officeSettings[department] = {};
     }
-    mongoSettings.departmentSettings[department].isEnabled = isEnabled;
+    mongoSettings.officeSettings[department].isEnabled = isEnabled;
 
     await mongoSettings.save();
+
+    // Log successful settings update
+    await AuditService.logSettings({
+      user: req.user,
+      action: 'SETTINGS_UPDATE',
+      settingName: `${department} Queue Toggle`,
+      req,
+      success: true,
+      oldValues: { isEnabled: oldValue },
+      newValues: { isEnabled: isEnabled }
+    });
 
     // Emit real-time update to specific rooms
     const io = req.app.get('io');
@@ -114,6 +147,16 @@ router.put('/queue/:department/toggle', async (req, res) => {
     res.json(updatedSettings.queueSystem[department]);
   } catch (error) {
     console.error('Error toggling queue system:', error);
+
+    await AuditService.logSettings({
+      user: req.user,
+      action: 'SETTINGS_UPDATE',
+      settingName: `${req.params.department} Queue Toggle`,
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -164,13 +207,13 @@ router.put('/location/:department', async (req, res) => {
     // Get current settings
     const settings = await Settings.getCurrentSettings();
 
-    // Ensure department settings exist
-    if (!settings.departmentSettings || !settings.departmentSettings[department]) {
-      return res.status(400).json({ error: 'Department settings not found' });
+    // Ensure office settings exist
+    if (!settings.officeSettings || !settings.officeSettings[department]) {
+      return res.status(400).json({ error: 'Office settings not found' });
     }
 
-    // Update location for the specific department
-    settings.departmentSettings[department].location = location.trim();
+    // Update location for the specific office
+    settings.officeSettings[department].location = location.trim();
     await settings.save();
 
     // Emit real-time update to specific rooms
@@ -179,7 +222,7 @@ router.put('/location/:department', async (req, res) => {
       department,
       type: 'location-updated',
       data: {
-        location: settings.departmentSettings[department].location
+        location: settings.officeSettings[department].location
       }
     });
 
@@ -188,12 +231,12 @@ router.put('/location/:department', async (req, res) => {
       department,
       type: 'location-updated',
       data: {
-        location: settings.departmentSettings[department].location
+        location: settings.officeSettings[department].location
       }
     });
 
     res.json({
-      location: settings.departmentSettings[department].location
+      location: settings.officeSettings[department].location
     });
   } catch (error) {
     console.error('Error updating location:', error);
@@ -214,13 +257,13 @@ router.get('/location/:department', async (req, res) => {
     // Get current settings
     const settings = await Settings.getCurrentSettings();
 
-    // Ensure department settings exist
-    if (!settings.departmentSettings || !settings.departmentSettings[department]) {
+    // Ensure office settings exist
+    if (!settings.officeSettings || !settings.officeSettings[department]) {
       return res.json({ location: '' });
     }
 
     res.json({
-      location: settings.departmentSettings[department].location || ''
+      location: settings.officeSettings[department].location || ''
     });
   } catch (error) {
     console.error('Error fetching location:', error);

@@ -8,12 +8,12 @@ router.get('/', async (req, res) => {
     const windows = await Window.find()
       .populate('serviceIds', 'name')
       .populate('assignedAdmin', 'name email')
-      .sort({ department: 1, name: 1 });
+      .sort({ office: 1, name: 1 });
 
     res.json(windows.map(window => ({
       id: window._id,
       name: window.name,
-      department: window.department,
+      office: window.office,
       serviceIds: window.serviceIds,
       assignedAdmin: window.assignedAdmin,
       isOpen: window.isOpen,
@@ -27,17 +27,17 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/windows/:department - Get windows by department
+// GET /api/windows/:department - Get windows by office (department param for backward compatibility)
 router.get('/:department', async (req, res) => {
   try {
     const { department } = req.params;
 
-    // Validate department
+    // Validate office
     if (!['registrar', 'admissions'].includes(department)) {
-      return res.status(400).json({ error: 'Invalid department' });
+      return res.status(400).json({ error: 'Invalid office' });
     }
 
-    const windows = await Window.find({ department })
+    const windows = await Window.find({ office: department })
       .populate('serviceIds', 'name')
       .populate('assignedAdmin', 'name email')
       .sort({ name: 1 });
@@ -45,7 +45,7 @@ router.get('/:department', async (req, res) => {
     res.json(windows.map(window => ({
       id: window._id,
       name: window.name,
-      department: window.department,
+      office: window.office,
       serviceIds: window.serviceIds,
       assignedAdmin: window.assignedAdmin,
       isOpen: window.isOpen,
@@ -54,7 +54,7 @@ router.get('/:department', async (req, res) => {
       updatedAt: window.updatedAt
     })));
   } catch (error) {
-    console.error('Error fetching department windows:', error);
+    console.error('Error fetching office windows:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -62,39 +62,39 @@ router.get('/:department', async (req, res) => {
 // POST /api/windows - Create new window
 router.post('/', async (req, res) => {
   try {
-    const { name, department, serviceIds, assignedAdmin } = req.body;
+    const { name, office, serviceIds, assignedAdmin } = req.body;
 
-    if (!name || !department || !serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
+    if (!name || !office || !serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
       return res.status(400).json({
-        error: 'Name, department, and at least one serviceId are required'
+        error: 'Name, office, and at least one serviceId are required'
       });
     }
 
-    // Validate department
-    if (!['registrar', 'admissions'].includes(department)) {
-      return res.status(400).json({ error: 'Invalid department' });
+    // Validate office
+    if (!['registrar', 'admissions'].includes(office)) {
+      return res.status(400).json({ error: 'Invalid office' });
     }
 
-    // Check if all services exist and belong to the same department
+    // Check if all services exist and belong to the same office
     const services = await Service.find({ _id: { $in: serviceIds } });
     if (services.length !== serviceIds.length) {
       return res.status(404).json({ error: 'One or more services not found' });
     }
 
-    // Check if all services belong to the same department
-    const invalidServices = services.filter(service => service.department !== department);
+    // Check if all services belong to the same office
+    const invalidServices = services.filter(service => service.office !== office);
     if (invalidServices.length > 0) {
-      return res.status(400).json({ error: 'All services must belong to the same department as the window' });
+      return res.status(400).json({ error: 'All services must belong to the same office as the window' });
     }
 
-    // Check for duplicate window names in the department (case-insensitive)
+    // Check for duplicate window names in the office (case-insensitive)
     const existingWindow = await Window.findOne({
       name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
-      department
+      office
     });
 
     if (existingWindow) {
-      return res.status(409).json({ error: 'Window with this name already exists in the department' });
+      return res.status(409).json({ error: 'Window with this name already exists in the office' });
     }
 
     // Validate assigned admin if provided
@@ -108,7 +108,7 @@ router.post('/', async (req, res) => {
 
     const newWindow = new Window({
       name: name.trim(),
-      department,
+      office,
       serviceIds,
       assignedAdmin: assignedAdmin || null,
       isOpen: false
@@ -122,13 +122,13 @@ router.post('/', async (req, res) => {
 
     // Emit real-time update
     const io = req.app.get('io');
-    io.to(`admin-${department}`).emit('windows-updated', {
+    io.to(`admin-${office}`).emit('windows-updated', {
       type: 'window-added',
-      department,
+      department: office, // Keep 'department' for backward compatibility with frontend
       data: {
         id: newWindow._id,
         name: newWindow.name,
-        department: newWindow.department,
+        office: newWindow.office,
         serviceIds: newWindow.serviceIds,
         assignedAdmin: newWindow.assignedAdmin,
         isOpen: newWindow.isOpen
@@ -138,13 +138,13 @@ router.post('/', async (req, res) => {
     // Also emit service visibility update since window assignments changed
     io.to('kiosk').emit('services-updated', {
       type: 'visibility-changed',
-      department
+      department: office // Keep 'department' for backward compatibility with frontend
     });
 
     res.status(201).json({
       id: newWindow._id,
       name: newWindow.name,
-      department: newWindow.department,
+      office: newWindow.office,
       serviceIds: newWindow.serviceIds,
       assignedAdmin: newWindow.assignedAdmin,
       isOpen: newWindow.isOpen,
@@ -169,16 +169,16 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Window not found' });
     }
 
-    // Check for duplicate window names in the department (case-insensitive)
+    // Check for duplicate window names in the office (case-insensitive)
     if (name && name.trim() !== window.name) {
       const existingWindow = await Window.findOne({
         name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
-        department: window.department,
+        office: window.office,
         _id: { $ne: id }
       });
 
       if (existingWindow) {
-        return res.status(409).json({ error: 'Window with this name already exists in the department' });
+        return res.status(409).json({ error: 'Window with this name already exists in the office' });
       }
     }
 
@@ -194,9 +194,9 @@ router.put('/:id', async (req, res) => {
           return res.status(404).json({ error: 'One or more services not found' });
         }
 
-        const invalidServices = services.filter(service => service.department !== window.department);
+        const invalidServices = services.filter(service => service.office !== window.office);
         if (invalidServices.length > 0) {
-          return res.status(400).json({ error: 'All services must belong to the same department as the window' });
+          return res.status(400).json({ error: 'All services must belong to the same office as the window' });
         }
       }
     }
@@ -222,9 +222,9 @@ router.put('/:id', async (req, res) => {
 
     // Emit real-time update
     const io = req.app.get('io');
-    io.to(`admin-${window.department}`).emit('windows-updated', {
+    io.to(`admin-${window.office}`).emit('windows-updated', {
       type: 'window-updated',
-      department: window.department,
+      department: window.office, // Keep 'department' for backward compatibility with frontend
       data: {
         id: window._id,
         name: window.name,
@@ -237,13 +237,13 @@ router.put('/:id', async (req, res) => {
     // Also emit service visibility update since window assignments may have changed
     io.to('kiosk').emit('services-updated', {
       type: 'visibility-changed',
-      department: window.department
+      department: window.office // Keep 'department' for backward compatibility with frontend
     });
 
     res.json({
       id: window._id,
       name: window.name,
-      department: window.department,
+      office: window.office,
       serviceIds: window.serviceIds,
       assignedAdmin: window.assignedAdmin,
       isOpen: window.isOpen,
@@ -273,9 +273,9 @@ router.patch('/:id/toggle', async (req, res) => {
 
     // Emit real-time update
     const io = req.app.get('io');
-    io.to(`admin-${window.department}`).emit('windows-updated', {
+    io.to(`admin-${window.office}`).emit('windows-updated', {
       type: 'window-toggled',
-      department: window.department,
+      department: window.office, // Keep 'department' for backward compatibility with frontend
       data: {
         id: window._id,
         name: window.name,
@@ -286,13 +286,13 @@ router.patch('/:id/toggle', async (req, res) => {
     // Also emit service visibility update since window visibility changed
     io.to('kiosk').emit('services-updated', {
       type: 'visibility-changed',
-      department: window.department
+      department: window.office // Keep 'department' for backward compatibility with frontend
     });
 
     res.json({
       id: window._id,
       name: window.name,
-      department: window.department,
+      office: window.office,
       isOpen: window.isOpen,
       updatedAt: window.updatedAt
     });
@@ -315,23 +315,23 @@ router.delete('/:id', async (req, res) => {
     const deletedWindow = {
       id: window._id,
       name: window.name,
-      department: window.department
+      office: window.office
     };
 
     await Window.findByIdAndDelete(id);
 
     // Emit real-time update
     const io = req.app.get('io');
-    io.to(`admin-${deletedWindow.department}`).emit('windows-updated', {
+    io.to(`admin-${deletedWindow.office}`).emit('windows-updated', {
       type: 'window-deleted',
-      department: deletedWindow.department,
+      department: deletedWindow.office, // Keep 'department' for backward compatibility with frontend
       data: { id: deletedWindow.id }
     });
 
     // Also emit service visibility update since window was deleted
     io.to('kiosk').emit('services-updated', {
       type: 'visibility-changed',
-      department: deletedWindow.department
+      department: deletedWindow.office // Keep 'department' for backward compatibility with frontend
     });
 
     res.json({

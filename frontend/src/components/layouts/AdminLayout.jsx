@@ -15,7 +15,8 @@ import {
   MdStar,
   MdBarChart,
   MdSwapHoriz,
-  MdStorage
+  MdStorage,
+  MdMonitor
 } from 'react-icons/md';
 import { BiSolidNotepad } from 'react-icons/bi';
 import { useSocket } from '../../contexts/SocketContext';
@@ -29,6 +30,7 @@ const AdminLayout = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isScrollable, setIsScrollable] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isQueueExpanded, setIsQueueExpanded] = useState(false);
 
   // Use centralized Socket context
@@ -127,13 +129,12 @@ const AdminLayout = ({ children }) => {
     };
   }, []);
 
-  // Detect if main content is scrollable
+  // Detect if page content is scrollable (for unified scrolling)
   useEffect(() => {
     const checkScrollable = () => {
-      if (mainContentRef.current) {
-        const { scrollHeight, clientHeight } = mainContentRef.current;
-        setIsScrollable(scrollHeight > clientHeight);
-      }
+      // Check if the document body is scrollable
+      const { scrollHeight, clientHeight } = document.documentElement;
+      setIsScrollable(scrollHeight > clientHeight);
     };
 
     // Check on mount and when children change
@@ -142,7 +143,7 @@ const AdminLayout = ({ children }) => {
     // Check on window resize
     window.addEventListener('resize', checkScrollable);
 
-    // Use MutationObserver to detect content changes
+    // Use MutationObserver to detect content changes in the main content
     const observer = new MutationObserver(checkScrollable);
     if (mainContentRef.current) {
       observer.observe(mainContentRef.current, {
@@ -158,6 +159,24 @@ const AdminLayout = ({ children }) => {
       observer.disconnect();
     };
   }, [children]);
+
+  // Detect scroll position for header shadow animation
+  useEffect(() => {
+    const handleScroll = () => {
+      // Set isScrolled to true when scrolled down, false when at top
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    // Check initial scroll position
+    handleScroll();
+
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const handleSignOut = async () => {
     const result = await signOut();
@@ -230,8 +249,8 @@ const AdminLayout = ({ children }) => {
       return 'registrar_admin';
     } else if (currentPath.startsWith('/admin/admissions')) {
       return 'admissions_admin';
-    } else if (currentPath.startsWith('/admin/hr')) {
-      return 'hr_admin';
+    } else if (currentPath.startsWith('/admin/seniormanagement')) {
+      return 'senior_management_admin';
     } else if (currentPath.startsWith('/admin/mis')) {
       return 'super_admin';
     }
@@ -266,7 +285,6 @@ const AdminLayout = ({ children }) => {
             }))
         },
         { name: 'Transaction Logs', path: '/admin/registrar/transaction-logs', icon: BiSolidNotepad },
-        { name: 'Audit Trail', path: '/admin/registrar/audit-trail', icon: MdHistory },
         { name: 'Settings', path: '/admin/registrar/settings', icon: MdSettings }
       ],
       admissions_admin: [
@@ -284,12 +302,10 @@ const AdminLayout = ({ children }) => {
             }))
         },
         { name: 'Transaction Logs', path: '/admin/admissions/transaction-logs', icon: BiSolidNotepad },
-        { name: 'Audit Trail', path: '/admin/admissions/audit-trail', icon: MdHistory },
         { name: 'Settings', path: '/admin/admissions/settings', icon: MdSettings }
       ],
-      hr_admin: [
-        { name: 'Charts', path: '/admin/hr/charts', icon: MdBarChart },
-        { name: 'Audit Trail', path: '/admin/hr/audit-trail', icon: MdHistory }
+      senior_management_admin: [
+        { name: 'Charts', path: '/admin/seniormanagement/charts', icon: MdBarChart }
       ]
     };
 
@@ -316,7 +332,7 @@ const AdminLayout = ({ children }) => {
       super_admin: 'MIS Super Admin',
       registrar_admin: 'Registrar Admin',
       admissions_admin: 'Admissions Admin',
-      hr_admin: 'HR Admin'
+      senior_management_admin: 'Senior Management Admin'
     };
 
     // In development mode with bypass, show role-based name
@@ -344,7 +360,7 @@ const AdminLayout = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen flex admin-layout" style={{ backgroundColor: '#efefef' }}>
+    <div className="min-h-screen admin-layout" style={{ backgroundColor: '#efefef' }}>
       {/* Sidebar - fixed position, full height, no scrolling */}
       <div
         className={`fixed left-0 top-0 h-screen shadow-xl transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-20' : 'w-72'} flex flex-col z-30 rounded-tr-3xl rounded-br-3xl`}
@@ -492,14 +508,13 @@ const AdminLayout = ({ children }) => {
 
       {/* Main Content Area - with left margin to account for fixed sidebar */}
       <div
-        className="flex-1 flex flex-col transition-all duration-300 ease-in-out"
+        className="flex flex-col min-h-screen transition-all duration-300 ease-in-out"
         style={{ marginLeft: isSidebarCollapsed ? '5rem' : '18rem' }}
       >
-        {/* Header - fixed position at top of content area */}
+        {/* Header - sticky position with scroll-based shadow animation */}
         <header
-          className={`fixed top-0 right-0 px-6 py-4 flex items-center justify-between z-20 transition-all duration-300 ease-in-out ${isScrollable ? 'shadow-sm' : ''}`}
+          className={`sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-shadow duration-300 ease-in-out ${isScrolled ? 'shadow-md' : ''}`}
           style={{
-            left: isSidebarCollapsed ? '5rem' : '18rem',
             backgroundColor: '#efefef'
           }}
         >
@@ -564,10 +579,10 @@ const AdminLayout = ({ children }) => {
           </div>
         </header>
 
-        {/* Page Content - scrollable area with top padding for fixed header */}
+        {/* Page Content - natural flow, no internal scrolling */}
         <main
           ref={mainContentRef}
-          className="flex-1 overflow-y-auto pt-20 p-6"
+          className="flex-1 p-6"
           style={{ backgroundColor: '#efefef' }}
         >
           {children}

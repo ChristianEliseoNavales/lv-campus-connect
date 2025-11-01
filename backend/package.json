@@ -1,7 +1,7 @@
 {
-  "name": "university-kiosk-backend",
+  "name": "lvcampusconnect-backend",
   "version": "1.0.0",
-  "description": "Backend server for University Kiosk System - MERN stack with Google SSO and role-based access control",
+  "description": "Backend server for LVCampusConnect Kiosk System - MERN stack with Google SSO and role-based access control",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -19,20 +19,25 @@
     "express",
     "websocket"
   ],
-  "author": "University Development Team",
+  "author": "LVCampusConnect Development Team",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "express-validator": "^7.2.1",
+    "form-data": "^4.0.4",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^3.0.0",
     "node-fetch": "^3.3.2",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "streamifier": "^0.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

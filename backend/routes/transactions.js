@@ -73,7 +73,7 @@ router.get('/:department', async (req, res) => {
 
     // Build query filter
     let queryFilter = {
-      department,
+      office: department,
       status: { $in: ['completed', 'skipped', 'serving', 'waiting'] }
     };
 
@@ -125,7 +125,7 @@ router.get('/:department', async (req, res) => {
     .lean();
 
     // Fetch services for mapping serviceId to service name
-    const services = await Service.find({ department }).lean();
+    const services = await Service.find({ office: department }).lean();
     const serviceMap = services.reduce((map, service) => {
       map[service._id.toString()] = service.name;
       return map;

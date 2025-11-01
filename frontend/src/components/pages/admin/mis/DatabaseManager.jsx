@@ -10,7 +10,7 @@ import {
   MdStorage,
   MdTableChart
 } from 'react-icons/md';
-import { useToast } from '../../../ui/Toast';
+import { useToast, ToastContainer } from '../../../ui/Toast';
 import {
   EditRecordModal,
   DeleteRecordModal,
@@ -315,6 +315,7 @@ const DatabaseManager = () => {
 
   return (
     <div className="space-y-6">
+      <ToastContainer />
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -438,20 +439,38 @@ const DatabaseManager = () => {
       {/* Records Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
-          <div className="p-8">
-            {/* Skeleton Loading */}
-            <div className="space-y-4">
-              {[...Array(5)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="flex space-x-4">
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/6"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  {[...Array(6)].map((_, index) => (
+                    <th key={index} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                    </th>
+                  ))}
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="h-4 bg-gray-200 rounded w-16 ml-auto animate-pulse"></div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {[...Array(7)].map((_, index) => (
+                  <tr key={index} className="animate-pulse">
+                    {[...Array(6)].map((_, colIndex) => (
+                      <td key={colIndex} className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex justify-end space-x-2">
+                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : records.length === 0 ? (
           <div className="p-8 text-center">

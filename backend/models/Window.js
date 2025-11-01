@@ -6,7 +6,7 @@ const windowSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  department: {
+  office: {
     type: String,
     enum: ['registrar', 'admissions'],
     required: true
@@ -45,14 +45,14 @@ const windowSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-windowSchema.index({ department: 1, isOpen: 1 });
+windowSchema.index({ office: 1, isOpen: 1 });
 windowSchema.index({ assignedAdmin: 1 });
 windowSchema.index({ serviceIds: 1 });
-windowSchema.index({ name: 1, department: 1 }, { unique: true });
+windowSchema.index({ name: 1, office: 1 }, { unique: true });
 
-// Static method to get windows by department
-windowSchema.statics.getByDepartment = function(department, openOnly = false) {
-  const query = { department };
+// Static method to get windows by office
+windowSchema.statics.getByOffice = function(office, openOnly = false) {
+  const query = { office };
   if (openOnly) {
     query.isOpen = true;
   }
@@ -70,12 +70,12 @@ windowSchema.statics.getAvailableForService = function(serviceId) {
   }).populate('serviceIds', 'name');
 };
 
-// Static method to get all visible services for a department
-windowSchema.statics.getVisibleServices = function(department) {
+// Static method to get all visible services for an office
+windowSchema.statics.getVisibleServices = function(office) {
   return this.aggregate([
     {
       $match: {
-        department: department,
+        office: office,
         isOpen: true,
         serviceIds: { $exists: true, $not: { $size: 0 } }
       }
@@ -101,7 +101,7 @@ windowSchema.statics.getVisibleServices = function(department) {
     },
     {
       $match: {
-        'service.department': department
+        'service.office': office
       }
     },
     {

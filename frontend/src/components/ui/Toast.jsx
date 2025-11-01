@@ -183,7 +183,7 @@ const Toast = ({
 // Toast Container Component for managing multiple toasts
 export const ToastContainer = ({ toasts = [], onRemoveToast }) => {
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div className="fixed inset-0 pointer-events-none z-[110]">
       {toasts.map((toast, index) => (
         <Toast
           key={toast.id || index}

@@ -1,9 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { MdAdd, MdLocationOn, MdClose, MdKeyboardArrowDown } from 'react-icons/md';
+import { MdAdd, MdLocationOn, MdClose, MdKeyboardArrowDown, MdMonitor } from 'react-icons/md';
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMinusCircle } from 'react-icons/ai';
 import { LuSettings2 } from 'react-icons/lu';
 import { io } from 'socket.io-client';
 import { useToast, ToastContainer, ConfirmModal } from '../../../ui';
+
+// Utility functions for change detection
+const deepEqual = (obj1, obj2) => {
+  if (obj1 === obj2) return true;
+
+  if (obj1 == null || obj2 == null) return obj1 === obj2;
+
+  if (typeof obj1 !== typeof obj2) return false;
+
+  if (typeof obj1 !== 'object') return obj1 === obj2;
+
+  if (Array.isArray(obj1) !== Array.isArray(obj2)) return false;
+
+  if (Array.isArray(obj1)) {
+    if (obj1.length !== obj2.length) return false;
+    for (let i = 0; i < obj1.length; i++) {
+      if (!deepEqual(obj1[i], obj2[i])) return false;
+    }
+    return true;
+  }
+
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+
+  if (keys1.length !== keys2.length) return false;
+
+  for (let key of keys1) {
+    if (!keys2.includes(key)) return false;
+    if (!deepEqual(obj1[key], obj2[key])) return false;
+  }
+
+  return true;
+};
+
+const hasChanges = (initialState, currentState) => {
+  return !deepEqual(initialState, currentState);
+};
 
 // Location options for the autocomplete dropdown
 const LOCATION_OPTIONS = [
@@ -104,7 +141,9 @@ const LocationAutocomplete = ({
   onSave,
   disabled,
   isUpdating,
-  placeholder = "Enter department location..."
+  placeholder = "Enter office location...",
+  initialValue = '',
+  showWarning
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [filteredOptions, setFilteredOptions] = useState([]);
@@ -145,9 +184,22 @@ const LocationAutocomplete = ({
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      onSave();
+      handleSave();
       setIsOpen(false);
     }
+  };
+
+  const handleSave = () => {
+    // Check if there are any changes
+    const trimmedValue = value.trim();
+    const trimmedInitial = initialValue.trim();
+
+    if (trimmedValue === trimmedInitial) {
+      showWarning('No Changes Detected', 'The location has not been modified.');
+      return;
+    }
+
+    onSave();
   };
 
   return (
@@ -194,10 +246,10 @@ const LocationAutocomplete = ({
 
       {/* Save Button - Positioned outside on the right */}
       <button
-        onClick={onSave}
-        disabled={isUpdating || !value.trim() || disabled}
+        onClick={handleSave}
+        disabled={isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()}
         className={`ml-3 px-4 py-2 text-sm rounded-full transition-colors ${
-          isUpdating || !value.trim() || disabled
+          isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
             : 'bg-[#1F3463] text-white hover:opacity-90'
         }`}
@@ -221,9 +273,24 @@ const AddEditWindowModal = ({
   adminUsersLoading,
   isEditing,
   onRemove,
-  errors = {}
+  errors = {},
+  initialFormData = { name: '', serviceIds: [], assignedAdmin: '', isPriority: false },
+  showWarning
 }) => {
   if (!isOpen) return null;
+
+  // Check if there are changes in the form data
+  const hasFormChanges = () => {
+    return hasChanges(initialFormData, windowFormData);
+  };
+
+  const handleSave = () => {
+    if (!hasFormChanges()) {
+      showWarning('No Changes Detected', 'The window configuration has not been modified.');
+      return;
+    }
+    onSave();
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -407,9 +474,14 @@ const AddEditWindowModal = ({
             {/* Row 5: Action Buttons */}
             <div className="flex space-x-3">
               <button
-                onClick={onSave}
-                className="flex-1 flex items-center justify-center space-x-2 p-3 text-white rounded-lg transition-colors hover:opacity-90"
-                style={{ backgroundColor: '#1F3463' }}
+                onClick={handleSave}
+                disabled={!hasFormChanges()}
+                className={`flex-1 flex items-center justify-center space-x-2 p-3 rounded-lg transition-colors ${
+                  !hasFormChanges()
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'text-white hover:opacity-90'
+                }`}
+                style={{ backgroundColor: !hasFormChanges() ? undefined : '#1F3463' }}
               >
                 <span className="font-medium">Save</span>
               </button>
@@ -436,9 +508,24 @@ const AddServiceModal = ({
   serviceFormData,
   onFormChange,
   onSave,
-  errors = {}
+  errors = {},
+  initialFormData = { name: '' },
+  showWarning
 }) => {
   if (!isOpen) return null;
+
+  // Check if there are changes in the form data
+  const hasFormChanges = () => {
+    return hasChanges(initialFormData, serviceFormData);
+  };
+
+  const handleSave = () => {
+    if (!hasFormChanges()) {
+      showWarning('No Changes Detected', 'The service information has not been modified.');
+      return;
+    }
+    onSave();
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -494,9 +581,14 @@ const AddServiceModal = ({
 
             {/* Row 3: Save Button */}
             <button
-              onClick={onSave}
-              className="w-full flex items-center justify-center space-x-2 p-3 text-white rounded-lg transition-colors hover:opacity-90"
-              style={{ backgroundColor: '#1F3463' }}
+              onClick={handleSave}
+              disabled={!hasFormChanges()}
+              className={`w-full flex items-center justify-center space-x-2 p-3 rounded-lg transition-colors ${
+                !hasFormChanges()
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'text-white hover:opacity-90'
+              }`}
+              style={{ backgroundColor: !hasFormChanges() ? undefined : '#1F3463' }}
             >
               <span className="font-medium">Save</span>
             </button>
@@ -525,6 +617,16 @@ const Settings = () => {
 
   // Location update state management
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+
+  // Initial state tracking for change detection
+  const [initialState, setInitialState] = useState({
+    isQueueingEnabled: false,
+    locationText: '',
+    services: [],
+    windows: [],
+    windowFormData: { name: '', serviceIds: [], assignedAdmin: '', isPriority: false },
+    serviceFormData: { name: '' }
+  });
 
   // Toast notifications
   const { toasts, removeToast, showSuccess, showError, showWarning } = useToast();
@@ -591,6 +693,17 @@ const Settings = () => {
         fetchAdminUsers(),
         fetchLocationSettings()
       ]);
+
+      // Capture initial state after all data is loaded
+      setTimeout(() => {
+        setInitialState(prev => ({
+          ...prev,
+          isQueueingEnabled,
+          locationText,
+          services: [...services],
+          windows: [...windows]
+        }));
+      }, 100); // Small delay to ensure state updates are complete
     } catch (error) {
       showError('Error', 'Failed to load settings data');
     } finally {
@@ -752,6 +865,15 @@ const Settings = () => {
       return;
     }
 
+    // Check for changes before proceeding
+    const trimmedValue = locationText.trim();
+    const trimmedInitial = initialState.locationText.trim();
+
+    if (trimmedValue === trimmedInitial) {
+      showWarning('No Changes Detected', 'The office location has not been modified.');
+      return;
+    }
+
     try {
       setIsUpdatingLocation(true);
       const response = await fetch('http://localhost:5000/api/settings/location/admissions', {
@@ -759,13 +881,15 @@ const Settings = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ location: locationText.trim() }),
+        body: JSON.stringify({ location: trimmedValue }),
       });
 
       if (response.ok) {
         const data = await response.json();
         setLocationText(data.location);
-        showSuccess('Location Updated', 'Department location has been updated successfully');
+        // Update initial state after successful save
+        setInitialState(prev => ({ ...prev, locationText: data.location }));
+        showSuccess('Location Updated', 'Office location has been updated successfully');
       } else {
         throw new Error('Failed to update location');
       }
@@ -785,8 +909,11 @@ const Settings = () => {
     }
     setEditingWindow(null);
     setWindowLocationSearch('');
-    setWindowFormData({ name: '', serviceIds: [], assignedAdmin: '', isPriority: false });
+    const newFormData = { name: '', serviceIds: [], assignedAdmin: '', isPriority: false };
+    setWindowFormData(newFormData);
     setWindowErrors({});
+    // Set initial state for change detection
+    setInitialState(prev => ({ ...prev, windowFormData: newFormData }));
     setShowAddEditWindowModal(true);
   };
 
@@ -797,14 +924,17 @@ const Settings = () => {
     }
     setEditingWindow(window);
     setWindowLocationSearch(window.location || '');
-    setWindowFormData({
+    const editFormData = {
       id: window.id,
       name: window.name,
       serviceIds: (window.serviceIds || []).map(s => s._id || s),
       assignedAdmin: window.assignedAdmin?._id || window.assignedAdmin || '',
       isPriority: window.name === 'Priority' || false
-    });
+    };
+    setWindowFormData(editFormData);
     setWindowErrors({});
+    // Set initial state for change detection
+    setInitialState(prev => ({ ...prev, windowFormData: editFormData }));
     setShowAddEditWindowModal(true);
   };
 
@@ -817,8 +947,11 @@ const Settings = () => {
   };
 
   const openAddServiceModal = () => {
-    setServiceFormData({ name: '' });
+    const newFormData = { name: '' };
+    setServiceFormData(newFormData);
     setServiceErrors({});
+    // Set initial state for change detection
+    setInitialState(prev => ({ ...prev, serviceFormData: newFormData }));
     setShowAddServiceModal(true);
   };
 
@@ -941,7 +1074,7 @@ const Settings = () => {
           },
           body: JSON.stringify({
             name: windowFormData.name.trim(),
-            department: 'admissions',
+            office: 'admissions',
             serviceIds: windowFormData.serviceIds,
             assignedAdmin: windowFormData.assignedAdmin
           }),
@@ -1002,7 +1135,7 @@ const Settings = () => {
         },
         body: JSON.stringify({
           name: serviceName,
-          department: 'admissions'
+          office: 'admissions'
         }),
       });
 
@@ -1174,6 +1307,87 @@ const Settings = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        {/* Settings Management Grid Skeleton */}
+        <div className="grid gap-4 h-[calc(100vh-12rem)] bg-white p-6 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
+          {/* Header Skeleton */}
+          <div className="col-span-2 row-span-1 bg-white rounded-xl p-6">
+            <div className="grid grid-cols-2 gap-4 items-center">
+              <div>
+                <div className="h-10 bg-gray-200 rounded w-80 animate-pulse"></div>
+              </div>
+              <div className="flex justify-end">
+                <div className="h-16 bg-gray-200 rounded-lg w-64 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Toggle Section Skeleton */}
+          <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col space-y-2">
+                <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+              </div>
+              <div className="w-16 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Services Section Skeleton */}
+          <div className="col-start-1 row-start-3 row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-6">
+            <div className="h-full flex flex-col">
+              <div className="h-8 bg-gray-200 rounded w-24 mb-4 animate-pulse"></div>
+              <div className="flex-1 space-y-2 mb-4">
+                {[...Array(5)].map((_, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-4 bg-gray-200 rounded w-32"></div>
+                        <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                      </div>
+                      <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Windows Section Skeleton */}
+          <div className="col-start-2 row-start-2 row-span-3 bg-white rounded-xl border border-gray-300 shadow-md p-6">
+            <div className="mb-4">
+              <div className="grid grid-cols-3 gap-4 items-center p-3">
+                <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col space-y-3">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
+                  <div className="flex items-center">
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  </div>
+                  <div className="flex flex-col justify-center space-y-1">
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    <div className="h-3 bg-gray-200 rounded w-32"></div>
+                  </div>
+                  <div className="flex items-center justify-center space-x-1">
+                    <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                    <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
 
@@ -1182,13 +1396,24 @@ const Settings = () => {
       <div className="grid gap-4 h-[calc(100vh-12rem)] bg-white p-6 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
         {/* First div: Row 1, spanning both columns */}
         <div className="col-span-2 row-span-1 bg-white rounded-xl p-6">
-          <div className="grid grid-cols-2 gap-4 items-center">
+          <div className="grid grid-cols-3 gap-4 items-center">
             {/* Column 1: Settings Management heading */}
             <div>
               <h1 className="text-4xl font-semibold text-gray-900">Settings Management</h1>
             </div>
 
-            {/* Column 2: Warning banner when queueing is enabled */}
+            {/* Column 2: Queue Monitor Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => window.open('/admin/admissions/queue-monitor', '_blank')}
+                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+              >
+                <MdMonitor className="text-xl" />
+                <span>Open Queue Monitor</span>
+              </button>
+            </div>
+
+            {/* Column 3: Warning banner when queueing is enabled */}
             <div className="flex justify-end">
               {isQueueingEnabled && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center space-x-2 max-w-md">
@@ -1328,7 +1553,9 @@ const Settings = () => {
                   onSave={handleLocationUpdate}
                   disabled={isQueueingEnabled}
                   isUpdating={isUpdatingLocation}
-                  placeholder="Enter department location..."
+                  placeholder="Enter office location..."
+                  initialValue={initialState.locationText}
+                  showWarning={showWarning}
                 />
               </div>
             </div>
@@ -1446,6 +1673,8 @@ const Settings = () => {
         isEditing={!!editingWindow}
         onRemove={editingWindow ? () => handleRemoveWindow(editingWindow.id) : null}
         errors={windowErrors}
+        initialFormData={initialState.windowFormData}
+        showWarning={showWarning}
       />
       <AddServiceModal
         isOpen={showAddServiceModal}
@@ -1454,6 +1683,8 @@ const Settings = () => {
         onFormChange={handleServiceFormChange}
         onSave={handleSaveService}
         errors={serviceErrors}
+        initialFormData={initialState.serviceFormData}
+        showWarning={showWarning}
       />
 
       {/* Confirmation Modal */}

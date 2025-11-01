@@ -128,8 +128,8 @@ const settingsSchema = new mongoose.Schema({
       }
     }
   },
-  // Department-specific settings
-  departmentSettings: {
+  // Office-specific settings
+  officeSettings: {
     registrar: {
       isEnabled: {
         type: Boolean,

@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { io } from 'socket.io-client';
 import { useAuth } from '../../../contexts/AuthContext';
-import { AdminCard, StatCard } from '../../ui/Card';
+import { RoleAwareAreaChart } from '../../ui/AreaChart';
+import { ChartPieLegend } from '../../ui/PieChart';
 
 const RegistrarAdminDashboard = () => {
   const { user } = useAuth();
@@ -10,91 +12,228 @@ const RegistrarAdminDashboard = () => {
     activeWindows: 0,
     systemStatus: 'operational'
   });
+  const [tableData, setTableData] = useState({
+    windows: [],
+    todayVisits: 0,
+    averageTurnaroundTime: '0 mins'
+  });
   const [recentActivity, setRecentActivity] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
 
+  // Extract fetchDashboardData function to be reusable
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      // Fetch windows data
+      const windowsResponse = await fetch('http://localhost:5000/api/windows/registrar');
+      const windows = windowsResponse.ok ? await windowsResponse.json() : [];
+
+      // Fetch table data for analytics (visits, turnaround time)
+      const tableResponse = await fetch('http://localhost:5000/api/analytics/dashboard-table-data/registrar');
+      const tableResult = tableResponse.ok ? await tableResponse.json() : { data: { windows: [], todayVisits: 0, averageTurnaroundTime: '0 mins' } };
+
+      // Transform windows data to match dashboard table format
+      const transformedWindows = windows.map(window => ({
+        windowName: window.name,
+        incomingNumber: 0, // Default to 0, could be enhanced with real queue data
+        currentServingNumber: 0 // Default to 0, could be enhanced with real queue data
+      }));
+
+      // Merge analytics data with transformed windows
+      const analyticsWindowsMap = new Map(
+        tableResult.data.windows.map(w => [w.windowName, w])
+      );
+
+      // Update transformed windows with analytics data where available
+      const finalWindows = transformedWindows.map(window => {
+        const analyticsData = analyticsWindowsMap.get(window.windowName);
+        return analyticsData ? analyticsData : window;
+      });
+
+      // Mock stats based on actual data
+      const mockStats = {
+        queueLength: 8,
+        servedToday: 23,
+        activeWindows: windows.length,
+        systemStatus: 'operational'
+      };
+
+      // Mock recent activity
+      const mockActivity = [
+        {
+          id: 1,
+          type: 'queue',
+          message: 'Queue #15 served at Window 1',
+          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+          icon: '📋'
+        },
+        {
+          id: 2,
+          type: 'service',
+          message: 'Enrollment service completed',
+          timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+          icon: '✅'
+        },
+        {
+          id: 3,
+          type: 'queue',
+          message: 'Queue #14 served at Window 2',
+          timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+          icon: '📋'
+        },
+        {
+          id: 4,
+          type: 'user',
+          message: 'New queue number issued: #16',
+          timestamp: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+          icon: '👤'
+        }
+      ];
+
+      setStats(mockStats);
+      setTableData({
+        windows: finalWindows,
+        todayVisits: tableResult.data.todayVisits,
+        averageTurnaroundTime: tableResult.data.averageTurnaroundTime
+      });
+      setRecentActivity(mockActivity);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // Empty dependency array since it doesn't depend on any props or state
+
+  // Initial data fetch
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        // Fetch windows data
-        const windowsResponse = await fetch('http://localhost:5000/api/windows/registrar');
-        const windows = windowsResponse.ok ? await windowsResponse.json() : [];
-
-        // Mock stats based on actual data
-        const mockStats = {
-          queueLength: 8,
-          servedToday: 23,
-          activeWindows: windows.length,
-          systemStatus: 'operational'
-        };
-
-        const mockActivity = [
-          {
-            id: 1,
-            action: 'Queue number called',
-            details: 'Window 1 - #15',
-            timestamp: new Date(Date.now() - 5 * 60 * 1000),
-            type: 'queue'
-          },
-          {
-            id: 2,
-            action: 'Window activated',
-            details: 'Window 2 started service',
-            timestamp: new Date(Date.now() - 15 * 60 * 1000),
-            type: 'window'
-          },
-          {
-            id: 3,
-            action: 'Service completed',
-            details: 'Transcript request processed',
-            timestamp: new Date(Date.now() - 30 * 60 * 1000),
-            type: 'service'
-          }
-        ];
-
-        setStats(mockStats);
-        setRecentActivity(mockActivity);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchDashboardData();
-
-    // Refresh data every 30 seconds
-    const interval = setInterval(fetchDashboardData, 30000);
-    return () => clearInterval(interval);
   }, []);
 
-  const formatTime = (date) => {
+  // Initialize Socket.io connection for real-time updates
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+
+    // Join admin room for real-time updates
+    newSocket.emit('join-room', 'admin-registrar');
+
+    // Listen for windows updates
+    newSocket.on('windows-updated', (data) => {
+      if (data.department === 'registrar') {
+        console.log('📡 Windows updated for registrar dashboard:', data);
+        // Refetch dashboard data when windows change
+        fetchDashboardData();
+      }
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []); // Empty dependency array - Socket.io connection should only be created once
+
+  const formatTimeAgo = (timestamp) => {
     const now = new Date();
-    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+    const time = new Date(timestamp);
+    const diffInMinutes = Math.floor((now - time) / (1000 * 60));
 
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-
     const diffInHours = Math.floor(diffInMinutes / 60);
-    return `${diffInHours}h ago`;
-  };
-
-  const getActivityIcon = (type) => {
-    switch (type) {
-      case 'queue': return '📋';
-      case 'window': return '🪟';
-      case 'service': return '✅';
-      default: return '📝';
-    }
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays}d ago`;
   };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3463] mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">Loading dashboard...</p>
+        {/* Welcome Section Skeleton */}
+        <div>
+          <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+        </div>
+
+        {/* Dashboard Grid Skeleton */}
+        <div className="grid grid-cols-3 gap-6 min-h-[600px]">
+          {/* Row 1 - Upper row (40% height) */}
+          <div className="col-span-1">
+            {/* Window & Incoming Queue Table Skeleton */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
+              <div className="space-y-2">
+                {/* Header Row Skeleton */}
+                <div className="bg-gray-300 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
+                  <div className="px-4 py-3 h-10"></div>
+                  <div className="px-4 py-3 h-10"></div>
+                </div>
+
+                {/* Data Rows Skeleton */}
+                {[...Array(4)].map((_, index) => (
+                  <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
+                    <div className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div>
+                    </div>
+                    <div className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-1">
+            {/* Window & Now Serving Table Skeleton */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
+              <div className="space-y-2">
+                {/* Header Row Skeleton */}
+                <div className="bg-gray-300 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
+                  <div className="px-4 py-3 h-10"></div>
+                  <div className="px-4 py-3 h-10"></div>
+                </div>
+
+                {/* Data Rows Skeleton */}
+                {[...Array(4)].map((_, index) => (
+                  <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
+                    <div className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div>
+                    </div>
+                    <div className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-1 grid grid-rows-2 gap-3">
+            {/* Statistics Cards Skeleton */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
+              <div className="w-16 h-12 bg-gray-300 rounded mb-2 animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
+              <div className="w-20 h-12 bg-gray-300 rounded mb-2 animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Row 2 - Lower row (60% height) */}
+          <div className="col-span-2">
+            {/* Area Chart Skeleton */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
+              <div className="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
+              <div className="bg-gray-100 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+
+          <div className="col-span-1">
+            {/* Pie Chart Skeleton */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
+              <div className="h-6 bg-gray-200 rounded w-32 mb-4 animate-pulse"></div>
+              <div className="flex items-center justify-center h-full">
+                <div className="w-48 h-48 bg-gray-100 rounded-full animate-pulse"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -103,61 +242,105 @@ const RegistrarAdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Welcome Section */}
       <div>
-        <h1 className="text-3xl font-bold text-[#1F3463]">Registrar Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome back, {user?.name || 'Registrar Admin'}</p>
+        <h1 className="text-2xl font-bold text-[#1F3463]">
+          Queue Monitoring
+        </h1>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Queue Length" value={stats.queueLength} icon="📋" color="blue" />
-        <StatCard title="Served Today" value={stats.servedToday} icon="✅" color="green" />
-        <StatCard title="Active Windows" value={stats.activeWindows} icon="🪟" color="yellow" />
-      </div>
+      {/* New Grid Layout - 2 rows (40%/60%), 3 columns */}
+      <div className="grid grid-cols-3 gap-6 min-h-[600px]">
+        {/* Row 1 - Upper row (40% height) */}
+        <div className="col-span-1">
+          {/* Row 1, Column 1 - Window & Incoming Queue Table */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
+            <div className="space-y-2">
+              {/* Header Row */}
+              <div className="bg-[#1F3463] text-white rounded-lg grid grid-cols-2 gap-0">
+                <div className="px-4 py-3 text-center text-sm font-semibold">Window</div>
+                <div className="px-4 py-3 text-center text-sm font-semibold">Incoming Number</div>
+              </div>
 
-      {/* Recent Activity */}
-      <AdminCard title="Recent Activity" icon="📊">
-        <div className="space-y-4">
-          {recentActivity.length > 0 ? (
-            recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{getActivityIcon(activity.type)}</span>
-                  <div>
-                    <p className="font-medium text-gray-900">{activity.action}</p>
-                    <p className="text-sm text-gray-600">{activity.details}</p>
+              {/* Data Rows */}
+              {tableData.windows.slice(0, 4).map((window, index) => (
+                <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
+                  <div className="px-4 py-3 text-sm text-gray-900 text-center">{window.windowName}</div>
+                  <div className="px-4 py-3 text-sm text-gray-900 font-medium text-center">
+                    {window.incomingNumber > 0 ? window.incomingNumber : '-'}
                   </div>
                 </div>
-                <span className="text-sm text-gray-500">{formatTime(activity.timestamp)}</span>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 text-center py-4">No recent activity</p>
-          )}
-        </div>
-      </AdminCard>
+              ))}
 
-      {/* Quick Actions */}
-      <AdminCard title="Quick Actions" icon="⚡">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <button className="p-4 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors">
-            <div className="text-2xl mb-2">🪟</div>
-            <div className="font-medium">Manage Windows</div>
-            <div className="text-sm opacity-90">Configure window settings</div>
-          </button>
-          <button className="p-4 bg-[#3930A8] text-white rounded-lg hover:bg-[#3930A8]/90 transition-colors">
-            <div className="text-2xl mb-2">📋</div>
-            <div className="font-medium">View Queues</div>
-            <div className="text-sm opacity-90">Monitor queue status</div>
-          </button>
-          <button className="p-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-            <div className="text-2xl mb-2">📊</div>
-            <div className="font-medium">View Reports</div>
-            <div className="text-sm opacity-90">Transaction logs & analytics</div>
-          </button>
+              {/* Fill remaining rows if less than 4 windows */}
+              {Array.from({ length: Math.max(0, 4 - tableData.windows.length) }).map((_, index) => (
+                <div key={`empty-${index}`} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">-</div>
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">-</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </AdminCard>
+
+        <div className="col-span-1">
+          {/* Row 1, Column 2 - Window & Now Serving Table */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
+            <div className="space-y-2">
+              {/* Header Row */}
+              <div className="bg-[#1F3463] text-white rounded-lg grid grid-cols-2 gap-0">
+                <div className="px-4 py-3 text-center text-sm font-semibold">Window</div>
+                <div className="px-4 py-3 text-center text-sm font-semibold">Now Serving</div>
+              </div>
+
+              {/* Data Rows */}
+              {tableData.windows.slice(0, 4).map((window, index) => (
+                <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
+                  <div className="px-4 py-3 text-sm text-gray-900 text-center">{window.windowName}</div>
+                  <div className="px-4 py-3 text-sm text-gray-900 font-medium text-center">
+                    {window.currentServingNumber > 0 ? window.currentServingNumber : '-'}
+                  </div>
+                </div>
+              ))}
+
+              {/* Fill remaining rows if less than 4 windows */}
+              {Array.from({ length: Math.max(0, 4 - tableData.windows.length) }).map((_, index) => (
+                <div key={`empty-${index}`} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">-</div>
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">-</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-span-1 grid grid-rows-2 gap-3">
+          {/* Row 1, Column 3 - Statistics Cards */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
+            <div className="text-3xl font-bold text-[#1F3463] mb-2">{tableData.todayVisits}</div>
+            <div className="text-sm text-gray-600 text-center">Visits Today</div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
+            <div className="text-3xl font-bold text-[#1F3463] mb-2">{tableData.averageTurnaroundTime}</div>
+            <div className="text-sm text-gray-600 text-center">Average Turnaround Time</div>
+          </div>
+        </div>
+
+        {/* Row 2 - Lower row (60% height) */}
+        <div className="col-span-2 ">
+          {/* Row 2, Columns 1-2 (spanning both columns) - Area Chart */}
+          <div className="h-full">
+            <RoleAwareAreaChart userRole={user?.role} />
+          </div>
+        </div>
+
+        <div className="col-span-1 ">
+          {/* Row 2, Column 3 - Pie Chart */}
+          <div className="h-full">
+            <ChartPieLegend userRole={user?.role} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

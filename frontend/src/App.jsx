@@ -7,7 +7,8 @@ import { ProtectedRoute, Login, Unauthorized } from './components/auth';
 import {
   MISAdminDashboard,
   RegistrarAdminDashboard,
-  AdmissionsAdminDashboard
+  AdmissionsAdminDashboard,
+  QueueMonitor
 } from './components/pages/admin';
 
 // MIS Admin Pages
@@ -20,6 +21,7 @@ import MISRatings from './components/pages/admin/mis/Ratings';
 // Registrar Admin Pages
 import RegistrarQueue from './components/pages/admin/registrar/Queue';
 import RegistrarQueueRedirect from './components/pages/admin/registrar/QueueRedirect';
+import RegistrarQueueMonitor from './components/pages/admin/registrar/QueueMonitor';
 import RegistrarTransactionLogs from './components/pages/admin/registrar/TransactionLogs';
 import RegistrarAuditTrail from './components/pages/admin/registrar/AuditTrail';
 import RegistrarSettings from './components/pages/admin/registrar/Settings';
@@ -27,13 +29,13 @@ import RegistrarSettings from './components/pages/admin/registrar/Settings';
 // Admissions Admin Pages
 import AdmissionsQueue from './components/pages/admin/admissions/Queue';
 import AdmissionsQueueRedirect from './components/pages/admin/admissions/QueueRedirect';
+import AdmissionsQueueMonitor from './components/pages/admin/admissions/QueueMonitor';
 import AdmissionsTransactionLogs from './components/pages/admin/admissions/TransactionLogs';
 import AdmissionsAuditTrail from './components/pages/admin/admissions/AuditTrail';
 import AdmissionsSettings from './components/pages/admin/admissions/Settings';
 
-// HR Admin Pages
-import HRCharts from './components/pages/admin/hr/Charts';
-import HRAuditTrail from './components/pages/admin/hr/AuditTrail';
+// Senior Management Admin Pages
+import SeniorManagementCharts from './components/pages/admin/seniormanagement/Charts';
 
 import {
   Home,
@@ -76,6 +78,9 @@ function App() {
 
           {/* Idle Page - No Layout Wrapper */}
           <Route path="/idle" element={<IdlePage />} />
+
+          {/* Queue Monitor - Public Display, No Layout Wrapper */}
+          <Route path="/queue-monitor" element={<QueueMonitor />} />
 
           {/* Authentication Routes */}
           <Route path="/login" element={<Login />} />
@@ -146,6 +151,11 @@ function App() {
               </AdminLayout>
             </ProtectedRoute>
           } />
+          <Route path="/admin/registrar/queue-monitor" element={
+            <ProtectedRoute requiredRoles={['super_admin', 'registrar_admin']}>
+              <RegistrarQueueMonitor />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/registrar/transaction-logs" element={
             <ProtectedRoute requiredRoles={['super_admin', 'registrar_admin']}>
               <AdminLayout>
@@ -190,6 +200,11 @@ function App() {
               </AdminLayout>
             </ProtectedRoute>
           } />
+          <Route path="/admin/admissions/queue-monitor" element={
+            <ProtectedRoute requiredRoles={['super_admin', 'admissions_admin']}>
+              <AdmissionsQueueMonitor />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/admissions/transaction-logs" element={
             <ProtectedRoute requiredRoles={['super_admin', 'admissions_admin']}>
               <AdminLayout>
@@ -212,18 +227,11 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* HR Admin Routes */}
-          <Route path="/admin/hr/charts" element={
-            <ProtectedRoute requiredRoles={['super_admin', 'hr_admin']}>
+          {/* Senior Management Admin Routes */}
+          <Route path="/admin/seniormanagement/charts" element={
+            <ProtectedRoute requiredRoles={['super_admin', 'senior_management_admin']}>
               <AdminLayout>
-                <HRCharts />
-              </AdminLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/hr/audit-trail" element={
-            <ProtectedRoute requiredRoles={['super_admin', 'hr_admin']}>
-              <AdminLayout>
-                <HRAuditTrail />
+                <SeniorManagementCharts />
               </AdminLayout>
             </ProtectedRoute>
           } />

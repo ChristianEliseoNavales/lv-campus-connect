@@ -30,6 +30,10 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from public directory
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('🔌 Client connected:', socket.id);
@@ -56,6 +60,12 @@ const publicRoutes = require('./routes/public');
 const usersRoutes = require('./routes/users');
 const transactionsRoutes = require('./routes/transactions');
 const databaseRoutes = require('./routes/database');
+const analyticsRoutes = require('./routes/analytics');
+const auditRoutes = require('./routes/audit');
+const ratingsRoutes = require('./routes/ratings');
+const bulletinRoutes = require('./routes/bulletin');
+const chartsRoutes = require('./routes/charts');
+const printerRoutes = require('./routes/printer');
 
 // Use routes
 app.use('/api/settings', settingsRoutes);
@@ -65,6 +75,12 @@ app.use('/api/public', publicRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/transactions', transactionsRoutes);
 app.use('/api/database', databaseRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/audit', auditRoutes);
+app.use('/api/ratings', ratingsRoutes);
+app.use('/api/bulletin', bulletinRoutes);
+app.use('/api/charts', chartsRoutes);
+app.use('/api/printer', printerRoutes);
 
 // Basic API routes
 app.get('/', (req, res) => {

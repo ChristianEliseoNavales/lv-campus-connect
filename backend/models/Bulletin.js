@@ -17,8 +17,27 @@ const bulletinSchema = new mongoose.Schema({
     trim: true,
     maxlength: 500
   },
-  // Image information
+  // Image information (Cloudinary)
   image: {
+    // Cloudinary-specific fields
+    public_id: {
+      type: String,
+      trim: true
+    },
+    secure_url: {
+      type: String,
+      trim: true
+    },
+    url: {
+      type: String,
+      trim: true
+    },
+    resource_type: {
+      type: String,
+      enum: ['image', 'video', 'raw'],
+      default: 'image'
+    },
+    // Legacy fields (for backward compatibility)
     filename: {
       type: String,
       trim: true
@@ -107,7 +126,7 @@ const bulletinSchema = new mongoose.Schema({
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false // Made optional to support system-generated bulletins
   },
   authorName: {
     type: String,

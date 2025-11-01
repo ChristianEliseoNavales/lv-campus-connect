@@ -7,7 +7,7 @@ const queueSchema = new mongoose.Schema({
     min: 1,
     max: 99
   },
-  department: {
+  office: {
     type: String,
     enum: ['registrar', 'admissions'],
     required: true
@@ -103,22 +103,22 @@ const queueSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-queueSchema.index({ department: 1, status: 1 });
-queueSchema.index({ queueNumber: 1, department: 1 });
+queueSchema.index({ office: 1, status: 1 });
+queueSchema.index({ queueNumber: 1, office: 1 });
 queueSchema.index({ status: 1, queuedAt: 1 });
 queueSchema.index({ windowId: 1, status: 1 });
 queueSchema.index({ isCurrentlyServing: 1 });
 
-// Static method to get next queue number for a department
-queueSchema.statics.getNextQueueNumber = async function(department) {
+// Static method to get next queue number for an office
+queueSchema.statics.getNextQueueNumber = async function(office) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // Find the highest queue number for today in this department
+  // Find the highest queue number for today in this office
   const lastQueue = await this.findOne({
-    department,
+    office,
     createdAt: { $gte: today, $lt: tomorrow }
   }).sort({ queueNumber: -1 });
 
@@ -130,14 +130,14 @@ queueSchema.statics.getNextQueueNumber = async function(department) {
   return lastQueue.queueNumber >= 99 ? 1 : lastQueue.queueNumber + 1;
 };
 
-// Static method to get current serving number for a department
-queueSchema.statics.getCurrentServingNumber = async function(department, windowId = null) {
-  const query = { 
-    department, 
+// Static method to get current serving number for an office
+queueSchema.statics.getCurrentServingNumber = async function(office, windowId = null) {
+  const query = {
+    office,
     isCurrentlyServing: true,
     status: 'serving'
   };
-  
+
   if (windowId) {
     query.windowId = windowId;
   }
@@ -146,13 +146,13 @@ queueSchema.statics.getCurrentServingNumber = async function(department, windowI
   return currentServing ? currentServing.queueNumber : 0;
 };
 
-// Static method to get waiting queue for a department
-queueSchema.statics.getWaitingQueue = async function(department, windowId = null) {
-  const query = { 
-    department, 
+// Static method to get waiting queue for an office
+queueSchema.statics.getWaitingQueue = async function(office, windowId = null) {
+  const query = {
+    office,
     status: 'waiting'
   };
-  
+
   if (windowId) {
     query.windowId = windowId;
   }

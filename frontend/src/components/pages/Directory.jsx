@@ -1,14 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResponsiveGrid } from '../ui';
 import DirectoryLayout from '../layouts/DirectoryLayout';
 import { KioskLayout } from '../layouts';
 import { FaLocationDot } from 'react-icons/fa6';
+import { io } from 'socket.io-client';
 
 const Directory = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [offices, setOffices] = useState([]);
+  const [charts, setCharts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
   // Fixed layout structure
 
-  // Organizational chart data for each office
+  // Initialize Socket.io connection for real-time updates
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+
+    // Join kiosk room for real-time updates
+    newSocket.emit('join-room', 'kiosk-directory');
+
+    // Listen for chart updates
+    newSocket.on('chart-updated', () => {
+      fetchCharts();
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  // Fetch offices and charts on component mount
+  useEffect(() => {
+    fetchOffices();
+    fetchCharts();
+  }, []);
+
+  const fetchOffices = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/database/office');
+      if (response.ok) {
+        const data = await response.json();
+        const officeList = Array.isArray(data) ? data : (data.records || []);
+        setOffices(officeList);
+      } else {
+        console.error('Failed to fetch offices');
+      }
+    } catch (error) {
+      console.error('Error fetching offices:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCharts = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/database/chart');
+      if (response.ok) {
+        const data = await response.json();
+        const chartList = Array.isArray(data) ? data : (data.records || []);
+        setCharts(chartList);
+      } else {
+        console.error('Failed to fetch charts');
+      }
+    } catch (error) {
+      console.error('Error fetching charts:', error);
+    }
+  };
+
+  // Get chart for selected office
+  const getCurrentChart = () => {
+    if (!selectedDepartment) return null;
+    const selectedOffice = offices.find(o => o._id === selectedDepartment);
+    if (!selectedOffice) return null;
+    return charts.find(c => c.officeId === selectedOffice._id);
+  };
+
+  const currentChart = getCurrentChart();
+
+  // Legacy organizational chart data for each office (kept for reference, not currently used)
   const organizationalData = {
     admissions: {
       name: "Admissions Office",
@@ -372,19 +443,6 @@ const Directory = () => {
     }
   };
 
-  const offices = [
-    { key: 'admissions', name: 'Admissions Office' },
-    { key: 'communications', name: 'Communications Office' },
-    { key: 'data_privacy', name: 'Data Privacy Office' },
-    { key: 'hr', name: 'HR Office' },
-    { key: 'it_mis', name: 'MIS Office' },
-    { key: 'registrar', name: "Registrar's Office" },
-    { key: 'basic_ed', name: 'Basic Ed Office' },
-    { key: 'higher_ed', name: 'Higher Ed Office' }
-  ];
-
-  const currentOffice = organizationalData[selectedDepartment];
-
   // Component to render individual staff member in triangular org chart
   const StaffMember = ({ person, isHead = false }) => (
     <div className="flex flex-col items-center justify-center space-y-3 w-40">
@@ -453,19 +511,23 @@ const Directory = () => {
 
               {/* Responsive Grid Container - Natural flow positioning */}
               <div className="flex-shrink-0">
-                <ResponsiveGrid
-                  items={offices}
-                  onItemClick={(office) => setSelectedDepartment(office.key)}
-                  renderItem={(office) => (
-                    <div className="text-center">
-                      <h3 className="text-2xl font-semibold text-white">
-                        {office.name}
-                      </h3>
-                    </div>
-                  )}
-                  showPagination={offices.length > 6}
-                  isDirectoryPage={true}
-                />
+                {loading ? (
+                  <div className="text-center text-gray-500">Loading offices...</div>
+                ) : (
+                  <ResponsiveGrid
+                    items={offices}
+                    onItemClick={(office) => setSelectedDepartment(office._id)}
+                    renderItem={(office) => (
+                      <div className="text-center">
+                        <h3 className="text-2xl font-semibold text-white">
+                          {office.officeName}
+                        </h3>
+                      </div>
+                    )}
+                    showPagination={offices.length > 6}
+                    isDirectoryPage={true}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -483,50 +545,53 @@ const Directory = () => {
             <div className="flex-grow flex items-center justify-center">
               <div className="w-full max-w-4xl mx-auto">
                 {/* Office Email Display - Positioned above office content */}
-                {currentOffice?.email && (
-                  <div className="mb-6 text-center">
-                    <div className="bg-white bg-opacity-95 rounded-lg shadow-lg drop-shadow-md px-6 py-4 inline-block">
-                      <div className="flex items-center justify-center space-x-3">
-                        <svg
-                          className="w-6 h-6"
-                          style={{ color: '#1F3463' }}
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                        </svg>
-                        <span
-                          className="text-2xl font-semibold"
-                          style={{ color: '#1F3463' }}
-                        >
-                          {currentOffice.email}
-                        </span>
+                {(() => {
+                  const selectedOffice = offices.find(o => o._id === selectedDepartment);
+                  return selectedOffice?.officeEmail && (
+                    <div className="mb-6 text-center">
+                      <div className="bg-white bg-opacity-95 rounded-lg shadow-lg drop-shadow-md px-6 py-4 inline-block">
+                        <div className="flex items-center justify-center space-x-3">
+                          <svg
+                            className="w-6 h-6"
+                            style={{ color: '#1F3463' }}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                          </svg>
+                          <span
+                            className="text-2xl font-semibold"
+                            style={{ color: '#1F3463' }}
+                          >
+                            {selectedOffice.officeEmail}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
-                {selectedDepartment === 'it_mis' ? (
+                {/* Display Chart Image or Placeholder */}
+                {currentChart ? (
                   <img
-                    src="/directory/mis.png"
-                    alt="MIS Office Directory"
+                    src={currentChart.image?.secure_url || currentChart.image?.url}
+                    alt={`${currentChart.officeName} Directory`}
                     className="w-full h-auto object-contain rounded-lg shadow-lg"
+                    onError={(e) => {
+                      console.error('Failed to load chart image');
+                      e.target.style.display = 'none';
+                    }}
                   />
                 ) : (
-                  /* Placeholder for other offices */
+                  /* Placeholder for offices without charts */
                   <div className="bg-white bg-opacity-90 rounded-lg shadow-xl drop-shadow-lg p-12 text-center">
                     <h2 className="text-5xl font-bold mb-6" style={{ color: '#1F3463' }}>
-                      {currentOffice?.name}
+                      {offices.find(o => o._id === selectedDepartment)?.officeName}
                     </h2>
                     <p className="text-2xl text-gray-600 mb-8">
-                      Directory image coming soon
+                      Directory chart coming soon
                     </p>
-                    <div className="text-xl" style={{ color: '#1F3463' }}>
-                      <p>
-                        <strong>Description:</strong> {currentOffice?.description}
-                      </p>
-                    </div>
                   </div>
                 )}
               </div>

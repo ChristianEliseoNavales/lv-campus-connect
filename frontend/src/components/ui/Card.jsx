@@ -1,139 +1,199 @@
-import React from 'react';
+import * as React from "react"
 
-const Card = ({ 
-  children, 
-  variant = 'default', 
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
+    {...props} />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props} />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("font-semibold leading-none tracking-tight", className)}
+    {...props} />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props} />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props} />
+))
+CardFooter.displayName = "CardFooter"
+
+// Custom Card Components for LVCampusConnect System
+const KioskCard = ({
+  children,
+  variant = 'default',
   padding = 'md',
   shadow = 'md',
   rounded = 'lg',
   className = '',
   onClick,
   hoverable = false,
-  ...props 
+  ...props
 }) => {
   const baseClasses = 'bg-white transition-all duration-150';
-  
+
   const variants = {
     default: 'border border-gray-200',
     elevated: 'border-0',
     outlined: 'border-2 border-gray-300',
-    kiosk: 'bg-white/95 backdrop-blur-sm border-4 border-transparent',
-    admin: 'bg-white shadow-sm border border-gray-200',
-    glass: 'bg-white/10 backdrop-blur-md border border-white/20'
+    primary: 'border border-[#1F3463] bg-[#1F3463]/5',
+    success: 'border border-green-500 bg-green-50',
+    warning: 'border border-yellow-500 bg-yellow-50',
+    danger: 'border border-red-500 bg-red-50'
   };
 
   const paddings = {
     none: 'p-0',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
-    xl: 'p-12',
-    kiosk: 'p-8 lg:p-12' // Optimized for kiosk interfaces
+    sm: 'p-3',
+    md: 'p-4',
+    lg: 'p-6',
+    xl: 'p-8'
   };
 
   const shadows = {
     none: 'shadow-none',
     sm: 'shadow-sm',
-    md: 'shadow-lg',
-    lg: 'shadow-xl',
-    xl: 'shadow-2xl',
-    kiosk: 'shadow-2xl active:shadow-xl drop-shadow-lg'
+    md: 'shadow-md',
+    lg: 'shadow-lg',
+    xl: 'shadow-xl'
   };
 
   const roundeds = {
     none: 'rounded-none',
-    sm: 'rounded-lg',
-    md: 'rounded-xl',
-    lg: 'rounded-2xl',
-    xl: 'rounded-3xl',
-    kiosk: 'rounded-3xl'
+    sm: 'rounded-sm',
+    md: 'rounded-md',
+    lg: 'rounded-lg',
+    xl: 'rounded-xl',
+    '2xl': 'rounded-2xl',
+    full: 'rounded-full'
   };
 
-  const hoverClasses = hoverable ? 'active:scale-95 active:shadow-lg cursor-pointer transition-transform duration-150' : '';
-  const clickableClasses = onClick ? 'cursor-pointer' : '';
-
-  const classes = `
-    ${baseClasses} 
-    ${variants[variant]} 
-    ${paddings[padding]} 
-    ${shadows[shadow]} 
-    ${roundeds[rounded]} 
-    ${hoverClasses} 
-    ${clickableClasses} 
-    ${className}
-  `.trim().replace(/\s+/g, ' ');
+  const classes = cn(
+    baseClasses,
+    variants[variant],
+    paddings[padding],
+    shadows[shadow],
+    roundeds[rounded],
+    hoverable && 'hover:shadow-lg cursor-pointer',
+    onClick && 'cursor-pointer',
+    className
+  );
 
   return (
-    <div
-      className={classes}
-      onClick={onClick}
-      {...props}
-    >
+    <div className={classes} onClick={onClick} {...props}>
       {children}
     </div>
   );
 };
 
-// Specialized card components
-export const KioskCard = ({ children, department, ...props }) => {
-  const departmentColors = {
-    registrar: 'border-blue-600 active:border-blue-700',
-    admissions: 'border-red-600 active:border-red-700'
-  };
-
-  const borderColor = department ? departmentColors[department] : 'border-gray-300';
-
+const AdminCard = ({
+  children,
+  title,
+  subtitle,
+  className = '',
+  headerClassName = '',
+  bodyClassName = '',
+  ...props
+}) => {
   return (
-    <Card
-      variant="kiosk"
-      padding="kiosk"
-      rounded="kiosk"
-      shadow="kiosk"
-      hoverable
-      className={`${borderColor} group`}
-      {...props}
-    >
-      {children}
-    </Card>
-  );
-};
-
-export const AdminCard = ({ children, ...props }) => (
-  <Card
-    variant="admin"
-    padding="lg"
-    rounded="lg"
-    shadow="md"
-    {...props}
-  >
-    {children}
-  </Card>
-);
-
-export const StatCard = ({ title, value, icon, color = 'blue', ...props }) => {
-  const colorClasses = {
-    blue: 'text-blue-600',
-    red: 'text-red-600',
-    green: 'text-emerald-600',
-    yellow: 'text-amber-600',
-    gray: 'text-gray-600'
-  };
-
-  return (
-    <AdminCard className="text-center" {...props}>
-      {icon && (
-        <div className={`text-3xl mb-4 ${colorClasses[color]}`}>
-          {icon}
+    <div className={cn("bg-white rounded-lg shadow-md border border-gray-200", className)} {...props}>
+      {(title || subtitle) && (
+        <div className={cn("px-6 py-4 border-b border-gray-200", headerClassName)}>
+          {title && <h3 className="text-lg font-semibold text-gray-900">{title}</h3>}
+          {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
         </div>
       )}
-      <h3 className="text-gray-600 text-sm uppercase tracking-wider mb-2 font-semibold">
-        {title}
-      </h3>
-      <div className={`text-4xl font-bold ${colorClasses[color]}`}>
-        {value}
+      <div className={cn("p-6", bodyClassName)}>
+        {children}
       </div>
-    </AdminCard>
+    </div>
   );
 };
 
-export default Card;
+const StatCard = ({
+  title,
+  value,
+  icon,
+  color = 'blue',
+  trend,
+  trendValue,
+  className = '',
+  ...props
+}) => {
+  const colorClasses = {
+    blue: 'bg-blue-50 text-blue-600 border-blue-200',
+    green: 'bg-green-50 text-green-600 border-green-200',
+    yellow: 'bg-yellow-50 text-yellow-600 border-yellow-200',
+    red: 'bg-red-50 text-red-600 border-red-200',
+    purple: 'bg-purple-50 text-purple-600 border-purple-200',
+    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-200'
+  };
+
+  const trendColors = {
+    up: 'text-green-600',
+    down: 'text-red-600',
+    neutral: 'text-gray-600'
+  };
+
+  return (
+    <div className={cn("bg-white rounded-lg shadow-md border border-gray-200 p-6", className)} {...props}>
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          {trend && trendValue && (
+            <p className={cn("text-sm mt-1", trendColors[trend])}>
+              {trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'} {trendValue}
+            </p>
+          )}
+        </div>
+        {icon && (
+          <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center text-xl", colorClasses[color])}>
+            {icon}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  KioskCard,
+  AdminCard,
+  StatCard
+}

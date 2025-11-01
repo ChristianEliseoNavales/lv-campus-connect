@@ -3,12 +3,13 @@ import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { IoMdRefresh } from 'react-icons/io';
 import { useAuth } from '../../../../contexts/AuthContext';
+import { useToast, ToastContainer } from '../../../ui/Toast';
 import textToSpeechService from '../../../../utils/textToSpeech';
-import toastService from '../../../../utils/toast';
 
 const Queue = () => {
   const { windowId } = useParams();
   const { user } = useAuth();
+  const { toasts, removeToast, showSuccess, showError, showInfo, showWarning } = useToast();
   const [windowData, setWindowData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
@@ -118,10 +119,10 @@ const Queue = () => {
     setIsRefreshing(true);
     try {
       await fetchQueueData();
-      toastService.success('Refreshed', 'Queue data updated successfully');
+      showSuccess('Refreshed', 'Queue data updated successfully');
     } catch (error) {
       console.error('Manual refresh error:', error);
-      toastService.error('Refresh Failed', 'Unable to update queue data');
+      showError('Refresh Failed', 'Unable to update queue data');
     } finally {
       setIsRefreshing(false);
     }
@@ -208,7 +209,7 @@ const Queue = () => {
           case 'queue-requeued-all':
             if (data.windowId === windowData?.id) {
               // Show success toast for re-queue operation
-              toastService.success(
+              showSuccess(
                 'Queues Re-queued',
                 `${data.data.requeuedCount} queue${data.data.requeuedCount > 1 ? 's' : ''} re-queued successfully`
               );
@@ -250,7 +251,7 @@ const Queue = () => {
   // Queue control handlers
   const handleStop = async () => {
     if (!windowData) {
-      toastService.error('Error', 'Window data not available');
+      showError('Error', 'Window data not available');
       return;
     }
 
@@ -273,7 +274,7 @@ const Queue = () => {
 
       if (response.ok && result.success) {
         setIsWindowServing(!isWindowServing);
-        toastService.success(
+        showSuccess(
           'Window Status Updated',
           `${windowData.name} has been ${action === 'pause' ? 'paused' : 'resumed'}`
         );
@@ -283,7 +284,7 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Stop/Resume error:', error);
-      toastService.error('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, stop: false }));
     }
@@ -291,17 +292,17 @@ const Queue = () => {
 
   const handleNext = async () => {
     if (!windowData) {
-      toastService.error('Error', 'Window data not available');
+      showError('Error', 'Window data not available');
       return;
     }
 
     if (queueData.length === 0) {
-      toastService.warning('No Queue', 'No queues waiting for this service');
+      showWarning('No Queue', 'No queues waiting for this service');
       return;
     }
 
     if (!isWindowServing) {
-      toastService.warning('Window Paused', 'Please resume the window before calling next queue');
+      showWarning('Window Paused', 'Please resume the window before calling next queue');
       return;
     }
 
@@ -341,7 +342,7 @@ const Queue = () => {
         // Refresh queue data
         fetchQueueData();
 
-        toastService.success(
+        showSuccess(
           'Queue Called',
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} called to ${result.data.windowName}`
         );
@@ -352,7 +353,7 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Next queue error:', error);
-      toastService.error('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, next: false }));
     }
@@ -360,12 +361,12 @@ const Queue = () => {
 
   const handleRecall = async () => {
     if (!windowData) {
-      toastService.error('Error', 'Window data not available');
+      showError('Error', 'Window data not available');
       return;
     }
 
     if (currentServing === 0) {
-      toastService.warning('No Queue', 'No queue currently being served');
+      showWarning('No Queue', 'No queue currently being served');
       return;
     }
 
@@ -393,7 +394,7 @@ const Queue = () => {
           );
         }
 
-        toastService.info(
+        showInfo(
           'Queue Recalled',
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} recalled to ${result.data.windowName}`
         );
@@ -404,7 +405,7 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Recall queue error:', error);
-      toastService.error('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, recall: false }));
     }
@@ -412,7 +413,7 @@ const Queue = () => {
 
   const handlePrevious = async () => {
     if (!windowData) {
-      toastService.error('Error', 'Window data not available');
+      showError('Error', 'Window data not available');
       return;
     }
 
@@ -452,7 +453,7 @@ const Queue = () => {
         // Refresh queue data
         fetchQueueData();
 
-        toastService.success(
+        showSuccess(
           'Previous Queue Recalled',
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} recalled to ${result.data.windowName}`
         );
@@ -463,7 +464,7 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Previous queue error:', error);
-      toastService.error('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, previous: false }));
     }
@@ -471,19 +472,19 @@ const Queue = () => {
 
   const handleTransfer = async () => {
     if (!windowData) {
-      toastService.error('Error', 'Window data not available');
+      showError('Error', 'Window data not available');
       return;
     }
 
     if (currentServing === 0) {
-      toastService.warning('No Queue', 'No queue currently being served');
+      showWarning('No Queue', 'No queue currently being served');
       return;
     }
 
     // Fetch available windows for transfer
     try {
       setTransferLoading(true);
-      const response = await fetch(`http://localhost:5000/api/public/queue/windows/${windowData.department}`);
+      const response = await fetch(`http://localhost:5000/api/public/queue/windows/${windowData.office}`);
       const result = await response.json();
 
       if (response.ok && result.success) {
@@ -491,7 +492,7 @@ const Queue = () => {
         const otherWindows = result.data.filter(window => window.id !== windowData.id);
 
         if (otherWindows.length === 0) {
-          toastService.warning('No Windows', 'No other windows available for transfer');
+          showWarning('No Windows', 'No other windows available for transfer');
           return;
         }
 
@@ -502,7 +503,7 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Transfer fetch error:', error);
-      toastService.error('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setTransferLoading(false);
     }
@@ -545,7 +546,7 @@ const Queue = () => {
         fetchQueueData();
 
         setShowTransferModal(false);
-        toastService.success(
+        showSuccess(
           'Queue Transferred',
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} transferred to ${result.data.toWindowName}`
         );
@@ -556,7 +557,7 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Transfer queue error:', error);
-      toastService.error('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, transfer: false }));
     }
@@ -564,12 +565,12 @@ const Queue = () => {
 
   const handleSkip = async () => {
     if (!windowData) {
-      toastService.error('Error', 'Window data not available');
+      showError('Error', 'Window data not available');
       return;
     }
 
     if (currentServing === 0) {
-      toastService.warning('No Queue', 'No queue currently being served');
+      showWarning('No Queue', 'No queue currently being served');
       return;
     }
 
@@ -615,7 +616,7 @@ const Queue = () => {
         // Refresh queue data to update skipped queue list
         fetchQueueData();
 
-        toastService.info(
+        showInfo(
           'Queue Skipped',
           `Queue ${String(result.data.skippedQueue.queueNumber).padStart(2, '0')} has been skipped${
             result.data.nextQueue ? `, calling queue ${String(result.data.nextQueue.queueNumber).padStart(2, '0')}` : ''
@@ -628,7 +629,7 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Skip queue error:', error);
-      toastService.error('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, skip: false }));
     }
@@ -636,12 +637,12 @@ const Queue = () => {
 
   const handleRequeueAll = async () => {
     if (!windowData) {
-      toastService.error('Error', 'Window data not available');
+      showError('Error', 'Window data not available');
       return;
     }
 
     if (skippedQueue.length === 0) {
-      toastService.warning('No Skipped Queues', 'No skipped queues to re-queue');
+      showWarning('No Skipped Queues', 'No skipped queues to re-queue');
       return;
     }
 
@@ -665,7 +666,7 @@ const Queue = () => {
         // Refresh queue data to update waiting and skipped queue lists
         fetchQueueData();
 
-        toastService.success(
+        showSuccess(
           'Queues Re-queued',
           `${result.data.requeuedCount} queue${result.data.requeuedCount > 1 ? 's' : ''} re-queued successfully`
         );
@@ -676,7 +677,7 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Re-queue all error:', error);
-      toastService.error('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, requeueAll: false }));
     }
@@ -727,7 +728,7 @@ const Queue = () => {
 
   return (
     <>
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="queue-management">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-[#1F3463]">Manage Queueing</h1>
@@ -852,6 +853,7 @@ const Queue = () => {
                 ? 'border-[#3930A8] text-[#3930A8] hover:bg-[#3930A8] hover:text-white'
                 : 'border-green-500 text-green-500 hover:bg-green-500 hover:text-white'
             } ${actionLoading.stop ? 'opacity-50 cursor-not-allowed' : ''}`}
+            data-testid="stop-button"
           >
             {actionLoading.stop ? 'Loading...' : (isWindowServing ? 'STOP' : 'RESUME')}
           </button>
@@ -861,6 +863,7 @@ const Queue = () => {
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-lg hover:bg-[#2F2580] transition-colors duration-200 min-h-[50px] flex items-center justify-center ${
               (actionLoading.next || !isWindowServing) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
+            data-testid="call-next-button"
           >
             {actionLoading.next ? 'Calling...' : 'NEXT'}
           </button>
@@ -897,6 +900,7 @@ const Queue = () => {
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-lg hover:bg-[#2F2580] transition-colors duration-200 min-h-[50px] flex items-center justify-center ${
               (actionLoading.skip || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
+            data-testid="skip-button"
           >
             {actionLoading.skip ? 'Skipping...' : 'SKIP'}
           </button>
@@ -977,6 +981,9 @@ const Queue = () => {
         </div>
       </div>
     )}
+
+    {/* Toast Container for Queue page notifications */}
+    <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </>
   );
 };

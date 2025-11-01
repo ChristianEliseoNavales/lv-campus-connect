@@ -26,10 +26,10 @@ export const EditRecordModal = ({
         { name: 'name', label: 'Name', type: 'text', required: true },
         { name: 'email', label: 'Email', type: 'email', required: true },
         { name: 'role', label: 'Role', type: 'select', required: true, options: [
-          'super_admin', 'registrar_admin', 'admissions_admin', 'hr_admin'
+          'super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'
         ]},
-        { name: 'department', label: 'Department', type: 'select', options: [
-          'MIS', 'Registrar', 'Admissions', 'HR'
+        { name: 'office', label: 'Office', type: 'select', options: [
+          'MIS', 'Registrar', 'Admissions', 'Senior Management'
         ]},
         { name: 'password', label: 'Password', type: 'password', required: !editingRecord },
         { name: 'isActive', label: 'Active', type: 'checkbox' }
@@ -207,7 +207,7 @@ export const EditRecordModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -282,7 +282,7 @@ export const DeleteRecordModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -374,7 +374,7 @@ export const DeleteAllRecordsModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">

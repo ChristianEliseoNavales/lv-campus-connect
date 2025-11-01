@@ -22,9 +22,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: function() {
-      return !this.googleId; // Password required only if not Google OAuth user
-    }
+    required: false // Made optional for Google SSO preparation
   },
   googleId: {
     type: String,
@@ -32,7 +30,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['super_admin', 'registrar_admin', 'admissions_admin', 'hr_admin'],
+    enum: ['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'],
     required: true
   },
   isActive: {
@@ -45,14 +43,17 @@ const userSchema = new mongoose.Schema({
   profilePicture: {
     type: String // URL to profile picture
   },
-  department: {
+  office: {
     type: String,
-    enum: ['MIS', 'Registrar', 'Admissions', 'HR'],
+    enum: ['MIS', 'Registrar', 'Admissions', 'Senior Management'],
     required: function() {
       return this.role !== 'super_admin';
     }
   },
   permissions: [{
+    type: String
+  }],
+  pageAccess: [{
     type: String
   }],
   createdBy: {

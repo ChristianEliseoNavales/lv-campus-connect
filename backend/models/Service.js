@@ -7,7 +7,7 @@ const serviceSchema = new mongoose.Schema({
     trim: true,
     maxlength: 200
   },
-  department: {
+  office: {
     type: String,
     enum: ['registrar', 'admissions'],
     required: true
@@ -30,12 +30,12 @@ const serviceSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-serviceSchema.index({ department: 1, isActive: 1 });
-serviceSchema.index({ name: 1, department: 1 }, { unique: true });
+serviceSchema.index({ office: 1, isActive: 1 });
+serviceSchema.index({ name: 1, office: 1 }, { unique: true });
 
-// Static method to get services by department
-serviceSchema.statics.getByDepartment = function(department, activeOnly = true) {
-  const query = { department };
+// Static method to get services by office
+serviceSchema.statics.getByOffice = function(office, activeOnly = true) {
+  const query = { office };
   if (activeOnly) {
     query.isActive = true;
   }

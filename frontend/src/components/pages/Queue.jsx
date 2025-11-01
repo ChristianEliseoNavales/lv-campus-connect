@@ -6,6 +6,8 @@ import { HiSparkles } from "react-icons/hi2";
 import HolographicKeyboard from '../ui/HolographicKeyboard';
 import { useSocket } from '../../contexts/SocketContext';
 import { useOptimizedFetch } from '../../hooks/useOptimizedFetch';
+import { useToast, ToastContainer } from '../ui/Toast';
+import QRCode from 'qrcode';
 
 
 
@@ -217,9 +219,14 @@ const Queue = () => {
 
   // Use centralized Socket context
   const { joinRoom, subscribe } = useSocket();
+
+  // Toast notifications
+  const { toasts, removeToast, showSuccess, showError, showWarning, showInfo } = useToast();
   const [starRating, setStarRating] = useState(0);
   const [idNumber, setIdNumber] = useState('');
   const [queueResult, setQueueResult] = useState(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [isPrinting, setIsPrinting] = useState(false); // Prevent multiple print clicks
   const [formData, setFormData] = useState({
     name: '',
     contactNumber: '',
@@ -357,6 +364,24 @@ const Queue = () => {
     setShowKeyboard(false);
   };
 
+  // Generate QR code from URL
+  const generateQRCode = async (url) => {
+    try {
+      const qrCodeDataUrl = await QRCode.toDataURL(url, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: '#1F3463', // Navy blue for QR code
+          light: '#FFFFFF' // White background
+        }
+      });
+      setQrCodeDataUrl(qrCodeDataUrl);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      setQrCodeDataUrl('');
+    }
+  };
+
   // Optimized check office availability status with caching
   const checkOfficeStatus = useCallback(async (department) => {
     try {
@@ -424,18 +449,20 @@ const Queue = () => {
 
     // Listen for real-time updates with cleanup
     const unsubscribeSettings = subscribe('settings-updated', (data) => {
-      if (data.department === 'registrar' || data.department === 'admissions') {
-        checkOfficeStatus(data.department);
+      const officeKey = data.office || data.department; // Support both 'office' and legacy 'department'
+      if (officeKey === 'registrar' || officeKey === 'admissions') {
+        checkOfficeStatus(officeKey);
         // Also fetch location if it's a location update
         if (data.type === 'location-updated') {
-          fetchDepartmentLocation(data.department);
+          fetchDepartmentLocation(officeKey);
         }
       }
     });
 
     const unsubscribeServices = subscribe('services-updated', (data) => {
-      if (data.department === 'registrar' || data.department === 'admissions') {
-        fetchAvailableServices(data.department);
+      const officeKey = data.office || data.department; // Support both 'office' and legacy 'department'
+      if (officeKey === 'registrar' || officeKey === 'admissions') {
+        fetchAvailableServices(officeKey);
       }
     });
 
@@ -768,9 +795,75 @@ const Queue = () => {
     await handleFormSubmit();
   };
 
-  // Print button handler - moves to feedback step
-  const handlePrintClick = () => {
-    setCurrentStep('feedback');
+  // Print button handler - prints receipt then moves to feedback step
+  const handlePrintClick = async () => {
+    // Prevent multiple clicks while printing
+    if (isPrinting) {
+      console.log('⚠️ Print already in progress, ignoring click');
+      return;
+    }
+
+    try {
+      setIsPrinting(true); // Disable button
+
+      // Show loading toast
+      showInfo('Printing receipt...');
+
+      // Prepare receipt data
+      const departmentKey = selectedDepartment?.name === "Registrar's Office" ? 'registrar' : 'admissions';
+      const location = departmentLocations[departmentKey] || 'Location not set';
+
+      // Format current date for validity notice
+      const formatCurrentDate = () => {
+        const today = new Date();
+        const options = {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        };
+        return today.toLocaleDateString('en-US', options);
+      };
+
+      const receiptData = {
+        queueNumber: queueResult?.queueNumber || 1,
+        location: location,
+        windowName: queueResult?.windowName || 'Window 1',
+        validityDate: formatCurrentDate(),
+        department: selectedDepartment?.name || 'Unknown'
+      };
+
+      console.log('🖨️  Sending print request:', receiptData);
+
+      // Call backend print API
+      const response = await fetch('http://localhost:5000/api/printer/print-receipt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(receiptData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log('✅ Print successful:', result);
+        showSuccess('Receipt printed successfully!');
+      } else {
+        console.error('❌ Print failed:', result.message);
+        showError(result.message || 'Failed to print receipt');
+      }
+
+    } catch (error) {
+      console.error('❌ Print error:', error);
+      showError('Failed to print receipt. Please try again.');
+    } finally {
+      // Always proceed to feedback step regardless of print success
+      // This ensures the flow continues even if printer is unavailable
+      setTimeout(() => {
+        setCurrentStep('feedback');
+        setIsPrinting(false); // Re-enable button for next queue
+      }, 1500); // Small delay to show toast message
+    }
   };
 
   // Star rating handler - Only updates visual state
@@ -834,7 +927,7 @@ const Queue = () => {
 
       // Prepare submission data with explicit values for Enroll service
       const submissionData = {
-        department: selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions',
+        office: selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions',
         service: 'Enroll',
         role: 'Student', // Always Student for Enroll service
         studentStatus: studentStatus ? mapStudentStatus(studentStatus) : 'continuing',
@@ -873,12 +966,17 @@ const Queue = () => {
         setQueueResult({
           queueId: result.data.queueId,
           queueNumber: result.data.queueNumber,
-          department: result.data.department,
+          office: result.data.office,
           service: result.data.service,
-          qrCode: result.data.qrCode,
+          qrCodeUrl: result.data.qrCodeUrl,
           estimatedWaitTime: result.data.estimatedWaitTime,
           windowName: result.data.windowName
         });
+
+        // Generate QR code from the URL
+        if (result.data.qrCodeUrl) {
+          await generateQRCode(result.data.qrCodeUrl);
+        }
 
         console.log('✅ [FRONTEND] Moving to result step');
         // Move to result step
@@ -887,12 +985,12 @@ const Queue = () => {
         console.error('❌ [FRONTEND] Enroll submission failed!');
         console.error('❌ [FRONTEND] Error details:', result);
         console.error('❌ [FRONTEND] Response status:', response.status);
-        alert(`Failed to submit queue request: ${result.error || 'Unknown error'}`);
+        showError('Submission Failed', result.error || 'Unknown error occurred while submitting your queue request.');
       }
     } catch (error) {
       console.error('💥 [FRONTEND] Enroll submission error:', error);
       console.error('💥 [FRONTEND] Error stack:', error.stack);
-      alert('Network error. Please check your connection and try again.');
+      showError('Network Error', 'Please check your connection and try again.');
     }
   };
 
@@ -926,7 +1024,7 @@ const Queue = () => {
 
       // Prepare submission data
       const submissionData = {
-        department: selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions',
+        office: selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions',
         service: selectedService,
         role: selectedRole,
         studentStatus: selectedService === 'Enroll' && studentStatus ? mapStudentStatus(studentStatus) : undefined,
@@ -967,12 +1065,17 @@ const Queue = () => {
         setQueueResult({
           queueId: result.data.queueId, // Store queue ID for rating submission
           queueNumber: result.data.queueNumber,
-          department: result.data.department,
+          office: result.data.office,
           service: result.data.service,
-          qrCode: result.data.qrCode,
+          qrCodeUrl: result.data.qrCodeUrl,
           estimatedWaitTime: result.data.estimatedWaitTime,
           windowName: result.data.windowName
         });
+
+        // Generate QR code from the URL
+        if (result.data.qrCodeUrl) {
+          await generateQRCode(result.data.qrCodeUrl);
+        }
 
         console.log('✅ [FRONTEND] Moving to result step');
         // Move to result step
@@ -981,13 +1084,13 @@ const Queue = () => {
         console.error('❌ [FRONTEND] Queue submission failed!');
         console.error('❌ [FRONTEND] Error details:', result);
         console.error('❌ [FRONTEND] Response status:', response.status);
-        // Handle error - could show error modal
-        alert(`Failed to submit queue request: ${result.error || 'Unknown error'}`);
+        // Handle error with toast notification
+        showError('Submission Failed', result.error || 'Unknown error occurred while submitting your queue request.');
       }
     } catch (error) {
       console.error('💥 [FRONTEND] Network/Exception error:', error);
       console.error('💥 [FRONTEND] Error stack:', error.stack);
-      alert('Network error. Please check your connection and try again.');
+      showError('Network Error', 'Please check your connection and try again.');
     }
   };
 
@@ -1011,6 +1114,7 @@ const Queue = () => {
     setStarRating(0);
     setIdNumber('');
     setQueueResult(null);
+    setQrCodeDataUrl(''); // Clear QR code
   };
 
   const handleFieldFocus = (fieldName) => {
@@ -1546,11 +1650,20 @@ const Queue = () => {
               <div className="flex-grow flex items-center justify-center mb-8">
                 <div className="w-96 h-96 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center">
                   {/* QR Code Image */}
-                  <img
-                    src="/queue/qr.png"
-                    alt="QR Code for Queue Number"
-                    className="w-full h-full object-contain rounded-lg"
-                  />
+                  {qrCodeDataUrl ? (
+                    <img
+                      src={qrCodeDataUrl}
+                      alt="QR Code for Queue Number"
+                      className="w-full h-full object-contain rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full text-gray-500">
+                      <div className="text-center">
+                        <div className="text-4xl mb-4">📱</div>
+                        <div className="text-lg">Generating QR Code...</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1600,17 +1713,22 @@ const Queue = () => {
               {/* Print Button */}
               <button
                 onClick={handlePrintClick}
-                className="px-20 py-4 bg-[#FFE251] text-black rounded-full font-bold text-xl active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+                disabled={isPrinting}
+                className={`px-20 py-4 rounded-full font-bold text-xl transition-all duration-150 shadow-lg ${
+                  isPrinting
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-[#FFE251] text-black active:bg-[#1A2E56] active:shadow-md active:scale-95'
+                }`}
               >
-                PRINT
+                {isPrinting ? 'PRINTING...' : 'PRINT'}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Done Button (replaces Back Button) */}
+        {/* Done Button (replaces Back Button) - Only navigates, does not print */}
         <button
-          onClick={handlePrintClick}
+          onClick={() => setCurrentStep('feedback')}
           className="fixed bottom-6 left-6 w-20 h-20 bg-[#FFE251] text-black border-2 border-white rounded-full shadow-lg active:bg-[#1A2E56] transition-all duration-150 flex items-center justify-center z-50 focus:outline-none focus:ring-4 focus:ring-blue-200 active:scale-95"
           aria-label="Done - Go to feedback"
         >
@@ -2029,19 +2147,24 @@ const Queue = () => {
   // If we reach here, we should be in the form step or something went wrong
   // Return to department selection as fallback
   return (
-    <KioskLayout>
-      <div className="h-full flex flex-col items-center justify-center">
-        <h2 className="text-2xl font-semibold text-gray-600 mb-4">
-          Something went wrong. Please start over.
-        </h2>
-        <button
-          onClick={handleBackToOffices}
-          className="px-6 py-3 bg-[#1F3463] text-white rounded-lg active:bg-[#1A2E56] active:scale-95 transition-all duration-150"
-        >
-          Back to Department Selection
-        </button>
-      </div>
-    </KioskLayout>
+    <>
+      <KioskLayout>
+        <div className="h-full flex flex-col items-center justify-center">
+          <h2 className="text-2xl font-semibold text-gray-600 mb-4">
+            Something went wrong. Please start over.
+          </h2>
+          <button
+            onClick={handleBackToOffices}
+            className="px-6 py-3 bg-[#1F3463] text-white rounded-lg active:bg-[#1A2E56] active:scale-95 transition-all duration-150"
+          >
+            Back to Department Selection
+          </button>
+        </div>
+      </KioskLayout>
+
+      {/* Toast Container for Queue page notifications */}
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+    </>
   );
 };
 

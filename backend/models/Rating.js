@@ -53,8 +53,8 @@ const ratingSchema = new mongoose.Schema({
     enum: ['Visitor', 'Student', 'Teacher', 'Alumni'],
     required: true
   },
-  // Department context
-  department: {
+  // Office context
+  office: {
     type: String,
     enum: ['registrar', 'admissions'],
     required: true
@@ -181,13 +181,13 @@ const ratingSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-ratingSchema.index({ department: 1, createdAt: -1 });
+ratingSchema.index({ office: 1, createdAt: -1 });
 ratingSchema.index({ serviceId: 1, rating: -1 });
 ratingSchema.index({ windowId: 1, rating: -1 });
 ratingSchema.index({ staffId: 1, rating: -1 });
 ratingSchema.index({ queueId: 1 });
 ratingSchema.index({ rating: -1, createdAt: -1 });
-ratingSchema.index({ ratingType: 1, department: 1 });
+ratingSchema.index({ ratingType: 1, office: 1 });
 ratingSchema.index({ status: 1, isPublic: 1 });
 ratingSchema.index({ sentiment: 1, createdAt: -1 });
 
@@ -245,10 +245,10 @@ ratingSchema.statics.getWindowAverageRating = async function(windowId) {
   } : { averageRating: 0, totalRatings: 0 };
 };
 
-// Static method to get department ratings summary
-ratingSchema.statics.getDepartmentSummary = async function(department, startDate, endDate) {
-  const matchStage = { department, status: 'approved' };
-  
+// Static method to get office ratings summary
+ratingSchema.statics.getOfficeSummary = async function(office, startDate, endDate) {
+  const matchStage = { office, status: 'approved' };
+
   if (startDate || endDate) {
     matchStage.createdAt = {};
     if (startDate) matchStage.createdAt.$gte = new Date(startDate);

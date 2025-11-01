@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const { auditCRUD, AuditService } = require('../middleware/auditMiddleware');
 
 // Validation middleware
 const validateUser = [
@@ -14,7 +15,7 @@ const validateUser = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Name must be between 2 and 100 characters'),
   body('role')
-    .isIn(['super_admin', 'registrar_admin', 'admissions_admin', 'hr_admin'])
+    .isIn(['super_admin', 'admin', 'admin_staff'])
     .withMessage('Invalid role specified'),
   body('department')
     .optional()
@@ -23,7 +24,11 @@ const validateUser = [
   body('password')
     .optional()
     .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
+    .withMessage('Password must be at least 6 characters long'),
+  body('pageAccess')
+    .optional()
+    .isArray()
+    .withMessage('Page access must be an array')
 ];
 
 const validateUserUpdate = [
@@ -39,7 +44,7 @@ const validateUserUpdate = [
     .withMessage('Name must be between 2 and 100 characters'),
   body('role')
     .optional()
-    .isIn(['super_admin', 'registrar_admin', 'admissions_admin', 'hr_admin'])
+    .isIn(['super_admin', 'admin', 'admin_staff'])
     .withMessage('Invalid role specified'),
   body('department')
     .optional()
@@ -48,7 +53,11 @@ const validateUserUpdate = [
   body('isActive')
     .optional()
     .isBoolean()
-    .withMessage('isActive must be a boolean value')
+    .withMessage('isActive must be a boolean value'),
+  body('pageAccess')
+    .optional()
+    .isArray()
+    .withMessage('Page access must be an array')
 ];
 
 // GET /api/users - Fetch all users
@@ -82,11 +91,16 @@ router.get('/', async (req, res) => {
       .select('-password -googleId')
       .populate('createdBy', 'name email')
       .sort({ createdAt: -1 });
-    
-    res.json(users);
+
+    res.json({
+      success: true,
+      data: users,
+      count: users.length
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({
+      success: false,
       error: 'Failed to fetch users',
       message: error.message
     });
@@ -99,19 +113,19 @@ router.get('/by-role/:role', async (req, res) => {
     const { role } = req.params;
     
     // Validate role parameter
-    const validRoles = ['super_admin', 'registrar_admin', 'admissions_admin', 'hr_admin'];
+    const validRoles = ['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         error: 'Invalid role specified',
         validRoles
       });
     }
-    
-    const users = await User.find({ 
-      role, 
-      isActive: true 
+
+    const users = await User.find({
+      role,
+      isActive: true
     })
-      .select('_id name email role department')
+      .select('_id name email role office')
       .sort({ name: 1 });
     
     res.json(users);
@@ -153,59 +167,119 @@ router.post('/', validateUser, async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      // Log failed validation
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'CREATE',
+        resourceType: 'User',
+        resourceName: req.body.email,
+        req,
+        success: false,
+        errorMessage: 'Validation failed'
+      });
+
       return res.status(400).json({
         error: 'Validation failed',
         details: errors.array()
       });
     }
-    
-    const { email, name, role, department, password } = req.body;
-    
+
+    const { email, name, role, department, password, pageAccess } = req.body;
+
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      // Log failed creation attempt
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'CREATE',
+        resourceType: 'User',
+        resourceName: email,
+        req,
+        success: false,
+        errorMessage: 'User already exists'
+      });
+
       return res.status(409).json({
         error: 'User already exists',
         message: 'A user with this email already exists'
       });
     }
-    
-    // Validate department requirement based on role
-    if (role !== 'super_admin' && !department) {
+
+    // Validate department requirement (now required for all users)
+    if (!department) {
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'CREATE',
+        resourceType: 'User',
+        resourceName: email,
+        req,
+        success: false,
+        errorMessage: 'Department/Office is required'
+      });
+
       return res.status(400).json({
-        error: 'Department is required for non-super admin roles'
+        error: 'Department/Office is required'
       });
     }
-    
+
     // Create new user
     const userData = {
       email,
       name,
       role,
-      isActive: true
+      department,
+      isActive: true,
+      pageAccess: pageAccess || []
     };
-    
-    if (department) {
-      userData.department = department;
-    }
-    
+
     if (password) {
       userData.password = password;
     }
-    
+
     const user = new User(userData);
     await user.save();
-    
+
+    // Log successful user creation
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'CREATE',
+      resourceType: 'User',
+      resourceId: user._id,
+      resourceName: `${user.name} (${user.email})`,
+      req,
+      success: true,
+      newValues: {
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        department: user.department,
+        pageAccess: user.pageAccess
+      }
+    });
+
     // Emit real-time update
     const io = req.app.get('io');
     io.emit('user-created', {
       user: user.toJSON(),
       timestamp: new Date().toISOString()
     });
-    
+
     res.status(201).json(user.toJSON());
   } catch (error) {
     console.error('Error creating user:', error);
+
+    // Log failed creation
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'CREATE',
+      resourceType: 'User',
+      resourceName: req.body.email,
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({
       error: 'Failed to create user',
       message: error.message
@@ -219,52 +293,122 @@ router.put('/:id', validateUserUpdate, async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'UPDATE',
+        resourceType: 'User',
+        resourceId: req.params.id,
+        req,
+        success: false,
+        errorMessage: 'Validation failed'
+      });
+
       return res.status(400).json({
         error: 'Validation failed',
         details: errors.array()
       });
     }
-    
+
     const { id } = req.params;
     const updateData = req.body;
-    
+
+    // Get old values for audit trail
+    const oldUser = await User.findById(id).select('-password -googleId');
+    if (!oldUser) {
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'UPDATE',
+        resourceType: 'User',
+        resourceId: id,
+        req,
+        success: false,
+        errorMessage: 'User not found'
+      });
+
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
     // Remove password from update if empty
     if (updateData.password === '') {
       delete updateData.password;
     }
-    
-    // Validate department requirement based on role
-    if (updateData.role && updateData.role !== 'super_admin' && !updateData.department) {
-      const existingUser = await User.findById(id);
-      if (!existingUser?.department) {
+
+    // Validate department requirement (now required for all users)
+    if (updateData.role && !updateData.department) {
+      if (!oldUser?.department) {
+        await AuditService.logCRUD({
+          user: req.user,
+          action: 'UPDATE',
+          resourceType: 'User',
+          resourceId: id,
+          resourceName: `${oldUser.name} (${oldUser.email})`,
+          req,
+          success: false,
+          errorMessage: 'Department/Office is required'
+        });
+
         return res.status(400).json({
-          error: 'Department is required for non-super admin roles'
+          error: 'Department/Office is required'
         });
       }
     }
-    
+
     const user = await User.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     ).select('-password -googleId');
-    
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
-    }
-    
+
+    // Log successful update
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'User',
+      resourceId: user._id,
+      resourceName: `${user.name} (${user.email})`,
+      req,
+      success: true,
+      oldValues: {
+        name: oldUser.name,
+        email: oldUser.email,
+        role: oldUser.role,
+        department: oldUser.department,
+        pageAccess: oldUser.pageAccess,
+        isActive: oldUser.isActive
+      },
+      newValues: {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        pageAccess: user.pageAccess,
+        isActive: user.isActive
+      }
+    });
+
     // Emit real-time update
     const io = req.app.get('io');
     io.emit('user-updated', {
       user: user.toJSON(),
       timestamp: new Date().toISOString()
     });
-    
+
     res.json(user);
   } catch (error) {
     console.error('Error updating user:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'User',
+      resourceId: req.params.id,
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({
       error: 'Failed to update user',
       message: error.message
@@ -276,32 +420,76 @@ router.put('/:id', validateUserUpdate, async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
+    // Get user info before deletion for audit trail
+    const oldUser = await User.findById(id).select('-password -googleId');
+    if (!oldUser) {
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'DELETE',
+        resourceType: 'User',
+        resourceId: id,
+        req,
+        success: false,
+        errorMessage: 'User not found'
+      });
+
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
     const user = await User.findByIdAndUpdate(
       id,
       { isActive: false },
       { new: true }
     ).select('-password -googleId');
-    
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
-    }
-    
+
+    // Log successful deletion (deactivation)
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'DELETE',
+      resourceType: 'User',
+      resourceId: user._id,
+      resourceName: `${user.name} (${user.email})`,
+      req,
+      success: true,
+      oldValues: {
+        name: oldUser.name,
+        email: oldUser.email,
+        role: oldUser.role,
+        department: oldUser.department,
+        isActive: oldUser.isActive
+      },
+      newValues: {
+        isActive: false
+      }
+    });
+
     // Emit real-time update
     const io = req.app.get('io');
     io.emit('user-deleted', {
       userId: id,
       timestamp: new Date().toISOString()
     });
-    
+
     res.json({
       message: 'User deactivated successfully',
       user: user.toJSON()
     });
   } catch (error) {
     console.error('Error deleting user:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'DELETE',
+      resourceType: 'User',
+      resourceId: req.params.id,
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({
       error: 'Failed to delete user',
       message: error.message

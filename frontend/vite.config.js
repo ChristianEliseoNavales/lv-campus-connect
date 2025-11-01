@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -7,6 +8,11 @@ export default defineConfig({
     // Enable Fast Refresh (default is true, but being explicit)
     fastRefresh: true,
   })],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   server: {
     port: 5173,
     strictPort: true, // Fail if port 5173 is not available instead of trying other ports

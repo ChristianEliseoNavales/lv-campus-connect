@@ -8,6 +8,8 @@ const AuditTrail = require('./AuditTrail');
 const Bulletin = require('./Bulletin');
 const Rating = require('./Rating');
 const VisitationForm = require('./VisitationForm');
+const Office = require('./Office');
+const Chart = require('./Chart');
 
 module.exports = {
   User,
@@ -18,5 +20,7 @@ module.exports = {
   AuditTrail,
   Bulletin,
   Rating,
-  VisitationForm
+  VisitationForm,
+  Office,
+  Chart
 };

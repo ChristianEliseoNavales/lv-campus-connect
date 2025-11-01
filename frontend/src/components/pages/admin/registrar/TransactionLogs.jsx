@@ -363,7 +363,59 @@ const TransactionLogs = () => {
 
         {/* Transaction Logs Table */}
         <div className="border border-gray-200 rounded-lg overflow-hidden">
-          {currentLogs.length === 0 ? (
+          {loading ? (
+            <>
+              {/* Table Header */}
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
+                <div className="grid grid-cols-8 gap-4 text-sm font-medium text-gray-700 w-full">
+                  <div>Queue No.</div>
+                  <div>Name</div>
+                  <div>Purpose of Visit</div>
+                  <div>Priority</div>
+                  <div>Role</div>
+                  <div>Turnaround Time</div>
+                  <div>Remarks</div>
+                  <div>Status</div>
+                </div>
+              </div>
+
+              {/* Skeleton Loading Rows */}
+              <div className="divide-y divide-gray-200">
+                {[...Array(7)].map((_, index) => (
+                  <div key={index} className="px-6 py-4 h-16 flex items-center animate-pulse">
+                    <div className="grid grid-cols-8 gap-4 items-center w-full">
+                      {/* Queue No. Skeleton */}
+                      <div className="h-4 bg-gray-200 rounded w-8"></div>
+
+                      {/* Name Skeleton */}
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+
+                      {/* Purpose of Visit Skeleton */}
+                      <div className="h-4 bg-gray-200 rounded w-32"></div>
+
+                      {/* Priority Skeleton */}
+                      <div className="h-6 bg-gray-200 rounded-full w-12"></div>
+
+                      {/* Role Skeleton */}
+                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+
+                      {/* Turnaround Time Skeleton */}
+                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+
+                      {/* Remarks Skeleton */}
+                      <div className="flex items-center space-x-2">
+                        <div className="h-4 bg-gray-200 rounded flex-1"></div>
+                        <div className="h-5 w-5 bg-gray-200 rounded"></div>
+                      </div>
+
+                      {/* Status Skeleton */}
+                      <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : currentLogs.length === 0 ? (
             <div className="text-center py-12">
               <BiSolidNotepad className="text-6xl text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No transaction logs found</h3>
@@ -387,41 +439,7 @@ const TransactionLogs = () => {
 
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
-                {loading ? (
-                  // Skeleton Loading Rows
-                  [...Array(7)].map((_, index) => (
-                    <div key={index} className="px-6 py-4 h-16 flex items-center animate-pulse">
-                      <div className="grid grid-cols-8 gap-4 items-center w-full">
-                        {/* Queue No. Skeleton */}
-                        <div className="h-4 bg-gray-200 rounded w-8"></div>
-
-                        {/* Name Skeleton */}
-                        <div className="h-4 bg-gray-200 rounded w-24"></div>
-
-                        {/* Purpose of Visit Skeleton */}
-                        <div className="h-4 bg-gray-200 rounded w-32"></div>
-
-                        {/* Priority Skeleton */}
-                        <div className="h-6 bg-gray-200 rounded-full w-12"></div>
-
-                        {/* Role Skeleton */}
-                        <div className="h-4 bg-gray-200 rounded w-16"></div>
-
-                        {/* Turnaround Time Skeleton */}
-                        <div className="h-4 bg-gray-200 rounded w-20"></div>
-
-                        {/* Remarks Skeleton */}
-                        <div className="flex items-center space-x-2">
-                          <div className="h-4 bg-gray-200 rounded flex-1"></div>
-                          <div className="h-5 w-5 bg-gray-200 rounded"></div>
-                        </div>
-
-                        {/* Status Skeleton */}
-                        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-                      </div>
-                    </div>
-                  ))
-                ) : currentLogs.map((log) => (
+                {currentLogs.map((log) => (
                   <div key={log.id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
                     <div className="grid grid-cols-8 gap-4 items-center w-full">
                       {/* Queue No. */}

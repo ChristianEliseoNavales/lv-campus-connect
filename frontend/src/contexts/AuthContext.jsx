@@ -247,7 +247,7 @@ export const AuthProvider = ({ children }) => {
     // Role-specific route access
     if (route.startsWith('/admin/registrar') && user.role === 'registrar_admin') return true;
     if (route.startsWith('/admin/admissions') && user.role === 'admissions_admin') return true;
-    if (route.startsWith('/admin/hr') && user.role === 'hr_admin') return true;
+    if (route.startsWith('/admin/seniormanagement') && user.role === 'senior_management_admin') return true;
     if (route.startsWith('/admin/mis') && user.role === 'super_admin') return true;
 
     return false;

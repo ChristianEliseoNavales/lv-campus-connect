@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const { Queue, VisitationForm, Service, Window, Settings } = require('../models');
+const { Queue, VisitationForm, Service, Window, Settings, Rating } = require('../models');
+const { AuditService } = require('../middleware/auditMiddleware');
 const router = express.Router();
 
 // GET /api/public/queue/:department - Get queue data for department
@@ -10,7 +11,7 @@ router.get('/queue/:department', async (req, res) => {
 
     // Check if department queue system is enabled
     const settings = await Settings.getCurrentSettings();
-    if (!settings?.departmentSettings?.[department]?.isEnabled) {
+    if (!settings?.officeSettings?.[department]?.isEnabled) {
       return res.json({
         isEnabled: false,
         message: `${department.charAt(0).toUpperCase() + department.slice(1)} office is currently closed`,
@@ -24,13 +25,13 @@ router.get('/queue/:department', async (req, res) => {
 
     // Get department windows that are open
     const departmentWindows = await Window.find({
-      department,
+      office: department,
       isOpen: true
     }).populate('serviceIds', 'name');
 
     // Get department queues
     const departmentQueues = await Queue.find({
-      department,
+      office: department,
       status: 'waiting'
     }).sort({ queuedAt: 1 });
 
@@ -47,7 +48,7 @@ router.get('/queue/:department', async (req, res) => {
         return {
           id: window._id,
           name: window.name,
-          department: window.department,
+          department: window.office, // Keep 'department' key for backward compatibility with frontend
           serviceName: window.serviceIds && window.serviceIds.length > 0
             ? window.serviceIds.map(s => s.name).join(', ')
             : 'No services assigned',
@@ -80,7 +81,7 @@ router.get('/services/:department', async (req, res) => {
 
     // Check if department queue system is enabled
     const settings = await Settings.getCurrentSettings();
-    if (!settings?.departmentSettings?.[department]?.isEnabled) {
+    if (!settings?.officeSettings?.[department]?.isEnabled) {
       return res.json({
         isEnabled: false,
         services: [],
@@ -99,7 +100,7 @@ router.get('/services/:department', async (req, res) => {
       services: visibleServices.map(service => ({
         id: service._id,
         name: service.name,
-        department: service.department,
+        department: service.office, // Keep 'department' key for backward compatibility with frontend
         category: service.category,
         description: service.description,
         estimatedProcessingTime: service.estimatedProcessingTime
@@ -119,7 +120,7 @@ router.get('/office-status/:department', async (req, res) => {
     const { department } = req.params;
     const settings = await Settings.getCurrentSettings();
 
-    const isEnabled = settings?.departmentSettings?.[department]?.isEnabled || false;
+    const isEnabled = settings?.officeSettings?.[department]?.isEnabled || false;
 
     res.json({
       department,
@@ -141,7 +142,7 @@ router.get('/windows/:department', async (req, res) => {
     const { department } = req.params;
 
     const windows = await Window.find({
-      department,
+      office: department,
       isOpen: true // Changed from isActive to isOpen to match Window model
     }).populate('serviceIds', 'name category');
 
@@ -150,7 +151,7 @@ router.get('/windows/:department', async (req, res) => {
         id: window._id,
         name: window.name,
         windowNumber: window.windowNumber,
-        department: window.department,
+        department: window.office, // Keep 'department' key for backward compatibility with frontend
         serviceIds: window.serviceIds, // Changed from serviceId to serviceIds array
         isOpen: window.isOpen
       })),
@@ -167,7 +168,7 @@ router.get('/windows/:department', async (req, res) => {
 router.post('/queue', async (req, res) => {
   try {
     const {
-      department,
+      office, // Changed from 'department' to 'office' to match frontend and database schema
       service,
       role,
       studentStatus,
@@ -196,7 +197,7 @@ router.post('/queue', async (req, res) => {
     // Validate required fields - special handling for Enroll service
     console.log('🔍 [BACKEND] Validating required fields...');
     console.log('🔍 [BACKEND] Field check:', {
-      department: !!department,
+      office: !!office,
       service: !!service,
       role: !!role,
       customerName: !!customerName,
@@ -207,26 +208,26 @@ router.post('/queue', async (req, res) => {
     // For Enroll service, only validate core fields (not visitation form fields)
     if (service === 'Enroll') {
       console.log('🎓 [BACKEND] ENROLL SERVICE - Using relaxed validation (no form fields required)');
-      if (!department || !service || !role) {
+      if (!office || !service || !role) {
         console.log('❌ [BACKEND] ENROLL VALIDATION FAILED - Missing core fields!');
         console.log('❌ [BACKEND] Missing fields:', {
-          department: !department ? 'MISSING' : 'OK',
+          office: !office ? 'MISSING' : 'OK',
           service: !service ? 'MISSING' : 'OK',
           role: !role ? 'MISSING' : 'OK'
         });
         return res.status(400).json({
           error: 'Missing required fields for Enroll service',
-          required: ['department', 'service', 'role']
+          required: ['office', 'service', 'role']
         });
       }
       console.log('✅ [BACKEND] Enroll service core fields validated');
     } else {
       // For all other services, require full visitation form fields
       console.log('📋 [BACKEND] REGULAR SERVICE - Using full validation (form fields required)');
-      if (!department || !service || !role || !customerName || !contactNumber || !email) {
+      if (!office || !service || !role || !customerName || !contactNumber || !email) {
         console.log('❌ [BACKEND] VALIDATION FAILED - Missing required fields!');
         console.log('❌ [BACKEND] Missing fields:', {
-          department: !department ? 'MISSING' : 'OK',
+          office: !office ? 'MISSING' : 'OK',
           service: !service ? 'MISSING' : 'OK',
           role: !role ? 'MISSING' : 'OK',
           customerName: !customerName ? 'MISSING' : 'OK',
@@ -235,16 +236,16 @@ router.post('/queue', async (req, res) => {
         });
         return res.status(400).json({
           error: 'Missing required fields',
-          required: ['department', 'service', 'role', 'customerName', 'contactNumber', 'email']
+          required: ['office', 'service', 'role', 'customerName', 'contactNumber', 'email']
         });
       }
       console.log('✅ [BACKEND] All required fields present for regular service');
     }
 
-    // Validate department
-    if (!['registrar', 'admissions'].includes(department)) {
+    // Validate office
+    if (!['registrar', 'admissions'].includes(office)) {
       return res.status(400).json({
-        error: 'Invalid department. Must be "registrar" or "admissions"'
+        error: 'Invalid office. Must be "registrar" or "admissions"'
       });
     }
 
@@ -262,18 +263,18 @@ router.post('/queue', async (req, res) => {
       });
     }
 
-    // Check if department queue system is enabled
+    // Check if office queue system is enabled
     const settings = await Settings.getCurrentSettings();
-    if (!settings?.departmentSettings?.[department]?.isEnabled) {
+    if (!settings?.officeSettings?.[office]?.isEnabled) {
       return res.status(503).json({
-        error: `${department.charAt(0).toUpperCase() + department.slice(1)} office is currently closed`
+        error: `${office.charAt(0).toUpperCase() + office.slice(1)} office is currently closed`
       });
     }
 
     // Find service by name
     const serviceObj = await Service.findOne({
       name: service,
-      department,
+      office: office,
       isActive: true
     });
 
@@ -287,7 +288,7 @@ router.post('/queue', async (req, res) => {
 
     // Find window assigned to this service
     const assignedWindow = await Window.findOne({
-      department,
+      office: office,
       isOpen: true, // Changed from isActive to isOpen to match Window model
       serviceIds: serviceObj._id
     }).populate('serviceIds', 'name');
@@ -329,14 +330,14 @@ router.post('/queue', async (req, res) => {
     }
 
     // Get next queue number
-    const nextQueueNumber = await Queue.getNextQueueNumber(department);
+    const nextQueueNumber = await Queue.getNextQueueNumber(office);
 
     console.log('🔢 Next queue number:', nextQueueNumber);
 
     // Create queue entry with proper data types
     const queueData = {
       queueNumber: nextQueueNumber,
-      department,
+      office: office,
       serviceId: serviceObj._id.toString(), // Store service ObjectId as string for compatibility
       windowId: assignedWindow._id.toString(), // Store window ObjectId as string for compatibility
       role,
@@ -370,9 +371,9 @@ router.post('/queue', async (req, res) => {
 
     // Emit real-time update to admin dashboards
     const io = req.app.get('io');
-    io.to(`admin-${department}`).emit('queue-updated', {
+    io.to(`admin-${office}`).emit('queue-updated', {
       type: 'queue-added',
-      department,
+      office,
       data: {
         id: queueEntry._id,
         queueNumber: queueEntry.queueNumber,
@@ -390,10 +391,21 @@ router.post('/queue', async (req, res) => {
     // Also emit to kiosk room for homepage updates
     io.to('kiosk').emit('queue-updated', {
       type: 'queue-added',
-      department,
+      office,
       data: {
         currentNumber: nextQueueNumber,
         nextNumber: nextQueueNumber + 1
+      }
+    });
+
+    // Emit to queue-specific room for PortalQueue real-time updates
+    io.to(`queue-${queueEntry._id}`).emit('queue-updated', {
+      type: 'queue-status-updated',
+      queueId: queueEntry._id,
+      data: {
+        queueNumber: queueEntry.queueNumber,
+        status: queueEntry.status,
+        office: queueEntry.office
       }
     });
 
@@ -405,7 +417,7 @@ router.post('/queue', async (req, res) => {
       data: {
         queueId: queueEntry._id, // Add queue ID for rating submission
         queueNumber: queueEntry.queueNumber,
-        department: queueEntry.department,
+        office: queueEntry.office,
         service: serviceObj.name,
         role: queueEntry.role,
         isPriority: queueEntry.isPriority,
@@ -413,7 +425,7 @@ router.post('/queue', async (req, res) => {
         queuedAt: queueEntry.queuedAt,
         windowId: assignedWindow._id,
         windowName: assignedWindow.name,
-        qrCode: `QR-${department.toUpperCase()}-${queueEntry.queueNumber.toString().padStart(2, '0')}`
+        qrCodeUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/portalqueue?queueId=${queueEntry._id}`
       }
     });
 
@@ -434,7 +446,7 @@ router.get('/queue-data/:department', async (req, res) => {
 
     // Build query for waiting queues
     const waitingQuery = {
-      department,
+      office: department,
       status: 'waiting'
     };
 
@@ -550,6 +562,98 @@ router.get('/queue-data/:department', async (req, res) => {
   }
 });
 
+// GET /api/public/queue-lookup/:id - Get queue details by ID for QR code scanning
+router.get('/queue-lookup/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log('🔍 Queue lookup request for ID:', id);
+
+    // Validate ObjectId format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        error: 'Invalid queue ID format'
+      });
+    }
+
+    // Find the queue entry with populated data
+    const queueEntry = await Queue.findById(id)
+      .populate('visitationFormId')
+      .populate('serviceId');
+
+    // Manually populate windowId since it's stored as String but we need ObjectId for population
+    let windowData = null;
+    if (queueEntry && queueEntry.windowId) {
+      try {
+        const Window = require('../models/Window');
+        windowData = await Window.findById(queueEntry.windowId);
+      } catch (err) {
+        console.warn('⚠️ Could not populate window data:', err.message);
+      }
+    }
+
+    if (!queueEntry) {
+      return res.status(404).json({
+        error: 'Queue not found'
+      });
+    }
+
+    // Check if queue is still valid (not older than 24 hours)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    if (queueEntry.createdAt < twentyFourHoursAgo) {
+      return res.status(410).json({
+        error: 'Queue has expired'
+      });
+    }
+
+    // Get current serving number for the same window/department
+    const currentServing = await Queue.getCurrentServingNumber(queueEntry.office, queueEntry.windowId);
+
+    // Get next 2 upcoming queue numbers for the same window
+    const upcomingQueues = await Queue.find({
+      office: queueEntry.office,
+      windowId: queueEntry.windowId,
+      status: 'waiting',
+      queueNumber: { $gt: currentServing }
+    })
+    .sort({ queueNumber: 1 })
+    .limit(2)
+    .select('queueNumber');
+
+    const upcomingNumbers = upcomingQueues.map(q => q.queueNumber);
+
+    // Get department location from settings
+    const Settings = require('../models/Settings');
+    const settings = await Settings.getCurrentSettings();
+    const location = settings?.officeSettings?.[queueEntry.office]?.location || '';
+
+    res.json({
+      success: true,
+      data: {
+        queueId: queueEntry._id,
+        queueNumber: queueEntry.queueNumber,
+        department: queueEntry.office, // Keep 'department' key for backward compatibility with frontend
+        service: queueEntry.serviceId?.name || 'Unknown Service',
+        windowName: windowData?.name || 'Unknown Window',
+        location: location,
+        status: queueEntry.status,
+        isPriority: queueEntry.isPriority,
+        queuedAt: queueEntry.queuedAt,
+        currentServing: currentServing,
+        upcomingNumbers: upcomingNumbers,
+        estimatedWaitTime: queueEntry.estimatedWaitTime
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Queue lookup error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve queue information',
+      message: error.message
+    });
+  }
+});
+
 // POST /api/public/queue/:id/rating - Submit rating for a queue entry
 router.post('/queue/:id/rating', async (req, res) => {
   try {
@@ -565,8 +669,8 @@ router.post('/queue/:id/rating', async (req, res) => {
       });
     }
 
-    // Find and update the queue entry
-    const queueEntry = await Queue.findById(id);
+    // Find and update the queue entry with population
+    const queueEntry = await Queue.findById(id).populate('visitationFormId');
 
     if (!queueEntry) {
       return res.status(404).json({
@@ -574,9 +678,35 @@ router.post('/queue/:id/rating', async (req, res) => {
       });
     }
 
-    // Update the rating
+    // Update the rating in queue entry
     queueEntry.rating = rating;
     await queueEntry.save();
+
+    // Create a Rating document for the Ratings page
+    try {
+      const ratingData = {
+        rating: rating,
+        ratingType: 'overall_experience', // Default rating type for queue submissions
+        queueId: queueEntry._id,
+        customerName: queueEntry.visitationFormId?.customerName || 'Anonymous Customer',
+        customerRole: queueEntry.role,
+        office: queueEntry.office,
+        status: 'approved' // Auto-approve queue ratings
+      };
+
+      // Add customer email if available
+      if (queueEntry.visitationFormId?.email) {
+        ratingData.customerEmail = queueEntry.visitationFormId.email;
+      }
+
+      const ratingDocument = new Rating(ratingData);
+      await ratingDocument.save();
+
+      console.log('📊 Rating document created for Ratings page:', ratingDocument._id);
+    } catch (ratingDocError) {
+      // Log error but don't fail the main rating submission
+      console.error('⚠️ Failed to create Rating document (queue rating still saved):', ratingDocError);
+    }
 
     console.log('⭐ Rating updated successfully:', { queueId: id, rating });
 
@@ -587,7 +717,7 @@ router.post('/queue/:id/rating', async (req, res) => {
         queueId: queueEntry._id,
         queueNumber: queueEntry.queueNumber,
         rating: queueEntry.rating,
-        department: queueEntry.department
+        department: queueEntry.office // Keep 'department' key for backward compatibility with frontend
       }
     });
 
@@ -614,6 +744,17 @@ router.post('/queue/next', async (req, res) => {
 
     // Validate required fields
     if (!windowId) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_CALL',
+        queueId: null,
+        queueNumber: null,
+        department: 'unknown',
+        req,
+        success: false,
+        errorMessage: 'Window ID is required'
+      });
+
       return res.status(400).json({
         error: 'Window ID is required'
       });
@@ -623,6 +764,18 @@ router.post('/queue/next', async (req, res) => {
     const window = await Window.findById(windowId);
 
     if (!window) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_CALL',
+        queueId: null,
+        queueNumber: null,
+        department: 'unknown',
+        req,
+        success: false,
+        errorMessage: 'Window not found',
+        metadata: { windowId }
+      });
+
       return res.status(404).json({
         error: 'Window not found'
       });
@@ -630,6 +783,18 @@ router.post('/queue/next', async (req, res) => {
 
     // Check if window is open
     if (!window.isOpen) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_CALL',
+        queueId: null,
+        queueNumber: null,
+        department: window.office, // Keep 'department' key for backward compatibility
+        req,
+        success: false,
+        errorMessage: 'Window is currently closed',
+        metadata: { windowId, windowName: window.name }
+      });
+
       return res.status(400).json({
         error: 'Window is currently closed'
       });
@@ -638,12 +803,24 @@ router.post('/queue/next', async (req, res) => {
     // Find the next waiting queue for any of this window's services
     const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
     const nextQueue = await Queue.findOne({
-      department: window.department,
+      office: window.office,
       serviceId: { $in: serviceIds },
       status: 'waiting'
     }).sort({ queuedAt: 1 }).populate('visitationFormId');
 
     if (!nextQueue) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_CALL',
+        queueId: null,
+        queueNumber: null,
+        department: window.office, // Keep 'department' key for backward compatibility
+        req,
+        success: false,
+        errorMessage: 'No queues waiting for this service',
+        metadata: { windowId, windowName: window.name, serviceIds }
+      });
+
       return res.status(404).json({
         error: 'No queues waiting for this service'
       });
@@ -672,10 +849,27 @@ router.post('/queue/next', async (req, res) => {
       customerName: nextQueue.visitationFormId?.customerName
     });
 
+    // Log queue call action
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_CALL',
+      queueId: nextQueue._id,
+      queueNumber: nextQueue.queueNumber,
+      department: window.office, // Keep 'department' key for backward compatibility
+      req,
+      success: true,
+      metadata: {
+        windowId,
+        windowName: window.name,
+        customerName: nextQueue.visitationFormId?.customerName,
+        serviceId: nextQueue.serviceId
+      }
+    });
+
     // Emit real-time updates
-    io.to(`admin-${window.department}`).emit('queue-updated', {
+    io.to(`admin-${window.office}`).emit('queue-updated', {
       type: 'next-called',
-      department: window.department,
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
       windowId,
       data: {
         queueNumber: nextQueue.queueNumber,
@@ -687,11 +881,22 @@ router.post('/queue/next', async (req, res) => {
     // Also emit to kiosk room for public display updates
     io.to('kiosk').emit('queue-updated', {
       type: 'next-called',
-      department: window.department,
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
       windowId,
       data: {
         queueNumber: nextQueue.queueNumber,
         windowName: window.name
+      }
+    });
+
+    // Emit to queue-specific room for PortalQueue real-time updates
+    io.to(`queue-${nextQueue._id}`).emit('queue-updated', {
+      type: 'queue-status-updated',
+      queueId: nextQueue._id,
+      data: {
+        queueNumber: nextQueue.queueNumber,
+        status: 'serving',
+        department: window.office // Keep 'department' key for backward compatibility with frontend
       }
     });
 
@@ -719,6 +924,7 @@ router.post('/queue/next', async (req, res) => {
 router.post('/queue/recall', async (req, res) => {
   try {
     const { windowId } = req.body;
+    const io = req.app.get('io');
 
     console.log('🔄 RECALL queue request:', { windowId });
 
@@ -753,6 +959,29 @@ router.post('/queue/recall', async (req, res) => {
     console.log('🔊 Recalling queue:', {
       queueNumber: currentQueue.queueNumber,
       windowName: window.name
+    });
+
+    // Emit real-time updates to admin dashboards
+    io.to(`admin-${window.office}`).emit('queue-updated', {
+      type: 'queue-recalled',
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
+      windowId,
+      data: {
+        queueNumber: currentQueue.queueNumber,
+        customerName: currentQueue.visitationFormId?.customerName,
+        windowName: window.name
+      }
+    });
+
+    // Also emit to kiosk room for public display updates
+    io.to('kiosk').emit('queue-updated', {
+      type: 'queue-recalled',
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
+      windowId,
+      data: {
+        queueNumber: currentQueue.queueNumber,
+        windowName: window.name
+      }
     });
 
     res.json({
@@ -804,9 +1033,9 @@ router.post('/queue/stop', async (req, res) => {
     await window.save();
 
     // Emit real-time updates
-    io.to(`admin-${window.department}`).emit('window-status-updated', {
+    io.to(`admin-${window.office}`).emit('window-status-updated', {
       type: 'serving-status-changed',
-      department: window.department,
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
       windowId,
       data: {
         windowName: window.name,
@@ -892,9 +1121,9 @@ router.post('/queue/previous', async (req, res) => {
     });
 
     // Emit real-time updates
-    io.to(`admin-${window.department}`).emit('queue-updated', {
+    io.to(`admin-${window.office}`).emit('queue-updated', {
       type: 'previous-recalled',
-      department: window.department,
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
       windowId,
       data: {
         queueNumber: previousQueue.queueNumber,
@@ -955,7 +1184,7 @@ router.post('/queue/transfer', async (req, res) => {
     }
 
     // Check if both windows are in the same department
-    if (fromWindow.department !== toWindow.department) {
+    if (fromWindow.office !== toWindow.office) {
       return res.status(400).json({
         error: 'Cannot transfer between different departments'
       });
@@ -1011,9 +1240,9 @@ router.post('/queue/transfer', async (req, res) => {
     });
 
     // Emit real-time updates
-    io.to(`admin-${fromWindow.department}`).emit('queue-updated', {
+    io.to(`admin-${fromWindow.office}`).emit('queue-updated', {
       type: 'queue-transferred',
-      department: fromWindow.department,
+      department: fromWindow.office, // Keep 'department' key for backward compatibility with frontend
       data: {
         queueNumber: currentQueue.queueNumber,
         fromWindowId,
@@ -1027,7 +1256,7 @@ router.post('/queue/transfer', async (req, res) => {
     // Also emit to kiosk room for public display updates
     io.to('kiosk').emit('queue-updated', {
       type: 'queue-transferred',
-      department: fromWindow.department,
+      department: fromWindow.office, // Keep 'department' key for backward compatibility with frontend
       data: {
         queueNumber: currentQueue.queueNumber,
         toWindowName: toWindow.name
@@ -1100,7 +1329,7 @@ router.post('/queue/skip', async (req, res) => {
     // Find and call next queue for any of this window's services
     const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
     const nextQueue = await Queue.findOne({
-      department: window.department,
+      office: window.office,
       serviceId: { $in: serviceIds },
       status: 'waiting'
     }).sort({ queuedAt: 1 }).populate('visitationFormId');
@@ -1120,9 +1349,9 @@ router.post('/queue/skip', async (req, res) => {
     });
 
     // Emit real-time updates
-    io.to(`admin-${window.department}`).emit('queue-updated', {
+    io.to(`admin-${window.office}`).emit('queue-updated', {
       type: 'queue-skipped',
-      department: window.department,
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
       windowId,
       data: {
         skippedQueue: currentQueue.queueNumber,
@@ -1181,7 +1410,7 @@ router.post('/queue/requeue-all', async (req, res) => {
     // Find all skipped queues for any of this window's services
     const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
     const skippedQueues = await Queue.find({
-      department: window.department,
+      office: window.office,
       serviceId: { $in: serviceIds },
       status: 'skipped'
     }).sort({ skippedAt: 1 }); // Order by when they were skipped (earliest first)
@@ -1199,7 +1428,7 @@ router.post('/queue/requeue-all', async (req, res) => {
     // This places them at the end of the current waiting queue
     await Queue.updateMany(
       {
-        department: window.department,
+        office: window.office,
         serviceId: { $in: serviceIds },
         status: 'skipped'
       },
@@ -1212,14 +1441,14 @@ router.post('/queue/requeue-all', async (req, res) => {
 
     console.log('✅ Re-queued all skipped queues:', {
       count: requeuedCount,
-      department: window.department,
+      department: window.office, // Keep 'department' key for backward compatibility
       services: window.serviceIds.map(s => s.name || s).join(', ')
     });
 
     // Emit real-time updates
-    io.to(`admin-${window.department}`).emit('queue-updated', {
+    io.to(`admin-${window.office}`).emit('queue-updated', {
       type: 'queue-requeued-all',
-      department: window.department,
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
       windowId,
       data: {
         requeuedCount,
@@ -1233,7 +1462,7 @@ router.post('/queue/requeue-all', async (req, res) => {
     // Also emit to kiosk room for public display updates
     io.to('kiosk').emit('queue-updated', {
       type: 'queue-requeued-all',
-      department: window.department,
+      department: window.office, // Keep 'department' key for backward compatibility with frontend
       data: {
         requeuedCount
       }
@@ -1248,7 +1477,7 @@ router.post('/queue/requeue-all', async (req, res) => {
         serviceName: window.serviceIds && window.serviceIds.length > 0
           ? window.serviceIds.map(s => s.name || s).join(', ')
           : 'No services assigned',
-        department: window.department
+        department: window.office // Keep 'department' key for backward compatibility with frontend
       }
     });
 

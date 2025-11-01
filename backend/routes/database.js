@@ -1,18 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult, query } = require('express-validator');
+const { AuditService } = require('../middleware/auditMiddleware');
 
 // Import all models
-const { 
-  User, 
-  Queue, 
-  VisitationForm, 
-  Window, 
-  Service, 
-  Settings, 
-  Rating, 
-  Bulletin, 
-  AuditTrail 
+const {
+  User,
+  Queue,
+  VisitationForm,
+  Window,
+  Service,
+  Settings,
+  Rating,
+  Bulletin,
+  AuditTrail,
+  Office,
+  Chart
 } = require('../models');
 
 // Model mapping for dynamic access
@@ -25,7 +28,9 @@ const modelMap = {
   settings: Settings,
   rating: Rating,
   bulletin: Bulletin,
-  audittrail: AuditTrail
+  audittrail: AuditTrail,
+  office: Office,
+  chart: Chart
 };
 
 // Middleware to check if user is MIS Super Admin
@@ -33,7 +38,13 @@ const requireSuperAdmin = (req, res, next) => {
   // Check if DEV_BYPASS_AUTH is enabled
   if (process.env.DEV_BYPASS_AUTH === 'true') {
     console.log('🔓 DEV_BYPASS_AUTH: Bypassing authentication for database routes');
-    req.user = { role: 'super_admin', email: 'dev@test.com', name: 'Development User' };
+    req.user = {
+      _id: 'dev-user-id',
+      role: 'super_admin',
+      email: 'dev@test.com',
+      name: 'Development User',
+      office: 'MIS'
+    };
     return next();
   }
 
@@ -69,10 +80,10 @@ const buildSearchQuery = (searchTerm, modelName) => {
 
   const searchFields = {
     user: ['name', 'email'],
-    queue: ['queueNumber', 'role', 'department'],
+    queue: ['queueNumber', 'role', 'office'],
     visitationform: ['customerName', 'contactNumber', 'email'],
-    window: ['name', 'department'],
-    service: ['name', 'department'],
+    window: ['name', 'office'],
+    service: ['name', 'office'],
     rating: ['customerName', 'feedback', 'ratingType'],
     bulletin: ['title', 'content', 'category'],
     audittrail: ['action', 'actionDescription', 'resourceType'],
@@ -182,7 +193,7 @@ router.get('/:model/:id',
 );
 
 // POST /api/database/:model - Create new record
-router.post('/:model', 
+router.post('/:model',
   requireSuperAdmin,
   getModel,
   async (req, res) => {
@@ -191,19 +202,52 @@ router.post('/:model',
       const record = new req.Model(req.body);
       await record.save();
 
+      // Log successful creation
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'CREATE',
+        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceId: record._id,
+        resourceName: record.name || record.email || record._id.toString(),
+        req,
+        success: true,
+        newValues: record.toObject()
+      });
+
+      // Emit Socket.io event for bulletin creation
+      if (req.modelName === 'bulletin') {
+        const io = req.app.get('io');
+        io.to('kiosk').emit('bulletin-updated', {
+          type: 'bulletin-created',
+          data: record
+        });
+        console.log('📡 Bulletin created event emitted to kiosk');
+      }
+
       res.status(201).json(record);
 
     } catch (error) {
       console.error(`Error creating ${req.modelName} record:`, error);
-      
+
+      // Log failed creation
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'CREATE',
+        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceName: req.body.name || req.body.email || 'Unknown',
+        req,
+        success: false,
+        errorMessage: error.message
+      });
+
       // Handle validation errors
       if (error.name === 'ValidationError') {
         const validationErrors = Object.values(error.errors).map(err => ({
           field: err.path,
           message: err.message
         }));
-        
-        return res.status(400).json({ 
+
+        return res.status(400).json({
           error: 'Validation failed',
           details: validationErrors
         });
@@ -212,53 +256,99 @@ router.post('/:model',
       // Handle duplicate key errors
       if (error.code === 11000) {
         const field = Object.keys(error.keyPattern)[0];
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: `Duplicate ${field}. This ${field} already exists.`
         });
       }
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: `Failed to create ${req.modelName} record`,
-        details: error.message 
+        details: error.message
       });
     }
   }
 );
 
 // PUT /api/database/:model/:id - Update record by ID
-router.put('/:model/:id', 
+router.put('/:model/:id',
   requireSuperAdmin,
   getModel,
   async (req, res) => {
     try {
+      // Get old record for audit trail
+      const oldRecord = await req.Model.findById(req.params.id);
+      if (!oldRecord) {
+        await AuditService.logCRUD({
+          user: req.user,
+          action: 'UPDATE',
+          resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+          resourceId: req.params.id,
+          req,
+          success: false,
+          errorMessage: `${req.modelName} record not found`
+        });
+
+        return res.status(404).json({
+          error: `${req.modelName} record not found`
+        });
+      }
+
       const record = await req.Model.findByIdAndUpdate(
         req.params.id,
         req.body,
-        { 
-          new: true, 
-          runValidators: true 
+        {
+          new: true,
+          runValidators: true
         }
       );
 
-      if (!record) {
-        return res.status(404).json({ 
-          error: `${req.modelName} record not found` 
+      // Log successful update
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'UPDATE',
+        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceId: record._id,
+        resourceName: record.name || record.email || record._id.toString(),
+        req,
+        success: true,
+        oldValues: oldRecord.toObject(),
+        newValues: record.toObject()
+      });
+
+      // Emit Socket.io event for bulletin update
+      if (req.modelName === 'bulletin') {
+        const io = req.app.get('io');
+        io.to('kiosk').emit('bulletin-updated', {
+          type: 'bulletin-updated',
+          data: record
         });
+        console.log('📡 Bulletin updated event emitted to kiosk');
       }
 
       res.json(record);
 
     } catch (error) {
       console.error(`Error updating ${req.modelName} record:`, error);
-      
+
+      // Log failed update
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'UPDATE',
+        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceId: req.params.id,
+        req,
+        success: false,
+        errorMessage: error.message
+      });
+
       // Handle validation errors
       if (error.name === 'ValidationError') {
         const validationErrors = Object.values(error.errors).map(err => ({
           field: err.path,
           message: err.message
         }));
-        
-        return res.status(400).json({ 
+
+        return res.status(400).json({
           error: 'Validation failed',
           details: validationErrors
         });
@@ -267,14 +357,14 @@ router.put('/:model/:id',
       // Handle duplicate key errors
       if (error.code === 11000) {
         const field = Object.keys(error.keyPattern)[0];
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: `Duplicate ${field}. This ${field} already exists.`
         });
       }
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: `Failed to update ${req.modelName} record`,
-        details: error.message 
+        details: error.message
       });
     }
   }
@@ -291,6 +381,17 @@ router.delete('/:model/delete-all',
       const result = await req.Model.deleteMany({});
       console.log(`✅ Successfully deleted ${result.deletedCount} ${req.modelName} records`);
 
+      // Log bulk deletion
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'DELETE',
+        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceName: `All ${req.modelName} records`,
+        req,
+        success: true,
+        metadata: { deletedCount: result.deletedCount }
+      });
+
       res.json({
         message: `All ${req.modelName} records deleted successfully`,
         deletedCount: result.deletedCount
@@ -298,6 +399,18 @@ router.delete('/:model/delete-all',
 
     } catch (error) {
       console.error(`❌ Error deleting all ${req.modelName} records:`, error);
+
+      // Log failed bulk deletion
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'DELETE',
+        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceName: `All ${req.modelName} records`,
+        req,
+        success: false,
+        errorMessage: error.message
+      });
+
       res.status(500).json({
         error: `Failed to delete all ${req.modelName} records`,
         details: error.message
@@ -318,6 +431,17 @@ router.delete('/:model/:id',
       const mongoose = require('mongoose');
       if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         console.log(`❌ Invalid ObjectId format: ${req.params.id}`);
+
+        await AuditService.logCRUD({
+          user: req.user,
+          action: 'DELETE',
+          resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+          resourceId: req.params.id,
+          req,
+          success: false,
+          errorMessage: `Invalid ID format for ${req.modelName} record`
+        });
+
         return res.status(400).json({
           error: `Invalid ID format for ${req.modelName} record`
         });
@@ -327,9 +451,43 @@ router.delete('/:model/:id',
       console.log(`🔍 Delete result for ${req.modelName}:`, record ? 'Found and deleted' : 'Not found');
 
       if (!record) {
+        await AuditService.logCRUD({
+          user: req.user,
+          action: 'DELETE',
+          resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+          resourceId: req.params.id,
+          req,
+          success: false,
+          errorMessage: `${req.modelName} record not found`
+        });
+
         return res.status(404).json({
           error: `${req.modelName} record not found`
         });
+      }
+
+      // Log successful deletion
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'DELETE',
+        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceId: record._id,
+        resourceName: record.name || record.email || record._id.toString(),
+        req,
+        success: true,
+        oldValues: record.toObject()
+      });
+
+      // Emit Socket.io event for bulletin deletion
+      if (req.modelName === 'bulletin') {
+        const io = req.app.get('io');
+        io.to('kiosk').emit('bulletin-updated', {
+          type: 'bulletin-deleted',
+          data: {
+            id: record._id
+          }
+        });
+        console.log('📡 Bulletin deleted event emitted to kiosk');
       }
 
       console.log(`✅ Successfully deleted ${req.modelName} record with ID: ${req.params.id}`);
@@ -340,6 +498,18 @@ router.delete('/:model/:id',
 
     } catch (error) {
       console.error(`❌ Error deleting ${req.modelName} record:`, error);
+
+      // Log failed deletion
+      await AuditService.logCRUD({
+        user: req.user,
+        action: 'DELETE',
+        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceId: req.params.id,
+        req,
+        success: false,
+        errorMessage: error.message
+      });
+
       res.status(500).json({
         error: `Failed to delete ${req.modelName} record`,
         details: error.message
