@@ -131,7 +131,7 @@ router.get('/test', async (req, res) => {
 router.get('/status', (req, res) => {
   try {
     const status = printerService.getStatus();
-    
+
     res.json({
       success: true,
       data: status,
@@ -142,6 +142,57 @@ router.get('/status', (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get printer status',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/printer/check-availability
+ * @desc    Check if printer is available and ready to print
+ * @access  Public (Kiosk)
+ */
+router.get('/check-availability', async (req, res) => {
+  try {
+    console.log('🔍 Checking printer availability...');
+
+    const availability = await printerService.checkAvailability();
+
+    if (availability.available && availability.ready) {
+      console.log('✅ Printer is available and ready');
+      res.json({
+        success: true,
+        available: true,
+        ready: true,
+        message: availability.message,
+        timestamp: new Date().toISOString()
+      });
+    } else if (availability.available && !availability.ready) {
+      console.log('⚠️ Printer found but not ready');
+      res.json({
+        success: true,
+        available: true,
+        ready: false,
+        message: availability.message,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.log('❌ Printer not available');
+      res.json({
+        success: true,
+        available: false,
+        ready: false,
+        message: availability.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    console.error('❌ Printer availability check error:', error);
+    res.status(500).json({
+      success: false,
+      available: false,
+      ready: false,
+      message: 'Failed to check printer availability',
       error: error.message
     });
   }

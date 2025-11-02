@@ -435,6 +435,98 @@ Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAc
       tempDirectory: this.tempDir
     };
   }
+
+  /**
+   * Check if printer is available and ready
+   * This performs a quick check without actually printing
+   * @returns {Promise<Object>} Status object with availability info
+   */
+  async checkAvailability() {
+    try {
+      // In TEST_MODE, always return available
+      if (this.TEST_MODE) {
+        return {
+          available: true,
+          ready: true,
+          message: 'Printer available (TEST MODE)',
+          testMode: true
+        };
+      }
+
+      // Check if printer exists in Windows
+      const checkCommand = `powershell -Command "Get-Printer -Name '${this.printerName}' -ErrorAction SilentlyContinue | Select-Object Name, PrinterStatus, JobCount"`;
+
+      return new Promise((resolve) => {
+        exec(checkCommand, { timeout: 3000 }, (error, stdout, stderr) => {
+          if (error) {
+            // Printer not found or error occurred
+            console.log('Printer check failed:', error.message);
+            resolve({
+              available: false,
+              ready: false,
+              message: 'Printer not found or offline',
+              error: error.message
+            });
+            return;
+          }
+
+          if (stderr) {
+            console.log('Printer check stderr:', stderr);
+            resolve({
+              available: false,
+              ready: false,
+              message: 'Printer check error',
+              error: stderr
+            });
+            return;
+          }
+
+          // Parse PowerShell output
+          const output = stdout.trim();
+
+          if (!output || output.length === 0) {
+            resolve({
+              available: false,
+              ready: false,
+              message: 'Printer not found'
+            });
+            return;
+          }
+
+          // If we got output, printer exists
+          // Check for common error indicators in the output
+          const lowerOutput = output.toLowerCase();
+
+          if (lowerOutput.includes('offline') || lowerOutput.includes('error') || lowerOutput.includes('paused')) {
+            resolve({
+              available: true,
+              ready: false,
+              message: 'Printer offline or has errors',
+              details: output
+            });
+            return;
+          }
+
+          // Printer exists and appears ready
+          resolve({
+            available: true,
+            ready: true,
+            message: 'Printer ready',
+            details: output
+          });
+        });
+      });
+
+    } catch (error) {
+      console.error('Printer availability check error:', error);
+      return {
+        available: false,
+        ready: false,
+        message: 'Failed to check printer status',
+        error: error.message
+      };
+    }
+  }
 }
 
 module.exports = new PrinterService();

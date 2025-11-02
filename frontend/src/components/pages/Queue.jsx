@@ -188,6 +188,46 @@ const OfficeMismatchModal = ({ isOpen, onConfirm, onClose, currentOffice, sugges
   );
 };
 
+// Print Error Modal Component
+const PrintErrorModal = ({ isOpen, onClose, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      {/* Black background with 80% opacity */}
+      <div className="absolute inset-0 bg-black bg-opacity-80" />
+
+      {/* Modal Container - Centered */}
+      <div className="relative flex flex-col items-center">
+        {/* Modal Content */}
+        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-10 mx-4 max-w-2xl w-full text-center">
+          {/* Error Icon */}
+          <div className="mb-6">
+            <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          <p className="text-2xl font-semibold text-gray-800 mb-8">
+            {message}
+          </p>
+
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="px-12 py-4 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xl active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Queue = () => {
   // Multi-step queue state management
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -228,6 +268,11 @@ const Queue = () => {
   const [queueResult, setQueueResult] = useState(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [isPrinting, setIsPrinting] = useState(false); // Prevent multiple print clicks
+  const [printerAvailable, setPrinterAvailable] = useState(true); // Track printer availability
+  const [printerChecking, setPrinterChecking] = useState(false); // Track if checking printer status
+  const [printAttempts, setPrintAttempts] = useState(0); // Track number of print attempts
+  const [showPrintErrorModal, setShowPrintErrorModal] = useState(false); // Show print error modal
+  const [printErrorMessage, setPrintErrorMessage] = useState(''); // Print error message
   const [formData, setFormData] = useState({
     name: '',
     contactNumber: '',
@@ -518,6 +563,16 @@ const Queue = () => {
     }
   }, [currentStep]);
 
+  // Check printer availability when reaching result step
+  useEffect(() => {
+    if (currentStep === 'result') {
+      // Reset print attempts when entering result step
+      setPrintAttempts(0);
+      // Check printer availability
+      checkPrinterAvailability();
+    }
+  }, [currentStep]);
+
   // Role options
   const roleOptions = [
     'Visitor',
@@ -796,7 +851,49 @@ const Queue = () => {
     await handleFormSubmit();
   };
 
-  // Print button handler - prints receipt then moves to feedback step
+  // Check printer availability
+  const checkPrinterAvailability = async () => {
+    try {
+      setPrinterChecking(true);
+      console.log('🔍 Checking printer availability...');
+
+      // Try to reach the local backend
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+      const response = await fetch(`${API_CONFIG.getPrintUrl()}/api/printer/check-availability`, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error('Printer check failed');
+      }
+
+      const result = await response.json();
+
+      if (result.available && result.ready) {
+        console.log('✅ Printer is available and ready');
+        setPrinterAvailable(true);
+        return true;
+      } else {
+        console.log('⚠️ Printer not ready:', result.message);
+        setPrinterAvailable(false);
+        return false;
+      }
+
+    } catch (error) {
+      console.log('❌ Printer availability check failed:', error.message);
+      // If we can't reach the backend or printer is not available
+      setPrinterAvailable(false);
+      return false;
+    } finally {
+      setPrinterChecking(false);
+    }
+  };
+
+  // Print button handler - prints receipt with retry logic
   const handlePrintClick = async () => {
     // Prevent multiple clicks while printing
     if (isPrinting) {
@@ -804,8 +901,17 @@ const Queue = () => {
       return;
     }
 
+    // Check if we've exceeded max attempts
+    if (printAttempts >= 3) {
+      console.log('⚠️ Max print attempts reached');
+      setPrintErrorMessage('Printing failed 3/3 times. Please scan the QR code for now. We apologize for the inconvenience.');
+      setShowPrintErrorModal(true);
+      return;
+    }
+
     try {
       setIsPrinting(true); // Disable button
+      setPrintAttempts(prev => prev + 1); // Increment attempt counter
 
       // Show loading toast
       showInfo('Printing receipt...');
@@ -833,37 +939,67 @@ const Queue = () => {
         department: selectedDepartment?.name || 'Unknown'
       };
 
-      console.log('🖨️  Sending print request:', receiptData);
+      console.log(`🖨️  Sending print request (Attempt ${printAttempts + 1}/3):`, receiptData);
 
       // Call backend print API (always use local backend for printing)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_CONFIG.getPrintUrl()}/api/printer/print-receipt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(receiptData)
+        body: JSON.stringify(receiptData),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       const result = await response.json();
 
       if (result.success) {
         console.log('✅ Print successful:', result);
         showSuccess('Receipt printed successfully!');
+        // Reset attempts on success
+        setPrintAttempts(0);
+
+        // Proceed to feedback step after successful print
+        setTimeout(() => {
+          setCurrentStep('feedback');
+          setIsPrinting(false);
+        }, 1500);
       } else {
         console.error('❌ Print failed:', result.message);
-        showError(result.message || 'Failed to print receipt');
+
+        // This is a temporary/recoverable error - show modal and allow retry
+        if (printAttempts + 1 >= 3) {
+          setPrintErrorMessage('Printing failed 3/3 times. Please scan the QR code for now. We apologize for the inconvenience.');
+        } else {
+          setPrintErrorMessage('Printing failed. Please try again.');
+        }
+        setShowPrintErrorModal(true);
+        setIsPrinting(false);
       }
 
     } catch (error) {
       console.error('❌ Print error:', error);
-      showError('Failed to print receipt. Please try again.');
-    } finally {
-      // Always proceed to feedback step regardless of print success
-      // This ensures the flow continues even if printer is unavailable
-      setTimeout(() => {
-        setCurrentStep('feedback');
-        setIsPrinting(false); // Re-enable button for next queue
-      }, 1500); // Small delay to show toast message
+
+      // Check if it's a network/connection error (printer/backend unavailable)
+      if (error.name === 'AbortError' || error.message.includes('fetch')) {
+        // This is a hardware/connectivity issue - mark printer as unavailable
+        setPrinterAvailable(false);
+        setIsPrinting(false);
+      } else {
+        // This is a temporary error - show modal and allow retry
+        if (printAttempts + 1 >= 3) {
+          setPrintErrorMessage('Printing failed 3/3 times. Please scan the QR code for now. We apologize for the inconvenience.');
+        } else {
+          setPrintErrorMessage('Printing failed. Please try again.');
+        }
+        setShowPrintErrorModal(true);
+        setIsPrinting(false);
+      }
     }
   };
 
@@ -1713,18 +1849,40 @@ const Queue = () => {
                 </p>
               </div>
 
-              {/* Print Button */}
+              {/* Print Button - Dynamic based on printer availability */}
               <button
                 onClick={handlePrintClick}
-                disabled={isPrinting}
+                disabled={isPrinting || !printerAvailable || printerChecking || printAttempts >= 3}
                 className={`px-20 py-4 rounded-full font-bold text-xl transition-all duration-150 shadow-lg ${
                   isPrinting
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : !printerAvailable || printAttempts >= 3
+                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                    : printerChecking
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-[#FFE251] text-black active:bg-[#1A2E56] active:shadow-md active:scale-95'
                 }`}
               >
-                {isPrinting ? 'PRINTING...' : 'PRINT'}
+                {isPrinting
+                  ? 'PRINTING...'
+                  : printerChecking
+                  ? 'CHECKING...'
+                  : !printerAvailable || printAttempts >= 3
+                  ? 'UNAVAILABLE'
+                  : 'PRINT'}
               </button>
+
+              {/* Printer Status Message */}
+              {!printerAvailable && !printerChecking && (
+                <p className="text-sm text-red-600 mt-2 text-center">
+                  Printer offline. Please use QR code.
+                </p>
+              )}
+              {printAttempts >= 3 && (
+                <p className="text-sm text-red-600 mt-2 text-center">
+                  Max attempts reached. Please use QR code.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -2167,6 +2325,13 @@ const Queue = () => {
 
       {/* Toast Container for Queue page notifications */}
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+
+      {/* Print Error Modal */}
+      <PrintErrorModal
+        isOpen={showPrintErrorModal}
+        onClose={() => setShowPrintErrorModal(false)}
+        message={printErrorMessage}
+      />
     </>
   );
 };
