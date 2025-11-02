@@ -50,8 +50,15 @@ const isAdminPage = () => {
  * @returns {string} The backend URL to use
  */
 const getBackendUrl = (operation = 'default') => {
+  // PRINT operations ALWAYS use localhost (for thermal printer access)
+  // This is critical for kiosk machines with physical printers
+  if (operation === 'print') {
+    console.log('🖨️ FORCING LOCAL backend for PRINTING (localhost:5000)');
+    return 'http://localhost:5000'; // Hardcoded for printing reliability
+  }
+
   // Explicit operation types
-  if (operation === 'kiosk' || operation === 'print') {
+  if (operation === 'kiosk') {
     console.log('🖥️ Using LOCAL backend for:', operation);
     return LOCAL_BACKEND_URL;
   }
@@ -175,7 +182,8 @@ const API_CONFIG = {
   // Convenience methods for common operations
   getKioskUrl: () => LOCAL_BACKEND_URL,
   getAdminUrl: () => CLOUD_BACKEND_URL,
-  getPrintUrl: () => LOCAL_BACKEND_URL,
+  // CRITICAL: Printing ALWAYS uses localhost for thermal printer access
+  getPrintUrl: () => 'http://localhost:5000',
 
   // API Endpoints
   API_ENDPOINTS,
