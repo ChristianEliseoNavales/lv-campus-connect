@@ -37,7 +37,8 @@ const PortalQueue = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/queue-lookup/${queueId}`);
+      // Use cloud backend for PortalQueue (accessed via QR codes on mobile devices)
+      const response = await fetch(`${API_CONFIG.CLOUD_BACKEND}/api/public/queue-lookup/${queueId}`);
       const result = await response.json();
 
       if (response.ok && result.success) {
