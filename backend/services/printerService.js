@@ -26,7 +26,7 @@ const os = require('os');
 class PrinterService {
   constructor() {
     // WARNING: Set to true during testing to prevent paper waste
-    this.TEST_MODE = false;  // DISABLED - Ready for production testing
+    this.TEST_MODE = false;  // DISABLED - Will print to physical printer
 
     this.printerName = 'POS-58-Text';  // Using Generic/Text Only driver (no margins)
     this.printerPort = 'USB001';  // Printer port - update this based on your setup
@@ -103,8 +103,8 @@ class PrinterService {
         };
       }
 
-      // Use RAW ESC/POS commands for complete control
-      await this.printWithRawESCPOS(receiptText);
+      // Use notepad for printing (simple and reliable)
+      await this.printWithNotepad(filepath);
       
       console.log('Receipt printed successfully');
       console.log('Queue Number:', formattedQueueNumber);
@@ -218,8 +218,8 @@ class PrinterService {
     receipt += this.centerText('Thank you for', width) + '\n';
     receipt += this.centerText('visiting!', width) + '\n';
     receipt += line + '\n';
-    receipt += '\n\n';
-
+    receipt += line + '\n';
+    receipt += line + '\n';
     return receipt;
   }
 
@@ -232,73 +232,61 @@ class PrinterService {
   }
 
   /**
-   * Print using PowerShell to automate notepad print dialog
-   * This uses notepad's printing engine and auto-clicks the Print button
+   * Print using notepad with PowerShell automation
+   * This uses notepad.exe /p and auto-clicks the Print button
    */
-  async printWithRawESCPOS(receiptText) {
+  async printWithNotepad(filepath) {
     try {
-      console.log('Using automated notepad print (18-char width)');
+      console.log('Printing with notepad (automated)...');
+      console.log('File:', filepath);
+      console.log('Printer:', this.printerName);
 
-      // Create text file with receipt
-      const timestamp = Date.now();
-      const filepath = path.join(this.tempDir, `receipt_${timestamp}.txt`);
-
-      // Write receipt to file
-      fs.writeFileSync(filepath, receiptText, 'utf8');
-
-      console.log('Receipt file created:', filepath);
-      console.log('File size:', receiptText.length, 'bytes');
-
-      // Create PowerShell script that:
-      // 1. Starts notepad /p in background
-      // 2. Waits for print dialog
-      // 3. Sends Enter key to click Print button
+      // PowerShell script to automate notepad printing
       const psScript = `
-# Start notepad print in background
-Start-Process -FilePath "notepad.exe" -ArgumentList "/p","${filepath.replace(/\\/g, '\\')}" -WindowStyle Hidden
+# Start notepad print process
+Start-Process notepad -ArgumentList '/p', '${filepath.replace(/\\/g, '\\\\')}' -WindowStyle Hidden
 
 # Wait for print dialog to appear
-Start-Sleep -Milliseconds 1500
+Start-Sleep -Milliseconds 500
 
-# Load Windows Forms assembly for SendKeys
+# Load Windows Forms for SendKeys
 Add-Type -AssemblyName System.Windows.Forms
 
-# Send Enter key to click the Print button
+# Send Enter key to auto-click Print button
 [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
 
-# Wait for print job to be sent
+# Wait for print job to complete
 Start-Sleep -Milliseconds 1000
+
+# Close any remaining notepad windows
+Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
       `.trim();
 
+      const timestamp = Date.now();
       const psFile = path.join(this.tempDir, `print_${timestamp}.ps1`);
       fs.writeFileSync(psFile, psScript, 'utf8');
 
-      console.log('PowerShell script created:', psFile);
-      console.log('Automating notepad print dialog...');
+      console.log('Executing automated print...');
 
       await new Promise((resolve, reject) => {
         exec(`powershell -ExecutionPolicy Bypass -File "${psFile}"`, (error, stdout, stderr) => {
           if (error) {
-            console.error('PowerShell automation error:', error.message);
+            console.error('Print automation error:', error.message);
             reject(error);
             return;
-          }
-          if (stdout && stdout.trim()) {
-            console.log('PowerShell output:', stdout.trim());
           }
           resolve();
         });
       });
 
-      console.log('Print job sent successfully via automated notepad');
+      console.log('✓ Print job sent successfully (automated)');
 
-      // Clean up temp files
+      // Clean up PowerShell script
       setTimeout(() => {
         try {
-          if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
           if (fs.existsSync(psFile)) fs.unlinkSync(psFile);
         } catch (err) {
-          console.error('Failed to delete temp files:', err.message);
+          console.error('Failed to delete temp file:', err.message);
         }
       }, 5000);
 
@@ -384,7 +372,12 @@ Start-Sleep -Milliseconds 1000
       testReceipt += 'Status: Ready\n';
       testReceipt += 'Time: ' + timestamp + '\n';
       testReceipt += line + '\n';
-      testReceipt += '\n\n';
+      testReceipt += '\n';
+      testReceipt += '\n';
+      testReceipt += '\n';
+
+      // ESC/POS partial cut command
+      testReceipt += '\x1B\x69';
 
       const filename = `test_receipt_${Date.now()}.txt`;
       const filepath = path.join(this.tempDir, filename);
