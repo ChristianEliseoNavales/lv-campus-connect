@@ -32,7 +32,8 @@ const MISAdminDashboard = () => {
         const baseUrl = API_CONFIG.getAdminUrl();
 
         const usersResponse = await fetch(`${baseUrl}/api/users`);
-        const users = usersResponse.ok ? await usersResponse.json() : [];
+        const usersData = usersResponse.ok ? await usersResponse.json() : { data: [] };
+        const users = usersData.data || [];
 
         // Fetch all windows data
         const registrarResponse = await fetch(`${baseUrl}/api/windows/registrar`);
@@ -54,7 +55,7 @@ const MISAdminDashboard = () => {
 
         // Stats based on actual data
         const mockStats = {
-          totalUsers: users.length || 12,
+          totalUsers: users.length,
           activeQueues: registrarWindows.length + admissionsWindows.length || 6,
           todayServed: 41, // Combined from both departments
           systemStatus: 'operational'

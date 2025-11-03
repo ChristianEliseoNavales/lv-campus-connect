@@ -140,7 +140,7 @@ const generateQueueEntry = async (services, windows, queueDate, queueNumber) => 
     // Create queue entry
     const queueEntry = new Queue({
       queueNumber,
-      department,
+      office: department, // Fixed: Use 'office' field to match Queue schema
       windowId: window._id.toString(),
       serviceId: service._id.toString(),
       visitationFormId: visitationForm ? visitationForm._id : null,

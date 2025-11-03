@@ -470,7 +470,7 @@ router.get('/queue-data/:department', async (req, res) => {
 
     // Build query for currently serving
     const servingQuery = {
-      department,
+      office: department,
       status: 'serving',
       isCurrentlyServing: true
     };
@@ -488,7 +488,7 @@ router.get('/queue-data/:department', async (req, res) => {
 
     // Get skipped queues (apply same filtering)
     const skippedQuery = {
-      department,
+      office: department,
       status: 'skipped'
     };
     if (windowId) {

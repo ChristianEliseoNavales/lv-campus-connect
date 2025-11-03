@@ -95,20 +95,11 @@ router.get('/:department', async (req, res) => {
         console.log(`[${formatPhilippineDateTime()}] Filtering transactions for date: ${date}`);
         console.log(`[${formatPhilippineDateTime()}] UTC boundaries: ${startOfDay.toISOString()} to ${endOfDay.toISOString()}`);
 
-        queryFilter.$or = [
-          {
-            queuedAt: {
-              $gte: startOfDay,
-              $lte: endOfDay
-            }
-          },
-          {
-            completedAt: {
-              $gte: startOfDay,
-              $lte: endOfDay
-            }
-          }
-        ];
+        // Filter by queuedAt only for consistency with dashboard "Visits Today" metric
+        queryFilter.queuedAt = {
+          $gte: startOfDay,
+          $lte: endOfDay
+        };
       } catch (error) {
         console.error('Error processing date filter:', error);
         return res.status(400).json({
@@ -120,7 +111,7 @@ router.get('/:department', async (req, res) => {
 
     // Fetch transaction logs
     const transactions = await Queue.find(queryFilter)
-    .populate('visitationFormId', 'customerName contactNumber email address')
+    .populate('visitationFormId', 'customerName contactNumber email address idNumber')
     .sort({ completedAt: -1, calledAt: -1, queuedAt: -1 }) // Most recent first
     .lean();
 
@@ -159,7 +150,7 @@ router.get('/:department', async (req, res) => {
         queueNumber: transaction.queueNumber,
         customerName: transaction.visitationFormId?.customerName || 'N/A (Enroll Service)',
         purposeOfVisit: serviceMap[transaction.serviceId] || 'Unknown Service',
-        priority: transaction.isPriority ? 'Yes' : 'No',
+        priority: transaction.isPriority ? (transaction.visitationFormId?.idNumber || 'No') : 'No',
         role: transaction.role,
         turnaroundTime,
         remarks: transaction.remarks || '',
