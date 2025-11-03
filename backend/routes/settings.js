@@ -44,14 +44,47 @@ router.get('/', async (req, res) => {
 router.get('/queue/:department', async (req, res) => {
   try {
     const { department } = req.params;
-    const settings = await readSettings();
-    
-    if (!settings.queueSystem[department]) {
-      return res.status(404).json({ error: 'Department not found' });
+
+    // Validate department
+    if (!['registrar', 'admissions'].includes(department)) {
+      return res.status(400).json({ error: 'Invalid department' });
     }
-    
-    res.json(settings.queueSystem[department]);
+
+    // Try to read from MongoDB first (for cloud deployment)
+    try {
+      const mongoSettings = await Settings.getCurrentSettings();
+
+      // Ensure officeSettings exists
+      if (mongoSettings.officeSettings && mongoSettings.officeSettings[department]) {
+        return res.json({
+          isEnabled: mongoSettings.officeSettings[department].isEnabled || false,
+          lastUpdated: mongoSettings.officeSettings[department].lastUpdated || new Date().toISOString()
+        });
+      }
+    } catch (mongoError) {
+      console.warn('MongoDB settings not available, falling back to JSON file:', mongoError.message);
+    }
+
+    // Fallback to JSON file (for local development)
+    try {
+      const settings = await readSettings();
+
+      if (!settings.queueSystem[department]) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
+
+      res.json(settings.queueSystem[department]);
+    } catch (fileError) {
+      console.error('Error reading settings from file:', fileError);
+
+      // If both MongoDB and file fail, return default values
+      return res.json({
+        isEnabled: false,
+        lastUpdated: new Date().toISOString()
+      });
+    }
   } catch (error) {
+    console.error('Error in /queue/:department endpoint:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -61,6 +94,20 @@ router.put('/queue/:department/toggle', async (req, res) => {
   try {
     const { department } = req.params;
     const { isEnabled } = req.body;
+
+    // Validate department
+    if (!['registrar', 'admissions'].includes(department)) {
+      await AuditService.logSettings({
+        user: req.user,
+        action: 'SETTINGS_UPDATE',
+        settingName: `${department} Queue Toggle`,
+        req,
+        success: false,
+        errorMessage: 'Invalid department'
+      });
+
+      return res.status(400).json({ error: 'Invalid department' });
+    }
 
     if (typeof isEnabled !== 'boolean') {
       await AuditService.logSettings({
@@ -75,31 +122,10 @@ router.put('/queue/:department/toggle', async (req, res) => {
       return res.status(400).json({ error: 'isEnabled must be a boolean' });
     }
 
-    // Update JSON file (for backward compatibility)
-    const settings = await readSettings();
+    const timestamp = new Date().toISOString();
+    let oldValue = false;
 
-    if (!settings.queueSystem[department]) {
-      await AuditService.logSettings({
-        user: req.user,
-        action: 'SETTINGS_UPDATE',
-        settingName: `${department} Queue Toggle`,
-        req,
-        success: false,
-        errorMessage: 'Department not found'
-      });
-
-      return res.status(404).json({ error: 'Department not found' });
-    }
-
-    // Store old value for audit trail
-    const oldValue = settings.queueSystem[department].isEnabled;
-
-    settings.queueSystem[department].isEnabled = isEnabled;
-    settings.queueSystem[department].lastUpdated = new Date().toISOString();
-
-    const updatedSettings = await writeSettings(settings);
-
-    // Update MongoDB Settings model (for public kiosk interface)
+    // Update MongoDB Settings model (primary storage for cloud deployment)
     let mongoSettings = await Settings.findOne();
     if (!mongoSettings) {
       mongoSettings = new Settings();
@@ -114,9 +140,27 @@ router.put('/queue/:department/toggle', async (req, res) => {
     if (!mongoSettings.officeSettings[department]) {
       mongoSettings.officeSettings[department] = {};
     }
+
+    // Store old value for audit trail
+    oldValue = mongoSettings.officeSettings[department].isEnabled || false;
+
     mongoSettings.officeSettings[department].isEnabled = isEnabled;
+    mongoSettings.officeSettings[department].lastUpdated = timestamp;
 
     await mongoSettings.save();
+
+    // Update JSON file (for backward compatibility with local development)
+    try {
+      const settings = await readSettings();
+
+      if (settings.queueSystem && settings.queueSystem[department]) {
+        settings.queueSystem[department].isEnabled = isEnabled;
+        settings.queueSystem[department].lastUpdated = timestamp;
+        await writeSettings(settings);
+      }
+    } catch (fileError) {
+      console.warn('Could not update JSON file (this is normal for cloud deployment):', fileError.message);
+    }
 
     // Log successful settings update
     await AuditService.logSettings({
@@ -129,22 +173,28 @@ router.put('/queue/:department/toggle', async (req, res) => {
       newValues: { isEnabled: isEnabled }
     });
 
+    // Prepare response data
+    const responseData = {
+      isEnabled: isEnabled,
+      lastUpdated: timestamp
+    };
+
     // Emit real-time update to specific rooms
     const io = req.app.get('io');
     io.to(`admin-${department}`).emit('settings-updated', {
       department,
       type: 'queue-toggle',
-      data: settings.queueSystem[department]
+      data: responseData
     });
 
     // Also emit to kiosk room for public interface updates
     io.to('kiosk').emit('settings-updated', {
       department,
       type: 'queue-toggle',
-      data: settings.queueSystem[department]
+      data: responseData
     });
 
-    res.json(updatedSettings.queueSystem[department]);
+    res.json(responseData);
   } catch (error) {
     console.error('Error toggling queue system:', error);
 

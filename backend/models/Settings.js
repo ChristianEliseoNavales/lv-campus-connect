@@ -166,6 +166,10 @@ const settingsSchema = new mongoose.Schema({
         type: Number,
         default: 5,
         min: 1
+      },
+      lastUpdated: {
+        type: String,
+        default: () => new Date().toISOString()
       }
     },
     admissions: {
@@ -204,6 +208,10 @@ const settingsSchema = new mongoose.Schema({
         type: Number,
         default: 3,
         min: 1
+      },
+      lastUpdated: {
+        type: String,
+        default: () => new Date().toISOString()
       }
     }
   },
