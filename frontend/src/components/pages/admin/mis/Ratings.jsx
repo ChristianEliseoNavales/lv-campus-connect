@@ -210,9 +210,9 @@ const Ratings = () => {
       stars.push(
         <span key={i}>
           {i <= rating ? (
-            <MdStar className="text-[#1F3463] text-lg" />
+            <MdStar className="text-[#1F3463] text-2xl" />
           ) : (
-            <MdStarBorder className="text-gray-300 text-lg" />
+            <MdStarBorder className="text-gray-300 text-2xl" />
           )}
         </span>
       );
@@ -228,9 +228,9 @@ const Ratings = () => {
         {/* Row 1 - Header */}
         <div className="mb-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-semibold text-gray-900">Ratings</h1>
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Ratings</h1>
             <div className="flex items-center space-x-1">
-              <p className="text-xs text-gray-500">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
@@ -251,13 +251,13 @@ const Ratings = () => {
         <div className="flex justify-between items-center mb-6">
           {/* Left side - Pagination Control */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-700">Showing</span>
+            <span className="text-base text-gray-700 font-medium">Showing</span>
             <div className="flex items-center space-x-1">
               <input
                 type="number"
                 value={logsPerPage}
                 onChange={(e) => updateState('logsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-16 px-2 py-1 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
@@ -266,24 +266,24 @@ const Ratings = () => {
                   onClick={() => handleLogsPerPageChange(1)}
                   className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-sm" />
+                  <MdKeyboardArrowUp className="text-base" />
                 </button>
                 <button
                   onClick={() => handleLogsPerPageChange(-1)}
                   className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-sm" />
+                  <MdKeyboardArrowDown className="text-base" />
                 </button>
               </div>
             </div>
-            <span className="text-sm text-gray-700">Ratings</span>
+            <span className="text-base text-gray-700 font-medium">Ratings</span>
           </div>
 
           {/* Right side - Date Filter, Search, Filter dropdown */}
           <div className="flex items-center space-x-4">
             {/* Date Filter */}
             <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-700">Date:</label>
+              <label className="text-base text-gray-700 font-medium">Date:</label>
               <DatePicker
                 value={selectedDate}
                 onChange={(date) => updateState('selectedDate', date)}
@@ -293,23 +293,23 @@ const Ratings = () => {
 
             {/* Search */}
             <div className="relative">
-              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
               <input
                 type="text"
                 placeholder="Search ratings..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
             <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-700">Filter by:</label>
+              <label className="text-base text-gray-700 font-medium">Filter by:</label>
               <select
                 value={filterBy}
                 onChange={(e) => updateState('filterBy', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-sm"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               >
                 <option value="all">All Ratings</option>
                 <option value="5_star">5 Stars</option>
@@ -330,7 +330,7 @@ const Ratings = () => {
             <>
               {/* Table Header */}
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-700 w-full">
+                <div className="grid grid-cols-4 gap-4 text-base font-bold text-gray-700 w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>Name</div>
@@ -348,7 +348,7 @@ const Ratings = () => {
                       <div className="h-4 bg-gray-200 rounded w-24"></div>
                       <div className="flex space-x-1">
                         {[...Array(5)].map((_, starIndex) => (
-                          <div key={starIndex} className="w-4 h-4 bg-gray-200 rounded"></div>
+                          <div key={starIndex} className="w-5 h-5 bg-gray-200 rounded"></div>
                         ))}
                       </div>
                     </div>
@@ -359,14 +359,14 @@ const Ratings = () => {
           ) : currentRatings.length === 0 ? (
             <div className="text-center py-12">
               <MdStar className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No ratings found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No ratings found</h3>
+              <p className="text-base text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
               {/* Table Header */}
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-700 w-full">
+                <div className="grid grid-cols-4 gap-4 text-base font-bold text-gray-700 w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>Name</div>
@@ -385,17 +385,17 @@ const Ratings = () => {
                     <div key={rating._id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
                       <div className="grid grid-cols-4 gap-4 items-center w-full">
                         {/* Time */}
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-base font-bold text-gray-900">
                           {time}
                         </div>
 
                         {/* Date */}
-                        <div className="text-sm text-gray-900">
+                        <div className="text-base font-medium text-gray-900">
                           {date}
                         </div>
 
                         {/* Name */}
-                        <div className="text-sm text-gray-900">
+                        <div className="text-base font-medium text-gray-900">
                           {rating.customerName || 'Unknown Customer'}
                         </div>
 
@@ -415,24 +415,24 @@ const Ratings = () => {
         {/* Pagination */}
         {!loading && filteredRatings.length > 0 && (
           <div className="flex items-center justify-between mt-6">
-            <div className="text-sm text-gray-700">
+            <div className="text-base text-gray-700 font-medium">
               Showing {startIndex + 1} to {Math.min(startIndex + logsPerPage, filteredRatings.length)} of {filteredRatings.length} ratings
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-base font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
-              <span className="px-3 py-2 text-sm font-medium text-gray-700">
+              <span className="px-3 py-2 text-base font-semibold text-gray-700">
                 Page {currentPage} of {totalPages}
               </span>
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-base font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

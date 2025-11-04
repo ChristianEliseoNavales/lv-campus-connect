@@ -1400,14 +1400,14 @@ const Settings = () => {
           <div className="grid grid-cols-3 gap-4 items-center">
             {/* Column 1: Settings Management heading */}
             <div>
-              <h1 className="text-4xl font-semibold text-gray-900">Settings Management</h1>
+              <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Settings Management</h1>
             </div>
 
             {/* Column 2: Queue Monitor Button */}
             <div className="flex justify-center">
               <button
                 onClick={() => window.open('/admin/admissions/queue-monitor', '_blank')}
-                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors duration-200 flex items-center space-x-2"
               >
                 <MdMonitor className="text-xl" />
                 <span>Open Queue Monitor</span>
@@ -1545,8 +1545,8 @@ const Settings = () => {
           {/* Row 1: Table Header */}
           <div className="mb-4">
             <div className="grid grid-cols-3 gap-4 items-center p-3">
-              <div className="font-semibold text-gray-900">Window</div>
-              <div className="font-semibold text-gray-900">Service & Admin</div>
+              <div className="font-bold text-base text-gray-900">Window</div>
+              <div className="font-bold text-base text-gray-900">Service & Admin</div>
               <div className="relative">
                 <LocationAutocomplete
                   value={locationText}
@@ -1572,7 +1572,7 @@ const Settings = () => {
               >
                 {/* Column 1: Window name */}
                 <div className="flex items-center">
-                  <span className="font-medium text-gray-900">{window.name}</span>
+                  <span className="font-bold text-base text-gray-900">{window.name}</span>
                 </div>
 
                 {/* Column 2: Split into 2 rows */}
@@ -1584,7 +1584,7 @@ const Settings = () => {
                     isPriority={window.name === 'Priority'}
                   />
                   {/* Row 2: Admin user email */}
-                  <div className="text-sm text-gray-600">
+                  <div className="text-base text-gray-600">
                     {window.assignedAdmin?.email || 'No admin assigned'}
                   </div>
                 </div>
@@ -1608,9 +1608,9 @@ const Settings = () => {
                     }
                   >
                     {window.isOpen ? (
-                      <AiOutlineEye className="text-xl" />
+                      <AiOutlineEye className="text-2xl" />
                     ) : (
-                      <AiOutlineEyeInvisible className="text-xl" />
+                      <AiOutlineEyeInvisible className="text-2xl" />
                     )}
                   </button>
                   <button
@@ -1627,7 +1627,7 @@ const Settings = () => {
                         : 'Configure Window'
                     }
                   >
-                    <LuSettings2 className="text-xl" />
+                    <LuSettings2 className="text-2xl" />
                   </button>
                 </div>
               </div>
@@ -1651,7 +1651,7 @@ const Settings = () => {
                     : 'Add new window'
                 }
               >
-                <span className="text-sm">
+                <span className="text-base font-medium">
                   {isQueueingEnabled ? 'Locked' : 'Available Window Slot'}
                 </span>
               </button>

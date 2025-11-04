@@ -492,9 +492,9 @@ const Users = () => {
         {/* Row 1 - Header */}
         <div className="mb-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-semibold text-gray-900">User Management</h1>
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">User Management</h1>
             <div className="flex items-center space-x-1">
-              <p className="text-xs text-gray-500">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
@@ -504,7 +504,7 @@ const Users = () => {
                 title="Refresh users"
               >
                 <IoMdRefresh
-                  className={`w-6 h-6 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-5 h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -515,13 +515,13 @@ const Users = () => {
         <div className="flex justify-between items-center mb-6">
           {/* Left side - Pagination Control */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-700">Showing</span>
+            <span className="text-base text-gray-700 font-medium">Showing</span>
             <div className="flex items-center space-x-1">
               <input
                 type="number"
                 value={usersPerPage}
                 onChange={(e) => setUsersPerPage(Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-16 px-2 py-1 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
@@ -530,40 +530,40 @@ const Users = () => {
                   onClick={() => handleUsersPerPageChange(1)}
                   className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-sm" />
+                  <MdKeyboardArrowUp className="text-base" />
                 </button>
                 <button
                   onClick={() => handleUsersPerPageChange(-1)}
                   className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-sm" />
+                  <MdKeyboardArrowDown className="text-base" />
                 </button>
               </div>
             </div>
-            <span className="text-sm text-gray-700">Users</span>
+            <span className="text-base text-gray-700 font-medium">Users</span>
           </div>
 
           {/* Right side - Search, Filter dropdown, Add button */}
           <div className="flex items-center space-x-4">
             {/* Search */}
             <div className="relative">
-              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
               <input
                 type="text"
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
             <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-700">Filter by:</label>
+              <label className="text-base text-gray-700 font-medium">Filter by:</label>
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-sm"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-base"
               >
                 <option value="all">All</option>
                 <option value="active">Active</option>
@@ -577,7 +577,7 @@ const Users = () => {
             {/* Add Button */}
             <button
               onClick={openAddModal}
-              className="px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-sm font-medium"
+              className="px-5 py-2.5 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-base font-semibold"
             >
               + Add User
             </button>
@@ -626,14 +626,14 @@ const Users = () => {
           ) : currentUsers.length === 0 ? (
             <div className="text-center py-12">
               <MdPerson className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No users found</h3>
+              <p className="text-base text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
               {/* Table Header */}
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-5 gap-4 text-sm font-medium text-gray-700 w-full">
+                <div className="grid grid-cols-5 gap-4 text-base font-bold text-gray-700 w-full">
                   <div>Name</div>
                   <div>Email</div>
                   <div>Department/Office</div>
@@ -648,22 +648,22 @@ const Users = () => {
                   <div key={user._id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
                     <div className="grid grid-cols-5 gap-4 items-center w-full">
                       {/* Name */}
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-base font-bold text-gray-900">
                         {user.name}
                       </div>
 
                       {/* Email */}
-                      <div className="text-sm text-gray-900">
+                      <div className="text-base font-medium text-gray-900">
                         {user.email}
                       </div>
 
                       {/* Department */}
-                      <div className="text-sm text-gray-900">
+                      <div className="text-base font-medium text-gray-900">
                         {user.department || 'N/A'}
                       </div>
 
                       {/* Role */}
-                      <div className="text-sm text-gray-900">
+                      <div className="text-base font-medium text-gray-900">
                         {getRoleDisplayName(user.role)}
                       </div>
 
@@ -674,7 +674,7 @@ const Users = () => {
                           className="text-[#1F3463] hover:text-[#1F3463]/80 p-1 rounded"
                           title="Edit user"
                         >
-                          <FiEdit3 className="h-4 w-4" />
+                          <FiEdit3 className="h-5 w-5" />
                         </button>
                       </div>
                     </div>

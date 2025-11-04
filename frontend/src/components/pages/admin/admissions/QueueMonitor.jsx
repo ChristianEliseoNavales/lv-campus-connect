@@ -205,19 +205,19 @@ const AdmissionsQueueMonitor = () => {
         <div className="flex">
           {/* Left sub-column: WINDOW header */}
           <div className="flex-1 flex items-center justify-center py-6">
-            <h2 className="text-3xl font-bold text-gray-800">WINDOW</h2>
+            <h2 className="text-5xl font-bold text-gray-800 tracking-wide">WINDOW</h2>
           </div>
 
           {/* Right sub-column: SERVING header */}
           <div className="flex-1 flex items-center justify-center py-6">
-            <h2 className="text-3xl font-bold text-gray-800">SERVING</h2>
+            <h2 className="text-5xl font-bold text-gray-800 tracking-wide">SERVING</h2>
           </div>
         </div>
 
         {/* Column 2, Row 1: Date/Time Display */}
         <div className="flex items-center justify-center p-6">
           <div className="bg-white border-2 border-gray-300 rounded-2xl px-10 py-6 w-full shadow-lg">
-            <div className="text-2xl font-semibold text-gray-800 text-center">
+            <div className="text-3xl font-bold text-gray-800 text-center tracking-wide">
               {currentDateTime}
             </div>
           </div>
@@ -237,7 +237,7 @@ const AdmissionsQueueMonitor = () => {
               {/* STOP indicator overlay */}
               {!window.isServing && (
                 <div className="absolute inset-0 bg-red-500 bg-opacity-20 rounded-xl flex items-center justify-center">
-                  <span className="bg-red-600 text-white px-3 py-1 rounded-lg text-lg font-bold">
+                  <span className="bg-red-600 text-white px-6 py-3 rounded-lg text-2xl font-bold tracking-wide">
                     CLOSED
                   </span>
                 </div>
@@ -245,12 +245,12 @@ const AdmissionsQueueMonitor = () => {
 
               {/* Left sub-column: Window name */}
               <div className="flex-1 flex items-center justify-center py-6 text-center">
-                <span className="text-3xl font-bold">{window.name}</span>
+                <span className="text-5xl font-bold tracking-wide">{window.name}</span>
               </div>
 
               {/* Right sub-column: Serving number */}
               <div className="flex-1 flex items-center justify-center py-6 text-center">
-                <span className="text-4xl font-bold">
+                <span className="text-6xl font-bold tracking-wider">
                   {window.serving > 0 ? window.serving.toString().padStart(2, '0') : '--'}
                 </span>
               </div>
@@ -262,18 +262,18 @@ const AdmissionsQueueMonitor = () => {
         <div className="rounded-2xl shadow-md border-2 border-gray-200 flex flex-col p-6 space-y-4">
           {/* First row: Next Queue Number */}
           <div className="flex-1 bg-white flex flex-col items-center justify-center border-b-2 border-gray-300">
-            <div className="text-xl text-gray-600 mb-2">Next</div>
-            <div className="text-2xl text-gray-700 mb-3">Queue No.</div>
-            <div className="text-6xl font-bold text-[#1F3463]">
+            <div className="text-2xl text-gray-600 mb-2 font-semibold">Next</div>
+            <div className="text-3xl text-gray-700 mb-4 font-bold">Queue No.</div>
+            <div className="text-8xl font-bold text-[#1F3463] tracking-wider">
               {nextQueueInfo.nextNumber > 0 ? nextQueueInfo.nextNumber.toString().padStart(2, '0') : '--'}
             </div>
           </div>
 
           {/* Second row: Window Assignment */}
           <div className="flex-1 bg-white flex flex-col items-center justify-center">
-            <div className="text-xl text-gray-600 mb-2">Please Proceed to</div>
-            <div className="text-2xl text-gray-700 mb-3">Window</div>
-            <div className="text-6xl font-bold text-[#1F3463]">
+            <div className="text-2xl text-gray-600 mb-2 font-semibold">Please Proceed to</div>
+            <div className="text-3xl text-gray-700 mb-4 font-bold">Window</div>
+            <div className="text-8xl font-bold text-[#1F3463] tracking-wider">
               {nextQueueInfo.assignedWindow || '--'}
             </div>
           </div>

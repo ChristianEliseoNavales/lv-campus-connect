@@ -80,15 +80,15 @@ const AuditTrail = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <MdHistory className="text-3xl text-[#1F3463]" />
+          <MdHistory className="text-4xl text-[#1F3463]" />
           <div>
-            <h1 className="text-3xl font-bold text-[#1F3463]">Audit Trail</h1>
-            <p className="text-gray-600">Registrar Department Security & Activity Log</p>
+            <h1 className="text-4xl font-bold text-[#1F3463] tracking-tight">Audit Trail</h1>
+            <p className="text-base text-gray-600">Registrar Department Security & Activity Log</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-            <MdRefresh className="text-lg" />
+          <button className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg font-semibold text-base hover:bg-gray-700 transition-colors">
+            <MdRefresh className="text-xl" />
             <span>Refresh</span>
           </button>
         </div>
@@ -98,8 +98,8 @@ const AuditTrail = () => {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="text-center py-12">
           <MdHistory className="text-6xl text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No audit logs available</h3>
-          <p className="text-gray-500">Audit trail functionality will be implemented soon</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No audit logs available</h3>
+          <p className="text-base text-gray-500">Audit trail functionality will be implemented soon</p>
         </div>
       </div>
     </div>

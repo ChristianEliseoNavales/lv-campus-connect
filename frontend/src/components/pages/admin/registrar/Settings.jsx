@@ -317,7 +317,7 @@ const AddEditWindowModal = ({
 
           {/* Row 1: Header */}
           <div className="p-6">
-            <h3 className="text-xl font-semibold text-gray-900">
+            <h3 className="text-2xl font-bold text-gray-900 tracking-wide">
               Adjusting Windows
             </h3>
           </div>
@@ -326,7 +326,7 @@ const AddEditWindowModal = ({
           <div className="p-6 space-y-6">
             {/* Row 2: Window Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-base font-semibold text-gray-900 mb-2">
                 Name for Window
               </label>
               <input
@@ -334,7 +334,7 @@ const AddEditWindowModal = ({
                 value={windowFormData.name}
                 onChange={(e) => onFormChange('name', e.target.value)}
                 disabled={windowFormData.isPriority}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-lg text-base focus:outline-none focus:ring-2 focus:border-transparent ${
                   windowFormData.isPriority
                     ? 'bg-gray-100 cursor-not-allowed border-gray-300'
                     : errors.name
@@ -344,7 +344,7 @@ const AddEditWindowModal = ({
                 placeholder="Enter window name"
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                <p className="mt-1 text-sm text-red-600 font-medium">{errors.name}</p>
               )}
             </div>
 
@@ -355,23 +355,23 @@ const AddEditWindowModal = ({
                   type="checkbox"
                   checked={windowFormData.isPriority}
                   onChange={(e) => onFormChange('isPriority', e.target.checked)}
-                  className="w-4 h-4 text-[#1F3463] border-gray-300 rounded focus:ring-[#1F3463] focus:ring-2"
+                  className="w-5 h-5 text-[#1F3463] border-gray-300 rounded focus:ring-[#1F3463] focus:ring-2"
                 />
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-base font-semibold text-gray-900">
                   Set as Priority
                 </span>
               </label>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-sm text-gray-500">
                 Priority windows automatically serve all services and handle PWD/Senior Citizen queues
               </p>
             </div>
 
             {/* Row 3: Service Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-base font-semibold text-gray-900 mb-2">
                 Services <span className="text-red-500">*</span>
                 {windowFormData.isPriority && (
-                  <span className="ml-2 text-xs text-gray-500">(All services auto-assigned for Priority window)</span>
+                  <span className="ml-2 text-sm text-gray-500">(All services auto-assigned for Priority window)</span>
                 )}
               </label>
               <div className={`border rounded-lg p-3 max-h-40 overflow-y-auto ${
@@ -1400,14 +1400,14 @@ const Settings = () => {
           <div className="grid grid-cols-3 gap-4 items-center">
             {/* Column 1: Settings Management heading */}
             <div>
-              <h1 className="text-4xl font-semibold text-gray-900">Settings Management</h1>
+              <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Settings Management</h1>
             </div>
 
             {/* Column 2: Queue Monitor Button */}
             <div className="flex justify-center">
               <button
                 onClick={() => window.open('/admin/registrar/queue-monitor', '_blank')}
-                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors duration-200 flex items-center space-x-2"
               >
                 <MdMonitor className="text-xl" />
                 <span>Open Queue Monitor</span>
@@ -1419,13 +1419,13 @@ const Settings = () => {
               {isQueueingEnabled && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center space-x-2 max-w-md">
                   <div className="flex-shrink-0">
-                    <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xs font-medium text-yellow-800">Settings Locked</h3>
-                    <p className="text-xs text-yellow-700">
+                    <h3 className="text-sm font-semibold text-yellow-800">Settings Locked</h3>
+                    <p className="text-sm text-yellow-700">
                       Management disabled while queueing is active.
                     </p>
                   </div>
@@ -1438,9 +1438,9 @@ const Settings = () => {
         {/* Second div: Row 2, Column 1 only - Toggle Section */}
         <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-6 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-lg font-medium text-gray-900">Tap to Enable Queueing</span>
+            <span className="text-xl font-semibold text-gray-900">Tap to Enable Queueing</span>
             {(isToggling || toggleCooldown > 0) && (
-              <span className="text-sm text-gray-500 mt-1">
+              <span className="text-base text-gray-500 mt-1">
                 {isToggling ? 'Processing...' : `Wait ${toggleCooldown}s before next toggle`}
               </span>
             )}
@@ -1473,7 +1473,7 @@ const Settings = () => {
         <div className="col-span-1 row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-6 flex flex-col">
           {/* Row 1: Header */}
           <div className="mb-4">
-            <h2 className="text-2xl font-semibold text-gray-900">Services</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Services</h2>
           </div>
 
           {/* Row 2: Content Area - Scrollable */}
@@ -1495,7 +1495,7 @@ const Settings = () => {
                 ))}
               </div>
             ) : services.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-base text-gray-400 italic">
                 No services available. Add a service to get started.
               </div>
             ) : (
@@ -1505,9 +1505,9 @@ const Settings = () => {
                   className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-3">
-                    <span className="text-gray-900 font-medium">{service.name}</span>
+                    <span className="text-gray-900 font-semibold text-base">{service.name}</span>
                     {!service.isActive && (
-                      <span className="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded-full">
+                      <span className="px-2.5 py-1 text-sm bg-gray-200 text-gray-600 rounded-full font-medium">
                         Inactive
                       </span>
                     )}
@@ -1527,7 +1527,7 @@ const Settings = () => {
                           : 'Remove Service'
                       }
                     >
-                      <AiOutlineMinusCircle className="text-lg" />
+                      <AiOutlineMinusCircle className="text-xl" />
                     </button>
                   </div>
                 </div>
@@ -1539,7 +1539,7 @@ const Settings = () => {
           <button
             onClick={handleAddService}
             disabled={isQueueingEnabled}
-            className={`flex items-center justify-center space-x-2 p-3 text-white rounded-lg transition-colors ${
+            className={`flex items-center justify-center space-x-2 p-3 text-white rounded-lg text-base font-semibold transition-colors ${
               isQueueingEnabled
                 ? 'opacity-50 cursor-not-allowed'
                 : 'hover:opacity-90'
@@ -1557,8 +1557,8 @@ const Settings = () => {
           {/* Row 1: Table Header */}
           <div className="mb-4">
             <div className="grid grid-cols-3 gap-4 items-center p-3">
-              <div className="font-semibold text-gray-900">Window</div>
-              <div className="font-semibold text-gray-900">Service & Admin</div>
+              <div className="font-bold text-base text-gray-900">Window</div>
+              <div className="font-bold text-base text-gray-900">Service & Admin</div>
               <div className="relative">
                 <LocationAutocomplete
                   value={locationText}
@@ -1584,7 +1584,7 @@ const Settings = () => {
               >
                 {/* Column 1: Window name */}
                 <div className="flex items-center">
-                  <span className="font-medium text-gray-900">{window.name}</span>
+                  <span className="font-bold text-base text-gray-900">{window.name}</span>
                 </div>
 
                 {/* Column 2: Split into 2 rows */}
@@ -1596,7 +1596,7 @@ const Settings = () => {
                     isPriority={window.name === 'Priority'}
                   />
                   {/* Row 2: Admin user email */}
-                  <div className="text-sm text-gray-600">
+                  <div className="text-base text-gray-600">
                     {window.assignedAdmin?.email || 'No admin assigned'}
                   </div>
                 </div>
@@ -1620,9 +1620,9 @@ const Settings = () => {
                     }
                   >
                     {window.isOpen ? (
-                      <AiOutlineEye className="text-xl" />
+                      <AiOutlineEye className="text-2xl" />
                     ) : (
-                      <AiOutlineEyeInvisible className="text-xl" />
+                      <AiOutlineEyeInvisible className="text-2xl" />
                     )}
                   </button>
                   <button
@@ -1639,7 +1639,7 @@ const Settings = () => {
                         : 'Configure Window'
                     }
                   >
-                    <LuSettings2 className="text-xl" />
+                    <LuSettings2 className="text-2xl" />
                   </button>
                 </div>
               </div>
@@ -1663,7 +1663,7 @@ const Settings = () => {
                     : 'Add new window'
                 }
               >
-                <span className="text-sm">
+                <span className="text-base font-medium">
                   {isQueueingEnabled ? 'Locked' : 'Available Window Slot'}
                 </span>
               </button>

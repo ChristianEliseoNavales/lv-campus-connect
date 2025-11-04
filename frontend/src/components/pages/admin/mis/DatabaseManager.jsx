@@ -320,26 +320,26 @@ const DatabaseManager = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-            <MdStorage className="mr-3 text-[#1F3463]" />
+          <h1 className="text-4xl font-bold text-gray-900 flex items-center tracking-tight">
+            <MdStorage className="mr-3 text-[#1F3463] text-4xl" />
             Database Manager
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-base text-gray-600 mt-2">
             Development tool for direct database record manipulation
           </p>
-          <div className="mt-2 px-3 py-1 bg-yellow-100 border border-yellow-300 rounded-lg inline-block">
-            <span className="text-xs font-semibold text-yellow-800">⚠️ DEVELOPMENT ONLY</span>
+          <div className="mt-3 px-4 py-2 bg-yellow-100 border border-yellow-300 rounded-lg inline-block">
+            <span className="text-sm font-bold text-yellow-800">⚠️ DEVELOPMENT ONLY</span>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
+            className="flex items-center space-x-2 px-5 py-2.5 text-white rounded-lg text-base font-semibold hover:bg-opacity-90 transition-colors disabled:opacity-50"
             style={{ backgroundColor: '#1F3463' }}
           >
-            <MdRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <MdRefresh className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -347,8 +347,8 @@ const DatabaseManager = () => {
 
       {/* Model Selection */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <MdTableChart className="mr-2 text-[#1F3463]" />
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <MdTableChart className="mr-2 text-[#1F3463] text-xl" />
           Select Database Model
         </h2>
 
@@ -363,10 +363,10 @@ const DatabaseManager = () => {
                   : 'border-gray-200 hover:border-[#1F3463] hover:bg-gray-50'
               }`}
             >
-              <div className="font-semibold text-gray-900">{model.label}</div>
-              <div className="text-sm text-gray-600 mt-1">{model.description}</div>
+              <div className="font-bold text-base text-gray-900">{model.label}</div>
+              <div className="text-base text-gray-600 mt-1">{model.description}</div>
               {selectedModel === model.name && (
-                <div className="text-xs text-[#1F3463] font-medium mt-2">
+                <div className="text-sm text-[#1F3463] font-semibold mt-2">
                   ✓ Currently Selected
                 </div>
               )}
@@ -381,13 +381,13 @@ const DatabaseManager = () => {
           {/* Search */}
           <form onSubmit={handleSearch} className="flex items-center space-x-2">
             <div className="relative">
-              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
               <input
                 type="text"
                 placeholder={`Search ${selectedModel} records...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-[#1F3463] focus:border-transparent w-64"
               />
             </div>
             <button
@@ -404,28 +404,28 @@ const DatabaseManager = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => openEditModal()}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-2 px-5 py-2.5 bg-green-600 text-white rounded-lg text-base font-semibold hover:bg-green-700 transition-colors"
             >
-              <MdAdd className="w-4 h-4" />
+              <MdAdd className="w-5 h-5" />
               <span>Add Record</span>
             </button>
 
             <button
               onClick={openDeleteAllModal}
               disabled={records.length === 0}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center space-x-2 px-5 py-2.5 bg-red-600 text-white rounded-lg text-base font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <MdDeleteSweep className="w-4 h-4" />
+              <MdDeleteSweep className="w-5 h-5" />
               <span>Delete All</span>
             </button>
           </div>
         </div>
 
         {/* Record Count */}
-        <div className="mt-4 text-sm text-gray-600">
+        <div className="mt-4 text-base text-gray-600 font-medium">
           {loading ? (
             <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#1F3463]"></div>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1F3463]"></div>
               <span>Loading {selectedModel} records...</span>
             </div>
           ) : (
@@ -445,11 +445,11 @@ const DatabaseManager = () => {
               <thead className="bg-gray-50">
                 <tr>
                   {[...Array(6)].map((_, index) => (
-                    <th key={index} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th key={index} className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                       <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
                     </th>
                   ))}
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wider">
                     <div className="h-4 bg-gray-200 rounded w-16 ml-auto animate-pulse"></div>
                   </th>
                 </tr>
@@ -475,9 +475,9 @@ const DatabaseManager = () => {
           </div>
         ) : records.length === 0 ? (
           <div className="p-8 text-center">
-            <MdStorage className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Records Found</h3>
-            <p className="text-gray-600">
+            <MdStorage className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Records Found</h3>
+            <p className="text-base text-gray-600">
               {searchTerm
                 ? `No ${selectedModel} records match your search criteria.`
                 : `No ${selectedModel} records exist in the database.`
@@ -485,9 +485,9 @@ const DatabaseManager = () => {
             </p>
             <button
               onClick={() => openEditModal()}
-              className="mt-4 flex items-center space-x-2 px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-colors mx-auto"
+              className="mt-4 flex items-center space-x-2 px-5 py-2.5 bg-[#1F3463] text-white rounded-lg text-base font-semibold hover:bg-opacity-90 transition-colors mx-auto"
             >
-              <MdAdd className="w-4 h-4" />
+              <MdAdd className="w-5 h-5" />
               <span>Add First Record</span>
             </button>
           </div>
@@ -499,12 +499,12 @@ const DatabaseManager = () => {
                   {records[0] && getDisplayFields(records[0]).slice(0, 6).map((field) => (
                     <th
                       key={field}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                     >
                       {field}
                     </th>
                   ))}
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -513,27 +513,27 @@ const DatabaseManager = () => {
                 {records.map((record, index) => (
                   <tr key={record._id || index} className="hover:bg-gray-50">
                     {getDisplayFields(record).slice(0, 6).map((field) => (
-                      <td key={field} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td key={field} className="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900">
                         <div className="max-w-xs truncate" title={formatFieldValue(record[field], field)}>
                           {formatFieldValue(record[field], field)}
                         </div>
                       </td>
                     ))}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-base font-medium">
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => openEditModal(record)}
                           className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
                           title="Edit record"
                         >
-                          <MdEdit className="h-4 w-4" />
+                          <MdEdit className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => openDeleteModal(record)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete record"
                         >
-                          <MdDelete className="h-4 w-4" />
+                          <MdDelete className="h-5 w-5" />
                         </button>
                       </div>
                     </td>
@@ -549,14 +549,14 @@ const DatabaseManager = () => {
       {totalPages > 1 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+            <div className="text-base text-gray-700 font-medium">
               Page {currentPage} of {totalPages}
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-base font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
@@ -570,7 +570,7 @@ const DatabaseManager = () => {
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`px-3 py-1 text-sm border rounded ${
+                    className={`px-4 py-2 text-base font-medium border rounded ${
                       pageNum === currentPage
                         ? 'bg-[#1F3463] text-white border-[#1F3463]'
                         : 'border-gray-300 hover:bg-gray-50'
@@ -584,7 +584,7 @@ const DatabaseManager = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-base font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

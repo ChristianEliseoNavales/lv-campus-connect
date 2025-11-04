@@ -248,7 +248,7 @@ const AdmissionsAdminDashboard = () => {
     <div className="space-y-6">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1F3463]">
+        <h1 className="text-4xl font-bold text-[#1F3463] tracking-tight">
           Queue Monitoring
         </h1>
       </div>
@@ -262,15 +262,15 @@ const AdmissionsAdminDashboard = () => {
             <div className="space-y-2">
               {/* Header Row */}
               <div className="bg-[#1F3463] text-white rounded-lg grid grid-cols-2 gap-0">
-                <div className="px-4 py-3 text-center text-sm font-semibold">Window</div>
-                <div className="px-4 py-3 text-center text-sm font-semibold">Incoming Number</div>
+                <div className="px-4 py-3 text-center text-base font-bold">Window</div>
+                <div className="px-4 py-3 text-center text-base font-bold">Incoming Number</div>
               </div>
 
               {/* Data Rows */}
               {tableData.windows.slice(0, 4).map((window, index) => (
                 <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-4 py-3 text-sm text-gray-900 text-center">{window.windowName}</div>
-                  <div className="px-4 py-3 text-sm text-gray-900 font-medium text-center">
+                  <div className="px-4 py-3 text-base text-gray-900 font-medium text-center">{window.windowName}</div>
+                  <div className="px-4 py-3 text-base text-gray-900 font-bold text-center">
                     {window.incomingNumber > 0 ? window.incomingNumber : '-'}
                   </div>
                 </div>
@@ -279,8 +279,8 @@ const AdmissionsAdminDashboard = () => {
               {/* Fill remaining rows if less than 4 windows */}
               {Array.from({ length: Math.max(0, 4 - tableData.windows.length) }).map((_, index) => (
                 <div key={`empty-${index}`} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-4 py-3 text-sm text-gray-500 text-center">-</div>
-                  <div className="px-4 py-3 text-sm text-gray-500 text-center">-</div>
+                  <div className="px-4 py-3 text-base text-gray-400 text-center">-</div>
+                  <div className="px-4 py-3 text-base text-gray-400 text-center">-</div>
                 </div>
               ))}
             </div>
@@ -293,15 +293,15 @@ const AdmissionsAdminDashboard = () => {
             <div className="space-y-2">
               {/* Header Row */}
               <div className="bg-[#1F3463] text-white rounded-lg grid grid-cols-2 gap-0">
-                <div className="px-4 py-3 text-center text-sm font-semibold">Window</div>
-                <div className="px-4 py-3 text-center text-sm font-semibold">Now Serving</div>
+                <div className="px-4 py-3 text-center text-base font-bold">Window</div>
+                <div className="px-4 py-3 text-center text-base font-bold">Now Serving</div>
               </div>
 
               {/* Data Rows */}
               {tableData.windows.slice(0, 4).map((window, index) => (
                 <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-4 py-3 text-sm text-gray-900 text-center">{window.windowName}</div>
-                  <div className="px-4 py-3 text-sm text-gray-900 font-medium text-center">
+                  <div className="px-4 py-3 text-base text-gray-900 font-medium text-center">{window.windowName}</div>
+                  <div className="px-4 py-3 text-base text-gray-900 font-bold text-center">
                     {window.currentServingNumber > 0 ? window.currentServingNumber : '-'}
                   </div>
                 </div>
@@ -310,8 +310,8 @@ const AdmissionsAdminDashboard = () => {
               {/* Fill remaining rows if less than 4 windows */}
               {Array.from({ length: Math.max(0, 4 - tableData.windows.length) }).map((_, index) => (
                 <div key={`empty-${index}`} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-4 py-3 text-sm text-gray-500 text-center">-</div>
-                  <div className="px-4 py-3 text-sm text-gray-500 text-center">-</div>
+                  <div className="px-4 py-3 text-base text-gray-400 text-center">-</div>
+                  <div className="px-4 py-3 text-base text-gray-400 text-center">-</div>
                 </div>
               ))}
             </div>
@@ -321,12 +321,12 @@ const AdmissionsAdminDashboard = () => {
         <div className="col-span-1 grid grid-rows-2 gap-3">
           {/* Row 1, Column 3 - Statistics Cards */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
-            <div className="text-3xl font-bold text-[#1F3463] mb-2">{tableData.todayVisits}</div>
-            <div className="text-sm text-gray-600 text-center">Visits Today</div>
+            <div className="text-4xl font-bold text-[#1F3463] mb-2">{tableData.todayVisits}</div>
+            <div className="text-base text-gray-600 text-center font-medium">Visits Today</div>
           </div>
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
-            <div className="text-3xl font-bold text-[#1F3463] mb-2">{tableData.averageTurnaroundTime}</div>
-            <div className="text-sm text-gray-600 text-center">Average Turnaround Time</div>
+            <div className="text-4xl font-bold text-[#1F3463] mb-2">{tableData.averageTurnaroundTime}</div>
+            <div className="text-base text-gray-600 text-center font-medium">Average Turnaround Time</div>
           </div>
         </div>
 
