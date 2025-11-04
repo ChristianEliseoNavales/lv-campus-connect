@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import KioskLayout from '../layouts/KioskLayout';
 import QueueLayout from '../layouts/QueueLayout';
 import { ResponsiveGrid } from '../ui';
 import { HiSparkles } from "react-icons/hi2";
 import HolographicKeyboard from '../ui/HolographicKeyboard';
+import PrintingOverlay from '../ui/PrintingOverlay';
 import { useSocket } from '../../contexts/SocketContext';
 import { useOptimizedFetch } from '../../hooks/useOptimizedFetch';
 import { useToast, ToastContainer } from '../ui/Toast';
@@ -2332,6 +2334,11 @@ const Queue = () => {
         onClose={() => setShowPrintErrorModal(false)}
         message={printErrorMessage}
       />
+
+      {/* Printing Animation Overlay */}
+      <AnimatePresence mode="wait">
+        {isPrinting && <PrintingOverlay key="printing-overlay" />}
+      </AnimatePresence>
     </>
   );
 };

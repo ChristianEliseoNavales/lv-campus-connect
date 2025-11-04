@@ -42,6 +42,19 @@ const Queue = () => {
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Debug: Log currentServingPerson changes
+  useEffect(() => {
+    if (windowData?.name === 'Priority') {
+      console.log('🔍 [RENDER] Priority Window - currentServingPerson state:', currentServingPerson);
+      console.log('🔍 [RENDER] Has idNumber?', currentServingPerson?.idNumber);
+      console.log('🔍 [RENDER] Condition check:', {
+        isWindowPriority: windowData?.name === 'Priority',
+        hasIdNumber: !!currentServingPerson?.idNumber,
+        shouldDisplay: windowData?.name === 'Priority' && currentServingPerson?.idNumber
+      });
+    }
+  }, [currentServingPerson, windowData]);
+
   // Fetch window data
   useEffect(() => {
     const fetchWindowData = async () => {
@@ -64,28 +77,27 @@ const Queue = () => {
     }
   }, [windowId]);
 
-  // Fetch queue data filtered by window's assigned service
+  // Fetch queue data filtered by window ID (ensures each window only sees its own queues)
   const fetchQueueData = async () => {
     try {
-      // Build URL with service filtering if window data is available
+      // Build URL with windowId filtering to ensure window-specific queue data
       let url = `${API_CONFIG.getAdminUrl()}/api/public/queue-data/registrar`;
 
-      if (windowData?.serviceIds && windowData.serviceIds.length > 0) {
-        // Get the first service ID for filtering (windows can have multiple services now)
-        const firstService = windowData.serviceIds[0];
-        const serviceId = typeof firstService === 'object'
-          ? firstService._id || firstService.id
-          : firstService;
-
-        if (serviceId) {
-          url += `?serviceId=${encodeURIComponent(serviceId)}`;
-          console.log('🔍 Fetching queues filtered by serviceId:', serviceId);
-          console.log('🪟 Window services:', windowData.serviceIds.map(s => s.name || s).join(', '));
-        }
+      if (windowData?.id) {
+        // Filter by windowId to ensure each window only sees queues assigned to it
+        url += `?windowId=${encodeURIComponent(windowData.id)}`;
+        console.log('🔍 Fetching queues filtered by windowId:', windowData.id);
+        console.log('🪟 Window name:', windowData.name);
       }
 
       const response = await fetch(url);
       const result = await response.json();
+
+      // DEBUG: Log the RAW response
+      console.log('🔍 [RAW RESPONSE] Full result object:', result);
+      console.log('🔍 [RAW RESPONSE] result.data:', result.data);
+      console.log('🔍 [RAW RESPONSE] result.data.currentlyServing:', result.data.currentlyServing);
+      console.log('🔍 [RAW RESPONSE] Has idNumber in response?', 'idNumber' in (result.data.currentlyServing || {}));
 
       if (result.success) {
         console.log('📊 Queue data received:', {
@@ -98,6 +110,18 @@ const Queue = () => {
         setQueueData(result.data.waitingQueue);
         setSkippedQueue(result.data.skippedQueue);
         setCurrentServingPerson(result.data.currentlyServing);
+
+        // Debug logging for Priority window ID Number
+        if (windowData?.name === 'Priority' && result.data.currentlyServing) {
+          console.log('🔍 [PRIORITY WINDOW] Current Serving Person:', result.data.currentlyServing);
+          console.log('🔍 [PRIORITY WINDOW] Has idNumber?', !!result.data.currentlyServing.idNumber);
+          console.log('🔍 [PRIORITY WINDOW] idNumber value:', result.data.currentlyServing.idNumber);
+          console.log('🔍 [PRIORITY WINDOW] Window name:', windowData.name);
+        }
+
+        // Debug logging for all windows
+        console.log('📊 [FETCH QUEUE DATA] Window:', windowData?.name);
+        console.log('📊 [FETCH QUEUE DATA] Currently Serving:', result.data.currentlyServing);
 
         if (result.data.currentlyServing) {
           setCurrentServing(result.data.currentlyServing.number);
@@ -158,8 +182,9 @@ const Queue = () => {
               setCurrentServing(data.data.queueNumber);
               setCurrentServingPerson({
                 name: data.data.customerName,
-                role: 'Customer',
-                purpose: windowData?.serviceName || 'General Service'
+                role: data.data.role || 'Customer',
+                purpose: windowData?.serviceName || 'General Service',
+                idNumber: data.data.idNumber || ''
               });
             }
             break;
@@ -174,8 +199,9 @@ const Queue = () => {
               setCurrentServing(data.data.queueNumber);
               setCurrentServingPerson({
                 name: data.data.customerName,
-                role: 'Customer',
-                purpose: windowData?.serviceName || 'General Service'
+                role: data.data.role || 'Customer',
+                purpose: windowData?.serviceName || 'General Service',
+                idNumber: data.data.idNumber || ''
               });
             }
             break;
@@ -186,8 +212,9 @@ const Queue = () => {
                 setCurrentServing(data.data.nextQueue.queueNumber);
                 setCurrentServingPerson({
                   name: data.data.nextQueue.customerName,
-                  role: 'Customer',
-                  purpose: windowData?.serviceName || 'General Service'
+                  role: data.data.nextQueue.role || 'Customer',
+                  purpose: windowData?.serviceName || 'General Service',
+                  idNumber: data.data.nextQueue.idNumber || ''
                 });
               } else {
                 setCurrentServing(0);
@@ -201,8 +228,9 @@ const Queue = () => {
               setCurrentServing(data.data.queueNumber);
               setCurrentServingPerson({
                 name: data.data.customerName,
-                role: 'Customer',
-                purpose: windowData?.serviceName || 'General Service'
+                role: data.data.role || 'Customer',
+                purpose: windowData?.serviceName || 'General Service',
+                idNumber: data.data.idNumber || ''
               });
             }
             break;
@@ -324,13 +352,8 @@ const Queue = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Update local state
-        setCurrentServing(result.data.queueNumber);
-        setCurrentServingPerson({
-          name: result.data.customerName,
-          role: 'Customer', // Will be updated when backend provides role
-          purpose: windowData.serviceName || 'General Service'
-        });
+        // Fetch updated queue data to get complete information including idNumber
+        await fetchQueueData();
 
         // Trigger text-to-speech announcement
         if (textToSpeechService.isReady()) {
@@ -771,6 +794,13 @@ const Queue = () => {
                   <p className="text-lg font-semibold text-gray-700">Purpose:</p>
                   <p className="text-xl font-bold text-[#1F3463]">{currentServingPerson.purpose}</p>
                 </div>
+                {/* Display ID Number for Priority windows */}
+                {windowData?.name === 'Priority' && currentServingPerson.idNumber && (
+                  <div className="text-center space-y-2">
+                    <p className="text-lg font-semibold text-gray-700">ID Number:</p>
+                    <p className="text-xl font-bold text-[#1F3463]">{currentServingPerson.idNumber}</p>
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-center">

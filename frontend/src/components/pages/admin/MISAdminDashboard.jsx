@@ -232,9 +232,9 @@ const MISAdminDashboard = () => {
 
         {/* Row 1, Column 2 - Kiosk Ratings Summary */}
         <div className="col-span-1">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full flex flex-col justify-between items-center text-center">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full flex flex-col justify-center items-center text-center">
             <div className="w-full">
-              <p className="text-sm font-medium text-gray-700 mb-4">Kiosk Total Ratings</p>
+              <p className="text-sm font-medium text-gray-700 mb-6">Kiosk Total Ratings</p>
               <p className="text-4xl font-bold text-[#1F3463] mb-6">{kioskRatings.totalRatings}</p>
 
               <p className="text-sm font-medium text-gray-700 mb-3">Average Rating</p>

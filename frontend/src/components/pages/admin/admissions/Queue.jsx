@@ -64,24 +64,17 @@ const Queue = () => {
     }
   }, [windowId]);
 
-  // Fetch queue data filtered by window's assigned service
+  // Fetch queue data filtered by window ID (ensures each window only sees its own queues)
   const fetchQueueData = async () => {
     try {
-      // Build URL with service filtering if window data is available
+      // Build URL with windowId filtering to ensure window-specific queue data
       let url = `${API_CONFIG.getAdminUrl()}/api/public/queue-data/admissions`;
 
-      if (windowData?.serviceIds && windowData.serviceIds.length > 0) {
-        // Get the first service ID for filtering (windows can have multiple services now)
-        const firstService = windowData.serviceIds[0];
-        const serviceId = typeof firstService === 'object'
-          ? firstService._id || firstService.id
-          : firstService;
-
-        if (serviceId) {
-          url += `?serviceId=${encodeURIComponent(serviceId)}`;
-          console.log('🔍 Fetching queues filtered by serviceId:', serviceId);
-          console.log('🪟 Window services:', windowData.serviceIds.map(s => s.name || s).join(', '));
-        }
+      if (windowData?.id) {
+        // Filter by windowId to ensure each window only sees queues assigned to it
+        url += `?windowId=${encodeURIComponent(windowData.id)}`;
+        console.log('🔍 Fetching queues filtered by windowId:', windowData.id);
+        console.log('🪟 Window name:', windowData.name);
       }
 
       const response = await fetch(url);
@@ -158,8 +151,9 @@ const Queue = () => {
               setCurrentServing(data.data.queueNumber);
               setCurrentServingPerson({
                 name: data.data.customerName,
-                role: 'Customer',
-                purpose: windowData?.serviceName || 'General Service'
+                role: data.data.role || 'Customer',
+                purpose: windowData?.serviceName || 'General Service',
+                idNumber: data.data.idNumber || ''
               });
             }
             break;
@@ -174,8 +168,9 @@ const Queue = () => {
               setCurrentServing(data.data.queueNumber);
               setCurrentServingPerson({
                 name: data.data.customerName,
-                role: 'Customer',
-                purpose: windowData?.serviceName || 'General Service'
+                role: data.data.role || 'Customer',
+                purpose: windowData?.serviceName || 'General Service',
+                idNumber: data.data.idNumber || ''
               });
             }
             break;
@@ -186,8 +181,9 @@ const Queue = () => {
                 setCurrentServing(data.data.nextQueue.queueNumber);
                 setCurrentServingPerson({
                   name: data.data.nextQueue.customerName,
-                  role: 'Customer',
-                  purpose: windowData?.serviceName || 'General Service'
+                  role: data.data.nextQueue.role || 'Customer',
+                  purpose: windowData?.serviceName || 'General Service',
+                  idNumber: data.data.nextQueue.idNumber || ''
                 });
               } else {
                 setCurrentServing(0);
@@ -201,8 +197,9 @@ const Queue = () => {
               setCurrentServing(data.data.queueNumber);
               setCurrentServingPerson({
                 name: data.data.customerName,
-                role: 'Customer',
-                purpose: windowData?.serviceName || 'General Service'
+                role: data.data.role || 'Customer',
+                purpose: windowData?.serviceName || 'General Service',
+                idNumber: data.data.idNumber || ''
               });
             }
             break;
@@ -324,13 +321,8 @@ const Queue = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Update local state
-        setCurrentServing(result.data.queueNumber);
-        setCurrentServingPerson({
-          name: result.data.customerName,
-          role: 'Customer', // Will be updated when backend provides role
-          purpose: windowData.serviceName || 'General Service'
-        });
+        // Fetch updated queue data to get complete information including idNumber
+        await fetchQueueData();
 
         // Trigger text-to-speech announcement
         if (textToSpeechService.isReady()) {
@@ -771,6 +763,13 @@ const Queue = () => {
                   <p className="text-lg font-semibold text-gray-700">Purpose:</p>
                   <p className="text-xl font-bold text-[#1F3463]">{currentServingPerson.purpose}</p>
                 </div>
+                {/* Display ID Number for Priority windows */}
+                {windowData?.name === 'Priority' && currentServingPerson.idNumber && (
+                  <div className="text-center space-y-2">
+                    <p className="text-lg font-semibold text-gray-700">ID Number:</p>
+                    <p className="text-xl font-bold text-[#1F3463]">{currentServingPerson.idNumber}</p>
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-center">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { HiHome } from "react-icons/hi2";
 import { BiSolidNotepad } from "react-icons/bi";
 import { FaLocationDot } from "react-icons/fa6";
@@ -16,6 +17,9 @@ const KioskLayout = ({ children, customFooter = null }) => {
 
   // Instruction mode state
   const [showInstructionMode, setShowInstructionMode] = useState(false);
+
+  // Remove timer-based loading - pages will handle their own loading states
+  // This prevents unnecessary loading animations when navigating between pages
 
   // Handle help button click to activate instruction mode
   const handleHelpButtonClick = () => {
@@ -55,7 +59,14 @@ const KioskLayout = ({ children, customFooter = null }) => {
 
       {/* Main Content - Full width utilization for 16:9 landscape */}
       <main className="flex-grow px-6 py-6 overflow-auto w-full">
-        {children}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          className="h-full w-full"
+        >
+          {children}
+        </motion.div>
       </main>
 
       {/* Circular Help Button - Fixed position overlay */}

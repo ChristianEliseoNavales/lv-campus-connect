@@ -12,7 +12,7 @@ const Toast = ({
   type = 'info', // 'success', 'error', 'warning', 'info'
   title,
   message,
-  duration = 5000, // Auto-dismiss duration in milliseconds (0 = no auto-dismiss)
+  duration = 3000, // Auto-dismiss duration in milliseconds (0 = no auto-dismiss)
   position = 'top-right', // 'top-right', 'top-center', 'top-left', 'bottom-right', 'bottom-center', 'bottom-left'
   showCloseButton = true,
   onClose,

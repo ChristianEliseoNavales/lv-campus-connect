@@ -445,7 +445,36 @@ router.get('/dashboard-table-data/:department', validateDepartment, async (req, 
 
       const averageTurnaroundMs = totalTurnaroundMs / completedQueues.length;
       const averageTurnaroundMins = Math.round(averageTurnaroundMs / (1000 * 60));
-      averageTurnaroundTime = `${averageTurnaroundMins} mins`;
+
+      // Format time in human-readable format
+      if (averageTurnaroundMins < 60) {
+        // Less than 60 minutes: display as "X mins"
+        averageTurnaroundTime = `${averageTurnaroundMins} ${averageTurnaroundMins === 1 ? 'min' : 'mins'}`;
+      } else if (averageTurnaroundMins < 1440) {
+        // Less than 24 hours: display as "X hrs and Y mins"
+        const hours = Math.floor(averageTurnaroundMins / 60);
+        const mins = averageTurnaroundMins % 60;
+        if (mins === 0) {
+          averageTurnaroundTime = `${hours} ${hours === 1 ? 'hr' : 'hrs'}`;
+        } else {
+          averageTurnaroundTime = `${hours} ${hours === 1 ? 'hr' : 'hrs'} and ${mins} ${mins === 1 ? 'min' : 'mins'}`;
+        }
+      } else {
+        // 24+ hours: display as "X days, Y hrs and Z mins"
+        const days = Math.floor(averageTurnaroundMins / 1440);
+        const remainingMins = averageTurnaroundMins % 1440;
+        const hours = Math.floor(remainingMins / 60);
+        const mins = remainingMins % 60;
+
+        let timeStr = `${days} ${days === 1 ? 'day' : 'days'}`;
+        if (hours > 0) {
+          timeStr += `, ${hours} ${hours === 1 ? 'hr' : 'hrs'}`;
+        }
+        if (mins > 0) {
+          timeStr += ` and ${mins} ${mins === 1 ? 'min' : 'mins'}`;
+        }
+        averageTurnaroundTime = timeStr;
+      }
     }
 
     res.json({

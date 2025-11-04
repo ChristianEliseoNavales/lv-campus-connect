@@ -5,6 +5,7 @@ import { KioskLayout } from '../layouts';
 import { FaLocationDot } from 'react-icons/fa6';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../../config/api';
+import NavigationLoadingOverlay from '../ui/NavigationLoadingOverlay';
 
 const Directory = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -511,9 +512,11 @@ const Directory = () => {
               </div>
 
               {/* Responsive Grid Container - Natural flow positioning */}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 w-full">
                 {loading ? (
-                  <div className="text-center text-gray-500">Loading offices...</div>
+                  <div className="h-64 flex items-center justify-center">
+                    <NavigationLoadingOverlay />
+                  </div>
                 ) : (
                   <ResponsiveGrid
                     items={offices}

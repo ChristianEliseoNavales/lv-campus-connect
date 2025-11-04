@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { MdClose } from 'react-icons/md';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../../config/api';
+import NavigationLoadingOverlay from '../ui/NavigationLoadingOverlay';
 
 const Bulletin = () => {
   const [currentPage, setCurrentPage] = useState(0);
@@ -125,11 +126,11 @@ const Bulletin = () => {
   const isPrevDisabled = currentPage === 0;
   const isNextDisabled = currentPage === totalPages - 1;
 
-  // Loading state
+  // Loading state - Show NavigationLoadingOverlay with consistent container
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-2xl text-gray-500">Loading bulletins...</div>
+        <NavigationLoadingOverlay />
       </div>
     );
   }

@@ -286,21 +286,44 @@ router.post('/queue', async (req, res) => {
 
     console.log('🔍 Found service:', serviceObj.name, serviceObj._id);
 
-    // Find window assigned to this service
-    const assignedWindow = await Window.findOne({
-      office: office,
-      isOpen: true, // Changed from isActive to isOpen to match Window model
-      serviceIds: serviceObj._id
-    }).populate('serviceIds', 'name');
+    // Find window assigned to this queue
+    let assignedWindow;
 
-    if (!assignedWindow) {
-      console.error('❌ No window assigned to service:', serviceObj.name);
-      return res.status(503).json({
-        error: 'Service is currently unavailable - no window assigned'
-      });
+    // Priority queues ALWAYS go to the Priority Window
+    if (isPriority) {
+      console.log('⭐ Priority queue detected - assigning to Priority Window');
+      assignedWindow = await Window.findOne({
+        office: office,
+        isOpen: true,
+        name: 'Priority'
+      }).populate('serviceIds', 'name');
+
+      if (!assignedWindow) {
+        console.error('❌ Priority Window not found or not open');
+        return res.status(503).json({
+          error: 'Priority Window is currently unavailable'
+        });
+      }
+      console.log('✅ Assigned to Priority Window:', assignedWindow.name);
+    } else {
+      // Non-priority queues use service-based window assignment
+      // IMPORTANT: Exclude Priority Window from non-priority queue assignment
+      // Priority Window should ONLY receive queues with isPriority=true
+      assignedWindow = await Window.findOne({
+        office: office,
+        isOpen: true,
+        serviceIds: serviceObj._id,
+        name: { $ne: 'Priority' } // Exclude Priority Window
+      }).populate('serviceIds', 'name');
+
+      if (!assignedWindow) {
+        console.error('❌ No window assigned to service:', serviceObj.name);
+        return res.status(503).json({
+          error: 'Service is currently unavailable - no window assigned'
+        });
+      }
+      console.log('🪟 Assigned to window:', assignedWindow.name);
     }
-
-    console.log('🪟 Assigned to window:', assignedWindow.name);
 
     // Create visitation form - skip for Enroll service
     let visitationForm = null;
@@ -524,14 +547,28 @@ router.get('/queue-data/:department', async (req, res) => {
     let currentServingData = null;
     if (currentlyServing) {
       const currentService = await Service.findById(currentlyServing.serviceId);
+
+      // Debug logging for idNumber
+      console.log('🔍 [BACKEND] currentlyServing object:', {
+        queueNumber: currentlyServing.queueNumber,
+        hasVisitationFormId: !!currentlyServing.visitationFormId,
+        visitationFormId: currentlyServing.visitationFormId?._id,
+        idNumberFromVisitationForm: currentlyServing.visitationFormId?.idNumber,
+        idNumberDirect: currentlyServing.idNumber,
+        isPriority: currentlyServing.isPriority
+      });
+
       currentServingData = {
         number: currentlyServing.queueNumber,
         name: currentlyServing.visitationFormId?.customerName || 'Unknown',
         role: currentlyServing.role,
         purpose: currentService ? currentService.name : 'Unknown Service',
         windowId: currentlyServing.windowId,
-        serviceId: currentlyServing.serviceId
+        serviceId: currentlyServing.serviceId,
+        idNumber: currentlyServing.visitationFormId?.idNumber || currentlyServing.idNumber || ''
       };
+
+      console.log('🔍 [BACKEND] currentServingData being sent:', currentServingData);
     }
 
     console.log('📊 Filtered queue results:', {
@@ -800,13 +837,39 @@ router.post('/queue/next', async (req, res) => {
       });
     }
 
-    // Find the next waiting queue for any of this window's services
+    // Find the next waiting queue for this specific window
     const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
-    const nextQueue = await Queue.findOne({
+
+    // Priority Window should ONLY serve priority queues (isPriority=true)
+    // Regular windows should ONLY serve non-priority queues (isPriority=false)
+    const isPriorityWindow = window.name === 'Priority';
+
+    console.log('🔍 [NEXT QUEUE] Window details:', {
+      windowId,
+      windowName: window.name,
+      isPriorityWindow,
+      serviceIds
+    });
+
+    // IMPORTANT: Filter by windowId to ensure each window only calls its own assigned queues
+    const queryFilter = {
       office: window.office,
+      windowId: windowId, // Only get queues assigned to THIS window
       serviceId: { $in: serviceIds },
-      status: 'waiting'
-    }).sort({ queuedAt: 1 }).populate('visitationFormId');
+      status: 'waiting',
+      isPriority: isPriorityWindow // Priority Window gets isPriority=true, others get isPriority=false
+    };
+
+    console.log('🔍 [NEXT QUEUE] Query filter:', JSON.stringify(queryFilter, null, 2));
+
+    const nextQueue = await Queue.findOne(queryFilter).sort({ queuedAt: 1 }).populate('visitationFormId');
+
+    console.log('🔍 [NEXT QUEUE] Found queue:', nextQueue ? {
+      queueNumber: nextQueue.queueNumber,
+      windowId: nextQueue.windowId,
+      isPriority: nextQueue.isPriority,
+      serviceId: nextQueue.serviceId
+    } : 'No queue found');
 
     if (!nextQueue) {
       await AuditService.logQueue({
@@ -874,7 +937,9 @@ router.post('/queue/next', async (req, res) => {
       data: {
         queueNumber: nextQueue.queueNumber,
         customerName: nextQueue.visitationFormId?.customerName,
-        service: nextQueue.serviceId
+        service: nextQueue.serviceId,
+        role: nextQueue.role,
+        idNumber: nextQueue.visitationFormId?.idNumber || nextQueue.idNumber || ''
       }
     });
 
@@ -1127,7 +1192,9 @@ router.post('/queue/previous', async (req, res) => {
       windowId,
       data: {
         queueNumber: previousQueue.queueNumber,
-        customerName: previousQueue.visitationFormId?.customerName
+        customerName: previousQueue.visitationFormId?.customerName,
+        role: previousQueue.role,
+        idNumber: previousQueue.visitationFormId?.idNumber || previousQueue.idNumber || ''
       }
     });
 
@@ -1249,7 +1316,9 @@ router.post('/queue/transfer', async (req, res) => {
         toWindowId,
         fromWindowName: fromWindow.name,
         toWindowName: toWindow.name,
-        customerName: currentQueue.visitationFormId?.customerName
+        customerName: currentQueue.visitationFormId?.customerName,
+        role: currentQueue.role,
+        idNumber: currentQueue.visitationFormId?.idNumber || currentQueue.idNumber || ''
       }
     });
 
@@ -1326,12 +1395,20 @@ router.post('/queue/skip', async (req, res) => {
     currentQueue.skippedAt = new Date();
     await currentQueue.save();
 
-    // Find and call next queue for any of this window's services
+    // Find and call next queue for this specific window
     const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
+
+    // Priority Window should ONLY serve priority queues (isPriority=true)
+    // Regular windows should ONLY serve non-priority queues (isPriority=false)
+    const isPriorityWindow = window.name === 'Priority';
+
+    // IMPORTANT: Filter by windowId to ensure each window only calls its own assigned queues
     const nextQueue = await Queue.findOne({
       office: window.office,
+      windowId: windowId, // Only get queues assigned to THIS window
       serviceId: { $in: serviceIds },
-      status: 'waiting'
+      status: 'waiting',
+      isPriority: isPriorityWindow // Priority Window gets isPriority=true, others get isPriority=false
     }).sort({ queuedAt: 1 }).populate('visitationFormId');
 
     let nextQueueData = null;
@@ -1339,7 +1416,9 @@ router.post('/queue/skip', async (req, res) => {
       await nextQueue.markAsServing(windowId, adminId);
       nextQueueData = {
         queueNumber: nextQueue.queueNumber,
-        customerName: nextQueue.visitationFormId?.customerName
+        customerName: nextQueue.visitationFormId?.customerName,
+        role: nextQueue.role,
+        idNumber: nextQueue.visitationFormId?.idNumber || nextQueue.idNumber || ''
       };
     }
 
