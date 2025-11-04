@@ -181,12 +181,6 @@ const PortalQueue = () => {
             <div className="text-6xl mb-4">❌</div>
             <h2 className="text-2xl font-bold text-[#1F3463] mb-4">Queue Not Found</h2>
             <p className="text-lg text-gray-600 mb-6">{error}</p>
-            <button
-              onClick={() => window.location.href = '/'}
-              className="px-6 py-3 bg-[#1F3463] text-white rounded-lg font-semibold hover:bg-[#1A2E56] transition-colors"
-            >
-              Return to Home
-            </button>
           </div>
         </main>
       </div>
