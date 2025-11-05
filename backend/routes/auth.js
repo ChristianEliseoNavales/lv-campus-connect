@@ -1,0 +1,363 @@
+const express = require('express');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const rateLimit = require('express-rate-limit');
+const { User } = require('../models');
+const { AuditService } = require('../middleware/auditMiddleware');
+
+// Initialize Google OAuth2 Client
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Rate limiting for authentication endpoints
+// 5 attempts per 15 minutes per IP address
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 5 : 100, // Strict in production, relaxed in development
+  message: {
+    error: 'Too many authentication attempts',
+    message: 'Please try again after 15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * POST /api/auth/google
+ * Verify Google OAuth token and authenticate user
+ * 
+ * Request body:
+ * {
+ *   credential: "google_id_token_string"
+ * }
+ * 
+ * Response:
+ * {
+ *   success: true,
+ *   token: "jwt_token",
+ *   user: { id, email, name, role, office, pageAccess, ... }
+ * }
+ */
+router.post('/google', authLimiter, async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      await AuditService.logAuth({
+        action: 'LOGIN_FAILED',
+        email: 'unknown',
+        req,
+        success: false,
+        errorMessage: 'No credential provided'
+      });
+
+      return res.status(400).json({
+        success: false,
+        error: 'No credential provided'
+      });
+    }
+
+    // Verify Google ID token
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch (verifyError) {
+      console.error('Google token verification failed:', verifyError);
+      
+      await AuditService.logAuth({
+        action: 'LOGIN_FAILED',
+        email: 'unknown',
+        req,
+        success: false,
+        errorMessage: 'Invalid Google token'
+      });
+
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid Google token',
+        message: 'Failed to verify your Google account. Please try again.'
+      });
+    }
+
+    // Extract user information from verified token
+    const payload = ticket.getPayload();
+    const { email, name, sub: googleId, picture } = payload;
+
+    console.log('✅ Google token verified for:', email);
+
+    // Check if user exists in database
+    let user = await User.findOne({ email }).select('-password');
+
+    if (!user) {
+      console.log('❌ User not found in database:', email);
+      
+      await AuditService.logAuth({
+        action: 'LOGIN_FAILED',
+        email,
+        req,
+        success: false,
+        errorMessage: 'User not registered in system'
+      });
+
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied',
+        message: 'Your email is not registered in the system. Please contact the administrator.'
+      });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      console.log('❌ User account is inactive:', email);
+      
+      await AuditService.logAuth({
+        action: 'LOGIN_FAILED',
+        email,
+        req,
+        success: false,
+        errorMessage: 'User account is inactive'
+      });
+
+      return res.status(403).json({
+        success: false,
+        error: 'Account inactive',
+        message: 'Your account has been deactivated. Please contact the administrator.'
+      });
+    }
+
+    // Update user's Google ID and profile picture if not set
+    let userUpdated = false;
+    if (!user.googleId) {
+      user.googleId = googleId;
+      userUpdated = true;
+    }
+    if (picture && (!user.profilePicture || user.profilePicture !== picture)) {
+      user.profilePicture = picture;
+      userUpdated = true;
+    }
+    
+    // Update last login timestamp
+    user.lastLogin = new Date();
+    userUpdated = true;
+
+    if (userUpdated) {
+      await user.save();
+    }
+
+    // Generate JWT token
+    const jwtPayload = {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      office: user.office,
+      pageAccess: user.pageAccess || []
+    };
+
+    const token = jwt.sign(
+      jwtPayload,
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    // Log successful authentication
+    await AuditService.logAuth({
+      action: 'LOGIN',
+      userId: user._id,
+      email: user.email,
+      req,
+      success: true,
+      metadata: {
+        role: user.role,
+        office: user.office,
+        loginMethod: 'google_sso'
+      }
+    });
+
+    console.log('✅ User authenticated successfully:', email);
+
+    // Return user data (excluding sensitive fields)
+    const userData = {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      office: user.office,
+      department: user.office, // Alias for compatibility
+      pageAccess: user.pageAccess || [],
+      permissions: user.permissions || {},
+      profilePicture: user.profilePicture,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin
+    };
+
+    res.json({
+      success: true,
+      token,
+      user: userData
+    });
+
+  } catch (error) {
+    console.error('Authentication error:', error);
+
+    await AuditService.logAuth({
+      action: 'LOGIN_FAILED',
+      email: req.body.email || 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Authentication failed',
+      message: 'An error occurred during authentication. Please try again.'
+    });
+  }
+});
+
+/**
+ * GET /api/auth/verify
+ * Verify JWT token and return user data
+ * 
+ * Headers:
+ * Authorization: Bearer <jwt_token>
+ * 
+ * Response:
+ * {
+ *   success: true,
+ *   user: { id, email, name, role, office, pageAccess, ... }
+ * }
+ */
+router.get('/verify', async (req, res) => {
+  try {
+    // Extract token from Authorization header
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'No token provided'
+      });
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Verify JWT token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      console.error('JWT verification failed:', jwtError.message);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid or expired token',
+        message: 'Your session has expired. Please sign in again.'
+      });
+    }
+
+    // Fetch fresh user data from database
+    const user = await User.findById(decoded.id).select('-password -googleId');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        error: 'Account inactive',
+        message: 'Your account has been deactivated.'
+      });
+    }
+
+    // Return user data
+    const userData = {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      office: user.office,
+      department: user.office, // Alias for compatibility
+      pageAccess: user.pageAccess || [],
+      permissions: user.permissions || {},
+      profilePicture: user.profilePicture,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin
+    };
+
+    res.json({
+      success: true,
+      user: userData
+    });
+
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Verification failed',
+      message: 'An error occurred during token verification.'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/logout
+ * Logout user (mainly for audit trail)
+ * 
+ * Headers:
+ * Authorization: Bearer <jwt_token>
+ * 
+ * Response:
+ * {
+ *   success: true,
+ *   message: "Logged out successfully"
+ * }
+ */
+router.post('/logout', async (req, res) => {
+  try {
+    // Extract token to get user info for audit trail
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Log logout event
+        await AuditService.logAuth({
+          action: 'LOGOUT',
+          userId: decoded.id,
+          email: decoded.email,
+          req,
+          success: true
+        });
+      } catch (jwtError) {
+        // Token invalid or expired, but still allow logout
+        console.log('Logout with invalid/expired token');
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Still return success even if audit logging fails
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  }
+});
+
+module.exports = router;
+

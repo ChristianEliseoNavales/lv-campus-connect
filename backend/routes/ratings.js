@@ -3,34 +3,12 @@ const router = express.Router();
 const Rating = require('../models/Rating');
 const Queue = require('../models/Queue');
 const { query, validationResult } = require('express-validator');
+const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
 
-// Middleware to check if user is MIS Super Admin
-const requireSuperAdmin = (req, res, next) => {
-  // Check if DEV_BYPASS_AUTH is enabled
-  if (process.env.DEV_BYPASS_AUTH === 'true') {
-    console.log('🔓 DEV_BYPASS_AUTH: Bypassing authentication for ratings routes');
-    req.user = {
-      _id: 'dev-user-id',
-      role: 'super_admin',
-      email: 'dev@test.com',
-      name: 'Development User',
-      office: 'MIS'
-    };
-    return next();
-  }
-
-  // In production, check actual user role
-  if (!req.user || req.user.role !== 'super_admin') {
-    return res.status(403).json({
-      error: 'Access denied. MIS Super Admin role required.'
-    });
-  }
-
-  next();
-};
+// Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
 // GET /api/ratings - Get ratings with pagination, filtering, and search
-router.get('/', requireSuperAdmin, [
+router.get('/', verifyToken, requireSuperAdmin, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   query('search').optional().isString().withMessage('Search must be a string'),

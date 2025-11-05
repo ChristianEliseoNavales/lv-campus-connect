@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
+const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -41,33 +42,10 @@ const upload = multer({
   }
 });
 
-// Middleware to check if user is MIS Super Admin
-const requireSuperAdmin = (req, res, next) => {
-  // Check if DEV_BYPASS_AUTH is enabled
-  if (process.env.DEV_BYPASS_AUTH === 'true') {
-    console.log('🔓 DEV_BYPASS_AUTH: Bypassing authentication for bulletin routes');
-    req.user = {
-      _id: 'dev-user-id',
-      role: 'super_admin',
-      email: 'dev@test.com',
-      name: 'Development User',
-      office: 'MIS'
-    };
-    return next();
-  }
-
-  // In production, check actual user role
-  if (!req.user || req.user.role !== 'super_admin') {
-    return res.status(403).json({
-      error: 'Access denied. MIS Super Admin role required.'
-    });
-  }
-
-  next();
-};
+// Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
 // POST /api/bulletin/upload - Upload bulletin file to Cloudinary
-router.post('/upload', requireSuperAdmin, upload.single('file'), async (req, res) => {
+router.post('/upload', verifyToken, requireSuperAdmin, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({

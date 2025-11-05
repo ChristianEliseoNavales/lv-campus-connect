@@ -2,31 +2,9 @@ const express = require('express');
 const router = express.Router();
 const AuditTrail = require('../models/AuditTrail');
 const { body, query, validationResult } = require('express-validator');
+const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
 
-// Middleware to check if user is MIS Super Admin
-const requireSuperAdmin = (req, res, next) => {
-  // Check if DEV_BYPASS_AUTH is enabled
-  if (process.env.DEV_BYPASS_AUTH === 'true') {
-    console.log('🔓 DEV_BYPASS_AUTH: Bypassing authentication for audit routes');
-    req.user = {
-      _id: 'dev-user-id',
-      role: 'super_admin',
-      email: 'dev@test.com',
-      name: 'Development User',
-      office: 'MIS'
-    };
-    return next();
-  }
-
-  // In production, check actual user role
-  if (!req.user || req.user.role !== 'super_admin') {
-    return res.status(403).json({
-      error: 'Access denied. MIS Super Admin role required.'
-    });
-  }
-
-  next();
-};
+// Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
 // Validation middleware for audit log creation
 const validateAuditLog = [
@@ -57,7 +35,7 @@ const validateAuditLog = [
 ];
 
 // GET /api/audit - Get audit trail with pagination, filtering, and search
-router.get('/', requireSuperAdmin, [
+router.get('/', verifyToken, requireSuperAdmin, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   query('search').optional().isString().withMessage('Search must be a string'),
@@ -222,7 +200,7 @@ router.post('/', validateAuditLog, async (req, res) => {
 });
 
 // GET /api/audit/stats - Get audit trail statistics
-router.get('/stats', requireSuperAdmin, [
+router.get('/stats', verifyToken, requireSuperAdmin, [
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date')
 ], async (req, res) => {
@@ -252,7 +230,7 @@ router.get('/stats', requireSuperAdmin, [
 });
 
 // GET /api/audit/user/:userId - Get audit trail for specific user
-router.get('/user/:userId', requireSuperAdmin, [
+router.get('/user/:userId', verifyToken, requireSuperAdmin, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100')
 ], async (req, res) => {

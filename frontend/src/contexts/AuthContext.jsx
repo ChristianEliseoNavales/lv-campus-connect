@@ -1,14 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import useGoogleAuth from '../hooks/useGoogleAuth';
 
-// ============================================================================
-// DEVELOPMENT BYPASS FLAG - TEMPORARILY DISABLE AUTHENTICATION
-// ============================================================================
-// Set to true to bypass authentication and auto-login as super admin
-// WARNING: Set back to false before deploying to production!
-const DEV_BYPASS_AUTH = true;
-// ============================================================================
-
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -30,23 +22,6 @@ export const AuthProvider = ({ children }) => {
   // Check for existing session on mount
   useEffect(() => {
     const checkExistingSession = async () => {
-      // DEVELOPMENT BYPASS: Auto-authenticate with mock super admin user
-      if (DEV_BYPASS_AUTH) {
-        console.warn('⚠️ DEVELOPMENT MODE: Auto-authenticated as Super Admin (authentication bypassed)');
-        const mockUser = {
-          id: 'dev-bypass-user',
-          email: 'dev@bypass.local',
-          name: 'Development Super Admin',
-          role: 'super_admin',
-          department: 'mis',
-          isActive: true
-        };
-        setUser(mockUser);
-        setIsAuthenticated(true);
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const token = localStorage.getItem('authToken');
         const userData = localStorage.getItem('userData');
@@ -54,8 +29,11 @@ export const AuthProvider = ({ children }) => {
         if (token && userData) {
           const parsedUser = JSON.parse(userData);
 
+          // Get backend URL from environment
+          const backendUrl = import.meta.env.VITE_CLOUD_BACKEND_URL || 'http://localhost:3001';
+
           // Verify token with backend
-          const response = await fetch('http://localhost:3001/api/auth/verify', {
+          const response = await fetch(`${backendUrl}/api/auth/verify`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -65,8 +43,14 @@ export const AuthProvider = ({ children }) => {
 
           if (response.ok) {
             const data = await response.json();
-            setUser(data.user);
-            setIsAuthenticated(true);
+            if (data.success && data.user) {
+              setUser(data.user);
+              setIsAuthenticated(true);
+            } else {
+              // Invalid response, clear storage
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('userData');
+            }
           } else {
             // Token is invalid, clear storage
             localStorage.removeItem('authToken');
@@ -92,8 +76,11 @@ export const AuthProvider = ({ children }) => {
 
       const credential = await signInWithGoogle();
 
+      // Get backend URL from environment
+      const backendUrl = import.meta.env.VITE_CLOUD_BACKEND_URL || 'http://localhost:3001';
+
       // Send credential to backend for verification
-      const response = await fetch('http://localhost:3001/api/auth/google', {
+      const response = await fetch(`${backendUrl}/api/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -113,7 +100,7 @@ export const AuthProvider = ({ children }) => {
 
         return { success: true, user: data.user };
       } else {
-        throw new Error(data.error || 'Authentication failed');
+        throw new Error(data.message || data.error || 'Authentication failed');
       }
     } catch (error) {
       console.error('Sign in error:', error);
@@ -124,80 +111,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signInWithCredentials = async (email, password) => {
-    try {
-      setIsLoading(true);
-      setError(null);
 
-      // Test credentials for development
-      const testCredentials = {
-        'admin@test.edu': { password: 'Admin123!', role: 'super_admin', department: 'mis', name: 'System Administrator' },
-        'registrar@test.edu': { password: 'Registrar123!', role: 'registrar_admin', department: 'registrar', name: 'Registrar Admin' },
-        'admissions@test.edu': { password: 'Admissions123!', role: 'admissions_admin', department: 'admissions', name: 'Admissions Admin' }
-      };
-
-      try {
-        // Try to connect to backend first
-        const response = await fetch('http://localhost:3001/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          setUser(data.user);
-          setIsAuthenticated(true);
-
-          // Store token and user data
-          localStorage.setItem('authToken', data.token);
-          localStorage.setItem('userData', JSON.stringify(data.user));
-
-          return { success: true, user: data.user };
-        } else {
-          throw new Error(data.error || 'Invalid credentials');
-        }
-      } catch (fetchError) {
-        console.warn('Backend not available, using test credentials:', fetchError.message);
-
-        // Fallback to test credentials if backend is not available
-        const testUser = testCredentials[email];
-
-        if (testUser && testUser.password === password) {
-          const user = {
-            id: Date.now(),
-            email,
-            name: testUser.name,
-            role: testUser.role,
-            department: testUser.department,
-            isActive: true
-          };
-
-          const token = `test-token-${Date.now()}`;
-
-          setUser(user);
-          setIsAuthenticated(true);
-
-          // Store token and user data
-          localStorage.setItem('authToken', token);
-          localStorage.setItem('userData', JSON.stringify(user));
-
-          return { success: true, user };
-        } else {
-          throw new Error('Invalid credentials');
-        }
-      }
-    } catch (error) {
-      console.error('Manual sign in error:', error);
-      setError(error.message);
-      return { success: false, error: error.message };
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const signOut = async () => {
     try {
@@ -234,23 +148,28 @@ export const AuthProvider = ({ children }) => {
   };
 
   const canAccessRoute = (route) => {
-    // DEVELOPMENT BYPASS: Allow all routes when bypass is enabled
-    if (DEV_BYPASS_AUTH) {
-      return true;
-    }
-
     if (!isAuthenticated || !user) return false;
 
     // MIS Super Admin has access to everything
     if (user.role === 'super_admin') return true;
 
-    // Role-specific route access
-    if (route.startsWith('/admin/registrar') && user.role === 'registrar_admin') return true;
-    if (route.startsWith('/admin/admissions') && user.role === 'admissions_admin') return true;
-    if (route.startsWith('/admin/seniormanagement') && user.role === 'senior_management_admin') return true;
-    if (route.startsWith('/admin/mis') && user.role === 'super_admin') return true;
+    // Check pageAccess array for specific route permissions
+    const pageAccess = user.pageAccess || [];
 
-    return false;
+    // Check for exact match or wildcard access
+    const hasAccess = pageAccess.some(page => {
+      if (page === '*') return true; // Wildcard access
+      if (page === route) return true; // Exact match
+
+      // Check if the route starts with the allowed page (for parent routes)
+      // e.g., if user has access to '/admin/registrar', they can access '/admin/registrar/queue'
+      if (route.startsWith(page + '/')) return true;
+      if (route.startsWith(page)) return true;
+
+      return false;
+    });
+
+    return hasAccess;
   };
 
   const value = {
@@ -260,7 +179,6 @@ export const AuthProvider = ({ children }) => {
     error,
     isGoogleLoaded,
     signIn,
-    signInWithCredentials,
     signOut,
     hasRole,
     hasAnyRole,

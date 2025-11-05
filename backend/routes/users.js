@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auditCRUD, AuditService } = require('../middleware/auditMiddleware');
+const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
 
 // Validation middleware
 const validateUser = [
@@ -61,7 +62,7 @@ const validateUserUpdate = [
 ];
 
 // GET /api/users - Fetch all users
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, requireSuperAdmin, async (req, res) => {
   try {
     const { role, department, isActive, search } = req.query;
     
@@ -108,7 +109,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/users/by-role/:role - Fetch users by specific role
-router.get('/by-role/:role', async (req, res) => {
+router.get('/by-role/:role', verifyToken, requireSuperAdmin, async (req, res) => {
   try {
     const { role } = req.params;
     
@@ -139,7 +140,7 @@ router.get('/by-role/:role', async (req, res) => {
 });
 
 // GET /api/users/:id - Fetch single user by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', verifyToken, requireSuperAdmin, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select('-password -googleId')
@@ -162,7 +163,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/users - Create new user
-router.post('/', validateUser, async (req, res) => {
+router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);
@@ -288,7 +289,7 @@ router.post('/', validateUser, async (req, res) => {
 });
 
 // PUT /api/users/:id - Update user
-router.put('/:id', validateUserUpdate, async (req, res) => {
+router.put('/:id', verifyToken, requireSuperAdmin, validateUserUpdate, async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);
@@ -417,7 +418,7 @@ router.put('/:id', validateUserUpdate, async (req, res) => {
 });
 
 // DELETE /api/users/:id - Delete user (soft delete by setting isActive to false)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, requireSuperAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 

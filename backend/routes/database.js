@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult, query } = require('express-validator');
 const { AuditService } = require('../middleware/auditMiddleware');
+const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
 
 // Import all models
 const {
@@ -33,30 +34,7 @@ const modelMap = {
   chart: Chart
 };
 
-// Middleware to check if user is MIS Super Admin
-const requireSuperAdmin = (req, res, next) => {
-  // Check if DEV_BYPASS_AUTH is enabled
-  if (process.env.DEV_BYPASS_AUTH === 'true') {
-    console.log('🔓 DEV_BYPASS_AUTH: Bypassing authentication for database routes');
-    req.user = {
-      _id: 'dev-user-id',
-      role: 'super_admin',
-      email: 'dev@test.com',
-      name: 'Development User',
-      office: 'MIS'
-    };
-    return next();
-  }
-
-  // In production, check actual user role
-  if (!req.user || req.user.role !== 'super_admin') {
-    return res.status(403).json({
-      error: 'Access denied. MIS Super Admin role required.'
-    });
-  }
-
-  next();
-};
+// Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
 // Middleware to get model from params
 const getModel = (req, res, next) => {
@@ -101,7 +79,8 @@ const buildSearchQuery = (searchTerm, modelName) => {
 };
 
 // GET /api/database/:model - Get all records for a model with pagination and search
-router.get('/:model', 
+router.get('/:model',
+  verifyToken,
   requireSuperAdmin,
   getModel,
   [
@@ -167,7 +146,8 @@ router.get('/:model',
 );
 
 // GET /api/database/:model/:id - Get single record by ID
-router.get('/:model/:id', 
+router.get('/:model/:id',
+  verifyToken,
   requireSuperAdmin,
   getModel,
   async (req, res) => {
@@ -194,6 +174,7 @@ router.get('/:model/:id',
 
 // POST /api/database/:model - Create new record
 router.post('/:model',
+  verifyToken,
   requireSuperAdmin,
   getModel,
   async (req, res) => {
@@ -271,6 +252,7 @@ router.post('/:model',
 
 // PUT /api/database/:model/:id - Update record by ID
 router.put('/:model/:id',
+  verifyToken,
   requireSuperAdmin,
   getModel,
   async (req, res) => {
@@ -372,6 +354,7 @@ router.put('/:model/:id',
 
 // DELETE /api/database/:model/delete-all - Delete all records for a model (MUST BE BEFORE /:model/:id)
 router.delete('/:model/delete-all',
+  verifyToken,
   requireSuperAdmin,
   getModel,
   async (req, res) => {
@@ -421,6 +404,7 @@ router.delete('/:model/delete-all',
 
 // DELETE /api/database/:model/:id - Delete single record by ID
 router.delete('/:model/:id',
+  verifyToken,
   requireSuperAdmin,
   getModel,
   async (req, res) => {

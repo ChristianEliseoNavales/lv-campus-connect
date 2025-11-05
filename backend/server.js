@@ -78,6 +78,7 @@ io.on('connection', (socket) => {
 app.set('io', io);
 
 // Import routes
+const authRoutes = require('./routes/auth');
 const settingsRoutes = require('./routes/settings');
 const servicesRoutes = require('./routes/services');
 const windowsRoutes = require('./routes/windows');
@@ -93,6 +94,7 @@ const chartsRoutes = require('./routes/charts');
 const printerRoutes = require('./routes/printer');
 
 // Use routes
+app.use('/api/auth', authRoutes); // Authentication routes (no auth required)
 app.use('/api/settings', settingsRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/windows', windowsRoutes);
