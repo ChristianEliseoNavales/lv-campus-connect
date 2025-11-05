@@ -62,14 +62,22 @@ class AuditService {
       const requestMethod = req?.method || 'unknown';
       const requestUrl = req?.originalUrl || req?.url || 'unknown';
 
-      // Determine office based on user role
-      const officeMap = {
-        'super_admin': 'MIS',
-        'registrar_admin': 'Registrar',
-        'admissions_admin': 'Admissions',
-        'senior_management_admin': 'Senior Management'
-      };
-      const office = officeMap[userRole] || 'Unknown';
+      // Determine office based on user role (supports both old and new role formats)
+      let office = user?.office || 'Unknown';
+
+      // If office is not set, try to extract from combined role format
+      if (office === 'Unknown' && userRole) {
+        // New format: "MIS Super Admin", "Registrar Admin", etc.
+        if (userRole.includes('MIS')) office = 'MIS';
+        else if (userRole.includes('Registrar')) office = 'Registrar';
+        else if (userRole.includes('Admissions')) office = 'Admissions';
+        else if (userRole.includes('Senior Management')) office = 'Senior Management';
+        // Old format fallback
+        else if (userRole === 'super_admin') office = 'MIS';
+        else if (userRole === 'registrar_admin') office = 'Registrar';
+        else if (userRole === 'admissions_admin') office = 'Admissions';
+        else if (userRole === 'senior_management_admin') office = 'Senior Management';
+      }
       
       // Create audit trail entry
       const auditData = {
@@ -122,10 +130,20 @@ class AuditService {
   
   /**
    * Log authentication events
+   * Accepts either a user object OR userId/email separately
    */
-  static async logAuth({ user, action, req, success, errorMessage = null }) {
+  static async logAuth({ user, userId, email, action, req, success, errorMessage = null, metadata = {} }) {
+    // Handle both user object and separate userId/email parameters
+    const userObj = user || {
+      _id: userId,
+      id: userId,
+      email: email || 'unknown@system.local',
+      name: email || 'Unknown User',
+      role: metadata?.role || 'unknown'
+    };
+
     return this.logAction({
-      user,
+      user: userObj,
       action,
       actionDescription: `User ${action.toLowerCase()}`,
       resourceType: 'System',
@@ -134,7 +152,8 @@ class AuditService {
       success,
       errorMessage,
       severity: success ? 'LOW' : 'MEDIUM',
-      tags: ['authentication']
+      tags: ['authentication'],
+      metadata
     });
   }
   

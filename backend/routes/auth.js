@@ -14,7 +14,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // 5 attempts per 15 minutes per IP address
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 5 : 100, // Strict in production, relaxed in development
+  max: process.env.NODE_ENV === 'production' ? 50 : 100, // Temporarily increased for testing, relaxed in development
   message: {
     error: 'Too many authentication attempts',
     message: 'Please try again after 15 minutes'
