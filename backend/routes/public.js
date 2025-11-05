@@ -852,7 +852,8 @@ router.post('/queue/next', async (req, res) => {
     });
 
     // IMPORTANT: Filter by windowId to ensure each window only calls its own assigned queues
-    const queryFilter = {
+    // First, try to find queues with matching services (normal flow)
+    const queryFilterWithService = {
       office: window.office,
       windowId: windowId, // Only get queues assigned to THIS window
       serviceId: { $in: serviceIds },
@@ -860,15 +861,32 @@ router.post('/queue/next', async (req, res) => {
       isPriority: isPriorityWindow // Priority Window gets isPriority=true, others get isPriority=false
     };
 
-    console.log('🔍 [NEXT QUEUE] Query filter:', JSON.stringify(queryFilter, null, 2));
+    console.log('🔍 [NEXT QUEUE] Query filter (with service):', JSON.stringify(queryFilterWithService, null, 2));
 
-    const nextQueue = await Queue.findOne(queryFilter).sort({ queuedAt: 1 }).populate('visitationFormId');
+    let nextQueue = await Queue.findOne(queryFilterWithService).sort({ queuedAt: 1 }).populate('visitationFormId');
+
+    // If no queue found with matching service, check for transferred queues (without service filter)
+    // This allows windows to serve transferred queues even if the service doesn't match
+    if (!nextQueue) {
+      const queryFilterWithoutService = {
+        office: window.office,
+        windowId: windowId,
+        status: 'waiting',
+        isPriority: isPriorityWindow
+      };
+
+      console.log('🔍 [NEXT QUEUE] No queue with matching service, checking for transferred queues...');
+      console.log('🔍 [NEXT QUEUE] Query filter (without service):', JSON.stringify(queryFilterWithoutService, null, 2));
+
+      nextQueue = await Queue.findOne(queryFilterWithoutService).sort({ queuedAt: 1 }).populate('visitationFormId');
+    }
 
     console.log('🔍 [NEXT QUEUE] Found queue:', nextQueue ? {
       queueNumber: nextQueue.queueNumber,
       windowId: nextQueue.windowId,
       isPriority: nextQueue.isPriority,
-      serviceId: nextQueue.serviceId
+      serviceId: nextQueue.serviceId,
+      isTransferred: nextQueue.serviceId && !serviceIds.includes(nextQueue.serviceId.toString())
     } : 'No queue found');
 
     // Mark current serving queue as completed (if any) - do this BEFORE checking for next queue
@@ -1306,6 +1324,9 @@ router.post('/queue/transfer', async (req, res) => {
     const isDestinationPriorityWindow = toWindow.name === 'Priority';
     currentQueue.isPriority = isDestinationPriorityWindow;
 
+    // DO NOT update serviceId - preserve original service for analytics integrity
+    // The Next endpoint will be modified to handle transferred queues with different services
+
     // Set processedBy (now accepts any type)
     if (adminId) {
       currentQueue.processedBy = adminId;
@@ -1319,7 +1340,8 @@ router.post('/queue/transfer', async (req, res) => {
       to: toWindow.name,
       isPriority: currentQueue.isPriority,
       status: currentQueue.status,
-      windowId: currentQueue.windowId
+      windowId: currentQueue.windowId,
+      serviceId: currentQueue.serviceId
     });
 
     // Emit real-time updates
