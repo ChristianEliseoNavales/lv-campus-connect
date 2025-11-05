@@ -24,6 +24,7 @@ const Queue = () => {
   // Transfer modal state
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [availableWindows, setAvailableWindows] = useState([]);
+  const [selectedWindow, setSelectedWindow] = useState(null);
   const [transferLoading, setTransferLoading] = useState(false);
 
   // Window serving status
@@ -352,26 +353,43 @@ const Queue = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Fetch updated queue data to get complete information including idNumber
-        await fetchQueueData();
+        // Check if there are no more queues
+        if (result.data.noMoreQueues) {
+          // Clear current serving
+          setCurrentServing(0);
+          setCurrentServingPerson(null);
 
-        // Trigger text-to-speech announcement
-        if (textToSpeechService.isReady()) {
-          await textToSpeechService.announceQueueNumber(
-            result.data.queueNumber,
-            result.data.windowName
+          // Refresh queue data
+          fetchQueueData();
+
+          showInfo(
+            'No More Queues',
+            'All queues have been served. Window is ready for new queues.'
           );
+
+          console.log('✅ No more queues waiting');
+        } else {
+          // Fetch updated queue data to get complete information including idNumber
+          await fetchQueueData();
+
+          // Trigger text-to-speech announcement
+          if (textToSpeechService.isReady()) {
+            await textToSpeechService.announceQueueNumber(
+              result.data.queueNumber,
+              result.data.windowName
+            );
+          }
+
+          // Refresh queue data
+          fetchQueueData();
+
+          showSuccess(
+            'Queue Called',
+            `Queue ${String(result.data.queueNumber).padStart(2, '0')} called to ${result.data.windowName}`
+          );
+
+          console.log('✅ Next queue called:', result.data);
         }
-
-        // Refresh queue data
-        fetchQueueData();
-
-        showSuccess(
-          'Queue Called',
-          `Queue ${String(result.data.queueNumber).padStart(2, '0')} called to ${result.data.windowName}`
-        );
-
-        console.log('✅ Next queue called:', result.data);
       } else {
         throw new Error(result.error || 'Failed to call next queue');
       }
@@ -521,6 +539,7 @@ const Queue = () => {
         }
 
         setAvailableWindows(otherWindows);
+        setSelectedWindow(null); // Reset selected window
         setShowTransferModal(true);
       } else {
         throw new Error(result.error || 'Failed to fetch available windows');
@@ -533,8 +552,8 @@ const Queue = () => {
     }
   };
 
-  const handleTransferConfirm = async (toWindowId) => {
-    if (!windowData) return;
+  const handleTransferConfirm = async () => {
+    if (!windowData || !selectedWindow) return;
 
     setActionLoading(prev => ({ ...prev, transfer: true }));
 
@@ -546,7 +565,7 @@ const Queue = () => {
         },
         body: JSON.stringify({
           fromWindowId: windowData.id,
-          toWindowId,
+          toWindowId: selectedWindow.id,
           adminId: user?.id || '507f1f77bcf86cd799439011' // Valid ObjectId for development
         })
       });
@@ -558,21 +577,14 @@ const Queue = () => {
         setCurrentServing(0);
         setCurrentServingPerson(null);
 
-        // Trigger text-to-speech announcement
-        if (textToSpeechService.isReady()) {
-          await textToSpeechService.announceQueueTransfer(
-            result.data.queueNumber,
-            result.data.toWindowName
-          );
-        }
-
         // Refresh queue data
         fetchQueueData();
 
         setShowTransferModal(false);
+        setSelectedWindow(null);
         showSuccess(
           'Queue Transferred',
-          `Queue ${String(result.data.queueNumber).padStart(2, '0')} transferred to ${result.data.toWindowName}`
+          `Queue ${String(result.data.queueNumber).padStart(2, '0')} transferred to ${result.data.toWindowName} and placed in waiting queue`
         );
 
         console.log('✅ Queue transferred:', result.data);
@@ -990,9 +1002,13 @@ const Queue = () => {
             {availableWindows.map((window) => (
               <button
                 key={window.id}
-                onClick={() => handleTransferConfirm(window.id)}
+                onClick={() => setSelectedWindow(window)}
                 disabled={actionLoading.transfer}
-                className="w-full p-4 text-left border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-[#3930A8] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`w-full p-4 text-left border-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  selectedWindow?.id === window.id
+                    ? 'border-[#3930A8] bg-[#3930A8]/10'
+                    : 'border-gray-300 hover:bg-gray-50 hover:border-[#3930A8]'
+                }`}
               >
                 <div className="font-bold text-lg text-gray-900">{window.name}</div>
                 <div className="text-base text-gray-500">{window.serviceName}</div>
@@ -1002,11 +1018,21 @@ const Queue = () => {
 
           <div className="flex space-x-3">
             <button
-              onClick={() => setShowTransferModal(false)}
+              onClick={() => {
+                setShowTransferModal(false);
+                setSelectedWindow(null);
+              }}
               disabled={actionLoading.transfer}
               className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold text-base rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
+            </button>
+            <button
+              onClick={handleTransferConfirm}
+              disabled={actionLoading.transfer || !selectedWindow}
+              className="flex-1 px-6 py-3 bg-[#3930A8] text-white font-semibold text-base rounded-lg hover:bg-[#2F2580] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {actionLoading.transfer ? 'Transferring...' : 'Transfer'}
             </button>
           </div>
         </div>

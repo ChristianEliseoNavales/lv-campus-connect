@@ -871,25 +871,7 @@ router.post('/queue/next', async (req, res) => {
       serviceId: nextQueue.serviceId
     } : 'No queue found');
 
-    if (!nextQueue) {
-      await AuditService.logQueue({
-        user: req.user,
-        action: 'QUEUE_CALL',
-        queueId: null,
-        queueNumber: null,
-        department: window.office, // Keep 'department' key for backward compatibility
-        req,
-        success: false,
-        errorMessage: 'No queues waiting for this service',
-        metadata: { windowId, windowName: window.name, serviceIds }
-      });
-
-      return res.status(404).json({
-        error: 'No queues waiting for this service'
-      });
-    }
-
-    // Mark current serving queue as completed (if any)
+    // Mark current serving queue as completed (if any) - do this BEFORE checking for next queue
     await Queue.updateMany(
       {
         windowId: windowId,
@@ -902,6 +884,41 @@ router.post('/queue/next', async (req, res) => {
         completedAt: new Date()
       }
     );
+
+    if (!nextQueue) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_CALL',
+        queueId: null,
+        queueNumber: null,
+        department: window.office, // Keep 'department' key for backward compatibility
+        req,
+        success: true, // Changed to true since we successfully completed the current queue
+        errorMessage: 'No more queues waiting',
+        metadata: { windowId, windowName: window.name, serviceIds }
+      });
+
+      // Emit real-time updates to clear the current serving
+      io.to(`admin-${window.office}`).emit('queue-updated', {
+        type: 'no-more-queues',
+        department: window.office,
+        windowId,
+        data: {
+          message: 'No more queues waiting'
+        }
+      });
+
+      return res.json({
+        success: true,
+        message: 'No more queues waiting',
+        data: {
+          queueNumber: null,
+          customerName: null,
+          windowName: window.name,
+          noMoreQueues: true
+        }
+      });
+    }
 
     // Mark the next queue as serving
     await nextQueue.markAsServing(windowId, adminId);
@@ -1277,21 +1294,12 @@ router.post('/queue/transfer', async (req, res) => {
       });
     }
 
-    // Check if destination window has a currently serving queue
-    const destinationCurrentQueue = await Queue.findOne({
-      windowId: toWindowId,
-      isCurrentlyServing: true,
-      status: 'serving'
-    });
-
-    if (destinationCurrentQueue) {
-      return res.status(400).json({
-        error: 'Destination window is currently serving another queue'
-      });
-    }
-
-    // Transfer the queue
+    // Transfer the queue to destination window as "waiting" status
+    // This allows it to follow the normal queue order at the destination
     currentQueue.windowId = toWindowId;
+    currentQueue.status = 'waiting';
+    currentQueue.isCurrentlyServing = false;
+    currentQueue.calledAt = null; // Reset calledAt since it's now waiting again
 
     // Set processedBy (now accepts any type)
     if (adminId) {
@@ -1318,7 +1326,8 @@ router.post('/queue/transfer', async (req, res) => {
         toWindowName: toWindow.name,
         customerName: currentQueue.visitationFormId?.customerName,
         role: currentQueue.role,
-        idNumber: currentQueue.visitationFormId?.idNumber || currentQueue.idNumber || ''
+        idNumber: currentQueue.visitationFormId?.idNumber || currentQueue.idNumber || '',
+        status: 'waiting' // Queue is now waiting at destination window
       }
     });
 
@@ -1328,7 +1337,8 @@ router.post('/queue/transfer', async (req, res) => {
       department: fromWindow.office, // Keep 'department' key for backward compatibility with frontend
       data: {
         queueNumber: currentQueue.queueNumber,
-        toWindowName: toWindow.name
+        toWindowName: toWindow.name,
+        status: 'waiting'
       }
     });
 
@@ -1340,7 +1350,7 @@ router.post('/queue/transfer', async (req, res) => {
         customerName: currentQueue.visitationFormId?.customerName,
         fromWindowName: fromWindow.name,
         toWindowName: toWindow.name,
-        announcement: `Queue number ${String(currentQueue.queueNumber).padStart(2, '0')} please proceed to ${toWindow.name}`
+        status: 'waiting'
       }
     });
 
