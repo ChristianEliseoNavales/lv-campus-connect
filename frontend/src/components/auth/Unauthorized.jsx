@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const Unauthorized = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, getDefaultRoute } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -13,6 +13,11 @@ const Unauthorized = () => {
 
   const handleGoBack = () => {
     navigate(-1);
+  };
+
+  const handleGoToDashboard = () => {
+    const defaultRoute = getDefaultRoute();
+    navigate(defaultRoute);
   };
 
   return (
@@ -59,10 +64,10 @@ const Unauthorized = () => {
             </button>
             
             <button
-              onClick={() => navigate('/admin')}
+              onClick={handleGoToDashboard}
               className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
             >
-              Go to Dashboard
+              Go to My Dashboard
             </button>
             
             <button

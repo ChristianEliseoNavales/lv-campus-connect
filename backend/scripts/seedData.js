@@ -270,10 +270,25 @@ async function seedDatabase() {
         profilePicture: null,
         permissions: ['all'],
         pageAccess: [
-          'mis_dashboard', 'mis_users', 'mis_database', 'mis_bulletin', 'mis_settings',
-          'registrar_dashboard', 'registrar_queue', 'registrar_services', 'registrar_windows', 'registrar_settings',
-          'admissions_dashboard', 'admissions_queue', 'admissions_services', 'admissions_windows', 'admissions_settings',
-          'senior_management_charts'
+          // MIS routes
+          '/admin/mis',
+          '/admin/mis/users',
+          '/admin/mis/database-manager',
+          '/admin/mis/audit-trail',
+          '/admin/mis/bulletin',
+          '/admin/mis/ratings',
+          // Registrar routes
+          '/admin/registrar',
+          '/admin/registrar/queue',
+          '/admin/registrar/transaction-logs',
+          '/admin/registrar/settings',
+          // Admissions routes
+          '/admin/admissions',
+          '/admin/admissions/queue',
+          '/admin/admissions/transaction-logs',
+          '/admin/admissions/settings',
+          // Senior Management routes
+          '/admin/seniormanagement/charts'
         ],
         createdBy: null
       },
@@ -288,8 +303,10 @@ async function seedDatabase() {
         profilePicture: null,
         permissions: ['queue_management', 'service_management', 'window_management', 'view_reports'],
         pageAccess: [
-          'registrar_dashboard', 'registrar_queue', 'registrar_services',
-          'registrar_windows', 'registrar_settings', 'registrar_reports'
+          '/admin/registrar',
+          '/admin/registrar/queue',
+          '/admin/registrar/transaction-logs',
+          '/admin/registrar/settings'
         ],
         createdBy: null
       },
@@ -304,8 +321,10 @@ async function seedDatabase() {
         profilePicture: null,
         permissions: ['queue_management', 'service_management', 'window_management', 'view_reports'],
         pageAccess: [
-          'admissions_dashboard', 'admissions_queue', 'admissions_services',
-          'admissions_windows', 'admissions_settings', 'admissions_reports'
+          '/admin/admissions',
+          '/admin/admissions/queue',
+          '/admin/admissions/transaction-logs',
+          '/admin/admissions/settings'
         ],
         createdBy: null
       },
@@ -318,8 +337,10 @@ async function seedDatabase() {
         isActive: true,
         lastLogin: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
         profilePicture: null,
-        permissions: ['chart_management', 'view_reports'],
-        pageAccess: ['senior_management_charts'],
+        permissions: ['view_analytics', 'view_reports'],
+        pageAccess: [
+          '/admin/seniormanagement/charts'
+        ],
         createdBy: null
       }
     ]);

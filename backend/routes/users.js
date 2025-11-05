@@ -16,11 +16,11 @@ const validateUser = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Name must be between 2 and 100 characters'),
   body('role')
-    .isIn(['super_admin', 'admin', 'admin_staff'])
+    .isIn(['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'])
     .withMessage('Invalid role specified'),
   body('department')
     .optional()
-    .isIn(['MIS', 'Registrar', 'Admissions', 'HR'])
+    .isIn(['MIS', 'Registrar', 'Admissions', 'Senior Management'])
     .withMessage('Invalid department specified'),
   body('password')
     .optional()
@@ -45,11 +45,11 @@ const validateUserUpdate = [
     .withMessage('Name must be between 2 and 100 characters'),
   body('role')
     .optional()
-    .isIn(['super_admin', 'admin', 'admin_staff'])
+    .isIn(['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'])
     .withMessage('Invalid role specified'),
   body('department')
     .optional()
-    .isIn(['MIS', 'Registrar', 'Admissions', 'HR'])
+    .isIn(['MIS', 'Registrar', 'Admissions', 'Senior Management'])
     .withMessage('Invalid department specified'),
   body('isActive')
     .optional()

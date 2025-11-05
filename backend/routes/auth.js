@@ -5,6 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const rateLimit = require('express-rate-limit');
 const { User } = require('../models');
 const { AuditService } = require('../middleware/auditMiddleware');
+const { getDefaultPageAccess, getOfficeForRole } = require('../utils/rolePermissions');
 
 // Initialize Google OAuth2 Client
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -138,7 +139,22 @@ router.post('/google', authLimiter, async (req, res) => {
       user.profilePicture = picture;
       userUpdated = true;
     }
-    
+
+    // Ensure pageAccess is populated with default routes for the role
+    // This handles cases where users were created before pageAccess was properly set
+    if (!user.pageAccess || user.pageAccess.length === 0) {
+      user.pageAccess = getDefaultPageAccess(user.role);
+      userUpdated = true;
+      console.log(`📝 Auto-populated pageAccess for ${user.email} (${user.role})`);
+    }
+
+    // Ensure office is set correctly for the role
+    if (!user.office) {
+      user.office = getOfficeForRole(user.role);
+      userUpdated = true;
+      console.log(`📝 Auto-populated office for ${user.email}: ${user.office}`);
+    }
+
     // Update last login timestamp
     user.lastLogin = new Date();
     userUpdated = true;
@@ -147,7 +163,7 @@ router.post('/google', authLimiter, async (req, res) => {
       await user.save();
     }
 
-    // Generate JWT token
+    // Generate JWT token with pageAccess
     const jwtPayload = {
       id: user._id,
       email: user.email,
@@ -276,6 +292,16 @@ router.get('/verify', async (req, res) => {
       });
     }
 
+    // Ensure pageAccess is populated (in case user was created before this was implemented)
+    let pageAccess = user.pageAccess || [];
+    if (pageAccess.length === 0) {
+      pageAccess = getDefaultPageAccess(user.role);
+      // Update user in background (don't wait for it)
+      User.findByIdAndUpdate(user._id, { pageAccess }).catch(err =>
+        console.error('Failed to update pageAccess:', err)
+      );
+    }
+
     // Return user data
     const userData = {
       id: user._id,
@@ -284,7 +310,7 @@ router.get('/verify', async (req, res) => {
       role: user.role,
       office: user.office,
       department: user.office, // Alias for compatibility
-      pageAccess: user.pageAccess || [],
+      pageAccess: pageAccess,
       permissions: user.permissions || {},
       profilePicture: user.profilePicture,
       isActive: user.isActive,

@@ -6,6 +6,7 @@ import { MdClose } from 'react-icons/md';
 import { useToast, ToastContainer } from '../../../ui/Toast';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../../../../config/api';
+import { authFetch } from '../../../../utils/apiClient';
 
 const Bulletin = () => {
   const [loading, setLoading] = useState(true);
@@ -43,7 +44,7 @@ const Bulletin = () => {
   const fetchBulletins = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin`);
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin`);
       if (response.ok) {
         const data = await response.json();
         // Handle both array response and paginated response
@@ -129,7 +130,7 @@ const Bulletin = () => {
       formData.append('file', uploadFile);
 
       // Upload file to backend
-      const uploadResponse = await fetch(`${API_CONFIG.getAdminUrl()}/api/bulletin/upload`, {
+      const uploadResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/bulletin/upload`, {
         method: 'POST',
         body: formData
       });
@@ -163,7 +164,7 @@ const Bulletin = () => {
         authorEmail: 'system@lvcc.edu'
       };
 
-      const createResponse = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin`, {
+      const createResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bulletinData)
@@ -195,7 +196,7 @@ const Bulletin = () => {
 
       if (bulletinToDelete && bulletinToDelete.image?.public_id) {
         // Delete from Cloudinary first
-        const cloudinaryDeleteResponse = await fetch(
+        const cloudinaryDeleteResponse = await authFetch(
           `${API_CONFIG.getAdminUrl()}/api/bulletin/delete/${encodeURIComponent(bulletinToDelete.image.public_id)}`,
           { method: 'DELETE' }
         );
@@ -206,7 +207,7 @@ const Bulletin = () => {
       }
 
       // Delete from database
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin/${selectedBulletinId}`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/bulletin/${selectedBulletinId}`, {
         method: 'DELETE'
       });
 

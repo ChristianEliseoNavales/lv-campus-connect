@@ -5,6 +5,7 @@ import { useToast, ToastContainer, DatePicker } from '../../../ui';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
 import API_CONFIG from '../../../../config/api';
+import { authFetch } from '../../../../utils/apiClient';
 
 // Define initial state outside component to prevent recreation
 const INITIAL_URL_STATE = {
@@ -61,7 +62,7 @@ const AuditTrail = () => {
         url += `?${params.toString()}`;
       }
 
-      const response = await fetch(url);
+      const response = await authFetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

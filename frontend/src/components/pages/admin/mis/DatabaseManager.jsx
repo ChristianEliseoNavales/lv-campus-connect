@@ -12,6 +12,7 @@ import {
 } from 'react-icons/md';
 import { useToast, ToastContainer } from '../../../ui/Toast';
 import API_CONFIG from '../../../../config/api';
+import { authFetch } from '../../../../utils/apiClient';
 import {
   EditRecordModal,
   DeleteRecordModal,
@@ -62,8 +63,8 @@ const DatabaseManager = () => {
         ...(search && { search })
       });
 
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}?${params}`);
-      
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}?${params}`);
+
       if (!response.ok) {
         throw new Error(`Failed to fetch ${selectedModel} records`);
       }
@@ -142,14 +143,14 @@ const DatabaseManager = () => {
   // Save record (create or update)
   const handleSaveRecord = async (e) => {
     e.preventDefault();
-    
+
     try {
       const method = editingRecord ? 'PUT' : 'POST';
       const url = editingRecord
         ? `${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}/${editingRecord._id}`
         : `${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}`;
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +164,7 @@ const DatabaseManager = () => {
       }
 
       const savedRecord = await response.json();
-      
+
       if (editingRecord) {
         showSuccess('Record Updated', `${selectedModel} record updated successfully`);
       } else {
@@ -204,7 +205,7 @@ const DatabaseManager = () => {
       const url = `${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}/${deletingRecord._id}`;
       console.log('🌐 DELETE URL:', url);
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'DELETE',
       });
 
@@ -248,7 +249,7 @@ const DatabaseManager = () => {
       const url = `${API_CONFIG.getAdminUrl()}/api/database/${selectedModel.toLowerCase()}/delete-all`;
       console.log('🌐 DELETE ALL URL:', url);
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'DELETE',
       });
 

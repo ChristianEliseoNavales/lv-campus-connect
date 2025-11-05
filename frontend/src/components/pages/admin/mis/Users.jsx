@@ -6,6 +6,7 @@ import { FiEdit3 } from 'react-icons/fi';
 import { useToast, ToastContainer, ConfirmModal } from '../../../ui';
 import Portal from '../../../ui/Portal';
 import API_CONFIG from '../../../../config/api';
+import { authFetch } from '../../../../utils/apiClient';
 
 // Define initial state outside component to prevent recreation
 const INITIAL_URL_STATE = {
@@ -142,7 +143,7 @@ const Users = () => {
     setFetchError(null);
 
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/users`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/users`, {
         signal: abortControllerRef.current.signal
       });
 
@@ -369,7 +370,7 @@ const Users = () => {
       let response;
       if (editingUser) {
         // Update existing user
-        response = await fetch(`${API_CONFIG.getAdminUrl()}/api/users/${editingUser._id}`, {
+        response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/users/${editingUser._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -378,7 +379,7 @@ const Users = () => {
         });
       } else {
         // Create new user
-        response = await fetch(`${API_CONFIG.getAdminUrl()}/api/users`, {
+        response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/users`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -426,7 +427,7 @@ const Users = () => {
     if (!userToDelete) return;
 
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/users/${userToDelete._id}`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/users/${userToDelete._id}`, {
         method: 'DELETE',
       });
 

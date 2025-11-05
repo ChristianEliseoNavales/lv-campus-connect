@@ -4,12 +4,20 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../ui';
 
 const Login = () => {
-  const { isAuthenticated, isLoading, signIn, error, clearError, isGoogleLoaded } = useAuth();
+  const { isAuthenticated, isLoading, signIn, error, clearError, isGoogleLoaded, getDefaultRoute } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const location = useLocation();
-  
-  // Redirect to intended page after login
-  const from = location.state?.from?.pathname || '/admin';
+
+  // Determine redirect destination
+  // Priority: 1) Intended page from navigation state, 2) Role-based default route
+  const getRedirectPath = () => {
+    // If user was trying to access a specific page, redirect there
+    if (location.state?.from?.pathname) {
+      return location.state.from.pathname;
+    }
+    // Otherwise, use role-based default route
+    return getDefaultRoute();
+  };
 
   // Clear any existing errors when component mounts
   useEffect(() => {
@@ -18,7 +26,8 @@ const Login = () => {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    return <Navigate to={from} replace />;
+    const redirectPath = getRedirectPath();
+    return <Navigate to={redirectPath} replace />;
   }
 
   const handleGoogleSignIn = async () => {

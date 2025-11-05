@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import useGoogleAuth from '../hooks/useGoogleAuth';
+import { getDefaultRoute as getDefaultRouteUtil } from '../utils/roleRoutes';
 
 const AuthContext = createContext();
 
@@ -172,6 +173,14 @@ export const AuthProvider = ({ children }) => {
     return hasAccess;
   };
 
+  /**
+   * Get the default route for the current user based on their role
+   * @returns {string} - Default route path
+   */
+  const getDefaultRoute = () => {
+    return getDefaultRouteUtil(user);
+  };
+
   const value = {
     user,
     isAuthenticated,
@@ -183,6 +192,7 @@ export const AuthProvider = ({ children }) => {
     hasRole,
     hasAnyRole,
     canAccessRoute,
+    getDefaultRoute,
     clearError: () => setError(null)
   };
 
