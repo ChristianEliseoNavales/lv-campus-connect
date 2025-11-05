@@ -35,7 +35,7 @@ const Users = () => {
     name: '',
     email: '',
     role: '',
-    department: '',
+    office: '',
     isActive: true,
     pageAccess: []
   });
@@ -49,14 +49,14 @@ const Users = () => {
   // Refs for cleanup
   const abortControllerRef = useRef(null);
 
-  // Role and department options
+  // Role and office options
   const roleOptions = [
     { value: 'super_admin', label: 'Super Admin' },
     { value: 'admin', label: 'Admin' },
     { value: 'admin_staff', label: 'Admin Staff' }
   ];
 
-  const departmentOptions = [
+  const officeOptions = [
     { value: 'MIS', label: 'MIS' },
     { value: 'Registrar', label: 'Registrar' },
     { value: 'Admissions', label: 'Admissions' },
@@ -195,7 +195,7 @@ const Users = () => {
       filtered = filtered.filter(user =>
         user.name.toLowerCase().includes(searchLower) ||
         user.email.toLowerCase().includes(searchLower) ||
-        user.department?.toLowerCase().includes(searchLower) ||
+        user.office?.toLowerCase().includes(searchLower) ||
         user.role.toLowerCase().includes(searchLower)
       );
     }
@@ -245,8 +245,8 @@ const Users = () => {
       errors.role = 'Role is required';
     }
 
-    if (!formData.department) {
-      errors.department = 'Department/Office is required';
+    if (!formData.office) {
+      errors.office = 'Office is required';
     }
 
     if (!formData.pageAccess || formData.pageAccess.length === 0) {
@@ -274,12 +274,38 @@ const Users = () => {
 
 
 
-    // Smart auto-selection: When department changes, auto-select relevant page access
-    if (field === 'department' && value) {
+    // Smart auto-selection: When office changes and role is admin, auto-select relevant page access
+    if (field === 'office' && value && formData.role === 'admin') {
       const defaultAccess = getDefaultPageAccess(value);
       setFormData(prev => ({
         ...prev,
         pageAccess: defaultAccess
+      }));
+    }
+
+    // Smart auto-selection: When role changes to super_admin with MIS office, select all pages
+    if (field === 'role' && value === 'super_admin' && formData.office === 'MIS') {
+      const allPageIds = adminPages.map(page => page.id);
+      setFormData(prev => ({
+        ...prev,
+        pageAccess: allPageIds
+      }));
+    }
+
+    // Smart auto-selection: When role changes to admin, auto-select office pages
+    if (field === 'role' && value === 'admin' && formData.office) {
+      const defaultAccess = getDefaultPageAccess(formData.office);
+      setFormData(prev => ({
+        ...prev,
+        pageAccess: defaultAccess
+      }));
+    }
+
+    // Clear page access when role changes to admin_staff
+    if (field === 'role' && value === 'admin_staff') {
+      setFormData(prev => ({
+        ...prev,
+        pageAccess: []
       }));
     }
   };
@@ -309,7 +335,7 @@ const Users = () => {
       name: '',
       email: '',
       role: '',
-      department: '',
+      office: '',
       isActive: true,
       pageAccess: []
     });
@@ -324,7 +350,7 @@ const Users = () => {
       name: user.name,
       email: user.email,
       role: user.role,
-      department: user.department || '',
+      office: user.office || '',
       isActive: user.isActive,
       pageAccess: user.pageAccess || []
     });
@@ -340,7 +366,7 @@ const Users = () => {
       name: '',
       email: '',
       role: '',
-      department: '',
+      office: '',
       isActive: true,
       pageAccess: []
     });
@@ -362,7 +388,7 @@ const Users = () => {
         name: formData.name.trim(),
         email: formData.email.trim(),
         role: formData.role,
-        department: formData.department,
+        office: formData.office,
         isActive: formData.isActive,
         pageAccess: formData.pageAccess
       };
@@ -594,7 +620,7 @@ const Users = () => {
                 <div className="grid grid-cols-5 gap-4 text-sm font-medium text-gray-700 w-full">
                   <div>Name</div>
                   <div>Email</div>
-                  <div>Department/Office</div>
+                  <div>Office</div>
                   <div>Role</div>
                   <div>Action</div>
                 </div>
@@ -611,7 +637,7 @@ const Users = () => {
                       {/* Email Skeleton */}
                       <div className="h-4 bg-gray-200 rounded w-40"></div>
 
-                      {/* Department Skeleton */}
+                      {/* Office Skeleton */}
                       <div className="h-4 bg-gray-200 rounded w-24"></div>
 
                       {/* Role Skeleton */}
@@ -637,7 +663,7 @@ const Users = () => {
                 <div className="grid grid-cols-5 gap-4 text-base font-bold text-gray-700 w-full">
                   <div>Name</div>
                   <div>Email</div>
-                  <div>Department/Office</div>
+                  <div>Office</div>
                   <div>Role</div>
                   <div>Action</div>
                 </div>
@@ -658,9 +684,9 @@ const Users = () => {
                         {user.email}
                       </div>
 
-                      {/* Department */}
+                      {/* Office */}
                       <div className="text-base font-medium text-gray-900">
-                        {user.department || 'N/A'}
+                        {user.office || 'N/A'}
                       </div>
 
                       {/* Role */}
@@ -772,29 +798,29 @@ const Users = () => {
                 )}
               </div>
 
-              {/* Department/Office */}
+              {/* Office */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Department/Office <span className="text-red-500">*</span>
+                  Office <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={formData.department}
-                  onChange={(e) => handleInputChange('department', e.target.value)}
+                  value={formData.office}
+                  onChange={(e) => handleInputChange('office', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
-                    formErrors.department
+                    formErrors.office
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-blue-500'
                   }`}
                 >
-                  <option value="">Select a department/office</option>
-                  {departmentOptions.map(option => (
+                  <option value="">Select an office</option>
+                  {officeOptions.map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
-                {formErrors.department && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.department}</p>
+                {formErrors.office && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.office}</p>
                 )}
               </div>
 
@@ -831,7 +857,7 @@ const Users = () => {
                 </label>
                 <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
                   {/* Group pages by category */}
-                  {['MIS', 'Registrar', 'Admissions', 'HR'].map(category => {
+                  {['MIS', 'Registrar', 'Admissions', 'Senior Management'].map(category => {
                     const categoryPages = adminPages.filter(page => page.category === category);
                     if (categoryPages.length === 0) return null;
 

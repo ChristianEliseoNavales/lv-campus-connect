@@ -16,12 +16,11 @@ const validateUser = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Name must be between 2 and 100 characters'),
   body('role')
-    .isIn(['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'])
+    .isIn(['super_admin', 'admin', 'admin_staff'])
     .withMessage('Invalid role specified'),
-  body('department')
-    .optional()
+  body('office')
     .isIn(['MIS', 'Registrar', 'Admissions', 'Senior Management'])
-    .withMessage('Invalid department specified'),
+    .withMessage('Invalid office specified'),
   body('password')
     .optional()
     .isLength({ min: 6 })
@@ -45,12 +44,12 @@ const validateUserUpdate = [
     .withMessage('Name must be between 2 and 100 characters'),
   body('role')
     .optional()
-    .isIn(['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'])
+    .isIn(['super_admin', 'admin', 'admin_staff'])
     .withMessage('Invalid role specified'),
-  body('department')
+  body('office')
     .optional()
     .isIn(['MIS', 'Registrar', 'Admissions', 'Senior Management'])
-    .withMessage('Invalid department specified'),
+    .withMessage('Invalid office specified'),
   body('isActive')
     .optional()
     .isBoolean()
@@ -64,30 +63,30 @@ const validateUserUpdate = [
 // GET /api/users - Fetch all users
 router.get('/', verifyToken, requireSuperAdmin, async (req, res) => {
   try {
-    const { role, department, isActive, search } = req.query;
-    
+    const { role, office, isActive, search } = req.query;
+
     // Build query object
     const query = {};
-    
+
     if (role) {
       query.role = role;
     }
-    
-    if (department) {
-      query.department = department;
+
+    if (office) {
+      query.office = office;
     }
-    
+
     if (isActive !== undefined) {
       query.isActive = isActive === 'true';
     }
-    
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     const users = await User.find(query)
       .select('-password -googleId')
       .populate('createdBy', 'name email')
@@ -112,9 +111,9 @@ router.get('/', verifyToken, requireSuperAdmin, async (req, res) => {
 router.get('/by-role/:role', verifyToken, requireSuperAdmin, async (req, res) => {
   try {
     const { role } = req.params;
-    
+
     // Validate role parameter
-    const validRoles = ['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'];
+    const validRoles = ['super_admin', 'admin', 'admin_staff'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         error: 'Invalid role specified',
@@ -128,7 +127,7 @@ router.get('/by-role/:role', verifyToken, requireSuperAdmin, async (req, res) =>
     })
       .select('_id name email role office')
       .sort({ name: 1 });
-    
+
     res.json(users);
   } catch (error) {
     console.error('Error fetching users by role:', error);
@@ -185,7 +184,7 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
       });
     }
 
-    const { email, name, role, department, password, pageAccess } = req.body;
+    const { email, name, role, office, password, pageAccess } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -207,8 +206,8 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
       });
     }
 
-    // Validate department requirement (now required for all users)
-    if (!department) {
+    // Validate office requirement (now required for all users)
+    if (!office) {
       await AuditService.logCRUD({
         user: req.user,
         action: 'CREATE',
@@ -216,11 +215,11 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
         resourceName: email,
         req,
         success: false,
-        errorMessage: 'Department/Office is required'
+        errorMessage: 'Office is required'
       });
 
       return res.status(400).json({
-        error: 'Department/Office is required'
+        error: 'Office is required'
       });
     }
 
@@ -229,7 +228,7 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
       email,
       name,
       role,
-      department,
+      office,
       isActive: true,
       pageAccess: pageAccess || []
     };
@@ -336,9 +335,9 @@ router.put('/:id', verifyToken, requireSuperAdmin, validateUserUpdate, async (re
       delete updateData.password;
     }
 
-    // Validate department requirement (now required for all users)
-    if (updateData.role && !updateData.department) {
-      if (!oldUser?.department) {
+    // Validate office requirement (now required for all users)
+    if (updateData.role && !updateData.office) {
+      if (!oldUser?.office) {
         await AuditService.logCRUD({
           user: req.user,
           action: 'UPDATE',
@@ -347,11 +346,11 @@ router.put('/:id', verifyToken, requireSuperAdmin, validateUserUpdate, async (re
           resourceName: `${oldUser.name} (${oldUser.email})`,
           req,
           success: false,
-          errorMessage: 'Department/Office is required'
+          errorMessage: 'Office is required'
         });
 
         return res.status(400).json({
-          error: 'Department/Office is required'
+          error: 'Office is required'
         });
       }
     }

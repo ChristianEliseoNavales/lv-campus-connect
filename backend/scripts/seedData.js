@@ -31,11 +31,11 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   password: { type: String, required: false },
   googleId: { type: String, sparse: true },
-  role: { type: String, enum: ['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'], required: true },
+  role: { type: String, enum: ['super_admin', 'admin', 'admin_staff'], required: true },
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date },
   profilePicture: { type: String },
-  office: { type: String, enum: ['MIS', 'Registrar', 'Admissions', 'Senior Management'] },
+  office: { type: String, enum: ['MIS', 'Registrar', 'Admissions', 'Senior Management'], required: true },
   permissions: [{ type: String }],
   pageAccess: [{ type: String }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
@@ -264,7 +264,7 @@ async function seedDatabase() {
         name: 'MIS Super Admin',
         password: 'Admin123!',
         role: 'super_admin',
-        office: 'MIS',
+        department: 'MIS',
         isActive: true,
         lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
         profilePicture: null,

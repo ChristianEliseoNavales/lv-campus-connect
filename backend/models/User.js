@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'],
+    enum: ['super_admin', 'admin', 'admin_staff'],
     required: true
   },
   isActive: {
@@ -46,9 +46,7 @@ const userSchema = new mongoose.Schema({
   office: {
     type: String,
     enum: ['MIS', 'Registrar', 'Admissions', 'Senior Management'],
-    required: function() {
-      return this.role !== 'super_admin';
-    }
+    required: true
   },
   permissions: [{
     type: String
