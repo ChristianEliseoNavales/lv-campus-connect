@@ -1577,7 +1577,7 @@ router.get('/queue/windows/:department', async (req, res) => {
     console.log('🪟 Fetching windows for transfer:', { department });
 
     const windows = await Window.find({
-      department,
+      office: department, // Use 'office' field to match Window model schema
       isOpen: true
     }).select('_id name serviceIds').populate('serviceIds', 'name');
 
