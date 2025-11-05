@@ -367,9 +367,9 @@ async function seedDatabase() {
 
     // Seed Services with complete fields
     console.log('🔧 Creating services...');
-    const superAdmin = users.find(u => u.role === 'super_admin');
-    const registrarAdmin = users.find(u => u.role === 'registrar_admin');
-    const admissionsAdmin = users.find(u => u.role === 'admissions_admin');
+    const superAdmin = users.find(u => u.role === 'MIS Super Admin');
+    const registrarAdmin = users.find(u => u.role === 'Registrar Admin');
+    const admissionsAdmin = users.find(u => u.role === 'Admissions Admin');
 
     const services = await Service.insertMany([
       {

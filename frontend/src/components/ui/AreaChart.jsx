@@ -213,9 +213,9 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
 
   // Helper function to determine department from role
   const getDepartmentFromRole = (role) => {
-    if (role === 'registrar_admin') return 'registrar';
-    if (role === 'admissions_admin') return 'admissions';
-    // For super admin, we'll fetch both departments
+    if (role?.includes('Registrar')) return 'registrar';
+    if (role?.includes('Admissions')) return 'admissions';
+    // For MIS Super Admin, we'll fetch both departments
     return null;
   };
 

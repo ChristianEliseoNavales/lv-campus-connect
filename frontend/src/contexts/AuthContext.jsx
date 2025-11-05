@@ -152,7 +152,7 @@ export const AuthProvider = ({ children }) => {
     if (!isAuthenticated || !user) return false;
 
     // MIS Super Admin has access to everything
-    if (user.role === 'super_admin') return true;
+    if (user.role === 'MIS Super Admin') return true;
 
     // Check pageAccess array for specific route permissions
     const pageAccess = user.pageAccess || [];

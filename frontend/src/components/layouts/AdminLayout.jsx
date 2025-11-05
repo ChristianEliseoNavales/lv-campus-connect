@@ -54,12 +54,12 @@ const AdminLayout = ({ children }) => {
       return 'admissions';
     } else {
       // Fallback to role-based department for other paths
-      if (user?.role === 'registrar_admin') {
+      if (user?.role?.includes('Registrar')) {
         return 'registrar';
-      } else if (user?.role === 'admissions_admin') {
+      } else if (user?.role?.includes('Admissions')) {
         return 'admissions';
-      } else if (user?.role === 'super_admin') {
-        // For super_admin, default to registrar if no specific path context
+      } else if (user?.role === 'MIS Super Admin' || user?.role?.includes('MIS')) {
+        // For MIS users, default to registrar if no specific path context
         return 'registrar';
       }
     }
@@ -189,9 +189,9 @@ const AdminLayout = ({ children }) => {
 
   // Office switching functionality
   const canSwitchOffices = () => {
-    // Only super_admin users can switch between offices
+    // Only MIS Super Admin users can switch between offices
     // In development mode, also allow switching when DEV_BYPASS_AUTH is enabled
-    return user?.role === 'super_admin' || isDevelopmentMode;
+    return user?.role === 'MIS Super Admin' || isDevelopmentMode;
   };
 
   const handleOfficeSwitch = (targetOffice) => {
@@ -247,17 +247,17 @@ const AdminLayout = ({ children }) => {
 
     // Map URL paths to roles for development testing
     if (currentPath.startsWith('/admin/registrar')) {
-      return 'registrar_admin';
+      return 'Registrar Admin';
     } else if (currentPath.startsWith('/admin/admissions')) {
-      return 'admissions_admin';
+      return 'Admissions Admin';
     } else if (currentPath.startsWith('/admin/seniormanagement')) {
-      return 'senior_management_admin';
+      return 'Senior Management Admin';
     } else if (currentPath.startsWith('/admin/mis')) {
-      return 'super_admin';
+      return 'MIS Super Admin';
     }
 
     // Default to user's actual role from auth context
-    return user?.role || 'super_admin';
+    return user?.role || 'MIS Super Admin';
   };
 
   // Role-based navigation items

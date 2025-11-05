@@ -139,8 +139,8 @@ async function seedWindows(users, services) {
   console.log('🪟 Creating windows...');
   
   // Find admin users
-  const registrarAdmin = users.find(u => u.role === 'registrar_admin');
-  const admissionsAdmin = users.find(u => u.role === 'admissions_admin');
+  const registrarAdmin = users.find(u => u.role === 'Registrar Admin');
+  const admissionsAdmin = users.find(u => u.role === 'Admissions Admin');
   
   // Find services
   const registrarServices = services.filter(s => s.department === 'registrar');

@@ -122,8 +122,8 @@ const checkPageAccess = (requiredPage) => {
       });
     }
 
-    // Super admin has access to everything
-    if (req.user.role === 'super_admin') {
+    // MIS Super Admin has access to everything
+    if (req.user.role === 'MIS Super Admin') {
       return next();
     }
 
@@ -210,7 +210,8 @@ const requireSuperAdmin = (req, res, next) => {
     req.user = req.user || {
       _id: 'dev-user-id',
       id: 'dev-user-id',
-      role: 'super_admin',
+      role: 'MIS Super Admin',
+      accessLevel: 'super_admin',
       email: 'dev@test.com',
       name: 'Development User',
       office: 'MIS'
@@ -218,7 +219,7 @@ const requireSuperAdmin = (req, res, next) => {
     return next();
   }
 
-  if (!req.user || req.user.role !== 'super_admin') {
+  if (!req.user || req.user.role !== 'MIS Super Admin') {
     return res.status(403).json({
       error: 'Access denied',
       message: 'MIS Super Admin role required.'

@@ -13,22 +13,39 @@ export const getDefaultRoute = (user) => {
     return '/login';
   }
 
-  // Role-based routing
+  // Role-based routing using new combined role format
   switch (user.role) {
-    case 'super_admin':
-      // MIS Super Admin always goes to MIS dashboard
+    case 'MIS Super Admin':
+    case 'MIS Admin':
+    case 'MIS Admin Staff':
+      // All MIS roles go to MIS dashboard
       return '/admin/mis';
 
-    case 'registrar_admin':
-      // Registrar Admin goes to Registrar dashboard
+    case 'Registrar Admin':
+    case 'Registrar Admin Staff':
+      // Registrar roles go to Registrar dashboard
+      // Admin Staff will be redirected to their specific page if they only have one
+      if (user.role === 'Registrar Admin Staff' && user.pageAccess && user.pageAccess.length === 1) {
+        return user.pageAccess[0];
+      }
       return '/admin/registrar';
 
-    case 'admissions_admin':
-      // Admissions Admin goes to Admissions dashboard
+    case 'Admissions Admin':
+    case 'Admissions Admin Staff':
+      // Admissions roles go to Admissions dashboard
+      // Admin Staff will be redirected to their specific page if they only have one
+      if (user.role === 'Admissions Admin Staff' && user.pageAccess && user.pageAccess.length === 1) {
+        return user.pageAccess[0];
+      }
       return '/admin/admissions';
 
-    case 'senior_management_admin':
-      // Senior Management Admin goes to Charts page
+    case 'Senior Management Admin':
+    case 'Senior Management Admin Staff':
+      // Senior Management roles go to Charts page
+      // Admin Staff will be redirected to their specific page if they only have one
+      if (user.role === 'Senior Management Admin Staff' && user.pageAccess && user.pageAccess.length === 1) {
+        return user.pageAccess[0];
+      }
       return '/admin/seniormanagement/charts';
 
     default:
@@ -68,8 +85,8 @@ export const getFirstAccessiblePage = (pageAccess) => {
 export const canAccessRoute = (user, route) => {
   if (!user || !route) return false;
 
-  // Super admin has access to everything
-  if (user.role === 'super_admin') return true;
+  // MIS Super Admin has access to everything
+  if (user.role === 'MIS Super Admin') return true;
 
   // Check pageAccess array
   const pageAccess = user.pageAccess || [];
@@ -92,22 +109,32 @@ export const canAccessRoute = (user, route) => {
 
 /**
  * Get allowed routes for a specific role
- * @param {string} role - User role
+ * @param {string} role - User role (combined format: "Office AccessLevel")
  * @returns {Array} - Array of allowed route patterns
  */
 export const getAllowedRoutesForRole = (role) => {
   switch (role) {
-    case 'super_admin':
+    case 'MIS Super Admin':
       return ['*']; // Access to all routes
 
-    case 'registrar_admin':
+    case 'MIS Admin':
+      return ['/admin/mis', '/admin/mis/*'];
+
+    case 'Registrar Admin':
       return ['/admin/registrar', '/admin/registrar/*'];
 
-    case 'admissions_admin':
+    case 'Admissions Admin':
       return ['/admin/admissions', '/admin/admissions/*'];
 
-    case 'senior_management_admin':
+    case 'Senior Management Admin':
       return ['/admin/seniormanagement', '/admin/seniormanagement/*'];
+
+    // Admin Staff roles return empty - they use pageAccess array
+    case 'MIS Admin Staff':
+    case 'Registrar Admin Staff':
+    case 'Admissions Admin Staff':
+    case 'Senior Management Admin Staff':
+      return [];
 
     default:
       return [];
@@ -135,19 +162,17 @@ export const getRouteDepartment = (route) => {
  */
 export const roleMatchesDepartment = (user, route) => {
   if (!user || !route) return false;
-  
-  // Super admin can access all departments
-  if (user.role === 'super_admin') return true;
+
+  // MIS Super Admin can access all departments
+  if (user.role === 'MIS Super Admin') return true;
 
   const routeDepartment = getRouteDepartment(route);
-  
-  // Map roles to departments
-  const roleDepartmentMap = {
-    'registrar_admin': 'Registrar',
-    'admissions_admin': 'Admissions',
-    'senior_management_admin': 'Senior Management'
-  };
 
-  return roleDepartmentMap[user.role] === routeDepartment;
+  // Extract office from combined role (e.g., "Registrar Admin" -> "Registrar")
+  if (user.role && user.role.includes(routeDepartment)) {
+    return true;
+  }
+
+  return false;
 };
 

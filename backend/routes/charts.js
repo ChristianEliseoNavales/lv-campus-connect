@@ -19,7 +19,8 @@ const requireSeniorManagementAccess = (req, res, next) => {
   }
 
   // In production, check for proper authentication
-  if (!req.user || !['super_admin', 'senior_management_admin'].includes(req.user.role)) {
+  const allowedRoles = ['MIS Super Admin', 'Senior Management Admin', 'Senior Management Admin Staff'];
+  if (!req.user || !allowedRoles.includes(req.user.role)) {
     return res.status(403).json({ error: 'Access denied. Senior Management or Super Admin access required.' });
   }
   next();
