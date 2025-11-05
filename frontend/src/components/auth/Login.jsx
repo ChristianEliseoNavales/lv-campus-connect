@@ -55,7 +55,7 @@ const Login = () => {
             <span className="text-white font-bold text-xl">LV</span>
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Admin Sign In</h2>
-          <p className="mt-2 text-gray-600">University Queue System</p>
+          <p className="mt-2 text-gray-600">LVCampus Connect</p>
           <p className="text-sm text-gray-500 mt-1">Access restricted to authorized personnel only</p>
         </div>
 
