@@ -31,11 +31,26 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   password: { type: String, required: false },
   googleId: { type: String, sparse: true },
-  role: { type: String, enum: ['super_admin', 'admin', 'admin_staff'], required: true },
+  accessLevel: { type: String, enum: ['super_admin', 'admin', 'admin_staff'], required: true },
+  office: { type: String, enum: ['MIS', 'Registrar', 'Admissions', 'Senior Management'], required: true },
+  role: {
+    type: String,
+    enum: [
+      'MIS Super Admin',
+      'MIS Admin',
+      'MIS Admin Staff',
+      'Registrar Admin',
+      'Registrar Admin Staff',
+      'Admissions Admin',
+      'Admissions Admin Staff',
+      'Senior Management Admin',
+      'Senior Management Admin Staff'
+    ],
+    required: true
+  },
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date },
   profilePicture: { type: String },
-  office: { type: String, enum: ['MIS', 'Registrar', 'Admissions', 'Senior Management'], required: true },
   permissions: [{ type: String }],
   pageAccess: [{ type: String }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
@@ -263,8 +278,9 @@ async function seedDatabase() {
         email: 'admin@lvcampusconnect.edu',
         name: 'MIS Super Admin',
         password: 'Admin123!',
-        role: 'super_admin',
-        department: 'MIS',
+        accessLevel: 'super_admin',
+        office: 'MIS',
+        role: 'MIS Super Admin',
         isActive: true,
         lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
         profilePicture: null,
@@ -296,8 +312,9 @@ async function seedDatabase() {
         email: 'registrar.admin@lvcampusconnect.edu',
         name: 'Registrar Administrator',
         password: 'Registrar123!',
-        role: 'registrar_admin',
+        accessLevel: 'admin',
         office: 'Registrar',
+        role: 'Registrar Admin',
         isActive: true,
         lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
         profilePicture: null,
@@ -314,8 +331,9 @@ async function seedDatabase() {
         email: 'admissions.admin@lvcampusconnect.edu',
         name: 'Admissions Administrator',
         password: 'Admissions123!',
-        role: 'admissions_admin',
+        accessLevel: 'admin',
         office: 'Admissions',
+        role: 'Admissions Admin',
         isActive: true,
         lastLogin: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
         profilePicture: null,
@@ -332,8 +350,9 @@ async function seedDatabase() {
         email: 'seniormanagement.admin@lvcampusconnect.edu',
         name: 'Senior Management Administrator',
         password: 'SeniorMgmt123!',
-        role: 'senior_management_admin',
+        accessLevel: 'admin',
         office: 'Senior Management',
+        role: 'Senior Management Admin',
         isActive: true,
         lastLogin: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
         profilePicture: null,

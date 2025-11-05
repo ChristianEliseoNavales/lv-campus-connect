@@ -28,9 +28,29 @@ const userSchema = new mongoose.Schema({
     type: String,
     sparse: true // Allows multiple null values but unique non-null values
   },
-  role: {
+  accessLevel: {
     type: String,
     enum: ['super_admin', 'admin', 'admin_staff'],
+    required: true
+  },
+  office: {
+    type: String,
+    enum: ['MIS', 'Registrar', 'Admissions', 'Senior Management'],
+    required: true
+  },
+  role: {
+    type: String,
+    enum: [
+      'MIS Super Admin',
+      'MIS Admin',
+      'MIS Admin Staff',
+      'Registrar Admin',
+      'Registrar Admin Staff',
+      'Admissions Admin',
+      'Admissions Admin Staff',
+      'Senior Management Admin',
+      'Senior Management Admin Staff'
+    ],
     required: true
   },
   isActive: {
@@ -42,11 +62,6 @@ const userSchema = new mongoose.Schema({
   },
   profilePicture: {
     type: String // URL to profile picture
-  },
-  office: {
-    type: String,
-    enum: ['MIS', 'Registrar', 'Admissions', 'Senior Management'],
-    required: true
   },
   permissions: [{
     type: String
@@ -65,7 +80,10 @@ const userSchema = new mongoose.Schema({
 // Index for better query performance
 // Note: email index is automatically created by unique: true
 userSchema.index({ role: 1 });
+userSchema.index({ accessLevel: 1 });
+userSchema.index({ office: 1 });
 userSchema.index({ isActive: 1 });
+userSchema.index({ office: 1, isActive: 1 }); // Compound index for common query pattern
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

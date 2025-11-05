@@ -34,7 +34,7 @@ const Users = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: '',
+    accessLevel: '',
     office: '',
     isActive: true,
     pageAccess: []
@@ -49,12 +49,23 @@ const Users = () => {
   // Refs for cleanup
   const abortControllerRef = useRef(null);
 
-  // Role and office options
-  const roleOptions = [
-    { value: 'super_admin', label: 'Super Admin' },
-    { value: 'admin', label: 'Admin' },
-    { value: 'admin_staff', label: 'Admin Staff' }
-  ];
+  // Access level options (conditionally filtered based on office)
+  const getAccessLevelOptions = (office) => {
+    const baseOptions = [
+      { value: 'admin', label: 'Admin' },
+      { value: 'admin_staff', label: 'Admin Staff' }
+    ];
+
+    // Super Admin is only available for MIS office
+    if (office === 'MIS') {
+      return [
+        { value: 'super_admin', label: 'Super Admin' },
+        ...baseOptions
+      ];
+    }
+
+    return baseOptions;
+  };
 
   const officeOptions = [
     { value: 'MIS', label: 'MIS' },
@@ -62,6 +73,19 @@ const Users = () => {
     { value: 'Admissions', label: 'Admissions' },
     { value: 'Senior Management', label: 'Senior Management' }
   ];
+
+  // Helper function to compute role from office and accessLevel
+  const computeRole = (office, accessLevel) => {
+    if (!office || !accessLevel) return '';
+
+    const accessLevelMap = {
+      'super_admin': 'Super Admin',
+      'admin': 'Admin',
+      'admin_staff': 'Admin Staff'
+    };
+
+    return `${office} ${accessLevelMap[accessLevel]}`;
+  };
 
   // Comprehensive list of all admin pages for access control
   const adminPages = [
@@ -241,8 +265,8 @@ const Users = () => {
       errors.email = 'Please enter a valid email address';
     }
 
-    if (!formData.role) {
-      errors.role = 'Role is required';
+    if (!formData.accessLevel) {
+      errors.accessLevel = 'Access Level is required';
     }
 
     if (!formData.office) {
@@ -272,10 +296,16 @@ const Users = () => {
       }));
     }
 
+    // When office changes, reset accessLevel if it was super_admin and new office is not MIS
+    if (field === 'office' && value !== 'MIS' && formData.accessLevel === 'super_admin') {
+      setFormData(prev => ({
+        ...prev,
+        accessLevel: ''
+      }));
+    }
 
-
-    // Smart auto-selection: When office changes and role is admin, auto-select relevant page access
-    if (field === 'office' && value && formData.role === 'admin') {
+    // Smart auto-selection: When office changes and accessLevel is admin, auto-select relevant page access
+    if (field === 'office' && value && formData.accessLevel === 'admin') {
       const defaultAccess = getDefaultPageAccess(value);
       setFormData(prev => ({
         ...prev,
@@ -283,8 +313,8 @@ const Users = () => {
       }));
     }
 
-    // Smart auto-selection: When role changes to super_admin with MIS office, select all pages
-    if (field === 'role' && value === 'super_admin' && formData.office === 'MIS') {
+    // Smart auto-selection: When accessLevel changes to super_admin with MIS office, select all pages
+    if (field === 'accessLevel' && value === 'super_admin' && formData.office === 'MIS') {
       const allPageIds = adminPages.map(page => page.id);
       setFormData(prev => ({
         ...prev,
@@ -292,8 +322,8 @@ const Users = () => {
       }));
     }
 
-    // Smart auto-selection: When role changes to admin, auto-select office pages
-    if (field === 'role' && value === 'admin' && formData.office) {
+    // Smart auto-selection: When accessLevel changes to admin, auto-select office pages
+    if (field === 'accessLevel' && value === 'admin' && formData.office) {
       const defaultAccess = getDefaultPageAccess(formData.office);
       setFormData(prev => ({
         ...prev,
@@ -301,8 +331,8 @@ const Users = () => {
       }));
     }
 
-    // Clear page access when role changes to admin_staff
-    if (field === 'role' && value === 'admin_staff') {
+    // Clear page access when accessLevel changes to admin_staff
+    if (field === 'accessLevel' && value === 'admin_staff') {
       setFormData(prev => ({
         ...prev,
         pageAccess: []
@@ -334,7 +364,7 @@ const Users = () => {
     setFormData({
       name: '',
       email: '',
-      role: '',
+      accessLevel: '',
       office: '',
       isActive: true,
       pageAccess: []
@@ -349,7 +379,7 @@ const Users = () => {
     setFormData({
       name: user.name,
       email: user.email,
-      role: user.role,
+      accessLevel: user.accessLevel || '',
       office: user.office || '',
       isActive: user.isActive,
       pageAccess: user.pageAccess || []
@@ -365,7 +395,7 @@ const Users = () => {
     setFormData({
       name: '',
       email: '',
-      role: '',
+      accessLevel: '',
       office: '',
       isActive: true,
       pageAccess: []
@@ -384,10 +414,14 @@ const Users = () => {
     setIsSubmitting(true);
 
     try {
+      // Compute the role from office and accessLevel
+      const computedRole = computeRole(formData.office, formData.accessLevel);
+
       const submitData = {
         name: formData.name.trim(),
         email: formData.email.trim(),
-        role: formData.role,
+        accessLevel: formData.accessLevel,
+        role: computedRole,
         office: formData.office,
         isActive: formData.isActive,
         pageAccess: formData.pageAccess
@@ -474,12 +508,6 @@ const Users = () => {
       setShowConfirmModal(false);
       setUserToDelete(null);
     }
-  };
-
-  // Get role display name
-  const getRoleDisplayName = (role) => {
-    const roleOption = roleOptions.find(option => option.value === role);
-    return roleOption ? roleOption.label : role;
   };
 
   // Get status badge color
@@ -691,7 +719,7 @@ const Users = () => {
 
                       {/* Role */}
                       <div className="text-base font-medium text-gray-900">
-                        {getRoleDisplayName(user.role)}
+                        {user.role || 'N/A'}
                       </div>
 
                       {/* Action */}
@@ -824,29 +852,33 @@ const Users = () => {
                 )}
               </div>
 
-              {/* Role */}
+              {/* Access Level */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Role <span className="text-red-500">*</span>
+                  Access Level <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={formData.role}
-                  onChange={(e) => handleInputChange('role', e.target.value)}
+                  value={formData.accessLevel}
+                  onChange={(e) => handleInputChange('accessLevel', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
-                    formErrors.role
+                    formErrors.accessLevel
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-blue-500'
                   }`}
+                  disabled={!formData.office}
                 >
-                  <option value="">Select a role</option>
-                  {roleOptions.map(option => (
+                  <option value="">Select an access level</option>
+                  {getAccessLevelOptions(formData.office).map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
-                {formErrors.role && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.role}</p>
+                {formErrors.accessLevel && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.accessLevel}</p>
+                )}
+                {!formData.office && (
+                  <p className="mt-1 text-sm text-gray-500">Please select an office first</p>
                 )}
               </div>
 

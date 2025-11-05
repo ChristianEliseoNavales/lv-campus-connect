@@ -5,14 +5,15 @@
 
 /**
  * Get default pageAccess array for a given role
- * @param {string} role - User role
+ * @param {string} role - User role (combined format: "Office AccessLevel", e.g., "MIS Super Admin")
  * @param {string} office - User office/department (optional, used for validation)
  * @returns {Array<string>} - Array of accessible route paths
  */
 const getDefaultPageAccess = (role, office = null) => {
+  // Handle new combined role format (e.g., "MIS Super Admin", "Registrar Admin")
   switch (role) {
-    case 'super_admin':
-      // Super admin has access to ALL routes
+    case 'MIS Super Admin':
+      // MIS Super admin has access to ALL routes
       return [
         // MIS routes
         '/admin/mis',
@@ -21,24 +22,35 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/mis/audit-trail',
         '/admin/mis/bulletin',
         '/admin/mis/ratings',
-        
+
         // Registrar routes
         '/admin/registrar',
         '/admin/registrar/queue',
         '/admin/registrar/transaction-logs',
         '/admin/registrar/settings',
-        
+
         // Admissions routes
         '/admin/admissions',
         '/admin/admissions/queue',
         '/admin/admissions/transaction-logs',
         '/admin/admissions/settings',
-        
+
         // Senior Management routes
         '/admin/seniormanagement/charts'
       ];
 
-    case 'registrar_admin':
+    case 'MIS Admin':
+      // MIS admin has access to all MIS routes
+      return [
+        '/admin/mis',
+        '/admin/mis/users',
+        '/admin/mis/database-manager',
+        '/admin/mis/audit-trail',
+        '/admin/mis/bulletin',
+        '/admin/mis/ratings'
+      ];
+
+    case 'Registrar Admin':
       // Registrar admin has access to all Registrar routes
       return [
         '/admin/registrar',
@@ -47,7 +59,7 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/registrar/settings'
       ];
 
-    case 'admissions_admin':
+    case 'Admissions Admin':
       // Admissions admin has access to all Admissions routes
       return [
         '/admin/admissions',
@@ -56,11 +68,18 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/admissions/settings'
       ];
 
-    case 'senior_management_admin':
+    case 'Senior Management Admin':
       // Senior Management admin has access to charts only
       return [
         '/admin/seniormanagement/charts'
       ];
+
+    // Admin Staff roles return empty - they get custom page access
+    case 'MIS Admin Staff':
+    case 'Registrar Admin Staff':
+    case 'Admissions Admin Staff':
+    case 'Senior Management Admin Staff':
+      return [];
 
     default:
       // Unknown role - no access
@@ -71,42 +90,32 @@ const getDefaultPageAccess = (role, office = null) => {
 
 /**
  * Validate that office matches role
- * @param {string} role - User role
+ * @param {string} role - User role (combined format: "Office AccessLevel")
  * @param {string} office - User office/department
  * @returns {boolean} - True if valid, false otherwise
  */
 const validateRoleOfficeMatch = (role, office) => {
-  const roleOfficeMap = {
-    'super_admin': 'MIS',
-    'registrar_admin': 'Registrar',
-    'admissions_admin': 'Admissions',
-    'senior_management_admin': 'Senior Management'
-  };
-
-  const expectedOffice = roleOfficeMap[role];
-  
-  if (!expectedOffice) {
-    console.warn(`Unknown role: ${role}`);
-    return false;
-  }
-
-  return office === expectedOffice;
+  // Extract office from combined role (e.g., "MIS Super Admin" -> "MIS")
+  const roleOffice = role.split(' ')[0];
+  return roleOffice === office;
 };
 
 /**
  * Get office/department for a given role
- * @param {string} role - User role
+ * @param {string} role - User role (combined format: "Office AccessLevel")
  * @returns {string|null} - Office name or null
  */
 const getOfficeForRole = (role) => {
-  const roleOfficeMap = {
-    'super_admin': 'MIS',
-    'registrar_admin': 'Registrar',
-    'admissions_admin': 'Admissions',
-    'senior_management_admin': 'Senior Management'
-  };
-
-  return roleOfficeMap[role] || null;
+  // Extract office from combined role (e.g., "MIS Super Admin" -> "MIS")
+  const parts = role.split(' ');
+  if (parts.length >= 2) {
+    // Handle "Senior Management" which has two words
+    if (parts[0] === 'Senior' && parts[1] === 'Management') {
+      return 'Senior Management';
+    }
+    return parts[0];
+  }
+  return null;
 };
 
 /**

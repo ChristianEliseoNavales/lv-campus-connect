@@ -15,12 +15,25 @@ const validateUser = [
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Name must be between 2 and 100 characters'),
-  body('role')
+  body('accessLevel')
     .isIn(['super_admin', 'admin', 'admin_staff'])
-    .withMessage('Invalid role specified'),
+    .withMessage('Invalid access level specified'),
   body('office')
     .isIn(['MIS', 'Registrar', 'Admissions', 'Senior Management'])
     .withMessage('Invalid office specified'),
+  body('role')
+    .isIn([
+      'MIS Super Admin',
+      'MIS Admin',
+      'MIS Admin Staff',
+      'Registrar Admin',
+      'Registrar Admin Staff',
+      'Admissions Admin',
+      'Admissions Admin Staff',
+      'Senior Management Admin',
+      'Senior Management Admin Staff'
+    ])
+    .withMessage('Invalid role specified'),
   body('password')
     .optional()
     .isLength({ min: 6 })
@@ -42,14 +55,28 @@ const validateUserUpdate = [
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Name must be between 2 and 100 characters'),
-  body('role')
+  body('accessLevel')
     .optional()
     .isIn(['super_admin', 'admin', 'admin_staff'])
-    .withMessage('Invalid role specified'),
+    .withMessage('Invalid access level specified'),
   body('office')
     .optional()
     .isIn(['MIS', 'Registrar', 'Admissions', 'Senior Management'])
     .withMessage('Invalid office specified'),
+  body('role')
+    .optional()
+    .isIn([
+      'MIS Super Admin',
+      'MIS Admin',
+      'MIS Admin Staff',
+      'Registrar Admin',
+      'Registrar Admin Staff',
+      'Admissions Admin',
+      'Admissions Admin Staff',
+      'Senior Management Admin',
+      'Senior Management Admin Staff'
+    ])
+    .withMessage('Invalid role specified'),
   body('isActive')
     .optional()
     .isBoolean()
@@ -107,32 +134,32 @@ router.get('/', verifyToken, requireSuperAdmin, async (req, res) => {
   }
 });
 
-// GET /api/users/by-role/:role - Fetch users by specific role
-router.get('/by-role/:role', verifyToken, requireSuperAdmin, async (req, res) => {
+// GET /api/users/by-access-level/:accessLevel - Fetch users by access level
+router.get('/by-access-level/:accessLevel', verifyToken, requireSuperAdmin, async (req, res) => {
   try {
-    const { role } = req.params;
+    const { accessLevel } = req.params;
 
-    // Validate role parameter
-    const validRoles = ['super_admin', 'admin', 'admin_staff'];
-    if (!validRoles.includes(role)) {
+    // Validate accessLevel parameter
+    const validAccessLevels = ['super_admin', 'admin', 'admin_staff'];
+    if (!validAccessLevels.includes(accessLevel)) {
       return res.status(400).json({
-        error: 'Invalid role specified',
-        validRoles
+        error: 'Invalid access level specified',
+        validAccessLevels
       });
     }
 
     const users = await User.find({
-      role,
+      accessLevel,
       isActive: true
     })
-      .select('_id name email role office')
+      .select('_id name email role accessLevel office')
       .sort({ name: 1 });
 
     res.json(users);
   } catch (error) {
-    console.error('Error fetching users by role:', error);
+    console.error('Error fetching users by access level:', error);
     res.status(500).json({
-      error: 'Failed to fetch users by role',
+      error: 'Failed to fetch users by access level',
       message: error.message
     });
   }
@@ -184,7 +211,7 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
       });
     }
 
-    const { email, name, role, office, password, pageAccess } = req.body;
+    const { email, name, accessLevel, role, office, password, pageAccess } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -227,6 +254,7 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
     const userData = {
       email,
       name,
+      accessLevel,
       role,
       office,
       isActive: true,
