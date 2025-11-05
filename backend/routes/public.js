@@ -1301,6 +1301,11 @@ router.post('/queue/transfer', async (req, res) => {
     currentQueue.isCurrentlyServing = false;
     currentQueue.calledAt = null; // Reset calledAt since it's now waiting again
 
+    // Update isPriority flag based on destination window type
+    // Priority Window requires isPriority=true, regular windows require isPriority=false
+    const isDestinationPriorityWindow = toWindow.name === 'Priority';
+    currentQueue.isPriority = isDestinationPriorityWindow;
+
     // Set processedBy (now accepts any type)
     if (adminId) {
       currentQueue.processedBy = adminId;
@@ -1311,7 +1316,10 @@ router.post('/queue/transfer', async (req, res) => {
     console.log('✅ Queue transferred:', {
       queueNumber: currentQueue.queueNumber,
       from: fromWindow.name,
-      to: toWindow.name
+      to: toWindow.name,
+      isPriority: currentQueue.isPriority,
+      status: currentQueue.status,
+      windowId: currentQueue.windowId
     });
 
     // Emit real-time updates
