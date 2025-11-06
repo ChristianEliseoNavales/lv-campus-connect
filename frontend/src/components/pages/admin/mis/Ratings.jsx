@@ -387,22 +387,22 @@ const Ratings = () => {
                     <div key={rating._id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
                       <div className="grid grid-cols-4 gap-4 items-center w-full">
                         {/* Time */}
-                        <div className="text-base font-bold text-gray-900">
+                        <div className="text-base font-bold text-gray-900 truncate">
                           {time}
                         </div>
 
                         {/* Date */}
-                        <div className="text-base font-medium text-gray-900">
+                        <div className="text-base font-medium text-gray-900 truncate">
                           {date}
                         </div>
 
                         {/* Name */}
-                        <div className="text-base font-medium text-gray-900">
+                        <div className="text-base font-medium text-gray-900 truncate" title={rating.customerName || 'Unknown Customer'}>
                           {rating.customerName || 'Unknown Customer'}
                         </div>
 
                         {/* Rate (5-star system) */}
-                        <div>
+                        <div className="truncate">
                           {renderStarRating(rating.rating)}
                         </div>
                       </div>

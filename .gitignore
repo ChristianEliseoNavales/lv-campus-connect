@@ -7,3 +7,44 @@
 
 # Exception: Allow .gitignore itself to be tracked
 !/.gitignore
+
+# Test files and results
+test-*.js
+test-*.png
+verify-*.js
+test-results/
+tests/
+*.test.js
+*.spec.js
+
+# Documentation files (keep in repo but ignore locally generated ones)
+# Note: Keep essential docs like README.md in frontend/backend folders
+
+# Playwright testing
+playwright.config.js
+playwright-report/
+
+# Node modules at root level
+node_modules/
+package.json
+package-lock.json
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp

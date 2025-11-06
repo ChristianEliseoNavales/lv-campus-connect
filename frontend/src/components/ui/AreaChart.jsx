@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import API_CONFIG from '../../config/api';
+import { authFetch } from '../../utils/apiClient';
 
 import {
   Card,
@@ -229,8 +230,8 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
         if (roleForChart === 'MIS Super Admin') {
           // Fetch data for both departments
           const [registrarResponse, admissionsResponse] = await Promise.all([
-            fetch(`${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/registrar?timeRange=${timeRange}`),
-            fetch(`${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/admissions?timeRange=${timeRange}`)
+            authFetch(`${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/registrar?timeRange=${timeRange}`),
+            authFetch(`${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/admissions?timeRange=${timeRange}`)
           ]);
 
           if (!registrarResponse.ok || !admissionsResponse.ok) {
@@ -273,7 +274,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
             throw new Error('Unable to determine department from role');
           }
 
-          const response = await fetch(
+          const response = await authFetch(
             `${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/${department}?timeRange=${timeRange}`
           );
 

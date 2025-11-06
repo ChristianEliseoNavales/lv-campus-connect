@@ -119,3 +119,32 @@ data/backups/
 *.pem
 *.key
 *.crt
+
+# Test and seed scripts (keep in repo for development/testing)
+# These are necessary for seeding and testing but should not affect production
+scripts/test-*.js
+scripts/seed*.js
+scripts/migrate*.js
+scripts/check*.js
+scripts/verify*.js
+scripts/fix*.js
+scripts/create*.js
+scripts/add*.js
+scripts/clear-*.js
+
+# Test files at backend root
+test-*.js
+verify-*.js
+diagnose-*.js
+*.test.js
+*.spec.js
+
+# Printer test outputs
+POS-58/
+POS-58-Text/
+*.py
+
+# Documentation (keep essential docs, ignore generated ones)
+docs/
+*.md
+!README.md

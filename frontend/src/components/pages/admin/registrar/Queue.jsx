@@ -7,6 +7,7 @@ import { ToastContainer } from '../../../ui/Toast';
 import { useNotification } from '../../../../hooks/useNotification';
 import textToSpeechService from '../../../../utils/textToSpeech';
 import API_CONFIG from '../../../../config/api';
+import { authFetch } from '../../../../utils/apiClient';
 
 const Queue = () => {
   const { windowId } = useParams();
@@ -61,7 +62,7 @@ const Queue = () => {
   useEffect(() => {
     const fetchWindowData = async () => {
       try {
-        const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/windows/registrar`);
+        const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/windows/registrar`);
         const windows = await response.json();
         const window = windows.find(w => w.id === windowId);
         setWindowData(window);
@@ -92,7 +93,7 @@ const Queue = () => {
         console.log('🪟 Window name:', windowData.name);
       }
 
-      const response = await fetch(url);
+      const response = await authFetch(url);
       const result = await response.json();
 
       // DEBUG: Log the RAW response
@@ -290,7 +291,7 @@ const Queue = () => {
 
     try {
       const action = isWindowServing ? 'pause' : 'resume';
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/stop`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/stop`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -340,7 +341,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, next: true }));
 
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/next`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/next`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -416,7 +417,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, recall: true }));
 
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/recall`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/recall`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -463,7 +464,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, previous: true }));
 
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/previous`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/previous`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -527,7 +528,7 @@ const Queue = () => {
     // Fetch available windows for transfer
     try {
       setTransferLoading(true);
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/windows/${windowData.office}`);
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/windows/${windowData.office}`);
       const result = await response.json();
 
       if (response.ok && result.success) {
@@ -559,7 +560,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, transfer: true }));
 
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/transfer`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/transfer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -614,7 +615,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, skip: true }));
 
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/skip`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/skip`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -686,7 +687,7 @@ const Queue = () => {
     setActionLoading(prev => ({ ...prev, requeueAll: true }));
 
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/requeue-all`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/requeue-all`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

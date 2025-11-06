@@ -60,7 +60,10 @@ const verifyToken = async (req, res, next) => {
     }
 
     // Fetch user from database to ensure they still exist and are active
-    const user = await User.findById(decoded.id).select('-password');
+    // Populate assignedWindow for Admin Staff RBAC
+    const user = await User.findById(decoded.id)
+      .select('-password')
+      .populate('assignedWindow', 'name office');
 
     if (!user) {
       return res.status(404).json({
@@ -86,7 +89,8 @@ const verifyToken = async (req, res, next) => {
       office: user.office,
       pageAccess: user.pageAccess || [],
       permissions: user.permissions || {},
-      isActive: user.isActive
+      isActive: user.isActive,
+      assignedWindow: user.assignedWindow || null // Include assignedWindow for Admin Staff RBAC
     };
 
     next();

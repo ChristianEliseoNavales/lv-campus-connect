@@ -294,28 +294,49 @@ const AdminLayout = ({ children }) => {
     return buttons;
   };
 
-  // Determine effective role based on current URL path for development testing
-  // This allows testing different role-based navigation while DEV_BYPASS_AUTH is enabled
-  const getEffectiveRole = () => {
-    const currentPath = location.pathname;
-
-    // Map URL paths to roles for development testing
-    if (currentPath.startsWith('/admin/registrar')) {
-      return 'Registrar Admin';
-    } else if (currentPath.startsWith('/admin/admissions')) {
-      return 'Admissions Admin';
-    } else if (currentPath.startsWith('/admin/seniormanagement')) {
-      return 'Senior Management Admin';
-    } else if (currentPath.startsWith('/admin/mis')) {
-      return 'MIS Super Admin';
-    }
-
-    // Default to user's actual role from auth context
-    return user?.role || 'MIS Super Admin';
-  };
-
   // Role-based navigation items
   const getNavigationItems = useCallback(() => {
+    // Determine effective role based on actual user role and current URL path
+    // For MIS Super Admin, use URL-based role to show appropriate navigation
+    const currentPath = location.pathname;
+    let effectiveRole = user?.role || 'MIS Super Admin';
+
+    // In development mode with DEV_BYPASS_AUTH, allow URL-based role switching for testing
+    if (isDevelopmentMode && !user?.role) {
+      if (currentPath.startsWith('/admin/registrar')) {
+        effectiveRole = 'Registrar Admin';
+      } else if (currentPath.startsWith('/admin/admissions')) {
+        effectiveRole = 'Admissions Admin';
+      } else if (currentPath.startsWith('/admin/seniormanagement')) {
+        effectiveRole = 'Senior Management Admin';
+      } else if (currentPath.startsWith('/admin/mis')) {
+        effectiveRole = 'MIS Super Admin';
+      }
+    }
+    // For MIS Super Admin, determine navigation role based on current URL path
+    else if (user?.role === 'MIS Super Admin') {
+      if (currentPath.startsWith('/admin/registrar')) {
+        effectiveRole = 'Registrar Admin';
+      } else if (currentPath.startsWith('/admin/admissions')) {
+        effectiveRole = 'Admissions Admin';
+      } else if (currentPath.startsWith('/admin/seniormanagement')) {
+        effectiveRole = 'Senior Management Admin';
+      } else if (currentPath.startsWith('/admin/mis')) {
+        effectiveRole = 'MIS Super Admin';
+      }
+    }
+
+    // Debug logging for RBAC
+    console.log('🔍 RBAC Debug - User object:', {
+      role: user?.role,
+      assignedWindow: user?.assignedWindow,
+      assignedWindowId: user?.assignedWindow?._id || user?.assignedWindow,
+      office: user?.office
+    });
+    console.log('🔍 RBAC Debug - Current path:', currentPath);
+    console.log('🔍 RBAC Debug - Effective role:', effectiveRole);
+    console.log('🔍 RBAC Debug - Windows available:', windows.length, windows.map(w => ({ id: w.id, name: w.name })));
+
     const roleSpecificItems = {
       'MIS Super Admin': [
         { name: 'Dashboard', path: '/admin/mis', icon: MdDashboard, end: true },
@@ -380,7 +401,10 @@ const AdminLayout = ({ children }) => {
                 const assignedWindowId = typeof user.assignedWindow === 'object'
                   ? user.assignedWindow._id
                   : user.assignedWindow;
-                return window && window.id === assignedWindowId;
+
+                // Compare window.id with assignedWindowId (both should be strings)
+                // Convert both to strings to ensure proper comparison
+                return window && window.id && String(window.id) === String(assignedWindowId);
               }
               return false;
             })
@@ -404,7 +428,10 @@ const AdminLayout = ({ children }) => {
                 const assignedWindowId = typeof user.assignedWindow === 'object'
                   ? user.assignedWindow._id
                   : user.assignedWindow;
-                return window && window.id === assignedWindowId;
+
+                // Compare window.id with assignedWindowId (both should be strings)
+                // Convert both to strings to ensure proper comparison
+                return window && window.id && String(window.id) === String(assignedWindowId);
               }
               return false;
             })
@@ -420,13 +447,21 @@ const AdminLayout = ({ children }) => {
       ]
     };
 
-    // Use effective role (URL-based for dev testing, or actual user role)
-    const effectiveRole = getEffectiveRole();
-    console.log('🔍 AdminLayout - Getting navigation items for role:', effectiveRole);
+    // Get navigation items for the effective role
     const userRoleItems = roleSpecificItems[effectiveRole] || [];
-    console.log('📋 AdminLayout - Navigation items:', userRoleItems.length, 'items');
+    console.log('📋 RBAC Debug - Navigation items count:', userRoleItems.length);
+
+    // For Admin Staff, log the filtered windows
+    if (effectiveRole?.includes('Admin Staff')) {
+      const queueItem = userRoleItems.find(item => item.name === 'Queue');
+      if (queueItem) {
+        console.log('📋 RBAC Debug - Admin Staff queue windows:', queueItem.children?.length || 0, 'windows');
+        console.log('📋 RBAC Debug - Admin Staff queue window names:', queueItem.children?.map(w => w.name) || []);
+      }
+    }
+
     return userRoleItems;
-  }, [windows, user?.role, location.pathname]);
+  }, [windows, user?.role, user?.assignedWindow, location.pathname, isDevelopmentMode]);
 
   // Get navigation items with error handling
   const navigationItems = useMemo(() => {
@@ -438,19 +473,9 @@ const AdminLayout = ({ children }) => {
     }
   }, [getNavigationItems]);
 
-  // Get display name based on effective role for development testing
+  // Get display name - use actual user name or fallback
   const getDisplayName = () => {
-    const effectiveRole = getEffectiveRole();
-    const roleNames = {
-      super_admin: 'MIS Super Admin',
-      registrar_admin: 'Registrar Admin',
-      admissions_admin: 'Admissions Admin',
-      senior_management_admin: 'Senior Management Admin'
-    };
-
-    // In development mode with bypass, show role-based name
-    // In production, use actual user name
-    return user?.name || roleNames[effectiveRole] || 'Admin User';
+    return user?.name || 'Admin User';
   };
 
   // Icon components for header

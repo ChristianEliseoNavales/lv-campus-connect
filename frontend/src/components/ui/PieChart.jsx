@@ -13,6 +13,7 @@ import {
   ChartContainer,
 } from "@/components/ui/chart";
 import API_CONFIG from "../../config/api";
+import { authFetch } from "../../utils/apiClient";
 
 // LVCampusConnect System colors for pie chart
 const serviceColors = [
@@ -156,7 +157,7 @@ export function ChartPieLegend({ userRole, timeRange = '3months' }) {
           ? `${baseUrl}/api/analytics/pie-chart/combined?timeRange=${timeRange}`
           : `${baseUrl}/api/analytics/pie-chart/${department}?timeRange=${timeRange}`;
 
-        const response = await fetch(endpoint);
+        const response = await authFetch(endpoint);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`);

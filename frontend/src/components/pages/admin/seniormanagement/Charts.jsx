@@ -6,6 +6,7 @@ import { MdClose } from 'react-icons/md';
 import { useToast, ToastContainer } from '../../../ui/Toast';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../../../../config/api';
+import { authFetch } from '../../../../utils/apiClient';
 
 const Charts = () => {
   const [loading, setLoading] = useState(true);
@@ -46,7 +47,7 @@ const Charts = () => {
 
   const fetchOffices = async () => {
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/office`);
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/office`);
       if (response.ok) {
         const data = await response.json();
         const officeList = Array.isArray(data) ? data : (data.records || []);
@@ -63,7 +64,7 @@ const Charts = () => {
   const fetchCharts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/chart`);
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/chart`);
       if (response.ok) {
         const data = await response.json();
         const chartList = Array.isArray(data) ? data : (data.records || []);

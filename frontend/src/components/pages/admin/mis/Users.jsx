@@ -101,14 +101,12 @@ const Users = () => {
     { id: 'registrar_dashboard', label: 'Registrar Dashboard', category: 'Registrar', path: '/admin/registrar' },
     { id: 'registrar_queue', label: 'Registrar Queue Management', category: 'Registrar', path: '/admin/registrar/queue' },
     { id: 'registrar_transaction_logs', label: 'Registrar Transaction Logs', category: 'Registrar', path: '/admin/registrar/transaction-logs' },
-    { id: 'registrar_audit_trail', label: 'Registrar Audit Trail', category: 'Registrar', path: '/admin/registrar/audit-trail' },
     { id: 'registrar_settings', label: 'Registrar Settings', category: 'Registrar', path: '/admin/registrar/settings' },
 
     // Admissions Admin Pages
     { id: 'admissions_dashboard', label: 'Admissions Dashboard', category: 'Admissions', path: '/admin/admissions' },
     { id: 'admissions_queue', label: 'Admissions Queue Management', category: 'Admissions', path: '/admin/admissions/queue' },
     { id: 'admissions_transaction_logs', label: 'Admissions Transaction Logs', category: 'Admissions', path: '/admin/admissions/transaction-logs' },
-    { id: 'admissions_audit_trail', label: 'Admissions Audit Trail', category: 'Admissions', path: '/admin/admissions/audit-trail' },
     { id: 'admissions_settings', label: 'Admissions Settings', category: 'Admissions', path: '/admin/admissions/settings' },
 
     // Senior Management Admin Pages
@@ -724,22 +722,22 @@ const Users = () => {
                   <div key={user._id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
                     <div className="grid grid-cols-5 gap-4 items-center w-full">
                       {/* Name */}
-                      <div className="text-base font-bold text-gray-900">
+                      <div className="text-base font-bold text-gray-900 truncate" title={user.name}>
                         {user.name}
                       </div>
 
                       {/* Email */}
-                      <div className="text-base font-medium text-gray-900">
+                      <div className="text-base font-medium text-gray-900 truncate" title={user.email}>
                         {user.email}
                       </div>
 
                       {/* Office */}
-                      <div className="text-base font-medium text-gray-900">
+                      <div className="text-base font-medium text-gray-900 truncate" title={user.office || 'N/A'}>
                         {user.office || 'N/A'}
                       </div>
 
                       {/* Role */}
-                      <div className="text-base font-medium text-gray-900">
+                      <div className="text-base font-medium text-gray-900 truncate" title={user.role || 'N/A'}>
                         {user.role || 'N/A'}
                       </div>
 

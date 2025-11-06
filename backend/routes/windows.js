@@ -117,9 +117,22 @@ router.post('/', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin',
 
     await newWindow.save();
 
-    // Update user's assignedWindow field if assignedAdmin is set
-    if (assignedAdmin) {
+    // Update user's assignedWindow field and pageAccess if assignedAdmin is set
+    if (assignedAdmin && adminUser) {
+      // Update assignedWindow field
       await User.findByIdAndUpdate(assignedAdmin, { assignedWindow: newWindow._id });
+
+      // For Admin Staff roles, also update pageAccess to include the specific queue route
+      if (adminUser.role && adminUser.role.includes('Admin Staff')) {
+        const queueRoute = `/admin/${office}/queue/${newWindow._id}`;
+
+        // Add the queue route to pageAccess if not already present
+        if (!adminUser.pageAccess || !adminUser.pageAccess.includes(queueRoute)) {
+          const updatedPageAccess = [...(adminUser.pageAccess || []), queueRoute];
+          await User.findByIdAndUpdate(assignedAdmin, { pageAccess: updatedPageAccess });
+          console.log(`✅ Added queue route ${queueRoute} to Admin Staff user ${adminUser.email}`);
+        }
+      }
     }
 
     // Populate the window for response
@@ -225,16 +238,42 @@ router.put('/:id', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin
 
     await window.save();
 
-    // Update user's assignedWindow field if assignedAdmin changed
+    // Update user's assignedWindow field and pageAccess if assignedAdmin changed
     if (assignedAdmin !== undefined) {
-      // Remove assignedWindow from old admin if exists
+      const queueRoute = `/admin/${window.office}/queue/${id}`;
+
+      // Remove assignedWindow and queue route from old admin if exists
       if (oldAssignedAdmin && oldAssignedAdmin.toString() !== (assignedAdmin || '').toString()) {
-        await User.findByIdAndUpdate(oldAssignedAdmin, { assignedWindow: null });
+        const oldAdmin = await User.findById(oldAssignedAdmin);
+        if (oldAdmin) {
+          // Remove assignedWindow
+          await User.findByIdAndUpdate(oldAssignedAdmin, { assignedWindow: null });
+
+          // For Admin Staff, also remove the queue route from pageAccess
+          if (oldAdmin.role && oldAdmin.role.includes('Admin Staff')) {
+            const updatedPageAccess = (oldAdmin.pageAccess || []).filter(route => route !== queueRoute);
+            await User.findByIdAndUpdate(oldAssignedAdmin, { pageAccess: updatedPageAccess });
+            console.log(`✅ Removed queue route ${queueRoute} from Admin Staff user ${oldAdmin.email}`);
+          }
+        }
       }
 
-      // Set assignedWindow for new admin if exists
+      // Set assignedWindow and add queue route for new admin if exists
       if (assignedAdmin) {
-        await User.findByIdAndUpdate(assignedAdmin, { assignedWindow: id });
+        const newAdmin = await User.findById(assignedAdmin);
+        if (newAdmin) {
+          // Set assignedWindow
+          await User.findByIdAndUpdate(assignedAdmin, { assignedWindow: id });
+
+          // For Admin Staff, also add the queue route to pageAccess
+          if (newAdmin.role && newAdmin.role.includes('Admin Staff')) {
+            if (!newAdmin.pageAccess || !newAdmin.pageAccess.includes(queueRoute)) {
+              const updatedPageAccess = [...(newAdmin.pageAccess || []), queueRoute];
+              await User.findByIdAndUpdate(assignedAdmin, { pageAccess: updatedPageAccess });
+              console.log(`✅ Added queue route ${queueRoute} to Admin Staff user ${newAdmin.email}`);
+            }
+          }
+        }
       }
     }
 
@@ -341,9 +380,21 @@ router.delete('/:id', verifyToken, requireRole(['MIS Super Admin', 'Registrar Ad
       assignedAdmin: window.assignedAdmin
     };
 
-    // Remove assignedWindow from user if window had an assigned admin
+    // Remove assignedWindow and queue route from user if window had an assigned admin
     if (window.assignedAdmin) {
-      await User.findByIdAndUpdate(window.assignedAdmin, { assignedWindow: null });
+      const admin = await User.findById(window.assignedAdmin);
+      if (admin) {
+        // Remove assignedWindow
+        await User.findByIdAndUpdate(window.assignedAdmin, { assignedWindow: null });
+
+        // For Admin Staff, also remove the queue route from pageAccess
+        if (admin.role && admin.role.includes('Admin Staff')) {
+          const queueRoute = `/admin/${window.office}/queue/${id}`;
+          const updatedPageAccess = (admin.pageAccess || []).filter(route => route !== queueRoute);
+          await User.findByIdAndUpdate(window.assignedAdmin, { pageAccess: updatedPageAccess });
+          console.log(`✅ Removed queue route ${queueRoute} from Admin Staff user ${admin.email}`);
+        }
+      }
     }
 
     await Window.findByIdAndDelete(id);

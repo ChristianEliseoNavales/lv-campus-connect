@@ -206,7 +206,8 @@ router.post('/google', authLimiter, async (req, res) => {
       permissions: user.permissions || {},
       profilePicture: user.profilePicture,
       isActive: user.isActive,
-      lastLogin: user.lastLogin
+      lastLogin: user.lastLogin,
+      assignedWindow: user.assignedWindow || null // Include assignedWindow for Admin Staff RBAC
     };
 
     res.json({
@@ -274,8 +275,10 @@ router.get('/verify', async (req, res) => {
       });
     }
 
-    // Fetch fresh user data from database
-    const user = await User.findById(decoded.id).select('-password -googleId');
+    // Fetch fresh user data from database with assignedWindow populated
+    const user = await User.findById(decoded.id)
+      .select('-password -googleId')
+      .populate('assignedWindow', 'name office');
 
     if (!user) {
       return res.status(404).json({
@@ -314,7 +317,8 @@ router.get('/verify', async (req, res) => {
       permissions: user.permissions || {},
       profilePicture: user.profilePicture,
       isActive: user.isActive,
-      lastLogin: user.lastLogin
+      lastLogin: user.lastLogin,
+      assignedWindow: user.assignedWindow || null // Include assignedWindow for Admin Staff RBAC
     };
 
     res.json({

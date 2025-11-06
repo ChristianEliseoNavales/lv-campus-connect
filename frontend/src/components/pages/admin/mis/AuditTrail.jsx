@@ -369,27 +369,27 @@ const AuditTrail = () => {
                     <div key={log._id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
                       <div className="grid grid-cols-5 gap-4 items-center w-full">
                         {/* Time */}
-                        <div className="text-base font-bold text-gray-900">
+                        <div className="text-base font-bold text-gray-900 truncate">
                           {time}
                         </div>
 
                         {/* Date */}
-                        <div className="text-base font-medium text-gray-900">
+                        <div className="text-base font-medium text-gray-900 truncate">
                           {date}
                         </div>
 
                         {/* User */}
-                        <div className="text-base font-medium text-gray-900">
+                        <div className="text-base font-medium text-gray-900 truncate" title={log.userName || 'Unknown User'}>
                           {log.userName || 'Unknown User'}
                         </div>
 
                         {/* Activity */}
-                        <div className="text-base font-medium text-gray-900">
+                        <div className="text-base font-medium text-gray-900 truncate" title={log.actionDescription}>
                           {log.actionDescription}
                         </div>
 
                         {/* Department */}
-                        <div>
+                        <div className="truncate">
                           {log.department && (
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold ${getDepartmentColor(log.department)}`}>
                               {log.department}

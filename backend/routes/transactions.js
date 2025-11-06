@@ -3,6 +3,7 @@ const router = express.Router();
 const Queue = require('../models/Queue');
 const VisitationForm = require('../models/VisitationForm');
 const Service = require('../models/Service');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const {
   validateDateString,
   getPhilippineDayBoundaries,
@@ -58,7 +59,7 @@ const formatTurnaroundTime = (diffMs) => {
 };
 
 // GET /api/transactions/:department - Get transaction logs for a department
-router.get('/:department', async (req, res) => {
+router.get('/:department', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
   try {
     const { department } = req.params;
     const { date } = req.query; // Get date filter from query parameters

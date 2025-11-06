@@ -5,6 +5,11 @@ const apiCache = new Map();
 const cacheTimestamps = new Map();
 const CACHE_DURATION = 30000; // 30 seconds
 
+// Get JWT token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem('authToken');
+};
+
 // Debounce utility
 const debounce = (func, delay) => {
   let timeoutId;
@@ -78,9 +83,22 @@ export const useOptimizedFetch = (url, options = {}) => {
       setLoading(true);
       setError(null);
 
+      // Get JWT token and prepare headers
+      const token = getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.fetchOptions?.headers,
+      };
+
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(url, {
         signal: abortControllerRef.current.signal,
-        ...options.fetchOptions
+        ...options.fetchOptions,
+        headers
       });
 
       if (!response.ok) {

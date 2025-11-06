@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import API_CONFIG from '../../../../config/api';
+import { authFetch } from '../../../../utils/apiClient';
 
 const QueueRedirect = () => {
   const [redirectPath, setRedirectPath] = useState(null);
@@ -9,7 +10,7 @@ const QueueRedirect = () => {
   useEffect(() => {
     const fetchFirstWindow = async () => {
       try {
-        const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/windows/admissions`);
+        const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/windows/admissions`);
         if (response.ok) {
           const windows = await response.json();
           if (windows.length > 0) {

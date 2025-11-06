@@ -138,8 +138,10 @@ const DataTable = ({
               paginatedData.map((item, index) => (
                 <tr key={item.id || index} className="hover:bg-gray-50">
                   {columns.map((column) => (
-                    <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {column.render ? column.render(item[column.key], item) : item[column.key]}
+                    <td key={column.key} className="px-6 py-4 text-sm text-gray-900">
+                      <div className="truncate max-w-xs" title={column.render ? undefined : item[column.key]}>
+                        {column.render ? column.render(item[column.key], item) : item[column.key]}
+                      </div>
                     </td>
                   ))}
                 </tr>

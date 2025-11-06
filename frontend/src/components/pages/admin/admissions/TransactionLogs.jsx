@@ -8,6 +8,7 @@ import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
 import API_CONFIG from '../../../../config/api';
+import { authFetch } from '../../../../utils/apiClient';
 
 // Define initial state outside component to prevent recreation
 const INITIAL_URL_STATE = {
@@ -61,7 +62,7 @@ const TransactionLogs = () => {
     try {
       const url = `${API_CONFIG.getAdminUrl()}/api/transactions/admissions${dateParam ? `?date=${dateParam}` : ''}`;
 
-      const response = await fetch(url);
+      const response = await authFetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -446,22 +447,22 @@ const TransactionLogs = () => {
                   <div key={log.id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
                     <div className="grid grid-cols-8 gap-4 items-center w-full">
                       {/* Queue No. */}
-                      <div className="text-base font-bold text-gray-900">
+                      <div className="text-base font-bold text-gray-900 truncate">
                         #{log.queueNumber.toString().padStart(2, '0')}
                       </div>
 
                       {/* Name */}
-                      <div className="text-base font-medium text-gray-900">
+                      <div className="text-base font-medium text-gray-900 truncate" title={log.customerName}>
                         {log.customerName}
                       </div>
 
                       {/* Purpose of Visit */}
-                      <div className="text-base font-medium text-gray-900">
+                      <div className="text-base font-medium text-gray-900 truncate" title={log.purposeOfVisit}>
                         {log.purposeOfVisit}
                       </div>
 
                       {/* Priority */}
-                      <div className="text-sm">
+                      <div className="text-sm truncate">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
                           log.priority === 'Yes' ? 'text-red-600 bg-red-50' : 'text-gray-600 bg-gray-50'
                         }`}>
@@ -470,12 +471,12 @@ const TransactionLogs = () => {
                       </div>
 
                       {/* Role */}
-                      <div className="text-base font-medium text-gray-900">
+                      <div className="text-base font-medium text-gray-900 truncate" title={log.role}>
                         {log.role}
                       </div>
 
                       {/* Turnaround Time */}
-                      <div className="text-base text-gray-900 font-mono font-semibold">
+                      <div className="text-base text-gray-900 font-mono font-semibold truncate">
                         {log.turnaroundTime}
                       </div>
 

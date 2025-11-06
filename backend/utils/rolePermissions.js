@@ -74,10 +74,23 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/seniormanagement/charts'
       ];
 
-    // Admin Staff roles return empty - they get custom page access
+    // Admin Staff roles get base queue access
+    // Specific window routes are added when they're assigned to a window
     case 'MIS Admin Staff':
+      return [
+        '/admin/mis'
+      ];
+
     case 'Registrar Admin Staff':
+      return [
+        '/admin/registrar/queue'
+      ];
+
     case 'Admissions Admin Staff':
+      return [
+        '/admin/admissions/queue'
+      ];
+
     case 'Senior Management Admin Staff':
       return [];
 
