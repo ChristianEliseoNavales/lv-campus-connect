@@ -90,7 +90,7 @@ router.post('/google', authLimiter, async (req, res) => {
     console.log('✅ Google token verified for:', email);
 
     // Check if user exists in database
-    let user = await User.findOne({ email }).select('-password');
+    let user = await User.findOne({ email }).select('-password').populate('assignedWindow', 'name office');
 
     if (!user) {
       console.log('❌ User not found in database:', email);

@@ -22,19 +22,37 @@ export const getDefaultRoute = (user) => {
       return '/admin/mis';
 
     case 'Registrar Admin':
+      return '/admin/registrar';
+
     case 'Registrar Admin Staff':
-      // Registrar roles go to Registrar dashboard
-      // Admin Staff will be redirected to their specific page if they only have one
-      if (user.role === 'Registrar Admin Staff' && user.pageAccess && user.pageAccess.length === 1) {
+      // Admin Staff with assigned window should go directly to their window
+      if (user.assignedWindow) {
+        // assignedWindow can be either an object (populated) or a string (ID)
+        const assignedWindowId = typeof user.assignedWindow === 'object'
+          ? user.assignedWindow._id
+          : user.assignedWindow;
+        return `/admin/registrar/queue/${assignedWindowId}`;
+      }
+      // Fallback to pageAccess if no assigned window
+      if (user.pageAccess && user.pageAccess.length === 1) {
         return user.pageAccess[0];
       }
       return '/admin/registrar';
 
     case 'Admissions Admin':
+      return '/admin/admissions';
+
     case 'Admissions Admin Staff':
-      // Admissions roles go to Admissions dashboard
-      // Admin Staff will be redirected to their specific page if they only have one
-      if (user.role === 'Admissions Admin Staff' && user.pageAccess && user.pageAccess.length === 1) {
+      // Admin Staff with assigned window should go directly to their window
+      if (user.assignedWindow) {
+        // assignedWindow can be either an object (populated) or a string (ID)
+        const assignedWindowId = typeof user.assignedWindow === 'object'
+          ? user.assignedWindow._id
+          : user.assignedWindow;
+        return `/admin/admissions/queue/${assignedWindowId}`;
+      }
+      // Fallback to pageAccess if no assigned window
+      if (user.pageAccess && user.pageAccess.length === 1) {
         return user.pageAccess[0];
       }
       return '/admin/admissions';

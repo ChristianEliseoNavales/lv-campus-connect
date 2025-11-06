@@ -10,7 +10,8 @@ import {
   MdStorage,
   MdTableChart
 } from 'react-icons/md';
-import { useToast, ToastContainer } from '../../../ui/Toast';
+import { ToastContainer } from '../../../ui/Toast';
+import { useNotification } from '../../../../hooks/useNotification';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
 import {
@@ -36,7 +37,7 @@ const DatabaseManager = () => {
   const [formData, setFormData] = useState({});
   const [formErrors, setFormErrors] = useState({});
 
-  const { showSuccess, showError, showWarning } = useToast();
+  const { toasts, removeToast, showSuccess, showError, showWarning } = useNotification();
 
   // Available models for database management
   const availableModels = [
@@ -317,7 +318,7 @@ const DatabaseManager = () => {
 
   return (
     <div className="space-y-6">
-      <ToastContainer />
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

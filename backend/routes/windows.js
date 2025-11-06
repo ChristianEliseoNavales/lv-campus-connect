@@ -1,9 +1,10 @@
 const express = require('express');
 const { Window, Service, User } = require('../models');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // GET /api/windows - Get all windows
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
   try {
     const windows = await Window.find()
       .populate('serviceIds', 'name')
@@ -28,7 +29,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/windows/:department - Get windows by office (department param for backward compatibility)
-router.get('/:department', async (req, res) => {
+router.get('/:department', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -60,7 +61,7 @@ router.get('/:department', async (req, res) => {
 });
 
 // POST /api/windows - Create new window
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
   try {
     const { name, office, serviceIds, assignedAdmin } = req.body;
 
@@ -116,6 +117,11 @@ router.post('/', async (req, res) => {
 
     await newWindow.save();
 
+    // Update user's assignedWindow field if assignedAdmin is set
+    if (assignedAdmin) {
+      await User.findByIdAndUpdate(assignedAdmin, { assignedWindow: newWindow._id });
+    }
+
     // Populate the window for response
     await newWindow.populate('serviceIds', 'name');
     await newWindow.populate('assignedAdmin', 'name email');
@@ -159,7 +165,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/windows/:id - Update window
-router.put('/:id', async (req, res) => {
+router.put('/:id', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, serviceIds, assignedAdmin } = req.body;
@@ -201,6 +207,9 @@ router.put('/:id', async (req, res) => {
       }
     }
 
+    // Track old assigned admin for cleanup
+    const oldAssignedAdmin = window.assignedAdmin;
+
     // Validate assigned admin if provided
     if (assignedAdmin) {
       const adminUser = await User.findById(assignedAdmin);
@@ -215,6 +224,19 @@ router.put('/:id', async (req, res) => {
     if (assignedAdmin !== undefined) window.assignedAdmin = assignedAdmin || null;
 
     await window.save();
+
+    // Update user's assignedWindow field if assignedAdmin changed
+    if (assignedAdmin !== undefined) {
+      // Remove assignedWindow from old admin if exists
+      if (oldAssignedAdmin && oldAssignedAdmin.toString() !== (assignedAdmin || '').toString()) {
+        await User.findByIdAndUpdate(oldAssignedAdmin, { assignedWindow: null });
+      }
+
+      // Set assignedWindow for new admin if exists
+      if (assignedAdmin) {
+        await User.findByIdAndUpdate(assignedAdmin, { assignedWindow: id });
+      }
+    }
 
     // Populate the window for response
     await window.populate('serviceIds', 'name');
@@ -258,7 +280,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // PATCH /api/windows/:id/toggle - Toggle window open status
-router.patch('/:id/toggle', async (req, res) => {
+router.patch('/:id/toggle', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -303,7 +325,7 @@ router.patch('/:id/toggle', async (req, res) => {
 });
 
 // DELETE /api/windows/:id - Delete window
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -315,8 +337,14 @@ router.delete('/:id', async (req, res) => {
     const deletedWindow = {
       id: window._id,
       name: window.name,
-      office: window.office
+      office: window.office,
+      assignedAdmin: window.assignedAdmin
     };
+
+    // Remove assignedWindow from user if window had an assigned admin
+    if (window.assignedAdmin) {
+      await User.findByIdAndUpdate(window.assignedAdmin, { assignedWindow: null });
+    }
 
     await Window.findByIdAndDelete(id);
 

@@ -128,7 +128,13 @@ router.get('/', verifyToken, async (req, res) => {
     const query = {};
 
     if (role) {
-      query.role = role;
+      // Support multiple roles separated by comma
+      if (role.includes(',')) {
+        const roles = role.split(',').map(r => r.trim());
+        query.role = { $in: roles };
+      } else {
+        query.role = role;
+      }
     }
 
     if (office) {
@@ -149,6 +155,7 @@ router.get('/', verifyToken, async (req, res) => {
     const users = await User.find(query)
       .select('-password -googleId')
       .populate('createdBy', 'name email')
+      .populate('assignedWindow', 'name office')
       .sort({ createdAt: -1 });
 
     res.json({

@@ -69,6 +69,11 @@ const userSchema = new mongoose.Schema({
   pageAccess: [{
     type: String
   }],
+  assignedWindow: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Window',
+    default: null
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

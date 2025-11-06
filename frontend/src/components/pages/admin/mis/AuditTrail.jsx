@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown, MdHistory } from 'react-icons/md';
 import { IoMdRefresh } from 'react-icons/io';
-import { useToast, ToastContainer, DatePicker } from '../../../ui';
+import { ToastContainer, DatePicker } from '../../../ui';
+import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
 import API_CONFIG from '../../../../config/api';
@@ -34,8 +35,8 @@ const AuditTrail = () => {
   // Ref to track if we've shown an error for the current fetch attempt
   const errorShownRef = useRef(false);
 
-  // Toast notifications
-  const { toasts, removeToast, showSuccess, showError } = useToast();
+  // Notifications (saves to database)
+  const { toasts, removeToast, showSuccess, showError } = useNotification();
 
   // Memoize the date parameter to prevent unnecessary API calls
   const dateParam = useMemo(() => {
@@ -356,7 +357,7 @@ const AuditTrail = () => {
                   <div>Date</div>
                   <div>User</div>
                   <div>Activity</div>
-                  <div>Department</div>
+                  <div>Department/Office</div>
                 </div>
               </div>
 

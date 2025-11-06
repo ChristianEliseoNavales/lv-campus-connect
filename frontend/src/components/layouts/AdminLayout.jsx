@@ -367,6 +367,54 @@ const AdminLayout = ({ children }) => {
         { name: 'Transaction Logs', path: '/admin/admissions/transaction-logs', icon: BiSolidNotepad },
         { name: 'Settings', path: '/admin/admissions/settings', icon: MdSettings }
       ],
+      'Registrar Admin Staff': [
+        {
+          name: 'Queue',
+          icon: MdQueue,
+          isExpandable: true,
+          children: windows
+            .filter(window => {
+              // Filter to only show assigned window for Admin Staff
+              if (user?.assignedWindow) {
+                // assignedWindow can be either an object (populated) or a string (ID)
+                const assignedWindowId = typeof user.assignedWindow === 'object'
+                  ? user.assignedWindow._id
+                  : user.assignedWindow;
+                return window && window.id === assignedWindowId;
+              }
+              return false;
+            })
+            .map(window => ({
+              name: window.name,
+              path: `/admin/registrar/queue/${window.id}`,
+              windowId: window.id
+            }))
+        }
+      ],
+      'Admissions Admin Staff': [
+        {
+          name: 'Queue',
+          icon: MdQueue,
+          isExpandable: true,
+          children: windows
+            .filter(window => {
+              // Filter to only show assigned window for Admin Staff
+              if (user?.assignedWindow) {
+                // assignedWindow can be either an object (populated) or a string (ID)
+                const assignedWindowId = typeof user.assignedWindow === 'object'
+                  ? user.assignedWindow._id
+                  : user.assignedWindow;
+                return window && window.id === assignedWindowId;
+              }
+              return false;
+            })
+            .map(window => ({
+              name: window.name,
+              path: `/admin/admissions/queue/${window.id}`,
+              windowId: window.id
+            }))
+        }
+      ],
       'Senior Management Admin': [
         { name: 'Charts', path: '/admin/seniormanagement/charts', icon: MdBarChart }
       ]

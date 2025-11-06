@@ -3,14 +3,15 @@ import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { IoMdRefresh } from 'react-icons/io';
 import { useAuth } from '../../../../contexts/AuthContext';
-import { useToast, ToastContainer } from '../../../ui/Toast';
+import { ToastContainer } from '../../../ui/Toast';
+import { useNotification } from '../../../../hooks/useNotification';
 import textToSpeechService from '../../../../utils/textToSpeech';
 import API_CONFIG from '../../../../config/api';
 
 const Queue = () => {
   const { windowId } = useParams();
   const { user } = useAuth();
-  const { toasts, removeToast, showSuccess, showError, showInfo, showWarning } = useToast();
+  const { toasts, removeToast, showSuccess, showError, showInfo, showWarning } = useNotification();
   const [windowData, setWindowData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);

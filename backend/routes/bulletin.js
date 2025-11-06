@@ -96,7 +96,7 @@ router.post('/upload', verifyToken, requireSuperAdmin, upload.single('file'), as
 });
 
 // DELETE /api/bulletin/delete/:publicId - Delete file from Cloudinary
-router.delete('/delete/:publicId', requireSuperAdmin, async (req, res) => {
+router.delete('/delete/:publicId', verifyToken, requireSuperAdmin, async (req, res) => {
   try {
     const { publicId } = req.params;
 

@@ -62,23 +62,23 @@ class AuditService {
       const requestMethod = req?.method || 'unknown';
       const requestUrl = req?.originalUrl || req?.url || 'unknown';
 
-      // Determine office based on user role (supports both old and new role formats)
-      let office = user?.office || 'Unknown';
+      // Determine department/office based on user role (supports both old and new role formats)
+      let department = user?.office || 'Unknown';
 
       // If office is not set, try to extract from combined role format
-      if (office === 'Unknown' && userRole) {
+      if (department === 'Unknown' && userRole) {
         // New format: "MIS Super Admin", "Registrar Admin", etc.
-        if (userRole.includes('MIS')) office = 'MIS';
-        else if (userRole.includes('Registrar')) office = 'Registrar';
-        else if (userRole.includes('Admissions')) office = 'Admissions';
-        else if (userRole.includes('Senior Management')) office = 'Senior Management';
+        if (userRole.includes('MIS')) department = 'MIS';
+        else if (userRole.includes('Registrar')) department = 'Registrar';
+        else if (userRole.includes('Admissions')) department = 'Admissions';
+        else if (userRole.includes('Senior Management')) department = 'HR';
         // Old format fallback
-        else if (userRole === 'super_admin') office = 'MIS';
-        else if (userRole === 'registrar_admin') office = 'Registrar';
-        else if (userRole === 'admissions_admin') office = 'Admissions';
-        else if (userRole === 'senior_management_admin') office = 'Senior Management';
+        else if (userRole === 'super_admin') department = 'MIS';
+        else if (userRole === 'registrar_admin') department = 'Registrar';
+        else if (userRole === 'admissions_admin') department = 'Admissions';
+        else if (userRole === 'senior_management_admin') department = 'HR';
       }
-      
+
       // Create audit trail entry
       const auditData = {
         userId,
@@ -98,7 +98,7 @@ class AuditService {
         success,
         oldValues,
         newValues,
-        office,
+        department,
         errorMessage,
         severity,
         tags,

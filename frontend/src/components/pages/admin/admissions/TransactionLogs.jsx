@@ -3,7 +3,8 @@ import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown } from 'react-icons/md
 import { IoMdRefresh } from 'react-icons/io';
 import { BiSolidNotepad } from 'react-icons/bi';
 import { PiNotePencilDuotone } from 'react-icons/pi';
-import { useToast, ToastContainer, DatePicker } from '../../../ui';
+import { ToastContainer, DatePicker } from '../../../ui';
+import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
 import API_CONFIG from '../../../../config/api';
@@ -39,8 +40,8 @@ const TransactionLogs = () => {
   // Ref to track if we've shown an error for the current fetch attempt
   const errorShownRef = useRef(false);
 
-  // Toast notifications
-  const { toasts, removeToast, showSuccess, showError } = useToast();
+  // Notifications (saves to database)
+  const { toasts, removeToast, showSuccess, showError } = useNotification();
 
 
   // Memoize the date parameter to prevent unnecessary API calls

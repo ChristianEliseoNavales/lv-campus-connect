@@ -3,7 +3,8 @@ import { FaPlus, FaUpload } from 'react-icons/fa';
 import { FiEdit3 } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
 import { MdClose } from 'react-icons/md';
-import { useToast, ToastContainer } from '../../../ui/Toast';
+import { ToastContainer } from '../../../ui/Toast';
+import { useNotification } from '../../../../hooks/useNotification';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
@@ -21,7 +22,7 @@ const Bulletin = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
   const fileInputRef = useRef(null);
-  const { toasts, removeToast, showSuccess, showError } = useToast();
+  const { toasts, removeToast, showSuccess, showError } = useNotification();
 
   // Initialize Socket.io connection
   useEffect(() => {

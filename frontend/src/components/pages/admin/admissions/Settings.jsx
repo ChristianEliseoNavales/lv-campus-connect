@@ -3,7 +3,8 @@ import { MdAdd, MdLocationOn, MdClose, MdKeyboardArrowDown, MdMonitor } from 're
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMinusCircle } from 'react-icons/ai';
 import { LuSettings2 } from 'react-icons/lu';
 import { io } from 'socket.io-client';
-import { useToast, ToastContainer, ConfirmModal } from '../../../ui';
+import { ToastContainer, ConfirmModal } from '../../../ui';
+import { useNotification } from '../../../../hooks/useNotification';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
 
@@ -630,8 +631,8 @@ const Settings = () => {
     serviceFormData: { name: '' }
   });
 
-  // Toast notifications
-  const { toasts, removeToast, showSuccess, showError, showWarning } = useToast();
+  // Notifications (saves to database)
+  const { toasts, removeToast, showSuccess, showError, showWarning } = useNotification();
 
   // Initialize Socket.io connection
   useEffect(() => {
@@ -785,7 +786,7 @@ const Settings = () => {
     try {
       setAdminUsersLoading(true);
       // Fetch users with Admissions office (both Admin and Admin Staff)
-      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/users?office=Admissions&isActive=true`);
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/users?office=Admissions&isActive=true&role=Admissions Admin,Admissions Admin Staff`);
       if (response.ok) {
         const result = await response.json();
         const data = result.success ? result.data : [];
