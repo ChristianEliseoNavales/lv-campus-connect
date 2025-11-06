@@ -92,6 +92,7 @@ const ratingsRoutes = require('./routes/ratings');
 const bulletinRoutes = require('./routes/bulletin');
 const chartsRoutes = require('./routes/charts');
 const printerRoutes = require('./routes/printer');
+const notificationRoutes = require('./routes/notifications');
 
 // Use routes
 app.use('/api/auth', authRoutes); // Authentication routes (no auth required)
@@ -108,6 +109,7 @@ app.use('/api/ratings', ratingsRoutes);
 app.use('/api/bulletin', bulletinRoutes);
 app.use('/api/charts', chartsRoutes);
 app.use('/api/printer', printerRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Basic API routes
 app.get('/', (req, res) => {

@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const streamifier = require('streamifier');
 const cloudinary = require('cloudinary').v2;
+const { verifyToken } = require('../middleware/authMiddleware');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -13,12 +14,13 @@ cloudinary.config({
 
 // Middleware to require super admin or senior management admin
 const requireSeniorManagementAccess = (req, res, next) => {
-  // For development, bypass authentication
-  if (process.env.NODE_ENV === 'development') {
+  // Check if DEV_BYPASS_AUTH is enabled (development only)
+  if (process.env.DEV_BYPASS_AUTH === 'true') {
+    console.log('🔓 DEV_BYPASS_AUTH: Bypassing senior management access check');
     return next();
   }
 
-  // In production, check for proper authentication
+  // Check for proper authentication
   const allowedRoles = ['MIS Super Admin', 'Senior Management Admin', 'Senior Management Admin Staff'];
   if (!req.user || !allowedRoles.includes(req.user.role)) {
     return res.status(403).json({ error: 'Access denied. Senior Management or Super Admin access required.' });
@@ -77,7 +79,7 @@ const handleMulterError = (err, req, res, next) => {
 };
 
 // POST /api/charts/upload - Upload chart file to Cloudinary
-router.post('/upload', requireSeniorManagementAccess, upload.single('file'), async (req, res) => {
+router.post('/upload', verifyToken, requireSeniorManagementAccess, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -128,7 +130,7 @@ router.post('/upload', requireSeniorManagementAccess, upload.single('file'), asy
 });
 
 // DELETE /api/charts/delete/:publicId - Delete file from Cloudinary
-router.delete('/delete/:publicId', requireSeniorManagementAccess, async (req, res) => {
+router.delete('/delete/:publicId', verifyToken, requireSeniorManagementAccess, async (req, res) => {
   try {
     const { publicId } = req.params;
 

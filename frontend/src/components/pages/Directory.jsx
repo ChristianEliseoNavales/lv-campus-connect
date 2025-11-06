@@ -41,7 +41,7 @@ const Directory = () => {
 
   const fetchOffices = async () => {
     try {
-      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/database/office`);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/office`);
       if (response.ok) {
         const data = await response.json();
         const officeList = Array.isArray(data) ? data : (data.records || []);
@@ -58,7 +58,7 @@ const Directory = () => {
 
   const fetchCharts = async () => {
     try {
-      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/database/chart`);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/chart`);
       if (response.ok) {
         const data = await response.json();
         const chartList = Array.isArray(data) ? data : (data.records || []);

@@ -10,6 +10,7 @@ const Rating = require('./Rating');
 const VisitationForm = require('./VisitationForm');
 const Office = require('./Office');
 const Chart = require('./Chart');
+const Notification = require('./Notification');
 
 module.exports = {
   User,
@@ -22,5 +23,6 @@ module.exports = {
   Rating,
   VisitationForm,
   Office,
-  Chart
+  Chart,
+  Notification
 };

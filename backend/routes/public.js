@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const { Queue, VisitationForm, Service, Window, Settings, Rating } = require('../models');
+const { Queue, VisitationForm, Service, Window, Settings, Rating, Bulletin, Office, Chart } = require('../models');
 const { AuditService } = require('../middleware/auditMiddleware');
 const router = express.Router();
 
@@ -1636,6 +1636,70 @@ router.get('/queue/windows/:department', async (req, res) => {
     console.error('❌ Error fetching windows:', error);
     res.status(500).json({
       error: 'Failed to fetch windows',
+      message: error.message
+    });
+  }
+});
+
+// ==========================================
+// PUBLIC KIOSK DATA ENDPOINTS
+// ==========================================
+
+// GET /api/public/bulletin - Get all bulletins for kiosk display
+router.get('/bulletin', async (req, res) => {
+  try {
+    const bulletins = await Bulletin.find()
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      records: bulletins,
+      count: bulletins.length
+    });
+  } catch (error) {
+    console.error('Error fetching bulletins:', error);
+    res.status(500).json({
+      error: 'Failed to fetch bulletins',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/public/office - Get all offices for directory display
+router.get('/office', async (req, res) => {
+  try {
+    const offices = await Office.find()
+      .sort({ name: 1 });
+
+    res.json({
+      success: true,
+      records: offices,
+      count: offices.length
+    });
+  } catch (error) {
+    console.error('Error fetching offices:', error);
+    res.status(500).json({
+      error: 'Failed to fetch offices',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/public/chart - Get all charts for directory display
+router.get('/chart', async (req, res) => {
+  try {
+    const charts = await Chart.find()
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      records: charts,
+      count: charts.length
+    });
+  } catch (error) {
+    console.error('Error fetching charts:', error);
+    res.status(500).json({
+      error: 'Failed to fetch charts',
       message: error.message
     });
   }

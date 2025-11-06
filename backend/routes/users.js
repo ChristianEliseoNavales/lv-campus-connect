@@ -88,9 +88,41 @@ const validateUserUpdate = [
 ];
 
 // GET /api/users - Fetch all users
-router.get('/', verifyToken, requireSuperAdmin, async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
     const { role, office, isActive, search } = req.query;
+
+    // RBAC: Check if user has permission to fetch users
+    // MIS Super Admin can fetch all users
+    // Registrar Admin can only fetch Registrar office users
+    // Admissions Admin can only fetch Admissions office users
+    if (req.user.role !== 'MIS Super Admin') {
+      // If not super admin, check if they're requesting their own office users
+      if (req.user.role === 'Registrar Admin' && office !== 'Registrar') {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied',
+          message: 'Registrar Admin can only access Registrar office users'
+        });
+      }
+
+      if (req.user.role === 'Admissions Admin' && office !== 'Admissions') {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied',
+          message: 'Admissions Admin can only access Admissions office users'
+        });
+      }
+
+      // If they're not super admin and not requesting their own office, deny
+      if (req.user.role !== 'Registrar Admin' && req.user.role !== 'Admissions Admin') {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied',
+          message: 'You do not have permission to access user data'
+        });
+      }
+    }
 
     // Build query object
     const query = {};

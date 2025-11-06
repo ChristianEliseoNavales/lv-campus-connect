@@ -16,7 +16,7 @@ const Bulletin = () => {
   const fetchBulletins = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/database/bulletin`);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/bulletin`);
       if (response.ok) {
         const data = await response.json();
         const bulletinList = Array.isArray(data) ? data : (data.records || []);

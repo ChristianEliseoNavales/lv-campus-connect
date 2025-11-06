@@ -22,6 +22,7 @@ import { BiSolidNotepad } from 'react-icons/bi';
 import { useSocket } from '../../contexts/SocketContext';
 import { useOptimizedFetch } from '../../hooks/useOptimizedFetch';
 import { ToastContainer, useToast } from '../ui/Toast';
+import NotificationBell from '../ui/NotificationBell';
 import API_CONFIG from '../../config/api';
 
 const AdminLayout = ({ children }) => {
@@ -198,7 +199,8 @@ const AdminLayout = ({ children }) => {
     const targetPaths = {
       'registrar': '/admin/registrar',
       'admissions': '/admin/admissions',
-      'mis': '/admin/mis'
+      'mis': '/admin/mis',
+      'seniormanagement': '/admin/seniormanagement/charts'
     };
 
     navigate(targetPaths[targetOffice]);
@@ -206,11 +208,21 @@ const AdminLayout = ({ children }) => {
   };
 
   const getOfficeSwitchButtons = () => {
+    // RBAC Logic for Office Switching:
+    // - Only MIS Super Admin can switch between all dashboards
+    // - MIS Admin/Admin Staff: no switching
+    // - Registrar/Admissions/Senior Management (any level): no switching
+
+    // Check if user is MIS Super Admin
+    if (user?.role !== 'MIS Super Admin') {
+      return []; // No switching for non-super admins
+    }
+
     const currentPath = location.pathname;
     const buttons = [];
 
     if (currentPath.startsWith('/admin/mis')) {
-      // When viewing MIS pages - show TWO buttons: Registrar and Admissions
+      // When viewing MIS pages - show ALL target paths: Registrar, Admissions, Senior Management
       buttons.push({
         key: 'registrar',
         text: 'Switch to Registrar\'s Office',
@@ -221,19 +233,61 @@ const AdminLayout = ({ children }) => {
         text: 'Switch to Admissions Office',
         onClick: () => handleOfficeSwitch('admissions')
       });
+      buttons.push({
+        key: 'seniormanagement',
+        text: 'Switch to Senior Management',
+        onClick: () => handleOfficeSwitch('seniormanagement')
+      });
     } else if (currentPath.startsWith('/admin/registrar')) {
-      // When viewing Registrar pages - show ONE button: MIS
+      // When viewing Registrar pages - show MIS, Admissions, Senior Management
       buttons.push({
         key: 'mis',
         text: 'Switch to MIS Office',
         onClick: () => handleOfficeSwitch('mis')
       });
+      buttons.push({
+        key: 'admissions',
+        text: 'Switch to Admissions Office',
+        onClick: () => handleOfficeSwitch('admissions')
+      });
+      buttons.push({
+        key: 'seniormanagement',
+        text: 'Switch to Senior Management',
+        onClick: () => handleOfficeSwitch('seniormanagement')
+      });
     } else if (currentPath.startsWith('/admin/admissions')) {
-      // When viewing Admissions pages - show ONE button: MIS
+      // When viewing Admissions pages - show MIS, Registrar, Senior Management
       buttons.push({
         key: 'mis',
         text: 'Switch to MIS Office',
         onClick: () => handleOfficeSwitch('mis')
+      });
+      buttons.push({
+        key: 'registrar',
+        text: 'Switch to Registrar\'s Office',
+        onClick: () => handleOfficeSwitch('registrar')
+      });
+      buttons.push({
+        key: 'seniormanagement',
+        text: 'Switch to Senior Management',
+        onClick: () => handleOfficeSwitch('seniormanagement')
+      });
+    } else if (currentPath.startsWith('/admin/seniormanagement')) {
+      // When viewing Senior Management pages - show MIS, Registrar, Admissions
+      buttons.push({
+        key: 'mis',
+        text: 'Switch to MIS Office',
+        onClick: () => handleOfficeSwitch('mis')
+      });
+      buttons.push({
+        key: 'registrar',
+        text: 'Switch to Registrar\'s Office',
+        onClick: () => handleOfficeSwitch('registrar')
+      });
+      buttons.push({
+        key: 'admissions',
+        text: 'Switch to Admissions Office',
+        onClick: () => handleOfficeSwitch('admissions')
       });
     }
 
@@ -552,41 +606,47 @@ const AdminLayout = ({ children }) => {
             )}
           </div>
 
-          {/* Right side: User Profile with navy blue background */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-              className="flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors text-white"
-              style={{ backgroundColor: '#1F3463' }}
-            >
-              <UserIcon />
-              <span className="font-medium">{getDisplayName()}</span>
-              <ChevronDownIcon />
-            </button>
+          {/* Right side: Notification Bell and User Profile */}
+          <div className="flex items-center space-x-3">
+            {/* Notification Bell */}
+            <NotificationBell />
 
-            {/* User Dropdown */}
-            {isUserDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                {/* Office Switch Buttons - only visible for users with multi-office access */}
-                {canSwitchOffices() && getOfficeSwitchButtons().map((button) => (
+            {/* User Profile with navy blue background */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                className="flex items-center space-x-3 px-4 py-2 rounded-xl transition-colors text-white"
+                style={{ backgroundColor: '#1F3463' }}
+              >
+                <UserIcon />
+                <span className="font-medium">{getDisplayName()}</span>
+                <ChevronDownIcon />
+              </button>
+
+              {/* User Dropdown */}
+              {isUserDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  {/* Office Switch Buttons - only visible for users with multi-office access */}
+                  {canSwitchOffices() && getOfficeSwitchButtons().map((button) => (
+                    <button
+                      key={button.key}
+                      onClick={button.onClick}
+                      className="w-full flex items-center space-x-2 px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <MdSwapHoriz className="w-5 h-5" />
+                      <span>{button.text}</span>
+                    </button>
+                  ))}
                   <button
-                    key={button.key}
-                    onClick={button.onClick}
+                    onClick={handleSignOut}
                     className="w-full flex items-center space-x-2 px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors"
                   >
-                    <MdSwapHoriz className="w-5 h-5" />
-                    <span>{button.text}</span>
+                    <LogoutIcon />
+                    <span>Sign Out</span>
                   </button>
-                ))}
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center space-x-2 px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  <LogoutIcon />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
