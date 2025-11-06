@@ -199,11 +199,11 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
       if (currentPath.startsWith('/admin/registrar')) {
-        return 'registrar_admin';
+        return 'Registrar Admin';
       } else if (currentPath.startsWith('/admin/admissions')) {
-        return 'admissions_admin';
+        return 'Admissions Admin';
       } else if (currentPath.startsWith('/admin/mis')) {
-        return 'super_admin';
+        return 'MIS Super Admin';
       }
     }
     return null;
@@ -226,7 +226,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
         setIsLoading(true);
         setError(null);
 
-        if (roleForChart === 'super_admin') {
+        if (roleForChart === 'MIS Super Admin') {
           // Fetch data for both departments
           const [registrarResponse, admissionsResponse] = await Promise.all([
             fetch(`${API_CONFIG.getAdminUrl()}/api/analytics/area-chart/registrar?timeRange=${timeRange}`),
@@ -318,7 +318,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
   // Role-specific chart configurations
   const getChartConfig = () => {
     switch (roleForChart) {
-      case 'super_admin':
+      case 'MIS Super Admin':
         // MIS Super Admin: dual-wave with renamed legends using LVCampusConnect colors
         return {
           count: {
@@ -333,7 +333,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
             color: "#1F3463", // Navy blue (primary)
           },
         };
-      case 'registrar_admin':
+      case 'Registrar Admin':
         // Registrar Admin: single-wave, no legend labels
         return {
           count: {
@@ -344,7 +344,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
             color: "#1F3463", // Navy blue (primary)
           },
         };
-      case 'admissions_admin':
+      case 'Admissions Admin':
         // Admissions Admin: single-wave, no legend labels
         return {
           count: {
@@ -367,9 +367,9 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
   const roleSpecificConfig = getChartConfig();
 
   // Determine which areas to render based on role
-  const shouldShowMobile = roleForChart === 'super_admin' || roleForChart === 'registrar_admin';
-  const shouldShowDesktop = roleForChart === 'super_admin' || roleForChart === 'admissions_admin';
-  const shouldShowLegend = roleForChart === 'super_admin';
+  const shouldShowMobile = roleForChart === 'MIS Super Admin' || roleForChart === 'Registrar Admin';
+  const shouldShowDesktop = roleForChart === 'MIS Super Admin' || roleForChart === 'Admissions Admin';
+  const shouldShowLegend = roleForChart === 'MIS Super Admin';
 
   // Helper function to get time range description
   const getTimeRangeDescription = () => {

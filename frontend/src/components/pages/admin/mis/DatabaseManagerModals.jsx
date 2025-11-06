@@ -26,7 +26,18 @@ export const EditRecordModal = ({
         { name: 'name', label: 'Name', type: 'text', required: true },
         { name: 'email', label: 'Email', type: 'email', required: true },
         { name: 'role', label: 'Role', type: 'select', required: true, options: [
-          'super_admin', 'registrar_admin', 'admissions_admin', 'senior_management_admin'
+          'MIS Super Admin',
+          'MIS Admin',
+          'MIS Admin Staff',
+          'Registrar Admin',
+          'Registrar Admin Staff',
+          'Admissions Admin',
+          'Admissions Admin Staff',
+          'Senior Management Admin',
+          'Senior Management Admin Staff'
+        ]},
+        { name: 'accessLevel', label: 'Access Level', type: 'select', options: [
+          'super_admin', 'admin', 'admin_staff'
         ]},
         { name: 'office', label: 'Office', type: 'select', options: [
           'MIS', 'Registrar', 'Admissions', 'Senior Management'

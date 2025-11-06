@@ -24,16 +24,13 @@ const ProtectedRoute = ({ children, requiredRoles = [], redirectTo = '/login' })
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // Check role-based access if roles are specified
-  if (requiredRoles.length > 0) {
-    const hasRequiredRole = requiredRoles.includes(user?.role);
-    if (!hasRequiredRole) {
-      return <Navigate to="/admin/unauthorized" replace />;
-    }
-  }
-
   // Check route-specific access using pageAccess array
+  // This is the primary access control mechanism - it checks if the user's
+  // pageAccess array includes the current route
   if (!canAccessRoute(location.pathname)) {
+    console.log(`❌ Access denied to ${location.pathname} for user:`, user?.email);
+    console.log(`   User role: ${user?.role}`);
+    console.log(`   User pageAccess:`, user?.pageAccess);
     return <Navigate to="/admin/unauthorized" replace />;
   }
 

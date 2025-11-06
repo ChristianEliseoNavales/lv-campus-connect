@@ -263,7 +263,7 @@ const AdminLayout = ({ children }) => {
   // Role-based navigation items
   const getNavigationItems = useCallback(() => {
     const roleSpecificItems = {
-      super_admin: [
+      'MIS Super Admin': [
         { name: 'Dashboard', path: '/admin/mis', icon: MdDashboard, end: true },
         { name: 'Users', path: '/admin/mis/users', icon: MdPeople },
         { name: 'Database Manager', path: '/admin/mis/database-manager', icon: MdStorage },
@@ -271,7 +271,15 @@ const AdminLayout = ({ children }) => {
         { name: 'Bulletin', path: '/admin/mis/bulletin', icon: MdNewspaper },
         { name: 'Ratings', path: '/admin/mis/ratings', icon: MdStar }
       ],
-      registrar_admin: [
+      'MIS Admin': [
+        { name: 'Dashboard', path: '/admin/mis', icon: MdDashboard, end: true },
+        { name: 'Users', path: '/admin/mis/users', icon: MdPeople },
+        { name: 'Database Manager', path: '/admin/mis/database-manager', icon: MdStorage },
+        { name: 'Audit Trail', path: '/admin/mis/audit-trail', icon: MdHistory },
+        { name: 'Bulletin', path: '/admin/mis/bulletin', icon: MdNewspaper },
+        { name: 'Ratings', path: '/admin/mis/ratings', icon: MdStar }
+      ],
+      'Registrar Admin': [
         { name: 'Dashboard', path: '/admin/registrar', icon: MdDashboard, end: true },
         {
           name: 'Queue',
@@ -288,7 +296,7 @@ const AdminLayout = ({ children }) => {
         { name: 'Transaction Logs', path: '/admin/registrar/transaction-logs', icon: BiSolidNotepad },
         { name: 'Settings', path: '/admin/registrar/settings', icon: MdSettings }
       ],
-      admissions_admin: [
+      'Admissions Admin': [
         { name: 'Dashboard', path: '/admin/admissions', icon: MdDashboard, end: true },
         {
           name: 'Queue',
@@ -305,14 +313,16 @@ const AdminLayout = ({ children }) => {
         { name: 'Transaction Logs', path: '/admin/admissions/transaction-logs', icon: BiSolidNotepad },
         { name: 'Settings', path: '/admin/admissions/settings', icon: MdSettings }
       ],
-      senior_management_admin: [
+      'Senior Management Admin': [
         { name: 'Charts', path: '/admin/seniormanagement/charts', icon: MdBarChart }
       ]
     };
 
     // Use effective role (URL-based for dev testing, or actual user role)
     const effectiveRole = getEffectiveRole();
+    console.log('🔍 AdminLayout - Getting navigation items for role:', effectiveRole);
     const userRoleItems = roleSpecificItems[effectiveRole] || [];
+    console.log('📋 AdminLayout - Navigation items:', userRoleItems.length, 'items');
     return userRoleItems;
   }, [windows, user?.role, location.pathname]);
 

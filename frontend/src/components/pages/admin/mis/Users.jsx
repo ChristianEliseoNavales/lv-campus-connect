@@ -116,12 +116,32 @@ const Users = () => {
   ];
 
   // Helper function to get default page access based on office
+  // Returns route paths (not old-style IDs)
   const getDefaultPageAccess = useCallback((office) => {
     const defaultAccess = {
-      'MIS': ['mis_dashboard', 'users_management', 'database_manager', 'mis_audit_trail', 'mis_bulletin', 'mis_ratings'],
-      'Registrar': ['registrar_dashboard', 'registrar_queue', 'registrar_transaction_logs', 'registrar_audit_trail', 'registrar_settings'],
-      'Admissions': ['admissions_dashboard', 'admissions_queue', 'admissions_transaction_logs', 'admissions_audit_trail', 'admissions_settings'],
-      'Senior Management': ['senior_management_charts']
+      'MIS': [
+        '/admin/mis',
+        '/admin/mis/users',
+        '/admin/mis/database-manager',
+        '/admin/mis/audit-trail',
+        '/admin/mis/bulletin',
+        '/admin/mis/ratings'
+      ],
+      'Registrar': [
+        '/admin/registrar',
+        '/admin/registrar/queue',
+        '/admin/registrar/transaction-logs',
+        '/admin/registrar/settings'
+      ],
+      'Admissions': [
+        '/admin/admissions',
+        '/admin/admissions/queue',
+        '/admin/admissions/transaction-logs',
+        '/admin/admissions/settings'
+      ],
+      'Senior Management': [
+        '/admin/seniormanagement/charts'
+      ]
     };
     return defaultAccess[office] || [];
   }, []);
@@ -315,10 +335,10 @@ const Users = () => {
 
     // Smart auto-selection: When accessLevel changes to super_admin with MIS office, select all pages
     if (field === 'accessLevel' && value === 'super_admin' && formData.office === 'MIS') {
-      const allPageIds = adminPages.map(page => page.id);
+      const allPagePaths = adminPages.map(page => page.path);
       setFormData(prev => ({
         ...prev,
-        pageAccess: allPageIds
+        pageAccess: allPagePaths
       }));
     }
 
@@ -341,12 +361,13 @@ const Users = () => {
   };
 
   // Handle page access checkbox changes
-  const handlePageAccessChange = (pageId, checked) => {
+  // Note: pagePath is the route path (e.g., '/admin/mis'), not the old ID format
+  const handlePageAccessChange = (pagePath, checked) => {
     setFormData(prev => ({
       ...prev,
       pageAccess: checked
-        ? [...prev.pageAccess, pageId]
-        : prev.pageAccess.filter(id => id !== pageId)
+        ? [...prev.pageAccess, pagePath]
+        : prev.pageAccess.filter(path => path !== pagePath)
     }));
 
     // Clear page access error when user makes changes
@@ -898,11 +919,11 @@ const Users = () => {
                         <h4 className="text-sm font-semibold text-[#1F3463] mb-2">{category} Pages</h4>
                         <div className="space-y-2">
                           {categoryPages.map(page => (
-                            <label key={page.id} className="flex items-center space-x-2">
+                            <label key={page.path} className="flex items-center space-x-2">
                               <input
                                 type="checkbox"
-                                checked={formData.pageAccess.includes(page.id)}
-                                onChange={(e) => handlePageAccessChange(page.id, e.target.checked)}
+                                checked={formData.pageAccess.includes(page.path)}
+                                onChange={(e) => handlePageAccessChange(page.path, e.target.checked)}
                                 className="rounded border-gray-300 text-[#1F3463] focus:ring-[#1F3463]"
                               />
                               <span className="text-sm text-gray-700">{page.label}</span>
