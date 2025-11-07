@@ -173,7 +173,7 @@ const validatePageAccess = (pageAccess) => {
   const invalidRoutes = pageAccess.filter(route => {
     // Allow wildcard
     if (route === '*') return false;
-    
+
     // Check if route starts with any valid prefix
     return !validPrefixes.some(prefix => route.startsWith(prefix));
   });
@@ -184,12 +184,73 @@ const validatePageAccess = (pageAccess) => {
   };
 };
 
+/**
+ * Validate that pageAccess routes match the user's office restrictions
+ * MIS Super Admin can access all pages
+ * Other offices can only access pages from their own office
+ * @param {Array<string>} pageAccess - Array of route paths
+ * @param {string} office - User's office (MIS, Registrar, Admissions, Senior Management)
+ * @param {string} accessLevel - User's access level (super_admin, admin, admin_staff)
+ * @returns {Object} - { valid: boolean, invalidRoutes: Array<string>, message: string }
+ */
+const validatePageAccessForOffice = (pageAccess, office, accessLevel) => {
+  // MIS Super Admin can access all pages
+  if (office === 'MIS' && accessLevel === 'super_admin') {
+    return {
+      valid: true,
+      invalidRoutes: [],
+      message: 'MIS Super Admin has access to all pages'
+    };
+  }
+
+  // Define office-to-route-prefix mapping
+  const officeRoutePrefixes = {
+    'MIS': '/admin/mis',
+    'Registrar': '/admin/registrar',
+    'Admissions': '/admin/admissions',
+    'Senior Management': '/admin/seniormanagement'
+  };
+
+  const allowedPrefix = officeRoutePrefixes[office];
+  if (!allowedPrefix) {
+    return {
+      valid: false,
+      invalidRoutes: [],
+      message: `Invalid office: ${office}`
+    };
+  }
+
+  // Check that all pageAccess routes belong to the user's office
+  const invalidRoutes = pageAccess.filter(route => {
+    // Allow wildcard only for MIS Super Admin (already handled above)
+    if (route === '*') return true;
+
+    // Check if route starts with the allowed prefix for this office
+    return !route.startsWith(allowedPrefix);
+  });
+
+  if (invalidRoutes.length > 0) {
+    return {
+      valid: false,
+      invalidRoutes,
+      message: `${office} users can only access pages under ${allowedPrefix}. Invalid routes: ${invalidRoutes.join(', ')}`
+    };
+  }
+
+  return {
+    valid: true,
+    invalidRoutes: [],
+    message: 'All pageAccess routes are valid for this office'
+  };
+};
+
 module.exports = {
   getDefaultPageAccess,
   validateRoleOfficeMatch,
   getOfficeForRole,
   getRouteDepartment,
   mergePageAccess,
-  validatePageAccess
+  validatePageAccess,
+  validatePageAccessForOffice
 };
 

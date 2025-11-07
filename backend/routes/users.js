@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auditCRUD, AuditService } = require('../middleware/auditMiddleware');
 const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
+const { validatePageAccessForOffice } = require('../utils/rolePermissions');
 
 // Validation middleware
 const validateUser = [
@@ -289,6 +290,28 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
       });
     }
 
+    // Validate pageAccess matches office restrictions
+    if (pageAccess && pageAccess.length > 0) {
+      const pageAccessValidation = validatePageAccessForOffice(pageAccess, office, accessLevel);
+      if (!pageAccessValidation.valid) {
+        await AuditService.logCRUD({
+          user: req.user,
+          action: 'CREATE',
+          resourceType: 'User',
+          resourceName: email,
+          req,
+          success: false,
+          errorMessage: pageAccessValidation.message
+        });
+
+        return res.status(400).json({
+          error: 'Invalid page access',
+          message: pageAccessValidation.message,
+          invalidRoutes: pageAccessValidation.invalidRoutes
+        });
+      }
+    }
+
     // Create new user
     const userData = {
       email,
@@ -418,6 +441,37 @@ router.put('/:id', verifyToken, requireSuperAdmin, validateUserUpdate, async (re
 
         return res.status(400).json({
           error: 'Office is required'
+        });
+      }
+    }
+
+    // Validate pageAccess matches office restrictions
+    if (updateData.pageAccess && updateData.pageAccess.length > 0) {
+      const targetOffice = updateData.office || oldUser.office;
+      const targetAccessLevel = updateData.accessLevel || oldUser.accessLevel;
+
+      const pageAccessValidation = validatePageAccessForOffice(
+        updateData.pageAccess,
+        targetOffice,
+        targetAccessLevel
+      );
+
+      if (!pageAccessValidation.valid) {
+        await AuditService.logCRUD({
+          user: req.user,
+          action: 'UPDATE',
+          resourceType: 'User',
+          resourceId: id,
+          resourceName: `${oldUser.name} (${oldUser.email})`,
+          req,
+          success: false,
+          errorMessage: pageAccessValidation.message
+        });
+
+        return res.status(400).json({
+          error: 'Invalid page access',
+          message: pageAccessValidation.message,
+          invalidRoutes: pageAccessValidation.invalidRoutes
         });
       }
     }

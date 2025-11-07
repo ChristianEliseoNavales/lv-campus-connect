@@ -318,17 +318,44 @@ const Users = () => {
     if (field === 'office' && value !== 'MIS' && formData.accessLevel === 'super_admin') {
       setFormData(prev => ({
         ...prev,
-        accessLevel: ''
+        accessLevel: '',
+        pageAccess: [] // Clear page access when office changes
       }));
     }
 
-    // Smart auto-selection: When office changes and accessLevel is admin, auto-select relevant page access
-    if (field === 'office' && value && formData.accessLevel === 'admin') {
-      const defaultAccess = getDefaultPageAccess(value);
-      setFormData(prev => ({
-        ...prev,
-        pageAccess: defaultAccess
-      }));
+    // When office changes, filter pageAccess to only include pages from the new office
+    if (field === 'office' && value) {
+      setFormData(prev => {
+        // Filter existing pageAccess to only include pages from the new office
+        const filteredPageAccess = prev.pageAccess.filter(pagePath => {
+          const page = adminPages.find(p => p.path === pagePath);
+          return page && page.category === value;
+        });
+
+        // If accessLevel is admin, auto-select all pages from the new office
+        if (prev.accessLevel === 'admin') {
+          const defaultAccess = getDefaultPageAccess(value);
+          return {
+            ...prev,
+            pageAccess: defaultAccess
+          };
+        }
+
+        // If accessLevel is super_admin and office is MIS, select all pages
+        if (prev.accessLevel === 'super_admin' && value === 'MIS') {
+          const allPagePaths = adminPages.map(page => page.path);
+          return {
+            ...prev,
+            pageAccess: allPagePaths
+          };
+        }
+
+        // Otherwise, keep filtered pageAccess
+        return {
+          ...prev,
+          pageAccess: filteredPageAccess
+        };
+      });
     }
 
     // Smart auto-selection: When accessLevel changes to super_admin with MIS office, select all pages
@@ -356,6 +383,42 @@ const Users = () => {
         pageAccess: []
       }));
     }
+  };
+
+  // Get available pages based on office and access level
+  const getAvailablePages = useCallback(() => {
+    const { office, accessLevel } = formData;
+
+    // If no office selected, return empty array
+    if (!office) {
+      return [];
+    }
+
+    // MIS Super Admin can select all pages
+    if (office === 'MIS' && accessLevel === 'super_admin') {
+      return adminPages;
+    }
+
+    // Other offices can only select pages from their own office
+    return adminPages.filter(page => page.category === office);
+  }, [formData.office, formData.accessLevel]);
+
+  // Check if a page checkbox should be disabled
+  const isPageCheckboxDisabled = (page) => {
+    const { office, accessLevel } = formData;
+
+    // If no office selected, disable all
+    if (!office) {
+      return true;
+    }
+
+    // MIS Super Admin can select all pages
+    if (office === 'MIS' && accessLevel === 'super_admin') {
+      return false;
+    }
+
+    // Other offices can only select pages from their own office
+    return page.category !== office;
   };
 
   // Handle page access checkbox changes
@@ -906,6 +969,19 @@ const Users = () => {
                 <label className="block text-sm font-medium text-gray-900 mb-3">
                   Page Access Permissions <span className="text-red-500">*</span>
                 </label>
+                {!formData.office && (
+                  <p className="text-sm text-gray-500 mb-2">Please select an office first to see available pages</p>
+                )}
+                {formData.office && formData.office !== 'MIS' && formData.accessLevel !== 'super_admin' && (
+                  <p className="text-sm text-blue-600 mb-2">
+                    You can only select pages from the {formData.office} office
+                  </p>
+                )}
+                {formData.office === 'MIS' && formData.accessLevel === 'super_admin' && (
+                  <p className="text-sm text-green-600 mb-2">
+                    As MIS Super Admin, you can select pages from all offices
+                  </p>
+                )}
                 <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
                   {/* Group pages by category */}
                   {['MIS', 'Registrar', 'Admissions', 'Senior Management'].map(category => {
@@ -916,17 +992,24 @@ const Users = () => {
                       <div key={category} className="mb-4 last:mb-0">
                         <h4 className="text-sm font-semibold text-[#1F3463] mb-2">{category} Pages</h4>
                         <div className="space-y-2">
-                          {categoryPages.map(page => (
-                            <label key={page.path} className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={formData.pageAccess.includes(page.path)}
-                                onChange={(e) => handlePageAccessChange(page.path, e.target.checked)}
-                                className="rounded border-gray-300 text-[#1F3463] focus:ring-[#1F3463]"
-                              />
-                              <span className="text-sm text-gray-700">{page.label}</span>
-                            </label>
-                          ))}
+                          {categoryPages.map(page => {
+                            const isDisabled = isPageCheckboxDisabled(page);
+                            return (
+                              <label
+                                key={page.path}
+                                className={`flex items-center space-x-2 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={formData.pageAccess.includes(page.path)}
+                                  onChange={(e) => handlePageAccessChange(page.path, e.target.checked)}
+                                  disabled={isDisabled}
+                                  className="rounded border-gray-300 text-[#1F3463] focus:ring-[#1F3463] disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                                <span className="text-sm text-gray-700">{page.label}</span>
+                              </label>
+                            );
+                          })}
                         </div>
                       </div>
                     );

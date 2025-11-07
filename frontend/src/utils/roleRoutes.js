@@ -4,8 +4,8 @@
  */
 
 /**
- * Get the default route for a user based on their role
- * @param {Object} user - User object with role and office properties
+ * Get the default route for a user based on their role and pageAccess
+ * @param {Object} user - User object with role, office, pageAccess, and assignedWindow properties
  * @returns {string} - Default route path for the user
  */
 export const getDefaultRoute = (user) => {
@@ -13,64 +13,69 @@ export const getDefaultRoute = (user) => {
     return '/login';
   }
 
-  // Role-based routing using new combined role format
-  switch (user.role) {
-    case 'MIS Super Admin':
-    case 'MIS Admin':
-    case 'MIS Admin Staff':
-      // All MIS roles go to MIS dashboard
-      return '/admin/mis';
+  const pageAccess = user.pageAccess || [];
 
-    case 'Registrar Admin':
-      return '/admin/registrar';
+  // Define dashboard paths for each office
+  const dashboardPaths = {
+    'MIS': '/admin/mis',
+    'Registrar': '/admin/registrar',
+    'Admissions': '/admin/admissions',
+    'Senior Management': '/admin/seniormanagement/charts'
+  };
 
-    case 'Registrar Admin Staff':
-      // Admin Staff with assigned window should go directly to their window
-      if (user.assignedWindow) {
-        // assignedWindow can be either an object (populated) or a string (ID)
-        const assignedWindowId = typeof user.assignedWindow === 'object'
-          ? user.assignedWindow._id
-          : user.assignedWindow;
-        return `/admin/registrar/queue/${assignedWindowId}`;
-      }
-      // Fallback to pageAccess if no assigned window
-      if (user.pageAccess && user.pageAccess.length === 1) {
-        return user.pageAccess[0];
-      }
-      return '/admin/registrar';
-
-    case 'Admissions Admin':
-      return '/admin/admissions';
-
-    case 'Admissions Admin Staff':
-      // Admin Staff with assigned window should go directly to their window
-      if (user.assignedWindow) {
-        // assignedWindow can be either an object (populated) or a string (ID)
-        const assignedWindowId = typeof user.assignedWindow === 'object'
-          ? user.assignedWindow._id
-          : user.assignedWindow;
-        return `/admin/admissions/queue/${assignedWindowId}`;
-      }
-      // Fallback to pageAccess if no assigned window
-      if (user.pageAccess && user.pageAccess.length === 1) {
-        return user.pageAccess[0];
-      }
-      return '/admin/admissions';
-
-    case 'Senior Management Admin':
-    case 'Senior Management Admin Staff':
-      // Senior Management roles go to Charts page
-      // Admin Staff will be redirected to their specific page if they only have one
-      if (user.role === 'Senior Management Admin Staff' && user.pageAccess && user.pageAccess.length === 1) {
-        return user.pageAccess[0];
-      }
-      return '/admin/seniormanagement/charts';
-
-    default:
-      // Fallback to generic admin route
-      console.warn(`Unknown role: ${user.role}. Redirecting to /admin`);
-      return '/admin';
+  // MIS Super Admin always goes to MIS dashboard
+  if (user.role === 'MIS Super Admin') {
+    return '/admin/mis';
   }
+
+  // Get the expected dashboard for the user's office
+  const expectedDashboard = dashboardPaths[user.office];
+
+  // Priority 1: Redirect to dashboard if it's in pageAccess
+  if (expectedDashboard && pageAccess.includes(expectedDashboard)) {
+    return expectedDashboard;
+  }
+
+  // Priority 2: For Admin Staff with assignedWindow and queue access, redirect to their window
+  if (user.role?.includes('Admin Staff') && user.assignedWindow) {
+    const assignedWindowId = typeof user.assignedWindow === 'object'
+      ? user.assignedWindow._id
+      : user.assignedWindow;
+
+    // Check if user has queue access
+    const officePrefix = user.office === 'Registrar' ? '/admin/registrar' : '/admin/admissions';
+    const queuePath = `${officePrefix}/queue`;
+
+    if (pageAccess.includes(queuePath) || pageAccess.some(path => path.startsWith(queuePath + '/'))) {
+      return `${queuePath}/${assignedWindowId}`;
+    }
+  }
+
+  // Priority 3: Redirect to first page in pageAccess
+  if (pageAccess.length > 0) {
+    // Filter out queue base paths (e.g., /admin/registrar/queue) if user has assignedWindow
+    // because they should go to specific window route
+    let firstPage = pageAccess[0];
+
+    // If first page is a queue base path and user has assignedWindow, try to find a better route
+    if (user.assignedWindow && (firstPage === '/admin/registrar/queue' || firstPage === '/admin/admissions/queue')) {
+      const assignedWindowId = typeof user.assignedWindow === 'object'
+        ? user.assignedWindow._id
+        : user.assignedWindow;
+      return `${firstPage}/${assignedWindowId}`;
+    }
+
+    return firstPage;
+  }
+
+  // Fallback: Use office-based default
+  if (expectedDashboard) {
+    return expectedDashboard;
+  }
+
+  // Final fallback
+  console.warn(`Unable to determine default route for user: ${user.email}. Redirecting to /admin`);
+  return '/admin';
 };
 
 /**

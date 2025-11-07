@@ -294,173 +294,146 @@ const AdminLayout = ({ children }) => {
     return buttons;
   };
 
-  // Role-based navigation items
+  // Dynamic navigation items based on pageAccess
   const getNavigationItems = useCallback(() => {
-    // Determine effective role based on actual user role and current URL path
-    // For MIS Super Admin, use URL-based role to show appropriate navigation
     const currentPath = location.pathname;
-    let effectiveRole = user?.role || 'MIS Super Admin';
-
-    // In development mode with DEV_BYPASS_AUTH, allow URL-based role switching for testing
-    if (isDevelopmentMode && !user?.role) {
-      if (currentPath.startsWith('/admin/registrar')) {
-        effectiveRole = 'Registrar Admin';
-      } else if (currentPath.startsWith('/admin/admissions')) {
-        effectiveRole = 'Admissions Admin';
-      } else if (currentPath.startsWith('/admin/seniormanagement')) {
-        effectiveRole = 'Senior Management Admin';
-      } else if (currentPath.startsWith('/admin/mis')) {
-        effectiveRole = 'MIS Super Admin';
-      }
-    }
-    // For MIS Super Admin, determine navigation role based on current URL path
-    else if (user?.role === 'MIS Super Admin') {
-      if (currentPath.startsWith('/admin/registrar')) {
-        effectiveRole = 'Registrar Admin';
-      } else if (currentPath.startsWith('/admin/admissions')) {
-        effectiveRole = 'Admissions Admin';
-      } else if (currentPath.startsWith('/admin/seniormanagement')) {
-        effectiveRole = 'Senior Management Admin';
-      } else if (currentPath.startsWith('/admin/mis')) {
-        effectiveRole = 'MIS Super Admin';
-      }
-    }
+    const pageAccess = user?.pageAccess || [];
 
     // Debug logging for RBAC
     console.log('🔍 RBAC Debug - User object:', {
       role: user?.role,
       assignedWindow: user?.assignedWindow,
       assignedWindowId: user?.assignedWindow?._id || user?.assignedWindow,
-      office: user?.office
+      office: user?.office,
+      pageAccess: pageAccess
     });
     console.log('🔍 RBAC Debug - Current path:', currentPath);
-    console.log('🔍 RBAC Debug - Effective role:', effectiveRole);
     console.log('🔍 RBAC Debug - Windows available:', windows.length, windows.map(w => ({ id: w.id, name: w.name })));
 
-    const roleSpecificItems = {
-      'MIS Super Admin': [
-        { name: 'Dashboard', path: '/admin/mis', icon: MdDashboard, end: true },
-        { name: 'Users', path: '/admin/mis/users', icon: MdPeople },
-        { name: 'Database Manager', path: '/admin/mis/database-manager', icon: MdStorage },
-        { name: 'Audit Trail', path: '/admin/mis/audit-trail', icon: MdHistory },
-        { name: 'Bulletin', path: '/admin/mis/bulletin', icon: MdNewspaper },
-        { name: 'Ratings', path: '/admin/mis/ratings', icon: MdStar }
-      ],
-      'MIS Admin': [
-        { name: 'Dashboard', path: '/admin/mis', icon: MdDashboard, end: true },
-        { name: 'Users', path: '/admin/mis/users', icon: MdPeople },
-        { name: 'Database Manager', path: '/admin/mis/database-manager', icon: MdStorage },
-        { name: 'Audit Trail', path: '/admin/mis/audit-trail', icon: MdHistory },
-        { name: 'Bulletin', path: '/admin/mis/bulletin', icon: MdNewspaper },
-        { name: 'Ratings', path: '/admin/mis/ratings', icon: MdStar }
-      ],
-      'Registrar Admin': [
-        { name: 'Dashboard', path: '/admin/registrar', icon: MdDashboard, end: true },
-        {
-          name: 'Queue',
-          icon: MdQueue,
-          isExpandable: true,
-          children: windows
-            .filter(window => window && window.id && window.name)
-            .map(window => ({
-              name: window.name,
-              path: `/admin/registrar/queue/${window.id}`,
-              windowId: window.id
-            }))
-        },
-        { name: 'Transaction Logs', path: '/admin/registrar/transaction-logs', icon: BiSolidNotepad },
-        { name: 'Settings', path: '/admin/registrar/settings', icon: MdSettings }
-      ],
-      'Admissions Admin': [
-        { name: 'Dashboard', path: '/admin/admissions', icon: MdDashboard, end: true },
-        {
-          name: 'Queue',
-          icon: MdQueue,
-          isExpandable: true,
-          children: windows
-            .filter(window => window && window.id && window.name)
-            .map(window => ({
-              name: window.name,
-              path: `/admin/admissions/queue/${window.id}`,
-              windowId: window.id
-            }))
-        },
-        { name: 'Transaction Logs', path: '/admin/admissions/transaction-logs', icon: BiSolidNotepad },
-        { name: 'Settings', path: '/admin/admissions/settings', icon: MdSettings }
-      ],
-      'Registrar Admin Staff': [
-        {
-          name: 'Queue',
-          icon: MdQueue,
-          isExpandable: true,
-          children: windows
-            .filter(window => {
-              // Filter to only show assigned window for Admin Staff
-              if (user?.assignedWindow) {
-                // assignedWindow can be either an object (populated) or a string (ID)
-                const assignedWindowId = typeof user.assignedWindow === 'object'
-                  ? user.assignedWindow._id
-                  : user.assignedWindow;
-
-                // Compare window.id with assignedWindowId (both should be strings)
-                // Convert both to strings to ensure proper comparison
-                return window && window.id && String(window.id) === String(assignedWindowId);
-              }
-              return false;
-            })
-            .map(window => ({
-              name: window.name,
-              path: `/admin/registrar/queue/${window.id}`,
-              windowId: window.id
-            }))
-        }
-      ],
-      'Admissions Admin Staff': [
-        {
-          name: 'Queue',
-          icon: MdQueue,
-          isExpandable: true,
-          children: windows
-            .filter(window => {
-              // Filter to only show assigned window for Admin Staff
-              if (user?.assignedWindow) {
-                // assignedWindow can be either an object (populated) or a string (ID)
-                const assignedWindowId = typeof user.assignedWindow === 'object'
-                  ? user.assignedWindow._id
-                  : user.assignedWindow;
-
-                // Compare window.id with assignedWindowId (both should be strings)
-                // Convert both to strings to ensure proper comparison
-                return window && window.id && String(window.id) === String(assignedWindowId);
-              }
-              return false;
-            })
-            .map(window => ({
-              name: window.name,
-              path: `/admin/admissions/queue/${window.id}`,
-              windowId: window.id
-            }))
-        }
-      ],
-      'Senior Management Admin': [
-        { name: 'Charts', path: '/admin/seniormanagement/charts', icon: MdBarChart }
-      ]
-    };
-
-    // Get navigation items for the effective role
-    const userRoleItems = roleSpecificItems[effectiveRole] || [];
-    console.log('📋 RBAC Debug - Navigation items count:', userRoleItems.length);
-
-    // For Admin Staff, log the filtered windows
-    if (effectiveRole?.includes('Admin Staff')) {
-      const queueItem = userRoleItems.find(item => item.name === 'Queue');
-      if (queueItem) {
-        console.log('📋 RBAC Debug - Admin Staff queue windows:', queueItem.children?.length || 0, 'windows');
-        console.log('📋 RBAC Debug - Admin Staff queue window names:', queueItem.children?.map(w => w.name) || []);
-      }
+    // Determine current office context based on URL for MIS Super Admin
+    let currentOffice = null;
+    if (currentPath.startsWith('/admin/registrar')) {
+      currentOffice = 'registrar';
+    } else if (currentPath.startsWith('/admin/admissions')) {
+      currentOffice = 'admissions';
+    } else if (currentPath.startsWith('/admin/seniormanagement')) {
+      currentOffice = 'seniormanagement';
+    } else if (currentPath.startsWith('/admin/mis')) {
+      currentOffice = 'mis';
     }
 
-    return userRoleItems;
+    // Helper function to check if user has access to a specific path
+    const hasAccessToPath = (path) => {
+      // MIS Super Admin has access to everything
+      if (user?.role === 'MIS Super Admin') return true;
+
+      // Check if path is in pageAccess array
+      return pageAccess.some(accessPath => {
+        if (accessPath === path) return true;
+        // Check for parent path access (e.g., /admin/registrar/queue allows /admin/registrar/queue/*)
+        if (path.startsWith(accessPath + '/')) return true;
+        return false;
+      });
+    };
+
+    // Master list of all possible navigation items
+    const allPossibleItems = {
+      // MIS items
+      '/admin/mis': { name: 'Dashboard', path: '/admin/mis', icon: MdDashboard, end: true, office: 'mis' },
+      '/admin/mis/users': { name: 'Users', path: '/admin/mis/users', icon: MdPeople, office: 'mis' },
+      '/admin/mis/database-manager': { name: 'Database Manager', path: '/admin/mis/database-manager', icon: MdStorage, office: 'mis' },
+      '/admin/mis/audit-trail': { name: 'Audit Trail', path: '/admin/mis/audit-trail', icon: MdHistory, office: 'mis' },
+      '/admin/mis/bulletin': { name: 'Bulletin', path: '/admin/mis/bulletin', icon: MdNewspaper, office: 'mis' },
+      '/admin/mis/ratings': { name: 'Ratings', path: '/admin/mis/ratings', icon: MdStar, office: 'mis' },
+
+      // Registrar items
+      '/admin/registrar': { name: 'Dashboard', path: '/admin/registrar', icon: MdDashboard, end: true, office: 'registrar' },
+      '/admin/registrar/queue': {
+        name: 'Queue',
+        path: '/admin/registrar/queue',
+        icon: MdQueue,
+        office: 'registrar',
+        isExpandable: true,
+        requiresWindows: true
+      },
+      '/admin/registrar/transaction-logs': { name: 'Transaction Logs', path: '/admin/registrar/transaction-logs', icon: BiSolidNotepad, office: 'registrar' },
+      '/admin/registrar/settings': { name: 'Settings', path: '/admin/registrar/settings', icon: MdSettings, office: 'registrar' },
+
+      // Admissions items
+      '/admin/admissions': { name: 'Dashboard', path: '/admin/admissions', icon: MdDashboard, end: true, office: 'admissions' },
+      '/admin/admissions/queue': {
+        name: 'Queue',
+        path: '/admin/admissions/queue',
+        icon: MdQueue,
+        office: 'admissions',
+        isExpandable: true,
+        requiresWindows: true
+      },
+      '/admin/admissions/transaction-logs': { name: 'Transaction Logs', path: '/admin/admissions/transaction-logs', icon: BiSolidNotepad, office: 'admissions' },
+      '/admin/admissions/settings': { name: 'Settings', path: '/admin/admissions/settings', icon: MdSettings, office: 'admissions' },
+
+      // Senior Management items
+      '/admin/seniormanagement/charts': { name: 'Charts', path: '/admin/seniormanagement/charts', icon: MdBarChart, office: 'seniormanagement' }
+    };
+
+    // Build navigation items based on pageAccess and current office context
+    const navigationItems = [];
+
+    // Determine which office's navigation to show
+    const targetOffice = currentOffice || user?.office?.toLowerCase() || 'mis';
+
+    // Filter items for the current office
+    Object.values(allPossibleItems).forEach(item => {
+      // Only show items from the current office context
+      if (item.office !== targetOffice) return;
+
+      // Check if user has access to this path
+      if (!hasAccessToPath(item.path)) return;
+
+      // Handle queue items with window filtering
+      if (item.requiresWindows) {
+        const officeWindows = windows.filter(w => w && w.id && w.name);
+
+        // If user has assignedWindow (Admin Staff), filter to only their window(s)
+        let filteredWindows = officeWindows;
+        if (user?.assignedWindow) {
+          const assignedWindowId = typeof user.assignedWindow === 'object'
+            ? user.assignedWindow._id
+            : user.assignedWindow;
+
+          filteredWindows = officeWindows.filter(window =>
+            String(window.id) === String(assignedWindowId)
+          );
+        }
+
+        // Only add queue item if there are windows to show
+        if (filteredWindows.length > 0) {
+          navigationItems.push({
+            ...item,
+            children: filteredWindows.map(window => ({
+              name: window.name,
+              path: `${item.path}/${window.id}`,
+              windowId: window.id
+            }))
+          });
+        }
+      } else {
+        // Regular navigation item
+        navigationItems.push(item);
+      }
+    });
+
+    console.log('📋 RBAC Debug - Navigation items count:', navigationItems.length);
+    console.log('📋 RBAC Debug - Navigation items:', navigationItems.map(i => i.name));
+
+    // For queue items, log the filtered windows
+    const queueItem = navigationItems.find(item => item.isExpandable);
+    if (queueItem) {
+      console.log('📋 RBAC Debug - Queue windows:', queueItem.children?.length || 0, 'windows');
+      console.log('📋 RBAC Debug - Queue window names:', queueItem.children?.map(w => w.name) || []);
+    }
+
+    return navigationItems;
   }, [windows, user?.role, user?.assignedWindow, location.pathname, isDevelopmentMode]);
 
   // Get navigation items with error handling
