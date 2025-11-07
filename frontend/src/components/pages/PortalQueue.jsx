@@ -353,25 +353,28 @@ const PortalQueue = () => {
           </div>
         )}
 
-        {/* Enable Notifications Modal - Full Screen */}
+        {/* Enable Notifications Modal - Overlay with Centered Modal */}
         {showEnableNotificationsPrompt && !notificationsEnabled && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ backgroundColor: '#1F3463' }}
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
           >
-            <div className="w-full max-w-2xl">
+            {/* Modal Container */}
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-xl md:max-w-2xl p-8 sm:p-10 md:p-12"
+            >
               {/* Modal Content */}
               <div className="text-center">
                 {/* Icon */}
-                <div className="mb-8">
-                  <div className="text-8xl sm:text-9xl mb-4">🔔</div>
+                <div className="mb-6">
+                  <div className="text-7xl sm:text-8xl">🔔</div>
                 </div>
 
                 {/* Title */}
                 <h2
-                  className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6"
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
                   style={{
-                    color: '#FFE251',
+                    color: '#1F3463',
                     fontFamily: 'Days One, sans-serif'
                   }}
                 >
@@ -379,18 +382,21 @@ const PortalQueue = () => {
                 </h2>
 
                 {/* Description */}
-                <p className="text-white text-lg sm:text-xl md:text-2xl mb-8 leading-relaxed px-4">
+                <p
+                  className="text-base sm:text-lg md:text-xl mb-6 leading-relaxed"
+                  style={{ color: '#1F3463' }}
+                >
                   To receive audio notifications when your queue number is called, please tap the button below.
                 </p>
 
-                <p className="text-white/80 text-sm sm:text-base mb-12 px-4">
+                <p className="text-gray-600 text-sm sm:text-base mb-8">
                   This allows the system to play sound alerts on your device.
                 </p>
 
                 {/* Enable Button */}
                 <button
                   onClick={enableNotifications}
-                  className="px-12 py-6 rounded-2xl font-bold text-xl sm:text-2xl shadow-2xl transition-all duration-200 transform hover:scale-105 active:scale-95 mb-6"
+                  className="w-full sm:w-auto px-10 py-4 sm:py-5 rounded-xl font-bold text-lg sm:text-xl shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 mb-4"
                   style={{
                     backgroundColor: '#FFE251',
                     color: '#1F3463'
@@ -403,7 +409,7 @@ const PortalQueue = () => {
                 <div>
                   <button
                     onClick={() => setShowEnableNotificationsPrompt(false)}
-                    className="text-white/60 text-sm sm:text-base underline hover:text-white/80 transition-colors"
+                    className="text-gray-500 text-sm sm:text-base underline hover:text-gray-700 transition-colors"
                   >
                     Continue without sound (not recommended)
                   </button>
