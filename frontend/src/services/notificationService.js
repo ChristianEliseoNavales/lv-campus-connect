@@ -11,7 +11,6 @@ class NotificationService {
     this.gainNode = null;
     this.isInitialized = false;
     this.isUnlocked = false; // Track if audio is unlocked for iOS
-    this.hasVibrationSupport = 'vibrate' in navigator;
     this.hasAudioSupport = 'Audio' in window;
     this.volumeBoost = 3.0; // Boost volume 3x (adjustable: 1.0 = normal, 3.0 = 3x louder)
   }
@@ -199,50 +198,22 @@ class NotificationService {
   }
 
   /**
-   * Trigger haptic feedback (vibration)
-   * Pattern: Short-Long-Short for attention-grabbing effect
-   * @returns {boolean} Success status
-   */
-  triggerHaptic() {
-    if (!this.hasVibrationSupport) {
-      console.warn('⚠️ Notification Service: Vibration not supported on this device');
-      return false;
-    }
-
-    try {
-      // Vibration pattern: [vibrate, pause, vibrate, pause, vibrate]
-      // Pattern: 200ms vibrate, 100ms pause, 400ms vibrate, 100ms pause, 200ms vibrate
-      const pattern = [200, 100, 400, 100, 200];
-      
-      navigator.vibrate(pattern);
-      console.log('📳 Notification Service: Haptic feedback triggered');
-      return true;
-    } catch (error) {
-      console.error('❌ Notification Service: Haptic feedback failed', error);
-      return false;
-    }
-  }
-
-  /**
-   * Trigger all notifications (sound + haptic)
+   * Trigger notification (sound only)
    * This is the main method to call when queue is called
-   * @returns {Promise<Object>} Status of each notification type
+   * @returns {Promise<Object>} Status of notification
    */
   async notifyQueueCalled() {
-    console.log('🔔 Notification Service: Queue called - triggering all notifications');
+    console.log('🔔 Notification Service: Queue called - triggering sound notification');
 
     const results = {
       sound: false,
-      haptic: false,
       timestamp: new Date().toISOString()
     };
 
     // Play sound
     results.sound = await this.playSound();
 
-    // Trigger haptic feedback
-    results.haptic = this.triggerHaptic();
-
+    console.log('🔔 Notification results:', results);
     return results;
   }
 
@@ -271,7 +242,6 @@ class NotificationService {
   getSupport() {
     return {
       audio: this.hasAudioSupport,
-      vibration: this.hasVibrationSupport,
       webNotifications: 'Notification' in window,
       initialized: this.isInitialized
     };

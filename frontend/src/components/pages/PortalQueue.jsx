@@ -37,8 +37,7 @@ const PortalQueue = () => {
         setShowEnableNotificationsPrompt(false);
         console.log('✅ Notifications enabled successfully!');
 
-        // Play a test sound to confirm it works
-        await notificationService.playSound();
+        // Don't play test sound - just enable silently
       } else {
         console.error('❌ Failed to enable notifications');
         alert('Failed to enable notifications. Please try again or use Safari browser for best experience on iOS.');
@@ -354,48 +353,61 @@ const PortalQueue = () => {
           </div>
         )}
 
-        {/* Enable Notifications Prompt - Critical for iOS */}
+        {/* Enable Notifications Modal - Full Screen */}
         {showEnableNotificationsPrompt && !notificationsEnabled && (
-          <div className="mb-6 sm:mb-8">
-            <div
-              className="rounded-2xl p-6 sm:p-8 shadow-xl border-4 mx-auto max-w-md sm:max-w-lg"
-              style={{
-                backgroundColor: '#FFE251',
-                borderColor: '#1F3463'
-              }}
-            >
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: '#1F3463' }}
+          >
+            <div className="w-full max-w-2xl">
+              {/* Modal Content */}
               <div className="text-center">
-                <div className="text-5xl sm:text-6xl mb-4">🔔</div>
-                <h3
-                  className="text-xl sm:text-2xl font-bold mb-3"
-                  style={{ color: '#1F3463' }}
+                {/* Icon */}
+                <div className="mb-8">
+                  <div className="text-8xl sm:text-9xl mb-4">🔔</div>
+                </div>
+
+                {/* Title */}
+                <h2
+                  className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6"
+                  style={{
+                    color: '#FFE251',
+                    fontFamily: 'Days One, sans-serif'
+                  }}
                 >
-                  Enable Notifications
-                </h3>
-                <p
-                  className="text-sm sm:text-base mb-6"
-                  style={{ color: '#1F3463' }}
-                >
-                  Tap the button below to receive sound and vibration alerts when your queue number is called.
-                  <br />
-                  <span className="text-xs mt-2 block opacity-75">
-                    (Required for iOS devices)
-                  </span>
+                  Enable Sound Alerts
+                </h2>
+
+                {/* Description */}
+                <p className="text-white text-lg sm:text-xl md:text-2xl mb-8 leading-relaxed px-4">
+                  To receive audio notifications when your queue number is called, please tap the button below.
                 </p>
+
+                <p className="text-white/80 text-sm sm:text-base mb-12 px-4">
+                  This allows the system to play sound alerts on your device.
+                </p>
+
+                {/* Enable Button */}
                 <button
                   onClick={enableNotifications}
-                  className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-                  style={{ backgroundColor: '#1F3463' }}
+                  className="px-12 py-6 rounded-2xl font-bold text-xl sm:text-2xl shadow-2xl transition-all duration-200 transform hover:scale-105 active:scale-95 mb-6"
+                  style={{
+                    backgroundColor: '#FFE251',
+                    color: '#1F3463'
+                  }}
                 >
-                  🔊 Enable Notifications
+                  🔊 Enable Sound Alerts
                 </button>
-                <button
-                  onClick={() => setShowEnableNotificationsPrompt(false)}
-                  className="mt-3 text-sm underline opacity-75"
-                  style={{ color: '#1F3463' }}
-                >
-                  Skip (not recommended)
-                </button>
+
+                {/* Skip Button */}
+                <div>
+                  <button
+                    onClick={() => setShowEnableNotificationsPrompt(false)}
+                    className="text-white/60 text-sm sm:text-base underline hover:text-white/80 transition-colors"
+                  >
+                    Continue without sound (not recommended)
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -409,7 +421,7 @@ const PortalQueue = () => {
                 <div className="text-2xl mr-3">✅</div>
                 <div>
                   <p className="text-sm text-green-700 font-semibold">
-                    Notifications enabled! You'll be alerted when your queue is called.
+                    Sound alerts enabled! You'll hear a notification when your queue is called.
                   </p>
                 </div>
               </div>
