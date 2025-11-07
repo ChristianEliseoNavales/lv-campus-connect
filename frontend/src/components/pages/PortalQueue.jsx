@@ -15,12 +15,39 @@ const PortalQueue = () => {
   const [currentDate, setCurrentDate] = useState('');
   const [isQueueCalled, setIsQueueCalled] = useState(false);
   const [showNotificationAlert, setShowNotificationAlert] = useState(false);
+  const [showEnableNotificationsPrompt, setShowEnableNotificationsPrompt] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   // Ref to track previous status to detect changes
   const previousStatusRef = useRef(null);
 
   // Get queue ID from URL parameters
   const queueId = searchParams.get('queueId');
+
+  // Function to enable notifications (requires user interaction for iOS)
+  const enableNotifications = async () => {
+    try {
+      console.log('🔔 User enabling notifications...');
+
+      // Initialize and unlock audio context with user gesture
+      const success = await notificationService.initializeWithUserGesture();
+
+      if (success) {
+        setNotificationsEnabled(true);
+        setShowEnableNotificationsPrompt(false);
+        console.log('✅ Notifications enabled successfully!');
+
+        // Play a test sound to confirm it works
+        await notificationService.playSound();
+      } else {
+        console.error('❌ Failed to enable notifications');
+        alert('Failed to enable notifications. Please try again or use Safari browser for best experience on iOS.');
+      }
+    } catch (error) {
+      console.error('❌ Error enabling notifications:', error);
+      alert('Error enabling notifications: ' + error.message);
+    }
+  };
 
   // Initialize notification service on component mount
   useEffect(() => {
@@ -322,6 +349,69 @@ const PortalQueue = () => {
                 >
                   Please proceed to {queueData?.windowName || 'your window'}
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Enable Notifications Prompt - Critical for iOS */}
+        {showEnableNotificationsPrompt && !notificationsEnabled && (
+          <div className="mb-6 sm:mb-8">
+            <div
+              className="rounded-2xl p-6 sm:p-8 shadow-xl border-4 mx-auto max-w-md sm:max-w-lg"
+              style={{
+                backgroundColor: '#FFE251',
+                borderColor: '#1F3463'
+              }}
+            >
+              <div className="text-center">
+                <div className="text-5xl sm:text-6xl mb-4">🔔</div>
+                <h3
+                  className="text-xl sm:text-2xl font-bold mb-3"
+                  style={{ color: '#1F3463' }}
+                >
+                  Enable Notifications
+                </h3>
+                <p
+                  className="text-sm sm:text-base mb-6"
+                  style={{ color: '#1F3463' }}
+                >
+                  Tap the button below to receive sound and vibration alerts when your queue number is called.
+                  <br />
+                  <span className="text-xs mt-2 block opacity-75">
+                    (Required for iOS devices)
+                  </span>
+                </p>
+                <button
+                  onClick={enableNotifications}
+                  className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  style={{ backgroundColor: '#1F3463' }}
+                >
+                  🔊 Enable Notifications
+                </button>
+                <button
+                  onClick={() => setShowEnableNotificationsPrompt(false)}
+                  className="mt-3 text-sm underline opacity-75"
+                  style={{ color: '#1F3463' }}
+                >
+                  Skip (not recommended)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notifications Enabled Confirmation */}
+        {notificationsEnabled && (
+          <div className="mb-4 sm:mb-6">
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mx-auto max-w-md sm:max-w-lg rounded-lg">
+              <div className="flex items-center">
+                <div className="text-2xl mr-3">✅</div>
+                <div>
+                  <p className="text-sm text-green-700 font-semibold">
+                    Notifications enabled! You'll be alerted when your queue is called.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

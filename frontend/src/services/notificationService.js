@@ -6,7 +6,9 @@
 class NotificationService {
   constructor() {
     this.audio = null;
+    this.audioContext = null;
     this.isInitialized = false;
+    this.isUnlocked = false; // Track if audio is unlocked for iOS
     this.hasVibrationSupport = 'vibrate' in navigator;
     this.hasAudioSupport = 'Audio' in window;
   }
@@ -17,7 +19,18 @@ class NotificationService {
    */
   generateBeep() {
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      // Use existing AudioContext if available, otherwise create new one
+      const audioContext = this.audioContext || new (window.AudioContext || window.webkitAudioContext)();
+
+      // Store AudioContext for reuse
+      if (!this.audioContext) {
+        this.audioContext = audioContext;
+      }
+
+      // Resume if suspended (iOS requirement)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
 
       // Create oscillator for beep sound
       const oscillator = audioContext.createOscillator();
@@ -48,37 +61,71 @@ class NotificationService {
   }
 
   /**
-   * Initialize the notification service
-   * Preloads audio for better performance
+   * Initialize with user gesture (required for iOS)
+   * This MUST be called from a user interaction (tap/click)
+   * @returns {Promise<boolean>} Success status
    */
-  async initialize() {
-    if (this.isInitialized) return;
+  async initializeWithUserGesture() {
+    console.log('🔔 Initializing notifications with user gesture (iOS compatible)...');
 
     try {
-      // Try to preload notification sound file
+      // Create AudioContext (required for iOS)
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('✅ AudioContext created');
+      }
+
+      // Resume AudioContext (required for iOS)
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+        console.log('✅ AudioContext resumed');
+      }
+
+      // Try to load and play audio file
       if (this.hasAudioSupport) {
         try {
           this.audio = new Audio('/sounds/queue-notification.mp3');
-          this.audio.preload = 'auto';
-
-          // Set volume to maximum for better audibility
           this.audio.volume = 1.0;
 
-          // Test if audio file loads successfully
+          // Load the audio
           await new Promise((resolve, reject) => {
             this.audio.addEventListener('canplaythrough', resolve, { once: true });
             this.audio.addEventListener('error', reject, { once: true });
+            this.audio.load();
 
             // Timeout after 3 seconds
             setTimeout(() => reject(new Error('Audio load timeout')), 3000);
           });
 
-          console.log('✅ Notification Service: Audio file loaded successfully');
+          console.log('✅ Audio file loaded successfully');
         } catch (audioError) {
-          console.warn('⚠️ Notification Service: Audio file not available, will use generated beep', audioError);
-          this.audio = null; // Will use generated beep as fallback
+          console.warn('⚠️ Audio file not available, will use generated beep', audioError);
+          this.audio = null;
         }
       }
+
+      this.isUnlocked = true;
+      this.isInitialized = true;
+
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to initialize with user gesture:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Initialize the notification service (basic initialization)
+   * Note: On iOS, you still need to call initializeWithUserGesture() from a user interaction
+   */
+  async initialize() {
+    if (this.isInitialized) return;
+
+    try {
+      // Basic initialization without user gesture
+      // On iOS, audio won't work until initializeWithUserGesture() is called
+      console.log('✅ Notification Service: Basic initialization complete');
+      console.log('⚠️ iOS users: Tap "Enable Notifications" button to unlock audio');
 
       this.isInitialized = true;
     } catch (error) {
