@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSocket } from '../../contexts/SocketContext';
 import API_CONFIG from '../../config/api';
+import notificationService from '../../services/notificationService';
 
 const PortalQueue = () => {
   const [searchParams] = useSearchParams();
@@ -12,9 +13,35 @@ const PortalQueue = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentDate, setCurrentDate] = useState('');
+  const [isQueueCalled, setIsQueueCalled] = useState(false);
+  const [showNotificationAlert, setShowNotificationAlert] = useState(false);
+
+  // Ref to track previous status to detect changes
+  const previousStatusRef = useRef(null);
 
   // Get queue ID from URL parameters
   const queueId = searchParams.get('queueId');
+
+  // Initialize notification service on component mount
+  useEffect(() => {
+    const initNotifications = async () => {
+      await notificationService.initialize();
+      const support = notificationService.getSupport();
+      console.log('🔔 Notification support:', support);
+
+      // Show alert if user needs to enable sound
+      if (!support.audio) {
+        setShowNotificationAlert(true);
+      }
+    };
+
+    initNotifications();
+
+    // Cleanup on unmount
+    return () => {
+      notificationService.cleanup();
+    };
+  }, []);
 
   // Set current date on component mount
   useEffect(() => {
@@ -42,7 +69,29 @@ const PortalQueue = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setQueueData(result.data);
+        const newData = result.data;
+
+        // Check if status changed from 'waiting' to 'serving'
+        if (previousStatusRef.current === 'waiting' && newData.status === 'serving') {
+          console.log('🔔 Queue status changed to SERVING - triggering notifications!');
+
+          // Trigger all notifications (sound + haptic)
+          const notificationResults = await notificationService.notifyQueueCalled();
+          console.log('🔔 Notification results:', notificationResults);
+
+          // Set visual alert state
+          setIsQueueCalled(true);
+
+          // Auto-dismiss visual alert after 10 seconds
+          setTimeout(() => {
+            setIsQueueCalled(false);
+          }, 10000);
+        }
+
+        // Update previous status ref
+        previousStatusRef.current = newData.status;
+
+        setQueueData(newData);
         setError(null);
       } else {
         setError(result.error || 'Failed to load queue data');
@@ -64,9 +113,27 @@ const PortalQueue = () => {
       joinRoom(`queue-${queueId}`);
 
       // Listen for queue updates
-      const unsubscribe = subscribe('queue-updated', (data) => {
+      const unsubscribe = subscribe('queue-updated', async (data) => {
         console.log('📡 PortalQueue - Real-time update received:', data);
-        // Only refresh if this update is for our queue
+
+        // Check if this is a status update to 'serving' for our queue
+        if (data.queueId === queueId && data.type === 'queue-status-updated' && data.data?.status === 'serving') {
+          console.log('🔔 Real-time notification: Queue is now being served!');
+
+          // Trigger notifications immediately via Socket.io event
+          const notificationResults = await notificationService.notifyQueueCalled();
+          console.log('🔔 Real-time notification results:', notificationResults);
+
+          // Set visual alert state
+          setIsQueueCalled(true);
+
+          // Auto-dismiss visual alert after 10 seconds
+          setTimeout(() => {
+            setIsQueueCalled(false);
+          }, 10000);
+        }
+
+        // Always refresh data for any queue update
         if (data.queueId === queueId || data.type === 'queue-status-updated') {
           fetchQueueData();
         }
@@ -231,6 +298,57 @@ const PortalQueue = () => {
 
       {/* Main Content */}
       <main className="flex-grow px-4 py-4 sm:px-6 sm:py-6 md:py-8">
+        {/* Queue Called Alert - Prominent Visual Notification */}
+        {isQueueCalled && (
+          <div className="mb-6 sm:mb-8 animate-pulse">
+            <div
+              className="rounded-2xl p-4 sm:p-6 shadow-2xl border-4 mx-auto max-w-md sm:max-w-lg"
+              style={{
+                backgroundColor: '#FFE251',
+                borderColor: '#1F3463'
+              }}
+            >
+              <div className="text-center">
+                <div className="text-4xl sm:text-5xl md:text-6xl mb-2">🔔</div>
+                <h3
+                  className="text-xl sm:text-2xl md:text-3xl font-bold mb-2"
+                  style={{ color: '#1F3463' }}
+                >
+                  YOUR TURN!
+                </h3>
+                <p
+                  className="text-base sm:text-lg md:text-xl font-semibold"
+                  style={{ color: '#1F3463' }}
+                >
+                  Please proceed to {queueData?.windowName || 'your window'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notification Support Alert */}
+        {showNotificationAlert && (
+          <div className="mb-4 sm:mb-6">
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mx-auto max-w-md sm:max-w-lg">
+              <div className="flex items-start">
+                <div className="text-2xl mr-3">ℹ️</div>
+                <div>
+                  <p className="text-sm text-blue-700">
+                    <strong>Tip:</strong> Enable sound on your device to receive audio notifications when your queue is called.
+                  </p>
+                  <button
+                    onClick={() => setShowNotificationAlert(false)}
+                    className="mt-2 text-xs text-blue-600 underline"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Date Validity Section */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8">
           <p className="text-base sm:text-lg md:text-xl text-gray-700 font-medium px-2">
@@ -241,11 +359,13 @@ const PortalQueue = () => {
           </p>
         </div>
 
-        {/* Queue Number Display - Large Circular Border */}
+        {/* Queue Number Display - Large Circular Border with conditional animation */}
         <div className="flex justify-center mb-6 sm:mb-8 md:mb-10">
           <div
-            className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 lg:w-56 lg:h-56 border-4 rounded-full flex items-center justify-center bg-white shadow-lg"
-            style={{ borderColor: '#1F3463' }}
+            className={`w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 lg:w-56 lg:h-56 border-4 rounded-full flex items-center justify-center bg-white shadow-lg transition-all duration-300 ${
+              isQueueCalled ? 'animate-pulse ring-8 ring-yellow-300' : ''
+            }`}
+            style={{ borderColor: isQueueCalled ? '#FFE251' : '#1F3463' }}
           >
             <span
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold"
