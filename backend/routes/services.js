@@ -1,10 +1,10 @@
 const express = require('express');
 const { Service } = require('../models');
-const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+const { verifyToken, requireRole, checkApiAccess } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // GET /api/services - Get all services
-router.get('/', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
+router.get('/', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const services = await Service.find().sort({ office: 1, name: 1 });
     res.json(services.map(service => ({
@@ -22,7 +22,7 @@ router.get('/', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Regis
 });
 
 // GET /api/services/:department - Get services by office (department param for backward compatibility)
-router.get('/:department', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
+router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -47,7 +47,7 @@ router.get('/:department', verifyToken, requireRole(['MIS Super Admin', 'MIS Adm
 });
 
 // GET /api/services/:department/active - Get active services by office (department param for backward compatibility)
-router.get('/:department/active', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
+router.get('/:department/active', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -74,7 +74,7 @@ router.get('/:department/active', verifyToken, requireRole(['MIS Super Admin', '
 });
 
 // POST /api/services - Create new service
-router.post('/', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.post('/', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { name, office } = req.body;
 
@@ -133,7 +133,7 @@ router.post('/', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin',
 });
 
 // PATCH /api/services/:id/toggle - Toggle service active status
-router.patch('/:id/toggle', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -172,7 +172,7 @@ router.patch('/:id/toggle', verifyToken, requireRole(['MIS Super Admin', 'Regist
 });
 
 // DELETE /api/services/:id - Delete service
-router.delete('/:id', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { id } = req.params;
 

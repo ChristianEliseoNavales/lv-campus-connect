@@ -3,7 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auditCRUD, AuditService } = require('../middleware/auditMiddleware');
-const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
 const { validatePageAccessForOffice } = require('../utils/rolePermissions');
 
 // Validation middleware
@@ -89,39 +89,28 @@ const validateUserUpdate = [
 ];
 
 // GET /api/users - Fetch all users
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { role, office, isActive, search } = req.query;
 
-    // RBAC: Check if user has permission to fetch users
+    // RBAC: Check if user has permission to fetch users based on office
     // MIS Super Admin can fetch all users
-    // Registrar Admin can only fetch Registrar office users
-    // Admissions Admin can only fetch Admissions office users
+    // Other offices can only fetch users from their own office
     if (req.user.role !== 'MIS Super Admin') {
-      // If not super admin, check if they're requesting their own office users
-      if (req.user.role === 'Registrar Admin' && office !== 'Registrar') {
+      // If office filter is provided and doesn't match user's office, deny access
+      if (office && office !== req.user.office) {
         return res.status(403).json({
           success: false,
           error: 'Access denied',
-          message: 'Registrar Admin can only access Registrar office users'
+          message: `You can only access ${req.user.office} office users`
         });
       }
 
-      if (req.user.role === 'Admissions Admin' && office !== 'Admissions') {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied',
-          message: 'Admissions Admin can only access Admissions office users'
-        });
-      }
-
-      // If they're not super admin and not requesting their own office, deny
-      if (req.user.role !== 'Registrar Admin' && req.user.role !== 'Admissions Admin') {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied',
-          message: 'You do not have permission to access user data'
-        });
+      // If no office filter provided, default to user's office
+      // This prevents users from seeing all users across all offices
+      if (!office) {
+        // Automatically filter to user's office
+        req.query.office = req.user.office;
       }
     }
 

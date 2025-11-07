@@ -4,7 +4,7 @@ const path = require('path');
 const router = express.Router();
 const Settings = require('../models/Settings');
 const { AuditService } = require('../middleware/auditMiddleware');
-const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 
 const SETTINGS_FILE = path.join(__dirname, '../data/settings.json');
 
@@ -32,7 +32,7 @@ const writeSettings = async (settings) => {
 };
 
 // GET /api/settings - Get all settings
-router.get('/', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.get('/', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const settings = await readSettings();
     res.json(settings);
@@ -42,7 +42,7 @@ router.get('/', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Regis
 });
 
 // GET /api/settings/queue/:department - Get queue settings for specific department
-router.get('/queue/:department', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
+router.get('/queue/:department', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -91,7 +91,7 @@ router.get('/queue/:department', verifyToken, requireRole(['MIS Super Admin', 'M
 });
 
 // PUT /api/settings/queue/:department/toggle - Toggle queue system for department
-router.put('/queue/:department/toggle', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.put('/queue/:department/toggle', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { department } = req.params;
     const { isEnabled } = req.body;
@@ -213,7 +213,7 @@ router.put('/queue/:department/toggle', verifyToken, requireRole(['MIS Super Adm
 });
 
 // PUT /api/settings - Update settings
-router.put('/', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.put('/', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const updates = req.body;
     const settings = await readSettings();
@@ -236,7 +236,7 @@ router.put('/', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 
 });
 
 // PUT /api/settings/location/:department - Update department location
-router.put('/location/:department', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.put('/location/:department', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { department } = req.params;
     const { location } = req.body;
@@ -296,7 +296,7 @@ router.put('/location/:department', verifyToken, requireRole(['MIS Super Admin',
 });
 
 // GET /api/settings/location/:department - Get department location
-router.get('/location/:department', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
+router.get('/location/:department', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { department } = req.params;
 

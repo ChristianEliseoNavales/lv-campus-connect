@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
-const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -45,7 +45,7 @@ const upload = multer({
 // Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
 // POST /api/bulletin/upload - Upload bulletin file to Cloudinary
-router.post('/upload', verifyToken, requireSuperAdmin, upload.single('file'), async (req, res) => {
+router.post('/upload', verifyToken, checkApiAccess, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -96,7 +96,7 @@ router.post('/upload', verifyToken, requireSuperAdmin, upload.single('file'), as
 });
 
 // DELETE /api/bulletin/delete/:publicId - Delete file from Cloudinary
-router.delete('/delete/:publicId', verifyToken, requireSuperAdmin, async (req, res) => {
+router.delete('/delete/:publicId', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { publicId } = req.params;
 

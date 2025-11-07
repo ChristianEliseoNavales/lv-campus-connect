@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const AuditTrail = require('../models/AuditTrail');
 const { body, query, validationResult } = require('express-validator');
-const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
 
 // Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
@@ -35,7 +35,7 @@ const validateAuditLog = [
 ];
 
 // GET /api/audit - Get audit trail with pagination, filtering, and search
-router.get('/', verifyToken, requireSuperAdmin, [
+router.get('/', verifyToken, checkApiAccess, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   query('search').optional().isString().withMessage('Search must be a string'),
@@ -200,7 +200,7 @@ router.post('/', validateAuditLog, async (req, res) => {
 });
 
 // GET /api/audit/stats - Get audit trail statistics
-router.get('/stats', verifyToken, requireSuperAdmin, [
+router.get('/stats', verifyToken, checkApiAccess, [
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date')
 ], async (req, res) => {
@@ -230,7 +230,7 @@ router.get('/stats', verifyToken, requireSuperAdmin, [
 });
 
 // GET /api/audit/user/:userId - Get audit trail for specific user
-router.get('/user/:userId', verifyToken, requireSuperAdmin, [
+router.get('/user/:userId', verifyToken, checkApiAccess, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100')
 ], async (req, res) => {

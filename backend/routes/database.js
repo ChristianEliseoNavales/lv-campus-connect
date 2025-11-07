@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult, query } = require('express-validator');
 const { AuditService } = require('../middleware/auditMiddleware');
-const { verifyToken, requireSuperAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
 
 // Import all models
 const {
@@ -81,7 +81,7 @@ const buildSearchQuery = (searchTerm, modelName) => {
 // GET /api/database/:model - Get all records for a model with pagination and search
 router.get('/:model',
   verifyToken,
-  requireSuperAdmin,
+  checkApiAccess,
   getModel,
   [
     query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
@@ -148,7 +148,7 @@ router.get('/:model',
 // GET /api/database/:model/:id - Get single record by ID
 router.get('/:model/:id',
   verifyToken,
-  requireSuperAdmin,
+  checkApiAccess,
   getModel,
   async (req, res) => {
     try {
@@ -175,7 +175,7 @@ router.get('/:model/:id',
 // POST /api/database/:model - Create new record
 router.post('/:model',
   verifyToken,
-  requireSuperAdmin,
+  checkApiAccess,
   getModel,
   async (req, res) => {
     try {
@@ -253,7 +253,7 @@ router.post('/:model',
 // PUT /api/database/:model/:id - Update record by ID
 router.put('/:model/:id',
   verifyToken,
-  requireSuperAdmin,
+  checkApiAccess,
   getModel,
   async (req, res) => {
     try {
@@ -355,7 +355,7 @@ router.put('/:model/:id',
 // DELETE /api/database/:model/delete-all - Delete all records for a model (MUST BE BEFORE /:model/:id)
 router.delete('/:model/delete-all',
   verifyToken,
-  requireSuperAdmin,
+  checkApiAccess,
   getModel,
   async (req, res) => {
     try {
@@ -405,7 +405,7 @@ router.delete('/:model/delete-all',
 // DELETE /api/database/:model/:id - Delete single record by ID
 router.delete('/:model/:id',
   verifyToken,
-  requireSuperAdmin,
+  checkApiAccess,
   getModel,
   async (req, res) => {
     try {

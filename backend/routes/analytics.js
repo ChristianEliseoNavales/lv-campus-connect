@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Queue, Service, Window, User, AuditTrail } = require('../models');
 const mongoose = require('mongoose');
+const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 
 // Middleware to validate department parameter
 const validateDepartment = (req, res, next) => {
@@ -54,7 +55,7 @@ const getDateRange = (timeRange) => {
 };
 
 // GET /api/analytics/pie-chart/combined - Get combined service distribution for MIS Super Admin
-router.get('/pie-chart/combined', async (req, res) => {
+router.get('/pie-chart/combined', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { timeRange = 'all' } = req.query;
 
@@ -135,7 +136,7 @@ router.get('/pie-chart/combined', async (req, res) => {
 });
 
 // GET /api/analytics/pie-chart/:department - Get service distribution for pie chart
-router.get('/pie-chart/:department', validateDepartment, async (req, res) => {
+router.get('/pie-chart/:department', verifyToken, checkApiAccess, validateDepartment, async (req, res) => {
   try {
     const { department } = req.params;
     const { timeRange = 'all' } = req.query;
@@ -214,7 +215,7 @@ router.get('/pie-chart/:department', validateDepartment, async (req, res) => {
 });
 
 // GET /api/analytics/area-chart/:department - Get time series data for area chart
-router.get('/area-chart/:department', validateDepartment, validateTimeRange, async (req, res) => {
+router.get('/area-chart/:department', verifyToken, checkApiAccess, validateDepartment, validateTimeRange, async (req, res) => {
   try {
     const { department } = req.params;
     const { timeRange = '3months' } = req.query;
@@ -315,7 +316,7 @@ router.get('/area-chart/:department', validateDepartment, validateTimeRange, asy
 });
 
 // GET /api/analytics/dashboard-stats/:department - Get dashboard statistics
-router.get('/dashboard-stats/:department', validateDepartment, async (req, res) => {
+router.get('/dashboard-stats/:department', verifyToken, checkApiAccess, validateDepartment, async (req, res) => {
   try {
     const { department } = req.params;
     const now = new Date();
@@ -386,7 +387,7 @@ router.get('/dashboard-stats/:department', validateDepartment, async (req, res) 
 });
 
 // GET /api/analytics/dashboard-table-data/:department - Get dashboard table data
-router.get('/dashboard-table-data/:department', validateDepartment, async (req, res) => {
+router.get('/dashboard-table-data/:department', verifyToken, checkApiAccess, validateDepartment, async (req, res) => {
   try {
     const { department } = req.params;
     const now = new Date();
@@ -498,7 +499,7 @@ router.get('/dashboard-table-data/:department', validateDepartment, async (req, 
 });
 
 // GET /api/analytics/queue-monitor/:department - Get queue monitor data for real-time display
-router.get('/queue-monitor/:department', validateDepartment, async (req, res) => {
+router.get('/queue-monitor/:department', verifyToken, checkApiAccess, validateDepartment, async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -570,7 +571,7 @@ router.get('/queue-monitor/:department', validateDepartment, async (req, res) =>
 });
 
 // GET /api/analytics/combined/:department - Get combined data for MIS Super Admin
-router.get('/combined/:department', validateDepartment, validateTimeRange, async (req, res) => {
+router.get('/combined/:department', verifyToken, checkApiAccess, validateDepartment, validateTimeRange, async (req, res) => {
   try {
     const { department } = req.params;
     const { timeRange = '3months' } = req.query;
@@ -626,7 +627,7 @@ router.get('/combined/:department', validateDepartment, validateTimeRange, async
 });
 
 // GET /api/analytics/active-sessions - Get currently active users
-router.get('/active-sessions', async (req, res) => {
+router.get('/active-sessions', verifyToken, checkApiAccess, async (req, res) => {
   try {
     // Get users who have logged in within the last 30 minutes
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
@@ -681,7 +682,7 @@ router.get('/active-sessions', async (req, res) => {
 });
 
 // GET /api/analytics/queue-ratings-summary - Get queue ratings statistics
-router.get('/queue-ratings-summary', async (req, res) => {
+router.get('/queue-ratings-summary', verifyToken, checkApiAccess, async (req, res) => {
   try {
     // Count total queue entries with ratings
     const totalRatings = await Queue.countDocuments({
@@ -727,7 +728,7 @@ router.get('/queue-ratings-summary', async (req, res) => {
 });
 
 // GET /api/analytics/queue-by-department - Get queue distribution by department
-router.get('/queue-by-department', async (req, res) => {
+router.get('/queue-by-department', verifyToken, checkApiAccess, async (req, res) => {
   try {
     // Group all queues by department
     const departmentStats = await Queue.aggregate([

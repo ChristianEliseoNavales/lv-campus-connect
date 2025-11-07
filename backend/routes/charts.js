@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const streamifier = require('streamifier');
 const cloudinary = require('cloudinary').v2;
-const { verifyToken } = require('../middleware/authMiddleware');
+const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -79,7 +79,7 @@ const handleMulterError = (err, req, res, next) => {
 };
 
 // POST /api/charts/upload - Upload chart file to Cloudinary
-router.post('/upload', verifyToken, requireSeniorManagementAccess, upload.single('file'), async (req, res) => {
+router.post('/upload', verifyToken, checkApiAccess, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -130,7 +130,7 @@ router.post('/upload', verifyToken, requireSeniorManagementAccess, upload.single
 });
 
 // DELETE /api/charts/delete/:publicId - Delete file from Cloudinary
-router.delete('/delete/:publicId', verifyToken, requireSeniorManagementAccess, async (req, res) => {
+router.delete('/delete/:publicId', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { publicId } = req.params;
 

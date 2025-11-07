@@ -1,10 +1,10 @@
 const express = require('express');
 const { Window, Service, User } = require('../models');
-const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+const { verifyToken, requireRole, checkApiAccess } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // GET /api/windows - Get all windows
-router.get('/', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
+router.get('/', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const windows = await Window.find()
       .populate('serviceIds', 'name')
@@ -29,7 +29,7 @@ router.get('/', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Regis
 });
 
 // GET /api/windows/:department - Get windows by office (department param for backward compatibility)
-router.get('/:department', verifyToken, requireRole(['MIS Super Admin', 'MIS Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
+router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -61,7 +61,7 @@ router.get('/:department', verifyToken, requireRole(['MIS Super Admin', 'MIS Adm
 });
 
 // POST /api/windows - Create new window
-router.post('/', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.post('/', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { name, office, serviceIds, assignedAdmin } = req.body;
 
@@ -178,7 +178,7 @@ router.post('/', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin',
 });
 
 // PUT /api/windows/:id - Update window
-router.put('/:id', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, serviceIds, assignedAdmin } = req.body;
@@ -319,7 +319,7 @@ router.put('/:id', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin
 });
 
 // PATCH /api/windows/:id/toggle - Toggle window open status
-router.patch('/:id/toggle', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Registrar Admin Staff', 'Admissions Admin', 'Admissions Admin Staff']), async (req, res) => {
+router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -364,7 +364,7 @@ router.patch('/:id/toggle', verifyToken, requireRole(['MIS Super Admin', 'Regist
 });
 
 // DELETE /api/windows/:id - Delete window
-router.delete('/:id', verifyToken, requireRole(['MIS Super Admin', 'Registrar Admin', 'Admissions Admin']), async (req, res) => {
+router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
   try {
     const { id } = req.params;
 
