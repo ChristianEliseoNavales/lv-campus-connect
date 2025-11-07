@@ -13,6 +13,7 @@ import {
 
 // MIS Admin Pages
 import MISUsers from './components/pages/admin/mis/Users';
+import FixUsers from './components/pages/admin/mis/FixUsers';
 import DatabaseManager from './components/pages/admin/mis/DatabaseManager';
 import MISAuditTrail from './components/pages/admin/mis/AuditTrail';
 import MISBulletin from './components/pages/admin/mis/Bulletin';
@@ -97,6 +98,13 @@ function App() {
             <ProtectedRoute requiredRoles={['super_admin']}>
               <AdminLayout>
                 <MISUsers />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/mis/fix-users" element={
+            <ProtectedRoute requiredRoles={['super_admin']}>
+              <AdminLayout>
+                <FixUsers />
               </AdminLayout>
             </ProtectedRoute>
           } />
