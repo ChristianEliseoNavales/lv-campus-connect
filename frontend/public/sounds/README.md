@@ -2,22 +2,35 @@
 
 This directory contains audio files for queue notifications in the PortalQueue system.
 
-## Required File
+## Current Active File
 
-- **queue-notification.mp3** - The notification sound played when a user's queue number is called
+✅ **queue-notification.mp3** - Custom notification sound (yo_phone_linging.mp3)
+- **Volume Boost:** 3x amplification enabled via Web Audio API
+- **Purpose:** Alert users when their queue number is called
 
-## Adding a Custom Notification Sound
+## 🔊 Volume Boost Feature
+
+The notification system uses **Web Audio API GainNode** to amplify the audio **3x louder** than normal:
+- Standard HTML5 audio is limited to 100% volume (gain = 1.0)
+- Our system uses a GainNode with gain = 3.0 (300% volume)
+- This ensures notifications are heard even in noisy environments
+- Adjustable in `notificationService.js` by changing the `volumeBoost` property
+
+## Replacing the Notification Sound
+
+To use a different notification sound:
 
 1. **Obtain an audio file** in MP3 format (recommended for best browser compatibility)
    - Suggested duration: 1-3 seconds
    - Suggested type: Pleasant notification tone, chime, or bell sound
    - Keep file size small (< 100KB) for fast loading
+   - **Don't worry about volume** - the system will automatically boost it 3x
 
-2. **Name the file** exactly as: `queue-notification.mp3`
+2. **Replace the existing file** by naming your file exactly as: `queue-notification.mp3`
 
 3. **Place the file** in this directory (`frontend/public/sounds/`)
 
-4. The notification service will automatically use this file when available
+4. The notification service will automatically use the new file (may need to refresh browser cache)
 
 ## Fallback Behavior
 

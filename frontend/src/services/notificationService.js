@@ -7,10 +7,13 @@ class NotificationService {
   constructor() {
     this.audio = null;
     this.audioContext = null;
+    this.audioSource = null;
+    this.gainNode = null;
     this.isInitialized = false;
     this.isUnlocked = false; // Track if audio is unlocked for iOS
     this.hasVibrationSupport = 'vibrate' in navigator;
     this.hasAudioSupport = 'Audio' in window;
+    this.volumeBoost = 3.0; // Boost volume 3x (adjustable: 1.0 = normal, 3.0 = 3x louder)
   }
 
   /**
@@ -134,7 +137,7 @@ class NotificationService {
   }
 
   /**
-   * Play notification sound
+   * Play notification sound with volume boost using Web Audio API
    * @returns {Promise<boolean>} Success status
    */
   async playSound() {
@@ -144,15 +147,42 @@ class NotificationService {
     }
 
     try {
-      // Try to play audio file if available
+      // Try to play audio file with volume boost if available
       if (this.audio) {
         try {
+          // Ensure AudioContext is created
+          if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          }
+
+          // Resume AudioContext if suspended (iOS requirement)
+          if (this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+          }
+
+          // Create audio element source if not exists
+          if (!this.audioSource) {
+            this.audioSource = this.audioContext.createMediaElementSource(this.audio);
+
+            // Create gain node for volume boosting
+            this.gainNode = this.audioContext.createGain();
+
+            // Set volume boost (3.0 = 3x louder than normal)
+            this.gainNode.gain.value = this.volumeBoost;
+
+            // Connect: audio -> gain -> destination (speakers)
+            this.audioSource.connect(this.gainNode);
+            this.gainNode.connect(this.audioContext.destination);
+
+            console.log(`🔊 Volume boost enabled: ${this.volumeBoost}x`);
+          }
+
           // Reset audio to start
           this.audio.currentTime = 0;
 
-          // Play the sound
+          // Play the sound (will be boosted by gainNode)
           await this.audio.play();
-          console.log('🔊 Notification Service: Audio file played');
+          console.log('🔊 Notification Service: Audio file played with volume boost');
           return true;
         } catch (playError) {
           console.warn('⚠️ Notification Service: Audio file playback failed, using beep fallback', playError);
@@ -251,10 +281,28 @@ class NotificationService {
    * Cleanup resources
    */
   cleanup() {
+    // Disconnect audio nodes
+    if (this.audioSource) {
+      this.audioSource.disconnect();
+      this.audioSource = null;
+    }
+    if (this.gainNode) {
+      this.gainNode.disconnect();
+      this.gainNode = null;
+    }
+
+    // Cleanup audio element
     if (this.audio) {
       this.audio.pause();
       this.audio = null;
     }
+
+    // Close AudioContext
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+
     this.isInitialized = false;
     console.log('🧹 Notification Service: Cleaned up');
   }
