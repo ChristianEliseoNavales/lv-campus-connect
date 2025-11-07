@@ -113,10 +113,11 @@ const Users = () => {
     { id: 'senior_management_charts', label: 'Senior Management Charts', category: 'Senior Management', path: '/admin/seniormanagement/charts' }
   ];
 
-  // Helper function to get default page access based on office
+  // Helper function to get default page access based on office and access level
   // Returns route paths (not old-style IDs)
-  const getDefaultPageAccess = useCallback((office) => {
-    const defaultAccess = {
+  const getDefaultPageAccess = useCallback((office, accessLevel) => {
+    // Admin gets full office access
+    const adminAccess = {
       'MIS': [
         '/admin/mis',
         '/admin/mis/users',
@@ -141,7 +142,27 @@ const Users = () => {
         '/admin/seniormanagement/charts'
       ]
     };
-    return defaultAccess[office] || [];
+
+    // Admin Staff gets limited access (queue page only)
+    const adminStaffAccess = {
+      'MIS': [
+        '/admin/mis'
+      ],
+      'Registrar': [
+        '/admin/registrar/queue'
+      ],
+      'Admissions': [
+        '/admin/admissions/queue'
+      ],
+      'Senior Management': []
+    };
+
+    // Return appropriate access based on access level
+    if (accessLevel === 'admin_staff') {
+      return adminStaffAccess[office] || [];
+    }
+
+    return adminAccess[office] || [];
   }, []);
 
   // Helper function to format refresh time
@@ -369,18 +390,19 @@ const Users = () => {
 
     // Smart auto-selection: When accessLevel changes to admin, auto-select office pages
     if (field === 'accessLevel' && value === 'admin' && formData.office) {
-      const defaultAccess = getDefaultPageAccess(formData.office);
+      const defaultAccess = getDefaultPageAccess(formData.office, 'admin');
       setFormData(prev => ({
         ...prev,
         pageAccess: defaultAccess
       }));
     }
 
-    // Clear page access when accessLevel changes to admin_staff
-    if (field === 'accessLevel' && value === 'admin_staff') {
+    // Smart auto-selection: When accessLevel changes to admin_staff, auto-select default staff pages
+    if (field === 'accessLevel' && value === 'admin_staff' && formData.office) {
+      const defaultAccess = getDefaultPageAccess(formData.office, 'admin_staff');
       setFormData(prev => ({
         ...prev,
-        pageAccess: []
+        pageAccess: defaultAccess
       }));
     }
   };

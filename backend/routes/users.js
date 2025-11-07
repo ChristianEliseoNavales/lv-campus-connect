@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auditCRUD, AuditService } = require('../middleware/auditMiddleware');
 const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
-const { validatePageAccessForOffice } = require('../utils/rolePermissions');
+const { validatePageAccessForOffice, getDefaultPageAccess } = require('../utils/rolePermissions');
 
 // Validation middleware
 const validateUser = [
@@ -302,6 +302,13 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
     }
 
     // Create new user
+    // If pageAccess is not provided or is empty, use default pageAccess for the role
+    let finalPageAccess = pageAccess;
+    if (!finalPageAccess || finalPageAccess.length === 0) {
+      finalPageAccess = getDefaultPageAccess(role, office);
+      console.log(`📋 Auto-assigning default pageAccess for role "${role}":`, finalPageAccess);
+    }
+
     const userData = {
       email,
       name,
@@ -309,7 +316,7 @@ router.post('/', verifyToken, requireSuperAdmin, validateUser, async (req, res) 
       role,
       office,
       isActive: true,
-      pageAccess: pageAccess || []
+      pageAccess: finalPageAccess
     };
 
     if (password) {
@@ -432,6 +439,14 @@ router.put('/:id', verifyToken, requireSuperAdmin, validateUserUpdate, async (re
           error: 'Office is required'
         });
       }
+    }
+
+    // If pageAccess is being updated and is empty, auto-assign default pageAccess
+    if ('pageAccess' in updateData && (!updateData.pageAccess || updateData.pageAccess.length === 0)) {
+      const targetRole = updateData.role || oldUser.role;
+      const targetOffice = updateData.office || oldUser.office;
+      updateData.pageAccess = getDefaultPageAccess(targetRole, targetOffice);
+      console.log(`📋 Auto-assigning default pageAccess for role "${targetRole}":`, updateData.pageAccess);
     }
 
     // Validate pageAccess matches office restrictions
