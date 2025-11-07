@@ -16,15 +16,27 @@ const FixUsers = () => {
   const checkUsers = async () => {
     setChecking(true);
     setResult(null);
+    setUsersToFix(null);
     try {
       const response = await authFetch('/api/fix-users/check');
-      setUsersToFix(response);
+      console.log('Check users response:', response);
+
+      // Ensure response has the expected structure
+      if (response && typeof response === 'object') {
+        setUsersToFix({
+          count: response.count || 0,
+          users: response.users || []
+        });
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error) {
       console.error('Error checking users:', error);
       setResult({
         success: false,
-        message: 'Failed to check users: ' + error.message
+        message: 'Failed to check users: ' + (error.message || 'Unknown error')
       });
+      setUsersToFix(null);
     } finally {
       setChecking(false);
     }
@@ -82,7 +94,7 @@ const FixUsers = () => {
         {usersToFix && (
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
             <h2 className="text-lg font-semibold mb-3">
-              Users Needing Fix: {usersToFix.count}
+              Users Needing Fix: {usersToFix.count || 0}
             </h2>
             {usersToFix.count === 0 ? (
               <p className="text-green-600 font-medium">
@@ -90,15 +102,19 @@ const FixUsers = () => {
               </p>
             ) : (
               <div className="space-y-2">
-                {usersToFix.users.map((user, index) => (
-                  <div key={index} className="bg-white p-3 rounded border border-gray-200">
-                    <div className="font-medium">{user.name}</div>
-                    <div className="text-sm text-gray-600">{user.email}</div>
-                    <div className="text-sm text-gray-500">
-                      Role: {user.role} | Office: {user.office}
+                {usersToFix.users && usersToFix.users.length > 0 ? (
+                  usersToFix.users.map((user, index) => (
+                    <div key={index} className="bg-white p-3 rounded border border-gray-200">
+                      <div className="font-medium">{user.name}</div>
+                      <div className="text-sm text-gray-600">{user.email}</div>
+                      <div className="text-sm text-gray-500">
+                        Role: {user.role} | Office: {user.office}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-gray-600">No users found.</p>
+                )}
               </div>
             )}
           </div>
