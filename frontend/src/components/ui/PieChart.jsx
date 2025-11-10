@@ -124,7 +124,7 @@ const ErrorDisplay = ({ message }) => (
   </div>
 );
 
-export function ChartPieLegend({ userRole, timeRange = '3months' }) {
+export function ChartPieLegend({ userRole, timeRange = 'all' }) {
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);

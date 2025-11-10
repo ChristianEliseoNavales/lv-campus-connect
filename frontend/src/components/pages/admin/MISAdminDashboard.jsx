@@ -6,12 +6,14 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { RoleAwareAreaChart } from '../../ui/AreaChart';
 import { ChartPieLegend } from '../../ui/PieChart';
 import DepartmentDonutChart from '../../ui/DepartmentDonutChart';
+import AnalyticalReportModal from '../../ui/AnalyticalReportModal';
 import API_CONFIG from '../../../config/api';
 import { authFetch } from '../../../utils/apiClient';
 
 const MISAdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeQueues: 0,
@@ -179,11 +181,24 @@ const MISAdminDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-4xl font-bold text-[#1F3463] tracking-tight">
           MIS Super Admin Dashboard
         </h1>
+        <button
+          onClick={() => setIsReportModalOpen(true)}
+          className="px-6 py-3 bg-[#1F3463] text-white rounded-lg font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
+        >
+          View Analytic Report
+        </button>
       </div>
+
+      {/* Analytical Report Modal */}
+      <AnalyticalReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        userRole="MIS Super Admin"
+      />
 
       {/* New Grid Layout - 2 rows (40%/60%), 3 columns */}
       <div className="grid grid-cols-3 gap-6 min-h-[600px]">

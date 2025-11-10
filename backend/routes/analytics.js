@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Queue, Service, Window, User, AuditTrail } = require('../models');
+const { Queue, Service, Window, User, AuditTrail, Rating } = require('../models');
 const mongoose = require('mongoose');
 const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 
@@ -16,16 +16,16 @@ const validateDepartment = (req, res, next) => {
 // Middleware to validate time range parameter
 const validateTimeRange = (req, res, next) => {
   const { timeRange } = req.query;
-  const validRanges = ['year', '6months', '3months', '1month'];
+  const validRanges = ['year', '6months', '3months', '1month', 'all'];
   if (timeRange && !validRanges.includes(timeRange)) {
     return res.status(400).json({
-      error: 'Invalid time range. Must be one of: year, 6months, 3months, 1month'
+      error: 'Invalid time range. Must be one of: year, 6months, 3months, 1month, all'
     });
   }
   next();
 };
 
-// Helper function to get date range based on time filter (backward-looking from current date)
+// Helper function to get date range based on time filter
 const getDateRange = (timeRange) => {
   const now = new Date();
   let startDate;
@@ -37,17 +37,21 @@ const getDateRange = (timeRange) => {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       break;
     case '3months':
-      // Last 3 months from current month (backward-looking)
+      // Last 3 months from current month
       startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
       break;
     case '6months':
-      // Last 6 months from current month (backward-looking)
+      // Last 6 months from current month
       startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
       break;
     case 'year':
-    default:
-      // Last 12 months from current month (backward-looking)
+      // Last 12 months from current month
       startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+      break;
+    case 'all':
+    default:
+      // All time - no start date filter (will return all data)
+      startDate = null;
       break;
   }
 
@@ -760,6 +764,358 @@ router.get('/queue-by-department', verifyToken, checkApiAccess, async (req, res)
     console.error('Error fetching queue by department:', error);
     res.status(500).json({
       error: 'Failed to fetch queue by department',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/analytics/analytical-report/:role - Get comprehensive analytical report data
+router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, res) => {
+  try {
+    const { role } = req.params;
+    const validRoles = ['MIS Super Admin', 'Registrar Admin', 'Admissions Admin'];
+
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        error: 'Invalid role. Must be MIS Super Admin, Registrar Admin, or Admissions Admin'
+      });
+    }
+
+    const reportData = {};
+    const now = new Date();
+    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+
+    // Determine department filter based on role
+    const departmentFilter = role === 'Registrar Admin' ? 'registrar' :
+                            role === 'Admissions Admin' ? 'admissions' : null;
+
+    if (role === 'MIS Super Admin') {
+      // MIS Super Admin: Combined data from both departments
+
+      // 1. Most Visited Office
+      const departmentStats = await Queue.aggregate([
+        { $match: { status: { $in: ['completed', 'cancelled', 'skipped'] } } },
+        { $group: { _id: '$office', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]);
+
+      reportData.mostVisitedOffice = departmentStats.map(stat => ({
+        department: stat._id === 'registrar' ? "Registrar's Office" : 'Admissions Office',
+        departmentKey: stat._id,
+        count: stat.count
+      }));
+
+      // 2. Service Distribution Overall (combined)
+      const serviceDistribution = await Queue.aggregate([
+        { $match: { status: { $in: ['completed', 'cancelled', 'skipped'] } } },
+        { $group: { _id: '$serviceId', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 }
+      ]);
+
+      const serviceIds = serviceDistribution.map(s => s._id);
+      const services = await Service.find({ _id: { $in: serviceIds } });
+      const serviceMap = services.reduce((map, s) => {
+        map[s._id.toString()] = s.name;
+        return map;
+      }, {});
+
+      reportData.serviceDistribution = serviceDistribution.map(s => ({
+        service: serviceMap[s._id] || 'Unknown',
+        count: s.count
+      }));
+
+      // 3. Kiosk Total Ratings
+      const ratingStats = await Rating.aggregate([
+        { $group: {
+          _id: null,
+          averageRating: { $avg: '$rating' },
+          totalRatings: { $sum: 1 },
+          rating1: { $sum: { $cond: [{ $eq: ['$rating', 1] }, 1, 0] } },
+          rating2: { $sum: { $cond: [{ $eq: ['$rating', 2] }, 1, 0] } },
+          rating3: { $sum: { $cond: [{ $eq: ['$rating', 3] }, 1, 0] } },
+          rating4: { $sum: { $cond: [{ $eq: ['$rating', 4] }, 1, 0] } },
+          rating5: { $sum: { $cond: [{ $eq: ['$rating', 5] }, 1, 0] } }
+        }}
+      ]);
+
+      reportData.kioskRatings = ratingStats.length > 0 ? ratingStats[0] : {
+        averageRating: 0,
+        totalRatings: 0,
+        rating1: 0,
+        rating2: 0,
+        rating3: 0,
+        rating4: 0,
+        rating5: 0
+      };
+
+      // 4. Total Number of Visitors Overall
+      reportData.totalVisitors = await Queue.countDocuments({
+        status: { $in: ['completed', 'cancelled', 'skipped'] }
+      });
+
+      // 5. Visitor Breakdown by Role
+      const roleBreakdown = await Queue.aggregate([
+        { $match: { status: { $in: ['completed', 'cancelled', 'skipped'] } } },
+        { $group: { _id: '$role', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]);
+
+      reportData.visitorsByRole = roleBreakdown.map(r => ({
+        role: r._id,
+        count: r.count
+      }));
+
+      // 6. Priority Status Distribution
+      const priorityStats = await Queue.aggregate([
+        { $match: {
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          isPriority: true
+        }},
+        { $lookup: {
+          from: 'visitationforms',
+          localField: 'visitationFormId',
+          foreignField: '_id',
+          as: 'visitationForm'
+        }},
+        { $unwind: { path: '$visitationForm', preserveNullAndEmptyArrays: true } },
+        { $group: {
+          _id: null,
+          totalPriority: { $sum: 1 }
+        }}
+      ]);
+
+      reportData.priorityVisitors = priorityStats.length > 0 ? priorityStats[0].totalPriority : 0;
+
+      // 7. Temporal Trends (monthly aggregation for the year)
+      const temporalTrends = await Queue.aggregate([
+        { $match: {
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: oneYearAgo, $lte: now }
+        }},
+        { $group: {
+          _id: {
+            year: { $year: '$queuedAt' },
+            month: { $month: '$queuedAt' },
+            office: '$office'
+          },
+          count: { $sum: 1 }
+        }},
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+      ]);
+
+      reportData.temporalTrends = temporalTrends;
+
+      // 8. Department Comparison Metrics
+      const registrarStats = await Queue.aggregate([
+        { $match: { office: 'registrar', status: 'completed' } },
+        { $group: {
+          _id: null,
+          totalCompleted: { $sum: 1 },
+          avgTurnaround: {
+            $avg: {
+              $subtract: ['$completedAt', '$queuedAt']
+            }
+          }
+        }}
+      ]);
+
+      const admissionsStats = await Queue.aggregate([
+        { $match: { office: 'admissions', status: 'completed' } },
+        { $group: {
+          _id: null,
+          totalCompleted: { $sum: 1 },
+          avgTurnaround: {
+            $avg: {
+              $subtract: ['$completedAt', '$queuedAt']
+            }
+          }
+        }}
+      ]);
+
+      reportData.departmentComparison = {
+        registrar: registrarStats.length > 0 ? {
+          totalCompleted: registrarStats[0].totalCompleted,
+          avgTurnaroundMinutes: Math.round(registrarStats[0].avgTurnaround / 60000)
+        } : { totalCompleted: 0, avgTurnaroundMinutes: 0 },
+        admissions: admissionsStats.length > 0 ? {
+          totalCompleted: admissionsStats[0].totalCompleted,
+          avgTurnaroundMinutes: Math.round(admissionsStats[0].avgTurnaround / 60000)
+        } : { totalCompleted: 0, avgTurnaroundMinutes: 0 }
+      };
+
+    } else {
+      // Registrar/Admissions Admin: Department-specific data
+
+      // 1. Total Visits
+      reportData.totalVisits = await Queue.countDocuments({
+        office: departmentFilter,
+        status: { $in: ['completed', 'cancelled', 'skipped'] }
+      });
+
+      // 2. Average Turnaround Time
+      const turnaroundStats = await Queue.aggregate([
+        { $match: {
+          office: departmentFilter,
+          status: 'completed',
+          completedAt: { $exists: true },
+          queuedAt: { $exists: true }
+        }},
+        { $group: {
+          _id: null,
+          avgTurnaround: {
+            $avg: {
+              $subtract: ['$completedAt', '$queuedAt']
+            }
+          }
+        }}
+      ]);
+
+      reportData.avgTurnaroundMinutes = turnaroundStats.length > 0 ?
+        Math.round(turnaroundStats[0].avgTurnaround / 60000) : 0;
+
+      // 3. Service Distribution
+      const serviceDistribution = await Queue.aggregate([
+        { $match: {
+          office: departmentFilter,
+          status: { $in: ['completed', 'cancelled', 'skipped'] }
+        }},
+        { $group: { _id: '$serviceId', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]);
+
+      const serviceIds = serviceDistribution.map(s => s._id);
+      const services = await Service.find({ _id: { $in: serviceIds } });
+      const serviceMap = services.reduce((map, s) => {
+        map[s._id.toString()] = s.name;
+        return map;
+      }, {});
+
+      reportData.serviceDistribution = serviceDistribution.map(s => ({
+        service: serviceMap[s._id] || 'Unknown',
+        count: s.count
+      }));
+
+      // 4. Visitor Breakdown by Role
+      const roleBreakdown = await Queue.aggregate([
+        { $match: {
+          office: departmentFilter,
+          status: { $in: ['completed', 'cancelled', 'skipped'] }
+        }},
+        { $group: { _id: '$role', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]);
+
+      reportData.visitorsByRole = roleBreakdown.map(r => ({
+        role: r._id,
+        count: r.count
+      }));
+
+      // 5. Peak Hours/Days Analysis
+      const peakHours = await Queue.aggregate([
+        { $match: {
+          office: departmentFilter,
+          status: { $in: ['completed', 'cancelled', 'skipped'] }
+        }},
+        { $group: {
+          _id: { $hour: '$queuedAt' },
+          count: { $sum: 1 }
+        }},
+        { $sort: { count: -1 } },
+        { $limit: 5 }
+      ]);
+
+      reportData.peakHours = peakHours.map(h => ({
+        hour: h._id,
+        count: h.count
+      }));
+
+      const peakDays = await Queue.aggregate([
+        { $match: {
+          office: departmentFilter,
+          status: { $in: ['completed', 'cancelled', 'skipped'] }
+        }},
+        { $group: {
+          _id: { $dayOfWeek: '$queuedAt' },
+          count: { $sum: 1 }
+        }},
+        { $sort: { count: -1 } }
+      ]);
+
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      reportData.peakDays = peakDays.map(d => ({
+        day: dayNames[d._id - 1],
+        count: d.count
+      }));
+
+      // 6. Monthly Trends
+      const monthlyTrends = await Queue.aggregate([
+        { $match: {
+          office: departmentFilter,
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: oneYearAgo, $lte: now }
+        }},
+        { $group: {
+          _id: {
+            year: { $year: '$queuedAt' },
+            month: { $month: '$queuedAt' }
+          },
+          count: { $sum: 1 }
+        }},
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+      ]);
+
+      reportData.monthlyTrends = monthlyTrends;
+
+      // 7. Window Performance
+      const windowPerformance = await Queue.aggregate([
+        { $match: {
+          office: departmentFilter,
+          status: 'completed'
+        }},
+        { $group: {
+          _id: '$windowId',
+          totalServed: { $sum: 1 },
+          avgTurnaround: {
+            $avg: {
+              $subtract: ['$completedAt', '$queuedAt']
+            }
+          }
+        }},
+        { $sort: { totalServed: -1 } }
+      ]);
+
+      const windowIds = windowPerformance.map(w => w._id);
+      const windows = await Window.find({ _id: { $in: windowIds } });
+      const windowMap = windows.reduce((map, w) => {
+        map[w._id.toString()] = w.name;
+        return map;
+      }, {});
+
+      reportData.windowPerformance = windowPerformance.map(w => ({
+        window: windowMap[w._id] || 'Unknown',
+        totalServed: w.totalServed,
+        avgTurnaroundMinutes: Math.round(w.avgTurnaround / 60000)
+      }));
+    }
+
+    // Add metadata
+    reportData.metadata = {
+      role,
+      department: departmentFilter,
+      reportPeriod: `${oneYearAgo.toDateString()} - ${now.toDateString()}`,
+      generatedAt: now.toISOString()
+    };
+
+    res.json({
+      success: true,
+      data: reportData
+    });
+
+  } catch (error) {
+    console.error('Error fetching analytical report data:', error);
+    res.status(500).json({
+      error: 'Failed to fetch analytical report data',
       message: error.message
     });
   }

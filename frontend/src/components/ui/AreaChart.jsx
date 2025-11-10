@@ -189,7 +189,7 @@ export function ChartAreaInteractive() {
 
 // Role-aware area chart component for LVCampusConnect System admin dashboards
 export function RoleAwareAreaChart({ userRole, effectiveRole }) {
-  const [timeRange, setTimeRange] = React.useState("3months");
+  const [timeRange, setTimeRange] = React.useState("all");
   const [chartData, setChartData] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -382,8 +382,10 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
       case '6months':
         return '6 Months';
       case 'year':
-      default:
         return 'A Year';
+      case 'all':
+      default:
+        return 'All Time';
     }
   };
 
@@ -480,9 +482,12 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
             className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
             aria-label="Select a value"
           >
-            <SelectValue placeholder="3 Months" />
+            <SelectValue placeholder="All Time" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="rounded-lg">
+              All Time
+            </SelectItem>
             <SelectItem value="year" className="rounded-lg">
               A Year
             </SelectItem>
