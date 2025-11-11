@@ -6,6 +6,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import API_CONFIG from '../../config/api';
 import { authFetch } from '../../utils/apiClient';
+import { getPhilippineStartOfDayISO, getPhilippineEndOfDayISO } from '../../utils/philippineTimezone';
 
 const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   const [reportData, setReportData] = useState(null);
@@ -26,22 +27,25 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
 
       const baseUrl = API_CONFIG.getAdminUrl();
 
-      console.log('📅 AnalyticalReportModal - Date Range:', {
-        dateRange,
-        startDate: dateRange?.startDate,
-        endDate: dateRange?.endDate,
-        startDateISO: dateRange?.startDate?.toISOString(),
-        endDateISO: dateRange?.endDate?.toISOString()
-      });
-
-      // Build query params with date range
+      // Build query params with date range using Philippine timezone
       const params = new URLSearchParams();
       if (dateRange?.startDate) {
-        params.append('startDate', dateRange.startDate.toISOString());
+        // Use Philippine timezone start of day (00:00:00 PHT)
+        const startISO = getPhilippineStartOfDayISO(dateRange.startDate);
+        params.append('startDate', startISO);
       }
       if (dateRange?.endDate) {
-        params.append('endDate', dateRange.endDate.toISOString());
+        // Use Philippine timezone end of day (23:59:59.999 PHT)
+        const endISO = getPhilippineEndOfDayISO(dateRange.endDate);
+        params.append('endDate', endISO);
       }
+
+      console.log('📅 AnalyticalReportModal - Date Range (Philippine Time):', {
+        startDate: dateRange?.startDate,
+        endDate: dateRange?.endDate,
+        startDateISO: params.get('startDate'),
+        endDateISO: params.get('endDate')
+      });
 
       const url = `${baseUrl}/api/analytics/analytical-report/${encodeURIComponent(userRole)}?${params.toString()}`;
 

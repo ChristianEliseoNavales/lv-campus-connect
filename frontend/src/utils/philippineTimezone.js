@@ -162,7 +162,7 @@ export const getPhilippineDayBoundaries = (date) => {
  */
 export const formatPhilippineDate = (date, options = {}) => {
   if (!date) return '';
-  
+
   const phDate = getPhilippineDate(date);
   const defaultOptions = {
     month: 'short',
@@ -170,6 +170,92 @@ export const formatPhilippineDate = (date, options = {}) => {
     year: 'numeric',
     timeZone: 'Asia/Manila'
   };
-  
+
   return phDate.toLocaleDateString('en-US', { ...defaultOptions, ...options });
+};
+
+/**
+ * Convert a Philippine date to ISO string for API transmission
+ * This preserves the Philippine date (not UTC conversion)
+ * @param {Date} date - Date object in Philippine timezone
+ * @returns {string} ISO string representing the Philippine date at start of day
+ */
+export const toPhilippineISOString = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return null;
+  }
+
+  // Get the date components in Philippine timezone
+  const phTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+
+  const year = phTime.find(part => part.type === 'year').value;
+  const month = phTime.find(part => part.type === 'month').value;
+  const day = phTime.find(part => part.type === 'day').value;
+  const hour = phTime.find(part => part.type === 'hour').value;
+  const minute = phTime.find(part => part.type === 'minute').value;
+  const second = phTime.find(part => part.type === 'second').value;
+
+  // Return ISO string in Philippine timezone (with +08:00 offset)
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}+08:00`;
+};
+
+/**
+ * Get start of day in Philippine timezone as ISO string
+ * @param {Date} date - Date object
+ * @returns {string} ISO string for start of day (00:00:00) in Philippine timezone
+ */
+export const getPhilippineStartOfDayISO = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return null;
+  }
+
+  const phTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+
+  const year = phTime.find(part => part.type === 'year').value;
+  const month = phTime.find(part => part.type === 'month').value;
+  const day = phTime.find(part => part.type === 'day').value;
+
+  // Return start of day (00:00:00) in Philippine timezone
+  return `${year}-${month}-${day}T00:00:00+08:00`;
+};
+
+/**
+ * Get end of day in Philippine timezone as ISO string
+ * @param {Date} date - Date object
+ * @returns {string} ISO string for end of day (23:59:59) in Philippine timezone
+ */
+export const getPhilippineEndOfDayISO = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return null;
+  }
+
+  const phTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+
+  const year = phTime.find(part => part.type === 'year').value;
+  const month = phTime.find(part => part.type === 'month').value;
+  const day = phTime.find(part => part.type === 'day').value;
+
+  // Return end of day (23:59:59.999) in Philippine timezone
+  return `${year}-${month}-${day}T23:59:59.999+08:00`;
 };

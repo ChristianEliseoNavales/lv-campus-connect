@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MdClose } from 'react-icons/md';
 import DatePicker from './DatePicker';
-import { getPhilippineDate } from '../../utils/philippineTimezone';
+import { getPhilippineDate, formatPhilippineDate } from '../../utils/philippineTimezone';
 
 /**
  * DateRangeModal Component
@@ -22,12 +22,11 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
   // Reset dates when modal opens
   useEffect(() => {
     if (isOpen) {
-      // Default to last 30 days
+      // Start date: empty (user selects freely)
+      // End date: today (Philippine timezone)
       const today = getPhilippineDate();
-      const thirtyDaysAgo = new Date(today);
-      thirtyDaysAgo.setDate(today.getDate() - 30);
-      
-      setStartDate(thirtyDaysAgo);
+
+      setStartDate(null);
       setEndDate(today);
       setError('');
     }
@@ -159,17 +158,17 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
             {startDate && endDate && !error && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
-                  <span className="font-medium">Selected Range:</span>{' '}
-                  {startDate.toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  <span className="font-medium">Selected Range (Philippine Time):</span>{' '}
+                  {formatPhilippineDate(startDate, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}{' '}
                   to{' '}
-                  {endDate.toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {formatPhilippineDate(endDate, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </p>
                 <p className="text-xs text-blue-600 mt-1">

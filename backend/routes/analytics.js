@@ -792,12 +792,17 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
 
     let startDate, endDate;
     if (req.query.startDate && req.query.endDate) {
+      // Parse ISO strings with timezone offset (e.g., "2024-10-01T00:00:00+08:00")
       startDate = new Date(req.query.startDate);
       endDate = new Date(req.query.endDate);
 
-      console.log('✅ Using provided date range:', {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+      console.log('✅ Using provided date range (Philippine Time):', {
+        startDateReceived: req.query.startDate,
+        endDateReceived: req.query.endDate,
+        startDateParsed: startDate.toISOString(),
+        endDateParsed: endDate.toISOString(),
+        startDateLocal: startDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' }),
+        endDateLocal: endDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
       });
 
       // Validate dates
@@ -813,13 +818,22 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         });
       }
     } else {
-      // Default to last year if no date range provided
-      endDate = new Date();
-      startDate = new Date(endDate.getFullYear() - 1, endDate.getMonth(), endDate.getDate());
+      // Default to last year if no date range provided (Philippine timezone)
+      const now = new Date();
+      const phNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
 
-      console.log('⚠️ No date range provided, using default (last year):', {
+      endDate = new Date(phNow);
+      endDate.setHours(23, 59, 59, 999);
+
+      startDate = new Date(phNow);
+      startDate.setFullYear(phNow.getFullYear() - 1);
+      startDate.setHours(0, 0, 0, 0);
+
+      console.log('⚠️ No date range provided, using default (last year in Philippine Time):', {
         startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+        endDate: endDate.toISOString(),
+        startDateLocal: startDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' }),
+        endDateLocal: endDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
       });
     }
 
@@ -1165,11 +1179,21 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       }));
     }
 
-    // Add metadata
+    // Add metadata with Philippine timezone formatting
+    const formatPhilippineDate = (date) => {
+      return new Date(date).toLocaleDateString('en-US', {
+        timeZone: 'Asia/Manila',
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    };
+
     reportData.metadata = {
       role,
       department: departmentFilter,
-      reportPeriod: `${startDate.toDateString()} - ${endDate.toDateString()}`,
+      reportPeriod: `${formatPhilippineDate(startDate)} - ${formatPhilippineDate(endDate)}`,
       generatedAt: new Date().toISOString(),
       dateRangeStart: startDate.toISOString(),
       dateRangeEnd: endDate.toISOString()
