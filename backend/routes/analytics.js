@@ -845,6 +845,11 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       // MIS Super Admin: Combined data from both departments
 
       // 1. Most Visited Office
+      console.log('🏢 Most Visited Office Query - Date Range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+
       const departmentStats = await Queue.aggregate([
         { $match: {
           status: { $in: ['completed', 'cancelled', 'skipped'] },
@@ -854,6 +859,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $sort: { count: -1 } }
       ]);
 
+      console.log('📊 Department Stats Result:', JSON.stringify(departmentStats, null, 2));
+
       reportData.mostVisitedOffice = departmentStats.map(stat => ({
         department: stat._id === 'registrar' ? "Registrar's Office" : 'Admissions Office',
         departmentKey: stat._id,
@@ -861,6 +868,11 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       }));
 
       // 2. Service Distribution Overall (combined)
+      console.log('📋 Service Distribution Query - Date Range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+
       const serviceDistribution = await Queue.aggregate([
         { $match: {
           status: { $in: ['completed', 'cancelled', 'skipped'] },
@@ -870,6 +882,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $sort: { count: -1 } },
         { $limit: 10 }
       ]);
+
+      console.log('📊 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
 
       const serviceIds = serviceDistribution.map(s => s._id);
       const services = await Service.find({ _id: { $in: serviceIds } });
@@ -884,6 +898,21 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       }));
 
       // 3. Kiosk Total Ratings
+      console.log('🔍 Rating Query - Date Range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        startDateLocal: startDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' }),
+        endDateLocal: endDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
+      });
+
+      // First, let's check total ratings without date filter for comparison
+      const totalRatingsCount = await Rating.countDocuments({});
+      console.log('📊 Total Ratings in DB (no filter):', totalRatingsCount);
+
+      // Check sample rating documents to verify createdAt field
+      const sampleRatings = await Rating.find({}).limit(3).select('rating createdAt');
+      console.log('📝 Sample Rating Documents:', JSON.stringify(sampleRatings, null, 2));
+
       const ratingStats = await Rating.aggregate([
         { $match: {
           createdAt: { $gte: startDate, $lte: endDate }
@@ -900,6 +929,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         }}
       ]);
 
+      console.log('📈 Rating Stats Result:', JSON.stringify(ratingStats, null, 2));
+
       reportData.kioskRatings = ratingStats.length > 0 ? ratingStats[0] : {
         averageRating: 0,
         totalRatings: 0,
@@ -910,13 +941,27 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         rating5: 0
       };
 
+      console.log('✅ Final Kiosk Ratings Data:', reportData.kioskRatings);
+
       // 4. Total Number of Visitors Overall
+      console.log('👥 Total Visitors Query - Date Range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+
       reportData.totalVisitors = await Queue.countDocuments({
         status: { $in: ['completed', 'cancelled', 'skipped'] },
         queuedAt: { $gte: startDate, $lte: endDate }
       });
 
+      console.log('📊 Total Visitors Result:', reportData.totalVisitors);
+
       // 5. Visitor Breakdown by Role
+      console.log('👤 Visitor Breakdown by Role Query - Date Range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+
       const roleBreakdown = await Queue.aggregate([
         { $match: {
           status: { $in: ['completed', 'cancelled', 'skipped'] },
@@ -926,12 +971,19 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $sort: { count: -1 } }
       ]);
 
+      console.log('📊 Role Breakdown Result:', JSON.stringify(roleBreakdown, null, 2));
+
       reportData.visitorsByRole = roleBreakdown.map(r => ({
         role: r._id,
         count: r.count
       }));
 
       // 6. Priority Status Distribution
+      console.log('⭐ Priority Visitors Query - Date Range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+
       const priorityStats = await Queue.aggregate([
         { $match: {
           status: { $in: ['completed', 'cancelled', 'skipped'] },
@@ -951,7 +1003,11 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         }}
       ]);
 
+      console.log('📊 Priority Stats Result:', JSON.stringify(priorityStats, null, 2));
+
       reportData.priorityVisitors = priorityStats.length > 0 ? priorityStats[0].totalPriority : 0;
+
+      console.log('✅ Priority Visitors Count:', reportData.priorityVisitors);
 
       // 7. Temporal Trends (monthly aggregation for the selected date range)
       const temporalTrends = await Queue.aggregate([
@@ -1020,6 +1076,11 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
 
     } else {
       // Registrar/Admissions Admin: Department-specific data
+      console.log(`📊 ${role} - Department Filter:`, departmentFilter);
+      console.log('📅 Date Range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
 
       // 1. Total Visits
       reportData.totalVisits = await Queue.countDocuments({
@@ -1027,6 +1088,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         status: { $in: ['completed', 'cancelled', 'skipped'] },
         queuedAt: { $gte: startDate, $lte: endDate }
       });
+
+      console.log('✅ Total Visits:', reportData.totalVisits);
 
       // 2. Average Turnaround Time
       const turnaroundStats = await Queue.aggregate([
@@ -1046,8 +1109,12 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         }}
       ]);
 
+      console.log('⏱️ Turnaround Stats Result:', JSON.stringify(turnaroundStats, null, 2));
+
       reportData.avgTurnaroundMinutes = turnaroundStats.length > 0 ?
         Math.round(turnaroundStats[0].avgTurnaround / 60000) : 0;
+
+      console.log('✅ Avg Turnaround Minutes:', reportData.avgTurnaroundMinutes);
 
       // 3. Service Distribution
       const serviceDistribution = await Queue.aggregate([
@@ -1059,6 +1126,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $group: { _id: '$serviceId', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ]);
+
+      console.log('📋 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
 
       const serviceIds = serviceDistribution.map(s => s._id);
       const services = await Service.find({ _id: { $in: serviceIds } });
@@ -1072,6 +1141,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         count: s.count
       }));
 
+      console.log('✅ Service Distribution Mapped:', reportData.serviceDistribution);
+
       // 4. Visitor Breakdown by Role
       const roleBreakdown = await Queue.aggregate([
         { $match: {
@@ -1083,10 +1154,14 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $sort: { count: -1 } }
       ]);
 
+      console.log('👤 Role Breakdown Result:', JSON.stringify(roleBreakdown, null, 2));
+
       reportData.visitorsByRole = roleBreakdown.map(r => ({
         role: r._id,
         count: r.count
       }));
+
+      console.log('✅ Visitors by Role Mapped:', reportData.visitorsByRole);
 
       // 5. Peak Hours/Days Analysis
       const peakHours = await Queue.aggregate([
@@ -1102,6 +1177,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $sort: { count: -1 } },
         { $limit: 5 }
       ]);
+
+      console.log('⏰ Peak Hours Result:', JSON.stringify(peakHours, null, 2));
 
       reportData.peakHours = peakHours.map(h => ({
         hour: h._id,
@@ -1121,11 +1198,18 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $sort: { count: -1 } }
       ]);
 
+      console.log('📅 Peak Days Result:', JSON.stringify(peakDays, null, 2));
+
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       reportData.peakDays = peakDays.map(d => ({
         day: dayNames[d._id - 1],
         count: d.count
       }));
+
+      console.log('✅ Peak Hours/Days Mapped:', {
+        peakHours: reportData.peakHours,
+        peakDays: reportData.peakDays
+      });
 
       // 6. Monthly Trends
       const monthlyTrends = await Queue.aggregate([
@@ -1144,7 +1228,11 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $sort: { '_id.year': 1, '_id.month': 1 } }
       ]);
 
+      console.log('📈 Monthly Trends Result:', JSON.stringify(monthlyTrends, null, 2));
+
       reportData.monthlyTrends = monthlyTrends;
+
+      console.log('✅ Monthly Trends Assigned');
 
       // 7. Window Performance
       const windowPerformance = await Queue.aggregate([
@@ -1165,6 +1253,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $sort: { totalServed: -1 } }
       ]);
 
+      console.log('🪟 Window Performance Result:', JSON.stringify(windowPerformance, null, 2));
+
       const windowIds = windowPerformance.map(w => w._id);
       const windows = await Window.find({ _id: { $in: windowIds } });
       const windowMap = windows.reduce((map, w) => {
@@ -1177,6 +1267,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         totalServed: w.totalServed,
         avgTurnaroundMinutes: Math.round(w.avgTurnaround / 60000)
       }));
+
+      console.log('✅ Window Performance Mapped:', reportData.windowPerformance);
     }
 
     // Add metadata with Philippine timezone formatting

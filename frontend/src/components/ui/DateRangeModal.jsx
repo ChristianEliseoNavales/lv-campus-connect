@@ -129,6 +129,7 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
                 value={startDate}
                 onChange={handleStartDateChange}
                 placeholder="Select start date"
+                showAllDates={false}
               />
             </div>
 
@@ -141,6 +142,7 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
                 value={endDate}
                 onChange={handleEndDateChange}
                 placeholder="Select end date"
+                showAllDates={false}
               />
             </div>
 

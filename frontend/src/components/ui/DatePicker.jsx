@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { HiCalendar, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { getPhilippineDate, isDateInFuture, isToday as isPhilippineToday } from '../../utils/philippineTimezone';
 
-const DatePicker = ({ value, onChange, placeholder = "Select date" }) => {
+const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates = true }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Helper function to safely convert value to Date object
@@ -225,13 +225,15 @@ const DatePicker = ({ value, onChange, placeholder = "Select date" }) => {
             >
               Today
             </button>
-            <button
-              type="button"
-              onClick={() => handleDateSelect(null)}
-              className="w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded transition-colors"
-            >
-              All Dates
-            </button>
+            {showAllDates && (
+              <button
+                type="button"
+                onClick={() => handleDateSelect(null)}
+                className="w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded transition-colors"
+              >
+                All Dates
+              </button>
+            )}
           </div>
         </div>
       )}

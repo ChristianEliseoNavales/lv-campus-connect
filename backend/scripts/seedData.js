@@ -124,6 +124,33 @@ const officeSchema = new mongoose.Schema({
   officeEmail: { type: String, default: null, trim: true, lowercase: true }
 }, { timestamps: true });
 
+const ratingSchema = new mongoose.Schema({
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  feedback: { type: String, trim: true, maxlength: 1000 },
+  ratingType: {
+    type: String,
+    enum: ['service', 'window', 'overall_experience', 'staff_performance', 'system_usability'],
+    required: true
+  },
+  queueId: { type: mongoose.Schema.Types.ObjectId, ref: 'Queue', required: true },
+  serviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Service' },
+  windowId: { type: mongoose.Schema.Types.ObjectId, ref: 'Window' },
+  staffId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  customerName: { type: String, required: true, trim: true },
+  customerEmail: { type: String, trim: true, lowercase: true },
+  customerRole: {
+    type: String,
+    enum: ['Visitor', 'Student', 'Teacher', 'Alumni'],
+    required: true
+  },
+  office: { type: String, enum: ['registrar', 'admissions'], required: true },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected', 'flagged'],
+    default: 'approved'
+  }
+}, { timestamps: true });
+
 const settingsSchema = new mongoose.Schema({
   systemName: { type: String, default: 'LVCampusConnect System' },
   systemVersion: { type: String, default: '1.0.0' },
@@ -225,6 +252,7 @@ async function seedDatabase() {
     const Queue = mongoose.model('Queue', queueSchema);
     const Office = mongoose.model('Office', officeSchema);
     const VisitationForm = mongoose.model('VisitationForm', visitationFormSchema);
+    const Rating = mongoose.model('Rating', ratingSchema);
     const Settings = mongoose.model('Settings', settingsSchema);
 
     // Clear existing data and drop old indexes
@@ -236,6 +264,7 @@ async function seedDatabase() {
       Queue.deleteMany({}),
       Office.deleteMany({}),
       VisitationForm.deleteMany({}),
+      Rating.deleteMany({}),
       Settings.deleteMany({})
     ]);
 
@@ -248,6 +277,7 @@ async function seedDatabase() {
         mongoose.connection.collection('queues').dropIndexes(),
         mongoose.connection.collection('offices').dropIndexes(),
         mongoose.connection.collection('visitationforms').dropIndexes(),
+        mongoose.connection.collection('ratings').dropIndexes(),
         mongoose.connection.collection('settings').dropIndexes()
       ]);
       console.log('✅ Old indexes dropped');
@@ -514,6 +544,62 @@ async function seedDatabase() {
         email: 'robert.cruz@outlook.com',
         address: '321 Elm St, Pasig, Philippines',
         idNumber: ''
+      },
+      {
+        customerName: 'Anna Garcia',
+        contactNumber: '09222333444',
+        email: 'anna.garcia@gmail.com',
+        address: '555 Maple Dr, Taguig, Philippines',
+        idNumber: ''
+      },
+      {
+        customerName: 'Michael Reyes',
+        contactNumber: '09333444555',
+        email: 'michael.reyes@yahoo.com',
+        address: '777 Cedar Ln, Mandaluyong, Philippines',
+        idNumber: ''
+      },
+      {
+        customerName: 'Sarah Lim',
+        contactNumber: '09555666777',
+        email: 'sarah.lim@outlook.com',
+        address: '999 Birch St, San Juan, Philippines',
+        idNumber: 'SC-2024-002'
+      },
+      {
+        customerName: 'David Tan',
+        contactNumber: '09666777888',
+        email: 'david.tan@gmail.com',
+        address: '111 Willow Ave, Pasay, Philippines',
+        idNumber: ''
+      },
+      {
+        customerName: 'Lisa Fernandez',
+        contactNumber: '09777888999',
+        email: 'lisa.fernandez@yahoo.com',
+        address: '222 Spruce Rd, Paranaque, Philippines',
+        idNumber: ''
+      },
+      {
+        customerName: 'Mark Villanueva',
+        contactNumber: '09888999000',
+        email: 'mark.villanueva@gmail.com',
+        address: '333 Ash Blvd, Las Pinas, Philippines',
+        idNumber: ''
+      },
+      {
+        customerName: 'Jennifer Aquino',
+        contactNumber: '09999000111',
+        email: 'jennifer.aquino@outlook.com',
+        address: '444 Palm St, Muntinlupa, Philippines',
+        idNumber: ''
+      },
+      {
+        customerName: 'Carlos Mendoza',
+        contactNumber: '09000111222',
+        email: 'carlos.mendoza@yahoo.com',
+        address: '666 Redwood Dr, Caloocan, Philippines',
+        idNumber: ''
       }
     ]);
     console.log(`✅ Created ${visitationForms.length} visitation forms`);
@@ -522,9 +608,13 @@ async function seedDatabase() {
     console.log('📋 Creating sample queues...');
     const transcriptService = services.find(s => s.name === 'Transcript of Records');
     const enrollService = services.find(s => s.name === 'Enroll');
+    const certEnrollmentService = services.find(s => s.name === 'Certificate of Enrollment');
+    const certGradesService = services.find(s => s.name === 'Certificate of Grades');
     const applicationService = services.find(s => s.name === 'Application Inquiry');
+    const requirementsService = services.find(s => s.name === 'Requirements Submission');
 
     const queues = await Queue.insertMany([
+      // Completed queues with ratings - Registrar (past week)
       {
         queueNumber: 1,
         office: 'registrar',
@@ -537,10 +627,10 @@ async function seedDatabase() {
         isPriority: false,
         status: 'completed',
         isCurrentlyServing: false,
-        queuedAt: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-        calledAt: new Date(Date.now() - 2.5 * 60 * 60 * 1000),
-        servedAt: new Date(Date.now() - 2.5 * 60 * 60 * 1000),
-        completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        queuedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        calledAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000),
+        servedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000),
+        completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 25 * 60 * 1000),
         skippedAt: null,
         estimatedWaitTime: 15,
         rating: 5,
@@ -551,8 +641,186 @@ async function seedDatabase() {
         queueNumber: 2,
         office: 'registrar',
         windowId: windows[0]._id.toString(),
-        serviceId: transcriptService._id.toString(),
+        serviceId: certEnrollmentService._id.toString(),
         visitationFormId: visitationForms[1]._id,
+        idNumber: '',
+        role: 'Student',
+        studentStatus: null,
+        isPriority: false,
+        status: 'completed',
+        isCurrentlyServing: false,
+        queuedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        calledAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000),
+        servedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000),
+        completedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000 + 18 * 60 * 1000),
+        skippedAt: null,
+        estimatedWaitTime: 12,
+        rating: 4,
+        remarks: 'Completed',
+        processedBy: registrarAdmin._id
+      },
+      {
+        queueNumber: 3,
+        office: 'registrar',
+        windowId: windows[1]._id.toString(),
+        serviceId: certGradesService._id.toString(),
+        visitationFormId: visitationForms[4]._id,
+        idNumber: '',
+        role: 'Alumni',
+        studentStatus: null,
+        isPriority: false,
+        status: 'completed',
+        isCurrentlyServing: false,
+        queuedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        calledAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 8 * 60 * 1000),
+        servedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 8 * 60 * 1000),
+        completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 22 * 60 * 1000),
+        skippedAt: null,
+        estimatedWaitTime: 14,
+        rating: 5,
+        remarks: 'Completed',
+        processedBy: registrarAdmin._id
+      },
+      {
+        queueNumber: 4,
+        office: 'registrar',
+        windowId: windows[0]._id.toString(),
+        serviceId: transcriptService._id.toString(),
+        visitationFormId: visitationForms[5]._id,
+        idNumber: '',
+        role: 'Student',
+        studentStatus: null,
+        isPriority: false,
+        status: 'completed',
+        isCurrentlyServing: false,
+        queuedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        calledAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000 + 12 * 60 * 1000),
+        servedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000 + 12 * 60 * 1000),
+        completedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
+        skippedAt: null,
+        estimatedWaitTime: 18,
+        rating: 3,
+        remarks: 'Completed',
+        processedBy: registrarAdmin._id
+      },
+      {
+        queueNumber: 5,
+        office: 'registrar',
+        windowId: windows[1]._id.toString(),
+        serviceId: certEnrollmentService._id.toString(),
+        visitationFormId: visitationForms[7]._id,
+        idNumber: '',
+        role: 'Student',
+        studentStatus: null,
+        isPriority: false,
+        status: 'completed',
+        isCurrentlyServing: false,
+        queuedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        calledAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 6 * 60 * 1000),
+        servedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 6 * 60 * 1000),
+        completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000),
+        skippedAt: null,
+        estimatedWaitTime: 14,
+        rating: 4,
+        remarks: 'Completed',
+        processedBy: registrarAdmin._id
+      },
+      // Completed queues with ratings - Admissions (past week)
+      {
+        queueNumber: 1,
+        office: 'admissions',
+        windowId: windows[2]._id.toString(),
+        serviceId: applicationService._id.toString(),
+        visitationFormId: visitationForms[3]._id,
+        idNumber: '',
+        role: 'Visitor',
+        studentStatus: null,
+        isPriority: false,
+        status: 'completed',
+        isCurrentlyServing: false,
+        queuedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        calledAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000),
+        servedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000),
+        completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 35 * 60 * 1000),
+        skippedAt: null,
+        estimatedWaitTime: 20,
+        rating: 5,
+        remarks: 'Completed',
+        processedBy: admissionsAdmin._id
+      },
+      {
+        queueNumber: 2,
+        office: 'admissions',
+        windowId: windows[2]._id.toString(),
+        serviceId: requirementsService._id.toString(),
+        visitationFormId: visitationForms[8]._id,
+        idNumber: '',
+        role: 'Student',
+        studentStatus: null,
+        isPriority: false,
+        status: 'completed',
+        isCurrentlyServing: false,
+        queuedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        calledAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000),
+        servedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000),
+        completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 25 * 60 * 1000),
+        skippedAt: null,
+        estimatedWaitTime: 15,
+        rating: 4,
+        remarks: 'Completed',
+        processedBy: admissionsAdmin._id
+      },
+      {
+        queueNumber: 3,
+        office: 'admissions',
+        windowId: windows[2]._id.toString(),
+        serviceId: applicationService._id.toString(),
+        visitationFormId: visitationForms[9]._id,
+        idNumber: '',
+        role: 'Visitor',
+        studentStatus: null,
+        isPriority: false,
+        status: 'completed',
+        isCurrentlyServing: false,
+        queuedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        calledAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 8 * 60 * 1000),
+        servedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 8 * 60 * 1000),
+        completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 28 * 60 * 1000),
+        skippedAt: null,
+        estimatedWaitTime: 20,
+        rating: 5,
+        remarks: 'Completed',
+        processedBy: admissionsAdmin._id
+      },
+      {
+        queueNumber: 4,
+        office: 'admissions',
+        windowId: windows[2]._id.toString(),
+        serviceId: requirementsService._id.toString(),
+        visitationFormId: visitationForms[10]._id,
+        idNumber: '',
+        role: 'Student',
+        studentStatus: null,
+        isPriority: false,
+        status: 'completed',
+        isCurrentlyServing: false,
+        queuedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        calledAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 12 * 60 * 1000),
+        servedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 12 * 60 * 1000),
+        completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
+        skippedAt: null,
+        estimatedWaitTime: 18,
+        rating: 3,
+        remarks: 'Completed',
+        processedBy: admissionsAdmin._id
+      },
+      // Current active queues (no ratings yet)
+      {
+        queueNumber: 6,
+        office: 'registrar',
+        windowId: windows[0]._id.toString(),
+        serviceId: transcriptService._id.toString(),
+        visitationFormId: visitationForms[11]._id,
         idNumber: '',
         role: 'Student',
         studentStatus: null,
@@ -570,7 +838,7 @@ async function seedDatabase() {
         processedBy: registrarAdmin._id
       },
       {
-        queueNumber: 3,
+        queueNumber: 7,
         office: 'registrar',
         windowId: null,
         serviceId: transcriptService._id.toString(),
@@ -592,15 +860,15 @@ async function seedDatabase() {
         processedBy: null
       },
       {
-        queueNumber: 1,
+        queueNumber: 5,
         office: 'admissions',
-        windowId: windows[2]._id.toString(),
+        windowId: null,
         serviceId: applicationService._id.toString(),
-        visitationFormId: visitationForms[3]._id,
-        idNumber: '',
+        visitationFormId: visitationForms[6]._id,
+        idNumber: 'SC-2024-002',
         role: 'Visitor',
         studentStatus: null,
-        isPriority: false,
+        isPriority: true,
         status: 'waiting',
         isCurrentlyServing: false,
         queuedAt: new Date(Date.now() - 20 * 60 * 1000), // 20 minutes ago
@@ -615,6 +883,31 @@ async function seedDatabase() {
       }
     ]);
     console.log(`✅ Created ${queues.length} queues`);
+
+    // Seed Ratings for completed queues (matching real system behavior)
+    console.log('⭐ Creating ratings for completed queues...');
+    const completedQueuesWithRatings = queues.filter(q => q.status === 'completed' && q.rating);
+
+    const ratings = [];
+    for (const queue of completedQueuesWithRatings) {
+      const visitationForm = visitationForms.find(vf => vf._id.equals(queue.visitationFormId));
+
+      ratings.push({
+        rating: queue.rating,
+        ratingType: 'overall_experience', // Default type for kiosk submissions
+        queueId: queue._id,
+        customerName: visitationForm?.customerName || 'Anonymous Customer',
+        customerEmail: visitationForm?.email || undefined,
+        customerRole: queue.role,
+        office: queue.office,
+        status: 'approved', // Auto-approved for kiosk ratings
+        createdAt: queue.completedAt, // Use queue completion time as rating time
+        updatedAt: queue.completedAt
+      });
+    }
+
+    await Rating.insertMany(ratings);
+    console.log(`✅ Created ${ratings.length} ratings`);
 
     // Seed Settings (singleton)
     console.log('⚙️ Creating system settings...');
@@ -718,7 +1011,13 @@ async function seedDatabase() {
     console.log(`   🪟 Windows: ${windows.length}`);
     console.log(`   📝 Visitation Forms: ${visitationForms.length}`);
     console.log(`   📋 Queues: ${queues.length}`);
+    console.log(`   ⭐ Ratings: ${ratings.length}`);
     console.log(`   ⚙️ Settings: 1 (singleton)`);
+    console.log('');
+    console.log('📈 Queue Status Breakdown:');
+    console.log(`   ✅ Completed (with ratings): ${queues.filter(q => q.status === 'completed' && q.rating).length}`);
+    console.log(`   🔄 Currently Serving: ${queues.filter(q => q.status === 'serving').length}`);
+    console.log(`   ⏳ Waiting: ${queues.filter(q => q.status === 'waiting').length}`);
     console.log('');
     console.log('🔐 Test Credentials:');
     console.log('   Super Admin: admin@lvcampusconnect.edu / Admin123!');
@@ -727,6 +1026,7 @@ async function seedDatabase() {
     console.log('   Senior Management Admin: seniormanagement.admin@lvcampusconnect.edu / SeniorMgmt123!');
     console.log('');
     console.log('✅ All models seeded with complete field data!');
+    console.log('✅ Rating documents created matching real system behavior!');
     console.log('✅ MongoDB Atlas connection verified and working!');
 
   } catch (error) {

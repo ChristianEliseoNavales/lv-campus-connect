@@ -22,29 +22,6 @@ const DepartmentDonutChart = ({ data = [] }) => {
     return COLORS[departmentKey] || '#1F3463';
   };
 
-  // Custom label renderer for the donut chart
-  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    if (percent < 0.05) return null; // Don't show label if segment is too small
-
-    return (
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor={x > cx ? 'start' : 'end'}
-        dominantBaseline="central"
-        className="font-bold text-sm"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
-
   // Handle mouse enter for active sector
   const handleMouseEnter = (index) => {
     setActiveIndex(index);
@@ -79,7 +56,6 @@ const DepartmentDonutChart = ({ data = [] }) => {
             outerRadius={80}
             paddingAngle={2}
             dataKey="value"
-            label={renderCustomLabel}
             onMouseEnter={(_, index) => handleMouseEnter(index)}
             onMouseLeave={handleMouseLeave}
           >

@@ -171,9 +171,9 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
           </button>
 
           {/* Scrollable Container */}
-          <div className="max-h-[90vh] overflow-y-auto">
+          <div className="max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-lg">
             {/* Header - Fixed at top */}
-            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between rounded-t-lg">
               <h2 className="text-xl font-bold text-[#1F3463]">
                 Analytical Report - {userRole}
               </h2>
@@ -191,7 +191,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
             </div>
 
             {/* Content - A4 Pages Container */}
-            <div ref={reportRef} className="p-6 space-y-6">
+            <div ref={reportRef} className="p-6 space-y-6 rounded-b-lg">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3463]"></div>
