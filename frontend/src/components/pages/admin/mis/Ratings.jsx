@@ -51,13 +51,16 @@ const Ratings = () => {
     errorShownRef.current = false;
 
     try {
-      let url = `${API_CONFIG.getAdminUrl()}/api/ratings`;
+      let url = `${API_CONFIG.getAdminUrl()}/api/queue-ratings`;
       const params = new URLSearchParams();
 
       if (dateParam) {
         params.append('startDate', dateParam);
         params.append('endDate', dateParam);
       }
+
+      // Set a high limit to get all ratings (pagination handled client-side)
+      params.append('limit', '1000');
 
       if (params.toString()) {
         url += `?${params.toString()}`;

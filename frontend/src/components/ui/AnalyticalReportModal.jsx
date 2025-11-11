@@ -52,34 +52,40 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
         downloadButton.disabled = true;
       }
 
-      // Capture the report content as canvas
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2, // Higher quality
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
-
-      // Calculate PDF dimensions (A4 size: 210mm x 297mm)
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-
       // Create PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
-      let position = 0;
 
-      // Add first page
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      // Get all page elements
+      const pages = reportRef.current.querySelectorAll('[data-pdf-page]');
 
-      // Add additional pages if content exceeds one page
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Capture and add each page
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        // Capture the page as canvas
+        const canvas = await html2canvas(pages[i], {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          width: pages[i].offsetWidth,
+          height: pages[i].offsetHeight
+        });
+
+        // Add to PDF (full page, no margins since content already has margins)
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = 297; // A4 height in mm
+
+        pdf.addImage(
+          canvas.toDataURL('image/png'),
+          'PNG',
+          0,
+          0,
+          imgWidth,
+          imgHeight
+        );
       }
 
       // Generate filename with current date
@@ -122,36 +128,38 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div 
-          className="relative bg-white rounded-lg shadow-xl w-full max-w-[210mm] max-h-[90vh] overflow-y-auto"
+        <div
+          className="relative bg-gray-100 rounded-lg shadow-xl w-full max-w-[230mm] max-h-[90vh] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-[#1F3463]">
-              Analytical Report - {userRole}
-            </h2>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleDownloadPDF}
-                data-download-button
-                disabled={isLoading || error}
-                className="flex items-center gap-2 px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#152847] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <MdDownload className="w-5 h-5" />
-                Download Report
-              </button>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <MdClose className="w-6 h-6" />
-              </button>
+          {/* Scrollable Container */}
+          <div className="max-h-[90vh] overflow-y-auto">
+            {/* Header - Fixed at top */}
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-[#1F3463]">
+                Analytical Report - {userRole}
+              </h2>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleDownloadPDF}
+                  data-download-button
+                  disabled={isLoading || error}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#152847] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <MdDownload className="w-5 h-5" />
+                  Download PDF
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <MdClose className="w-6 h-6" />
+                </button>
+              </div>
             </div>
-          </div>
-          
-          {/* Content */}
-          <div ref={reportRef} className="p-8 space-y-8">
+
+            {/* Content - A4 Pages Container */}
+            <div ref={reportRef} className="p-6 space-y-6">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3463]"></div>
@@ -168,93 +176,109 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
               </div>
             ) : reportData ? (
               <>
-                {/* Report Header */}
-                <div className="text-center border-b-2 border-[#1F3463] pb-6">
-                  <h1 className="text-3xl font-bold text-[#1F3463] mb-2">
-                    LVCampusConnect System
-                  </h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-4">
-                    {userRole} Analytical Report
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Report Period: {reportData.metadata?.reportPeriod}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Generated: {new Date(reportData.metadata?.generatedAt).toLocaleString()}
-                  </p>
-                </div>
-
-                {/* Executive Summary */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="text-xl font-bold text-[#1F3463] mb-4">Executive Summary</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {userRole === 'MIS Super Admin' ? (
-                      <>
-                        <div className="bg-white p-4 rounded-lg shadow">
-                          <p className="text-sm text-gray-600">Total Visitors</p>
-                          <p className="text-3xl font-bold text-[#1F3463]">{reportData.totalVisitors?.toLocaleString()}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow">
-                          <p className="text-sm text-gray-600">Average Rating</p>
-                          <p className="text-3xl font-bold text-[#1F3463]">
-                            {reportData.kioskRatings?.averageRating?.toFixed(2)} / 5.0
-                          </p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow">
-                          <p className="text-sm text-gray-600">Total Ratings</p>
-                          <p className="text-3xl font-bold text-[#1F3463]">{reportData.kioskRatings?.totalRatings?.toLocaleString()}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow">
-                          <p className="text-sm text-gray-600">Priority Visitors</p>
-                          <p className="text-3xl font-bold text-[#1F3463]">{reportData.priorityVisitors?.toLocaleString()}</p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="bg-white p-4 rounded-lg shadow">
-                          <p className="text-sm text-gray-600">Total Visits</p>
-                          <p className="text-3xl font-bold text-[#1F3463]">{reportData.totalVisits?.toLocaleString()}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow">
-                          <p className="text-sm text-gray-600">Avg Turnaround Time</p>
-                          <p className="text-3xl font-bold text-[#1F3463]">{reportData.avgTurnaroundMinutes} mins</p>
-                        </div>
-                      </>
-                    )}
+                {/* Page 1 - A4 Size */}
+                <div
+                  data-pdf-page="1"
+                  className="bg-white shadow-lg mx-auto"
+                  style={{ width: '210mm', height: '297mm', padding: '20mm' }}
+                >
+                  {/* Report Header */}
+                  <div className="text-center border-b-2 border-[#1F3463] pb-6 mb-6">
+                    <h1 className="text-3xl font-bold text-[#1F3463] mb-2">
+                      LVCampusConnect System
+                    </h1>
+                    <h2 className="text-xl font-semibold text-gray-700 mb-4">
+                      {userRole} Analytical Report
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Report Period: {reportData.metadata?.reportPeriod}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Generated: {new Date(reportData.metadata?.generatedAt).toLocaleString()}
+                    </p>
                   </div>
+
+                  {/* Executive Summary */}
+                  <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                    <h3 className="text-xl font-bold text-[#1F3463] mb-4">Executive Summary</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {userRole === 'MIS Super Admin' ? (
+                        <>
+                          <div className="bg-white p-4 rounded-lg shadow">
+                            <p className="text-sm text-gray-600">Total Visitors</p>
+                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.totalVisitors?.toLocaleString()}</p>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg shadow">
+                            <p className="text-sm text-gray-600">Average Rating</p>
+                            <p className="text-3xl font-bold text-[#1F3463]">
+                              {reportData.kioskRatings?.averageRating?.toFixed(2)} / 5.0
+                            </p>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg shadow">
+                            <p className="text-sm text-gray-600">Total Ratings</p>
+                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.kioskRatings?.totalRatings?.toLocaleString()}</p>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg shadow">
+                            <p className="text-sm text-gray-600">Priority Visitors</p>
+                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.priorityVisitors?.toLocaleString()}</p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="bg-white p-4 rounded-lg shadow">
+                            <p className="text-sm text-gray-600">Total Visits</p>
+                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.totalVisits?.toLocaleString()}</p>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg shadow">
+                            <p className="text-sm text-gray-600">Avg Turnaround Time</p>
+                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.avgTurnaroundMinutes} mins</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* MIS Super Admin - First Page Charts */}
+                  {userRole === 'MIS Super Admin' && (
+                    <>
+                      {/* Most Visited Office */}
+                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 className="text-lg font-bold text-[#1F3463] mb-4">Most Visited Office</h3>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              data={reportData.mostVisitedOffice}
+                              dataKey="count"
+                              nameKey="department"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label={(entry) => `${entry.department}: ${entry.count}`}
+                            >
+                              {reportData.mostVisitedOffice?.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                {/* MIS Super Admin Specific Content */}
+                {/* Page 2 - MIS Super Admin Continued */}
                 {userRole === 'MIS Super Admin' && (
-                  <>
-                    {/* Most Visited Office */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <h3 className="text-lg font-bold text-[#1F3463] mb-4">Most Visited Office</h3>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={reportData.mostVisitedOffice}
-                            dataKey="count"
-                            nameKey="department"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={100}
-                            label={(entry) => `${entry.department}: ${entry.count}`}
-                          >
-                            {reportData.mostVisitedOffice?.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
+                  <div
+                    data-pdf-page="2"
+                    className="bg-white shadow-lg mx-auto"
+                    style={{ width: '210mm', height: '297mm', padding: '20mm' }}
+                  >
                     {/* Service Distribution Overall */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                       <h3 className="text-lg font-bold text-[#1F3463] mb-4">Service Distribution Overall</h3>
-                      <ResponsiveContainer width="100%" height={300}>
+                      <ResponsiveContainer width="100%" height={250}>
                         <PieChart>
                           <Pie
                             data={reportData.serviceDistribution?.slice(0, 5)}
@@ -262,7 +286,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                             nameKey="service"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
+                            outerRadius={80}
                             label={(entry) => `${entry.service}: ${entry.count}`}
                           >
                             {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
@@ -276,7 +300,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                     </div>
 
                     {/* Kiosk Ratings Breakdown */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                       <h3 className="text-lg font-bold text-[#1F3463] mb-4">Kiosk Ratings Distribution</h3>
                       <div className="grid grid-cols-5 gap-4">
                         {[5, 4, 3, 2, 1].map((star) => (
@@ -291,7 +315,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                     </div>
 
                     {/* Visitor Breakdown by Role */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                       <h3 className="text-lg font-bold text-[#1F3463] mb-4">Visitor Breakdown by Role</h3>
                       <div className="grid grid-cols-4 gap-4">
                         {reportData.visitorsByRole?.map((item, index) => (
@@ -335,16 +359,16 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                         </div>
                       </div>
                     </div>
-                  </>
+                  </div>
                 )}
 
-                {/* Registrar/Admissions Admin Specific Content */}
+                {/* Registrar/Admissions Admin Specific Content - Page 1 */}
                 {(userRole === 'Registrar Admin' || userRole === 'Admissions Admin') && (
                   <>
                     {/* Service Distribution */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                       <h3 className="text-lg font-bold text-[#1F3463] mb-4">Service Distribution</h3>
-                      <ResponsiveContainer width="100%" height={300}>
+                      <ResponsiveContainer width="100%" height={250}>
                         <PieChart>
                           <Pie
                             data={reportData.serviceDistribution?.slice(0, 5)}
@@ -352,7 +376,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                             nameKey="service"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
+                            outerRadius={80}
                             label={(entry) => `${entry.service}: ${entry.count}`}
                           >
                             {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
@@ -377,9 +401,18 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                         ))}
                       </div>
                     </div>
+                  </>
+                )}
 
+                {/* Registrar/Admissions Admin - Page 2 */}
+                {(userRole === 'Registrar Admin' || userRole === 'Admissions Admin') && (
+                  <div
+                    data-pdf-page="2"
+                    className="bg-white shadow-lg mx-auto"
+                    style={{ width: '210mm', height: '297mm', padding: '20mm' }}
+                  >
                     {/* Peak Hours Analysis */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                       <h3 className="text-lg font-bold text-[#1F3463] mb-4">Peak Hours</h3>
                       <div className="space-y-2">
                         {reportData.peakHours?.map((item, index) => (
@@ -394,7 +427,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                     </div>
 
                     {/* Peak Days Analysis */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                       <h3 className="text-lg font-bold text-[#1F3463] mb-4">Peak Days</h3>
                       <div className="grid grid-cols-7 gap-2">
                         {reportData.peakDays?.map((item, index) => (
@@ -432,10 +465,11 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                         </div>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
               </>
             ) : null}
+            </div>
           </div>
         </div>
       </div>

@@ -25,7 +25,7 @@ const serviceColors = [
 
 // Helper function to determine department from user role or URL path
 const getDepartmentFromContext = (userRole) => {
-  // Check URL path first
+  // Check URL path first (most reliable)
   if (typeof window !== 'undefined') {
     const currentPath = window.location.pathname;
     if (currentPath.startsWith('/admin/registrar')) {
@@ -35,15 +35,16 @@ const getDepartmentFromContext = (userRole) => {
     }
   }
 
-  // Fallback to user role
-  if (userRole === 'registrar_admin') {
+  // Fallback to user role (handle both old and new role formats)
+  if (userRole === 'registrar_admin' || userRole === 'Registrar Admin' || userRole === 'Registrar Admin Staff') {
     return 'registrar';
-  } else if (userRole === 'admissions_admin') {
+  } else if (userRole === 'admissions_admin' || userRole === 'Admissions Admin' || userRole === 'Admissions Admin Staff') {
     return 'admissions';
   }
 
-  // Default for super admin - could be either, we'll use registrar as default
-  return 'registrar';
+  // If we can't determine department, return null to prevent incorrect data fetching
+  console.warn('Could not determine department from role:', userRole);
+  return null;
 };
 
 // Helper function to format date range description
@@ -134,7 +135,7 @@ export function ChartPieLegend({ userRole, timeRange = 'all' }) {
 
   // Determine department and super admin status based on user role or URL
   useEffect(() => {
-    const isSuper = userRole === 'super_admin' || window.location.pathname.startsWith('/admin/mis');
+    const isSuper = userRole === 'super_admin' || userRole === 'MIS Super Admin' || window.location.pathname.startsWith('/admin/mis');
     setIsSuperAdmin(isSuper);
 
     if (!isSuper) {
