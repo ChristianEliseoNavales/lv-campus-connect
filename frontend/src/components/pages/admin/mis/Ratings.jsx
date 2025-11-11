@@ -59,8 +59,8 @@ const Ratings = () => {
         params.append('endDate', dateParam);
       }
 
-      // Set a high limit to get all ratings (pagination handled client-side)
-      params.append('limit', '1000');
+      // Fetch all ratings for the selected date (or all if no date selected)
+      params.append('limit', '10000'); // High limit to get all records
 
       if (params.toString()) {
         url += `?${params.toString()}`;
@@ -105,21 +105,8 @@ const Ratings = () => {
     }
   };
 
-  // Show error toast only once per fetch attempt
-  useEffect(() => {
-    if (fetchError && !errorShownRef.current) {
-      showError('Error', fetchError);
-      errorShownRef.current = true;
-    }
-  }, [fetchError, showError]);
-
-  // Initial data fetch
-  useEffect(() => {
-    fetchRatings();
-  }, [fetchRatings]);
-
-  // Filter and search logic
-  useEffect(() => {
+  // Client-side filtering - separate from API fetching
+  const applyFilters = useCallback(() => {
     let filtered = [...ratings];
 
     // Apply search filter
@@ -127,59 +114,66 @@ const Ratings = () => {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(rating =>
         rating.customerName?.toLowerCase().includes(searchLower) ||
-        rating.feedback?.toLowerCase().includes(searchLower) ||
-        rating.department?.toLowerCase().includes(searchLower) ||
-        rating.ratingType?.toLowerCase().includes(searchLower)
+        rating.serviceName?.toLowerCase().includes(searchLower) ||
+        rating.department?.toLowerCase().includes(searchLower)
       );
     }
 
-    // Apply filter by rating value
+    // Apply filter by rating value or department
     if (filterBy !== 'all') {
-      filtered = filtered.filter(rating => {
-        switch (filterBy) {
-          case '5_star':
-            return rating.rating === 5;
-          case '4_star':
-            return rating.rating === 4;
-          case '3_star':
-            return rating.rating === 3;
-          case '2_star':
-            return rating.rating === 2;
-          case '1_star':
-            return rating.rating === 1;
-          case 'registrar':
-            return rating.department === 'registrar';
-          case 'admissions':
-            return rating.department === 'admissions';
-          default:
-            return true;
-        }
-      });
+      if (filterBy === 'registrar' || filterBy === 'admissions') {
+        filtered = filtered.filter(rating => rating.department === filterBy);
+      } else if (filterBy.endsWith('_star')) {
+        const ratingValue = parseInt(filterBy.charAt(0));
+        filtered = filtered.filter(rating => rating.rating === ratingValue);
+      }
     }
 
     setFilteredRatings(filtered);
-    // Reset to first page when filters change
+  }, [ratings, searchTerm, filterBy]);
+
+  // Effect for fetching data - only when date changes or on mount
+  useEffect(() => {
+    fetchRatings();
+  }, [fetchRatings]);
+
+  // Effect for client-side filtering - when data or filter criteria change
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  // Effect for resetting page when filters change (separate to avoid loops)
+  useEffect(() => {
     if (currentPage > 1) {
       updateState('currentPage', 1);
     }
-  }, [ratings, searchTerm, filterBy, currentPage, updateState]);
+  }, [searchTerm, filterBy, updateState]); // Removed currentPage from dependencies to prevent infinite loop
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredRatings.length / logsPerPage);
-  const startIndex = (currentPage - 1) * logsPerPage;
-  const currentRatings = filteredRatings.slice(startIndex, startIndex + logsPerPage);
-
-  // Handle pagination
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      updateState('currentPage', newPage);
+  // Effect for handling fetch errors (separate to avoid infinite loops)
+  useEffect(() => {
+    if (fetchError && !errorShownRef.current) {
+      showError('Error', 'Failed to load ratings');
+      errorShownRef.current = true;
+      // Clear the error after showing it to prevent repeated notifications
+      setFetchError(null);
     }
-  };
+  }, [fetchError, showError]);
 
   // Handle logs per page change
   const handleLogsPerPageChange = (increment) => {
     const newValue = Math.max(5, Math.min(50, logsPerPage + increment));
     updateState('logsPerPage', newValue);
+    updateState('currentPage', 1);
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredRatings.length / logsPerPage);
+  const startIndex = (currentPage - 1) * logsPerPage;
+  const endIndex = startIndex + logsPerPage;
+  const currentRatings = filteredRatings.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    updateState('currentPage', page);
   };
 
   // Format refresh time
@@ -418,10 +412,10 @@ const Ratings = () => {
         </div>
 
         {/* Pagination */}
-        {!loading && filteredRatings.length > 0 && (
+        {totalPages > 1 && (
           <div className="flex items-center justify-between mt-6">
             <div className="text-base text-gray-700 font-medium">
-              Showing {startIndex + 1} to {Math.min(startIndex + logsPerPage, filteredRatings.length)} of {filteredRatings.length} ratings
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredRatings.length)} of {filteredRatings.length} ratings
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -431,9 +425,14 @@ const Ratings = () => {
               >
                 Previous
               </button>
-              <span className="px-3 py-2 text-base font-semibold text-gray-700">
-                Page {currentPage} of {totalPages}
-              </span>
+
+              {/* Current Page Number */}
+              <button
+                className="px-3 py-2 text-base font-semibold text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
+              >
+                {currentPage}
+              </button>
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
