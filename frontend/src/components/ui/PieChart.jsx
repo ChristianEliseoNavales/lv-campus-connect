@@ -130,7 +130,7 @@ export function ChartPieLegend({ userRole, timeRange = 'all' }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
-  const [department, setDepartment] = useState('registrar');
+  const [department, setDepartment] = useState(null); // ✅ FIX: Initialize to null instead of 'registrar'
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // Determine department and super admin status based on user role or URL
@@ -141,6 +141,15 @@ export function ChartPieLegend({ userRole, timeRange = 'all' }) {
     if (!isSuper) {
       const dept = getDepartmentFromContext(userRole);
       setDepartment(dept);
+
+      // Log for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 PieChart department detection:', {
+          userRole,
+          detectedDepartment: dept,
+          currentPath: window.location.pathname
+        });
+      }
     }
   }, [userRole]);
 
@@ -151,12 +160,28 @@ export function ChartPieLegend({ userRole, timeRange = 'all' }) {
         setIsLoading(true);
         setError(null);
 
+        // Don't fetch if department is not determined yet (for non-super admins)
+        if (!isSuperAdmin && !department) {
+          console.warn('⚠️ PieChart: Department not determined yet, skipping fetch');
+          setIsLoading(false);
+          return;
+        }
+
         // Use combined endpoint for super admin, department-specific for others
         // Admin pages use cloud backend
         const baseUrl = API_CONFIG.getAdminUrl();
         const endpoint = isSuperAdmin
           ? `${baseUrl}/api/analytics/pie-chart/combined?timeRange=${timeRange}`
           : `${baseUrl}/api/analytics/pie-chart/${department}?timeRange=${timeRange}`;
+
+        // Log for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📊 Fetching pie chart data:', {
+            isSuperAdmin,
+            department,
+            endpoint
+          });
+        }
 
         const response = await authFetch(endpoint);
 
@@ -188,8 +213,12 @@ export function ChartPieLegend({ userRole, timeRange = 'all' }) {
       }
     };
 
+    // Only fetch when we have determined the department (or user is super admin)
     if (isSuperAdmin || department) {
       fetchPieChartData();
+    } else {
+      // Still loading, waiting for department to be determined
+      setIsLoading(true);
     }
   }, [isSuperAdmin, department, timeRange]);
 

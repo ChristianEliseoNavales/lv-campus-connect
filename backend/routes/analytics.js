@@ -782,8 +782,46 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
     }
 
     const reportData = {};
-    const now = new Date();
-    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+
+    // Extract date range from query parameters
+    console.log('📅 Analytical Report - Query Params:', {
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+      allParams: req.query
+    });
+
+    let startDate, endDate;
+    if (req.query.startDate && req.query.endDate) {
+      startDate = new Date(req.query.startDate);
+      endDate = new Date(req.query.endDate);
+
+      console.log('✅ Using provided date range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+
+      // Validate dates
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).json({
+          error: 'Invalid date format. Please provide valid ISO date strings.'
+        });
+      }
+
+      if (startDate > endDate) {
+        return res.status(400).json({
+          error: 'Start date must be before end date.'
+        });
+      }
+    } else {
+      // Default to last year if no date range provided
+      endDate = new Date();
+      startDate = new Date(endDate.getFullYear() - 1, endDate.getMonth(), endDate.getDate());
+
+      console.log('⚠️ No date range provided, using default (last year):', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+    }
 
     // Determine department filter based on role
     const departmentFilter = role === 'Registrar Admin' ? 'registrar' :
@@ -794,7 +832,10 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
 
       // 1. Most Visited Office
       const departmentStats = await Queue.aggregate([
-        { $match: { status: { $in: ['completed', 'cancelled', 'skipped'] } } },
+        { $match: {
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: startDate, $lte: endDate }
+        } },
         { $group: { _id: '$office', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ]);
@@ -807,7 +848,10 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
 
       // 2. Service Distribution Overall (combined)
       const serviceDistribution = await Queue.aggregate([
-        { $match: { status: { $in: ['completed', 'cancelled', 'skipped'] } } },
+        { $match: {
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: startDate, $lte: endDate }
+        } },
         { $group: { _id: '$serviceId', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $limit: 10 }
@@ -827,6 +871,9 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
 
       // 3. Kiosk Total Ratings
       const ratingStats = await Rating.aggregate([
+        { $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        } },
         { $group: {
           _id: null,
           averageRating: { $avg: '$rating' },
@@ -851,12 +898,16 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
 
       // 4. Total Number of Visitors Overall
       reportData.totalVisitors = await Queue.countDocuments({
-        status: { $in: ['completed', 'cancelled', 'skipped'] }
+        status: { $in: ['completed', 'cancelled', 'skipped'] },
+        queuedAt: { $gte: startDate, $lte: endDate }
       });
 
       // 5. Visitor Breakdown by Role
       const roleBreakdown = await Queue.aggregate([
-        { $match: { status: { $in: ['completed', 'cancelled', 'skipped'] } } },
+        { $match: {
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: startDate, $lte: endDate }
+        } },
         { $group: { _id: '$role', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ]);
@@ -870,7 +921,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       const priorityStats = await Queue.aggregate([
         { $match: {
           status: { $in: ['completed', 'cancelled', 'skipped'] },
-          isPriority: true
+          isPriority: true,
+          queuedAt: { $gte: startDate, $lte: endDate }
         }},
         { $lookup: {
           from: 'visitationforms',
@@ -887,11 +939,11 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
 
       reportData.priorityVisitors = priorityStats.length > 0 ? priorityStats[0].totalPriority : 0;
 
-      // 7. Temporal Trends (monthly aggregation for the year)
+      // 7. Temporal Trends (monthly aggregation for the selected date range)
       const temporalTrends = await Queue.aggregate([
         { $match: {
           status: { $in: ['completed', 'cancelled', 'skipped'] },
-          queuedAt: { $gte: oneYearAgo, $lte: now }
+          queuedAt: { $gte: startDate, $lte: endDate }
         }},
         { $group: {
           _id: {
@@ -908,7 +960,11 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
 
       // 8. Department Comparison Metrics
       const registrarStats = await Queue.aggregate([
-        { $match: { office: 'registrar', status: 'completed' } },
+        { $match: {
+          office: 'registrar',
+          status: 'completed',
+          queuedAt: { $gte: startDate, $lte: endDate }
+        } },
         { $group: {
           _id: null,
           totalCompleted: { $sum: 1 },
@@ -921,7 +977,11 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       ]);
 
       const admissionsStats = await Queue.aggregate([
-        { $match: { office: 'admissions', status: 'completed' } },
+        { $match: {
+          office: 'admissions',
+          status: 'completed',
+          queuedAt: { $gte: startDate, $lte: endDate }
+        } },
         { $group: {
           _id: null,
           totalCompleted: { $sum: 1 },
@@ -950,7 +1010,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       // 1. Total Visits
       reportData.totalVisits = await Queue.countDocuments({
         office: departmentFilter,
-        status: { $in: ['completed', 'cancelled', 'skipped'] }
+        status: { $in: ['completed', 'cancelled', 'skipped'] },
+        queuedAt: { $gte: startDate, $lte: endDate }
       });
 
       // 2. Average Turnaround Time
@@ -959,7 +1020,7 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
           office: departmentFilter,
           status: 'completed',
           completedAt: { $exists: true },
-          queuedAt: { $exists: true }
+          queuedAt: { $exists: true, $gte: startDate, $lte: endDate }
         }},
         { $group: {
           _id: null,
@@ -978,7 +1039,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       const serviceDistribution = await Queue.aggregate([
         { $match: {
           office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped'] }
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: startDate, $lte: endDate }
         }},
         { $group: { _id: '$serviceId', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
@@ -1000,7 +1062,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       const roleBreakdown = await Queue.aggregate([
         { $match: {
           office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped'] }
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: startDate, $lte: endDate }
         }},
         { $group: { _id: '$role', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
@@ -1015,7 +1078,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       const peakHours = await Queue.aggregate([
         { $match: {
           office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped'] }
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: startDate, $lte: endDate }
         }},
         { $group: {
           _id: { $hour: '$queuedAt' },
@@ -1033,7 +1097,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       const peakDays = await Queue.aggregate([
         { $match: {
           office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped'] }
+          status: { $in: ['completed', 'cancelled', 'skipped'] },
+          queuedAt: { $gte: startDate, $lte: endDate }
         }},
         { $group: {
           _id: { $dayOfWeek: '$queuedAt' },
@@ -1053,7 +1118,7 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         { $match: {
           office: departmentFilter,
           status: { $in: ['completed', 'cancelled', 'skipped'] },
-          queuedAt: { $gte: oneYearAgo, $lte: now }
+          queuedAt: { $gte: startDate, $lte: endDate }
         }},
         { $group: {
           _id: {
@@ -1071,7 +1136,8 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       const windowPerformance = await Queue.aggregate([
         { $match: {
           office: departmentFilter,
-          status: 'completed'
+          status: 'completed',
+          queuedAt: { $gte: startDate, $lte: endDate }
         }},
         { $group: {
           _id: '$windowId',
@@ -1103,8 +1169,10 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
     reportData.metadata = {
       role,
       department: departmentFilter,
-      reportPeriod: `${oneYearAgo.toDateString()} - ${now.toDateString()}`,
-      generatedAt: now.toISOString()
+      reportPeriod: `${startDate.toDateString()} - ${endDate.toDateString()}`,
+      generatedAt: new Date().toISOString(),
+      dateRangeStart: startDate.toISOString(),
+      dateRangeEnd: endDate.toISOString()
     };
 
     res.json({

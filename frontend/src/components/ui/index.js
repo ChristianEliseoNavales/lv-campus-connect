@@ -9,6 +9,7 @@ export { default as HolographicKeyboard } from './HolographicKeyboard';
 export { default as CircularHelpButton } from './CircularHelpButton';
 export { default as InstructionModeOverlay } from './InstructionModeOverlay';
 export { default as DatePicker } from './DatePicker';
+export { default as DateRangeModal } from './DateRangeModal';
 export { ChartAreaInteractive } from './AreaChart';
 export { ChartPieLegend } from './PieChart';
 

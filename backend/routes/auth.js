@@ -145,7 +145,7 @@ router.post('/google', authLimiter, async (req, res) => {
     if (!user.pageAccess || user.pageAccess.length === 0) {
       user.pageAccess = getDefaultPageAccess(user.role);
       userUpdated = true;
-      console.log(`📝 Auto-populated pageAccess for ${user.email} (${user.role})`);
+      console.log(`📝 Auto-populated pageAccess for ${user.email} (${user.role}):`, user.pageAccess);
     }
 
     // Ensure office is set correctly for the role
@@ -161,6 +161,15 @@ router.post('/google', authLimiter, async (req, res) => {
 
     if (userUpdated) {
       await user.save();
+      console.log(`✅ User data updated for ${user.email}`);
+    }
+
+    // Log successful login details (only in development/debug mode)
+    if (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') {
+      console.log(`🔐 User logged in: ${user.email}`);
+      console.log(`   Role: ${user.role}`);
+      console.log(`   Office: ${user.office}`);
+      console.log(`   PageAccess:`, user.pageAccess);
     }
 
     // Generate JWT token with pageAccess
@@ -297,12 +306,28 @@ router.get('/verify', async (req, res) => {
 
     // Ensure pageAccess is populated (in case user was created before this was implemented)
     let pageAccess = user.pageAccess || [];
+    let userUpdated = false;
+
     if (pageAccess.length === 0) {
       pageAccess = getDefaultPageAccess(user.role);
-      // Update user in background (don't wait for it)
-      User.findByIdAndUpdate(user._id, { pageAccess }).catch(err =>
-        console.error('Failed to update pageAccess:', err)
-      );
+      userUpdated = true;
+      console.log(`📝 Auto-populated pageAccess for ${user.email} (${user.role}) during token verification`);
+
+      // Update user in database immediately (not in background)
+      try {
+        await User.findByIdAndUpdate(user._id, { pageAccess });
+        console.log(`✅ Successfully updated pageAccess for ${user.email}:`, pageAccess);
+      } catch (updateError) {
+        console.error('❌ Failed to update pageAccess:', updateError);
+      }
+    }
+
+    // Log verification for debugging (only in development/debug mode)
+    if (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') {
+      console.log(`🔍 Token verified for ${user.email}`);
+      console.log(`   Role: ${user.role}`);
+      console.log(`   Office: ${user.office}`);
+      console.log(`   PageAccess:`, pageAccess);
     }
 
     // Return user data
@@ -385,6 +410,81 @@ router.post('/logout', async (req, res) => {
     res.json({
       success: true,
       message: 'Logged out successfully'
+    });
+  }
+});
+
+/**
+ * GET /api/auth/debug/permissions
+ * Debug endpoint to check current user's permissions
+ * Only available in development mode
+ */
+router.get('/debug/permissions', async (req, res) => {
+  try {
+    // Only allow in development
+    if (process.env.NODE_ENV === 'production' && process.env.LOG_LEVEL !== 'debug') {
+      return res.status(403).json({
+        error: 'Debug endpoints are disabled in production'
+      });
+    }
+
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'No token provided'
+      });
+    }
+
+    const token = authHeader.substring(7);
+
+    // Verify JWT token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      return res.status(401).json({
+        error: 'Invalid or expired token',
+        details: jwtError.message
+      });
+    }
+
+    // Fetch user from database
+    const user = await User.findById(decoded.id).select('-password');
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
+    // Get expected pageAccess for this role
+    const expectedPageAccess = getDefaultPageAccess(user.role);
+
+    res.json({
+      success: true,
+      user: {
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        office: user.office,
+        isActive: user.isActive
+      },
+      permissions: {
+        currentPageAccess: user.pageAccess || [],
+        expectedPageAccess: expectedPageAccess,
+        hasCorrectAccess: JSON.stringify(user.pageAccess) === JSON.stringify(expectedPageAccess),
+        missingPages: expectedPageAccess.filter(page => !(user.pageAccess || []).includes(page)),
+        extraPages: (user.pageAccess || []).filter(page => !expectedPageAccess.includes(page))
+      },
+      tokenPayload: decoded
+    });
+  } catch (error) {
+    console.error('Debug permissions error:', error);
+    res.status(500).json({
+      error: 'Server error',
+      details: error.message
     });
   }
 });

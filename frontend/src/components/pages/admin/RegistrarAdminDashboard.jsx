@@ -4,12 +4,15 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { RoleAwareAreaChart } from '../../ui/AreaChart';
 import { ChartPieLegend } from '../../ui/PieChart';
 import AnalyticalReportModal from '../../ui/AnalyticalReportModal';
+import DateRangeModal from '../../ui/DateRangeModal';
 import API_CONFIG from '../../../config/api';
 import { authFetch } from '../../../utils/apiClient';
 
 const RegistrarAdminDashboard = () => {
   const { user } = useAuth();
+  const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [selectedDateRange, setSelectedDateRange] = useState(null);
   const [stats, setStats] = useState({
     queueLength: 0,
     servedToday: 0,
@@ -255,18 +258,31 @@ const RegistrarAdminDashboard = () => {
           Queue Monitoring
         </h1>
         <button
-          onClick={() => setIsReportModalOpen(true)}
+          onClick={() => setIsDateRangeModalOpen(true)}
           className="px-6 py-3 bg-[#1F3463] text-white rounded-lg font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
         >
           View Analytic Report
         </button>
       </div>
 
+      {/* Date Range Selection Modal */}
+      <DateRangeModal
+        isOpen={isDateRangeModalOpen}
+        onClose={() => setIsDateRangeModalOpen(false)}
+        onGenerateReport={(dateRange) => {
+          setSelectedDateRange(dateRange);
+          setIsDateRangeModalOpen(false);
+          setIsReportModalOpen(true);
+        }}
+        userRole="Registrar Admin"
+      />
+
       {/* Analytical Report Modal */}
       <AnalyticalReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         userRole="Registrar Admin"
+        dateRange={selectedDateRange}
       />
 
       {/* New Grid Layout - 2 rows (40%/60%), 3 columns */}

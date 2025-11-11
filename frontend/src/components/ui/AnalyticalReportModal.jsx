@@ -7,26 +7,51 @@ import jsPDF from 'jspdf';
 import API_CONFIG from '../../config/api';
 import { authFetch } from '../../utils/apiClient';
 
-const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
+const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && userRole) {
+    if (isOpen && userRole && dateRange) {
       fetchReportData();
     }
-  }, [isOpen, userRole]);
+  }, [isOpen, userRole, dateRange]);
 
   const fetchReportData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const baseUrl = API_CONFIG.getAdminUrl();
-      const response = await authFetch(`${baseUrl}/api/analytics/analytical-report/${encodeURIComponent(userRole)}`);
-      
+
+      console.log('📅 AnalyticalReportModal - Date Range:', {
+        dateRange,
+        startDate: dateRange?.startDate,
+        endDate: dateRange?.endDate,
+        startDateISO: dateRange?.startDate?.toISOString(),
+        endDateISO: dateRange?.endDate?.toISOString()
+      });
+
+      // Build query params with date range
+      const params = new URLSearchParams();
+      if (dateRange?.startDate) {
+        params.append('startDate', dateRange.startDate.toISOString());
+      }
+      if (dateRange?.endDate) {
+        params.append('endDate', dateRange.endDate.toISOString());
+      }
+
+      const url = `${baseUrl}/api/analytics/analytical-report/${encodeURIComponent(userRole)}?${params.toString()}`;
+
+      console.log('🌐 Fetching analytical report:', {
+        url,
+        params: params.toString()
+      });
+
+      const response = await authFetch(url);
+
       if (!response.ok) {
         throw new Error('Failed to fetch analytical report data');
       }
@@ -129,9 +154,18 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-gray-100 rounded-lg shadow-xl w-full max-w-[230mm] max-h-[90vh] overflow-hidden"
+          className="relative bg-gray-100 rounded-lg shadow-xl w-full max-w-[230mm] max-h-[90vh]"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Close Button - Circular Navy Blue with White Border (Outside Corner) */}
+          <button
+            onClick={onClose}
+            className="absolute -top-2 -right-2 z-20 w-10 h-10 rounded-full border-2 border-white bg-[#1F3463] hover:bg-opacity-90 flex items-center justify-center text-white transition-colors shadow-lg"
+            aria-label="Close"
+          >
+            <MdClose className="w-5 h-5" />
+          </button>
+
           {/* Scrollable Container */}
           <div className="max-h-[90vh] overflow-y-auto">
             {/* Header - Fixed at top */}
@@ -148,12 +182,6 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                 >
                   <MdDownload className="w-5 h-5" />
                   Download PDF
-                </button>
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <MdClose className="w-6 h-6" />
                 </button>
               </div>
             </div>
@@ -266,6 +294,48 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                       </div>
                     </>
                   )}
+
+                  {/* Registrar/Admissions Admin - First Page Charts */}
+                  {(userRole === 'Registrar Admin' || userRole === 'Admissions Admin') && (
+                    <>
+                      {/* Service Distribution */}
+                      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+                        <h3 className="text-lg font-bold text-[#1F3463] mb-4">Service Distribution</h3>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              data={reportData.serviceDistribution?.slice(0, 5)}
+                              dataKey="count"
+                              nameKey="service"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label={(entry) => `${entry.service}: ${entry.count}`}
+                            >
+                              {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Visitor Breakdown by Role */}
+                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 className="text-lg font-bold text-[#1F3463] mb-4">Visitor Breakdown by Role</h3>
+                        <div className="grid grid-cols-4 gap-4">
+                          {reportData.visitorsByRole?.map((item, index) => (
+                            <div key={index} className="text-center bg-gray-50 p-4 rounded-lg">
+                              <p className="text-2xl font-bold text-[#1F3463]">{item.count}</p>
+                              <p className="text-sm text-gray-600">{item.role}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Page 2 - MIS Super Admin Continued */}
@@ -360,48 +430,6 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole }) => {
                       </div>
                     </div>
                   </div>
-                )}
-
-                {/* Registrar/Admissions Admin Specific Content - Page 1 */}
-                {(userRole === 'Registrar Admin' || userRole === 'Admissions Admin') && (
-                  <>
-                    {/* Service Distribution */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                      <h3 className="text-lg font-bold text-[#1F3463] mb-4">Service Distribution</h3>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                          <Pie
-                            data={reportData.serviceDistribution?.slice(0, 5)}
-                            dataKey="count"
-                            nameKey="service"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            label={(entry) => `${entry.service}: ${entry.count}`}
-                          >
-                            {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    {/* Visitor Breakdown by Role */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <h3 className="text-lg font-bold text-[#1F3463] mb-4">Visitor Breakdown by Role</h3>
-                      <div className="grid grid-cols-4 gap-4">
-                        {reportData.visitorsByRole?.map((item, index) => (
-                          <div key={index} className="text-center bg-gray-50 p-4 rounded-lg">
-                            <p className="text-2xl font-bold text-[#1F3463]">{item.count}</p>
-                            <p className="text-sm text-gray-600">{item.role}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
                 )}
 
                 {/* Registrar/Admissions Admin - Page 2 */}
