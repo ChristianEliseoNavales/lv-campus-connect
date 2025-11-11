@@ -247,16 +247,29 @@ const requireRole = (allowedRoles) => {
       });
 
       if (hasPageAccess) {
-        console.log(`✅ Page access granted for ${req.user.email} to ${req.baseUrl}${req.path}`);
+        // Only log in development to prevent spam
+        if (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') {
+          console.log(`✅ Page access granted for ${req.user.email} to ${req.baseUrl}${req.path}`);
+        }
         return next();
       }
     }
 
-    console.log(`❌ Access denied for ${req.user.email}. Required roles: ${roles.join(', ')}, Has: ${req.user.role}`);
+    console.error(`❌ Role access denied for ${req.user.email}`);
+    console.error(`   User role: ${req.user.role}`);
+    console.error(`   Required roles:`, roles);
+    console.error(`   Required pages:`, requiredPages);
+    console.error(`   User's pageAccess:`, req.user.pageAccess);
 
     return res.status(403).json({
       error: 'Access denied',
-      message: 'You do not have the required permissions to access this resource.'
+      message: 'You do not have the required permissions to access this resource.',
+      details: process.env.NODE_ENV === 'development' ? {
+        requiredRoles: roles,
+        requiredPages,
+        userPageAccess: req.user.pageAccess,
+        userRole: req.user.role
+      } : undefined
     });
   };
 };
@@ -313,14 +326,27 @@ const requireSuperAdmin = (req, res, next) => {
     });
 
     if (hasPageAccess) {
-      console.log(`✅ Page access granted for ${req.user.email} to ${req.baseUrl}${req.path}`);
+      // Only log in development to prevent spam
+      if (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') {
+        console.log(`✅ Page access granted for ${req.user.email} to ${req.baseUrl}${req.path}`);
+      }
       return next();
     }
   }
 
+  console.error(`❌ Super Admin access denied for ${req.user.email}`);
+  console.error(`   User role: ${req.user.role}`);
+  console.error(`   Required pages:`, requiredPages);
+  console.error(`   User's pageAccess:`, req.user.pageAccess);
+
   return res.status(403).json({
     error: 'Access denied',
-    message: 'You do not have the required permissions to access this resource.'
+    message: 'You do not have the required permissions to access this resource.',
+    details: process.env.NODE_ENV === 'development' ? {
+      requiredPages,
+      userPageAccess: req.user.pageAccess,
+      userRole: req.user.role
+    } : undefined
   });
 };
 
@@ -490,17 +516,27 @@ const checkApiAccess = (req, res, next) => {
   });
 
   if (!hasAccess) {
-    console.log(`❌ API access denied for ${req.user.email} to ${apiPath}`);
-    console.log(`   Required pages:`, requiredPages);
-    console.log(`   User's pageAccess:`, pageAccess);
+    console.error(`❌ API access denied for ${req.user.email} to ${apiPath}`);
+    console.error(`   User role: ${req.user.role}`);
+    console.error(`   Required pages:`, requiredPages);
+    console.error(`   User's pageAccess:`, pageAccess);
+    console.error(`   Full API path: ${req.baseUrl}${req.path}`);
 
     return res.status(403).json({
       error: 'Access denied',
-      message: 'You do not have permission to access this resource.'
+      message: 'You do not have permission to access this resource.',
+      details: process.env.NODE_ENV === 'development' ? {
+        requiredPages,
+        userPageAccess: pageAccess,
+        userRole: req.user.role
+      } : undefined
     });
   }
 
-  console.log(`✅ API access granted for ${req.user.email} to ${apiPath}`);
+  // Only log in development to prevent spam
+  if (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') {
+    console.log(`✅ API access granted for ${req.user.email} to ${apiPath}`);
+  }
   next();
 };
 
