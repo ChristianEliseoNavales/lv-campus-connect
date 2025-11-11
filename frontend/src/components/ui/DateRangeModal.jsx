@@ -22,12 +22,9 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
   // Reset dates when modal opens
   useEffect(() => {
     if (isOpen) {
-      // Start date: empty (user selects freely)
-      // End date: today (Philippine timezone)
-      const today = getPhilippineDate();
-
+      // Both dates empty for consistency (user selects both freely)
       setStartDate(null);
-      setEndDate(today);
+      setEndDate(null);
       setError('');
     }
   }, [isOpen]);
@@ -105,10 +102,10 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
           {/* Close Button - Circular Navy Blue with White Border */}
           <button
             onClick={onClose}
-            className="absolute -top-3 -right-3 z-10 w-12 h-12 rounded-full border-2 border-white bg-[#1F3463] hover:bg-[#152847] flex items-center justify-center text-white transition-all duration-200 shadow-lg"
+            className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
             aria-label="Close"
           >
-            <MdClose className="w-6 h-6" />
+            <MdClose className="w-4 h-4" />
           </button>
 
           {/* Header */}

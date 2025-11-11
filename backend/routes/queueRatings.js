@@ -9,7 +9,7 @@ const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 // GET /api/queue-ratings - Get ratings from Queue collection with pagination, filtering, and search
 router.get('/', verifyToken, checkApiAccess, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+  query('limit').optional().isInt({ min: 1, max: 1000 }).withMessage('Limit must be between 1 and 1000'),
   query('search').optional().isString().withMessage('Search must be a string'),
   query('department').optional().isIn(['registrar', 'admissions']).withMessage('Invalid department'),
   query('rating').optional().isInt({ min: 1, max: 5 }).withMessage('Rating must be between 1 and 5'),
