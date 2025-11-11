@@ -2,30 +2,53 @@ import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import NoWindowAssigned from '../shared/NoWindowAssigned';
 
 const QueueRedirect = () => {
+  const { user } = useAuth();
   const [redirectPath, setRedirectPath] = useState(null);
+  const [showNoWindowMessage, setShowNoWindowMessage] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFirstWindow = async () => {
+    const determineRedirect = async () => {
       try {
-        const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/windows/admissions`);
-        if (response.ok) {
-          const windows = await response.json();
-          if (windows.length > 0) {
-            // Redirect to the first available window
-            setRedirectPath(`/admin/admissions/queue/${windows[0].id}`);
+        // Admin Staff: Check for assigned window (role includes "Admin Staff")
+        const isAdminStaff = user?.role?.includes('Admin Staff');
+
+        if (isAdminStaff) {
+          if (user?.assignedWindow) {
+            const assignedWindowId = typeof user.assignedWindow === 'object'
+              ? user.assignedWindow._id
+              : user.assignedWindow;
+
+            // Redirect to the assigned window
+            setRedirectPath(`/admin/admissions/queue/${assignedWindowId}`);
           } else {
-            // No windows available, redirect to settings to create one
-            setRedirectPath('/admin/admissions/settings');
+            // Admin Staff has queue access but no assigned window
+            // Show the "not assigned" message
+            setShowNoWindowMessage(true);
           }
         } else {
-          // API error, redirect to dashboard
-          setRedirectPath('/admin/admissions');
+          // Admin or Super Admin: Fetch all windows and redirect to first one
+          const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/windows/admissions`);
+          if (response.ok) {
+            const windows = await response.json();
+            if (windows.length > 0) {
+              // Redirect to the first available window
+              setRedirectPath(`/admin/admissions/queue/${windows[0].id}`);
+            } else {
+              // No windows available, redirect to settings to create one
+              setRedirectPath('/admin/admissions/settings');
+            }
+          } else {
+            // API error, redirect to dashboard
+            setRedirectPath('/admin/admissions');
+          }
         }
       } catch (error) {
-        console.error('Error fetching windows:', error);
+        console.error('Error determining redirect:', error);
         // Network error, redirect to dashboard
         setRedirectPath('/admin/admissions');
       } finally {
@@ -33,8 +56,8 @@ const QueueRedirect = () => {
       }
     };
 
-    fetchFirstWindow();
-  }, []);
+    determineRedirect();
+  }, [user]);
 
   if (loading) {
     return (
@@ -93,11 +116,17 @@ const QueueRedirect = () => {
     );
   }
 
+  // Show "not assigned" message if user has no assigned window
+  if (showNoWindowMessage) {
+    return <NoWindowAssigned office="Admissions" />;
+  }
+
   if (redirectPath) {
     return <Navigate to={redirectPath} replace />;
   }
 
-  return null;
+  // Fallback redirect
+  return <Navigate to="/admin/admissions" replace />;
 };
 
 export default QueueRedirect;

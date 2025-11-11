@@ -154,6 +154,16 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
       }
     });
 
+    // Emit user-specific event if assigned admin exists
+    if (assignedAdmin) {
+      io.emit('user-window-assignment-changed', {
+        userId: assignedAdmin.toString(),
+        type: 'window-assigned',
+        windowId: newWindow._id.toString(),
+        windowName: newWindow.name
+      });
+    }
+
     // Also emit service visibility update since window assignments changed
     io.to('kiosk').emit('services-updated', {
       type: 'visibility-changed',
@@ -295,6 +305,29 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
       }
     });
 
+    // Emit user-specific event if assigned admin changed
+    if (assignedAdmin !== undefined) {
+      // Notify old admin if exists
+      if (oldAssignedAdmin && oldAssignedAdmin.toString() !== (assignedAdmin || '').toString()) {
+        io.emit('user-window-assignment-changed', {
+          userId: oldAssignedAdmin.toString(),
+          type: 'window-unassigned',
+          windowId: null,
+          windowName: null
+        });
+      }
+
+      // Notify new admin if exists
+      if (assignedAdmin) {
+        io.emit('user-window-assignment-changed', {
+          userId: assignedAdmin.toString(),
+          type: 'window-assigned',
+          windowId: window._id.toString(),
+          windowName: window.name
+        });
+      }
+    }
+
     // Also emit service visibility update since window assignments may have changed
     io.to('kiosk').emit('services-updated', {
       type: 'visibility-changed',
@@ -406,6 +439,16 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
       department: deletedWindow.office, // Keep 'department' for backward compatibility with frontend
       data: { id: deletedWindow.id }
     });
+
+    // Emit user-specific event if window had assigned admin
+    if (deletedWindow.assignedAdmin) {
+      io.emit('user-window-assignment-changed', {
+        userId: deletedWindow.assignedAdmin.toString(),
+        type: 'window-unassigned',
+        windowId: null,
+        windowName: null
+      });
+    }
 
     // Also emit service visibility update since window was deleted
     io.to('kiosk').emit('services-updated', {

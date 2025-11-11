@@ -117,25 +117,62 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      
+
       // Clear local state
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
-      
+
       // Clear storage
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
-      
+
       // Sign out from Google
       googleSignOut();
-      
+
       return { success: true };
     } catch (error) {
       console.error('Sign out error:', error);
       return { success: false, error: error.message };
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Refresh user data from backend
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.warn('No auth token found, cannot refresh user');
+        return false;
+      }
+
+      const backendUrl = import.meta.env.VITE_CLOUD_BACKEND_URL || 'http://localhost:3001';
+
+      const response = await fetch(`${backendUrl}/api/auth/verify`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+          localStorage.setItem('userData', JSON.stringify(data.user));
+          console.log('✅ User data refreshed successfully');
+          return true;
+        }
+      }
+
+      console.warn('Failed to refresh user data');
+      return false;
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      return false;
     }
   };
 
@@ -159,13 +196,26 @@ export const AuthProvider = ({ children }) => {
 
     // Check for exact match or wildcard access
     const hasAccess = pageAccess.some(page => {
-      if (page === '*') return true; // Wildcard access
+      if (page === '*') return true; // Wildcard access (MIS Super Admin only)
       if (page === route) return true; // Exact match
 
-      // Check if the route starts with the allowed page (for parent routes)
-      // e.g., if user has access to '/admin/registrar', they can access '/admin/registrar/queue'
-      if (route.startsWith(page + '/')) return true;
-      if (route.startsWith(page)) return true;
+      // Special case for queue window routes:
+      // If user has access to /admin/{office}/queue, they can access /admin/{office}/queue/{windowId}
+      // This applies to Admin and Registrar/Admissions Admin roles (NOT Admin Staff)
+      // Admin Staff will have the specific window route in their pageAccess
+      const isAdminStaff = user.role?.includes('Admin Staff');
+      const isAdmin = user.role === 'Admin' || user.role?.includes('Admin') && !isAdminStaff;
+
+      if (isAdmin) {
+        // Check if route is a queue window route (e.g., /admin/registrar/queue/windowId)
+        const queueWindowPattern = /^\/admin\/(registrar|admissions)\/queue\/[a-f0-9]+$/i;
+        if (queueWindowPattern.test(route)) {
+          // Extract the base queue route (e.g., /admin/registrar/queue)
+          const baseQueueRoute = route.substring(0, route.lastIndexOf('/'));
+          // Check if user has access to the base queue route
+          if (page === baseQueueRoute) return true;
+        }
+      }
 
       return false;
     });
@@ -189,6 +239,7 @@ export const AuthProvider = ({ children }) => {
     isGoogleLoaded,
     signIn,
     signOut,
+    refreshUser,
     hasRole,
     hasAnyRole,
     canAccessRoute,

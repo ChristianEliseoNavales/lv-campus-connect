@@ -133,23 +133,20 @@ const checkPageAccess = (requiredPage) => {
 
     // Check if user has access to the specific page
     const pageAccess = req.user.pageAccess || [];
-    
-    // Check for exact match or wildcard access
+
+    // Check for exact match or wildcard access ONLY
+    // No parent route access - each page must be explicitly granted
     const hasAccess = pageAccess.some(page => {
-      if (page === '*') return true; // Wildcard access
-      if (page === requiredPage) return true; // Exact match
-      
-      // Check if the required page starts with the allowed page (for parent routes)
-      // e.g., if user has access to '/admin/registrar', they can access '/admin/registrar/queue'
-      if (requiredPage.startsWith(page + '/')) return true;
-      
+      if (page === '*') return true; // Wildcard access (MIS Super Admin only)
+      if (page === requiredPage) return true; // Exact match required
+
       return false;
     });
 
     if (!hasAccess) {
       console.log(`❌ Access denied for ${req.user.email} to ${requiredPage}`);
       console.log(`   User's pageAccess:`, pageAccess);
-      
+
       return res.status(403).json({
         error: 'Access denied',
         message: 'You do not have permission to access this resource.'
@@ -238,10 +235,8 @@ const requireRole = (allowedRoles) => {
     if (requiredPages && req.user.pageAccess && req.user.pageAccess.length > 0) {
       const hasPageAccess = requiredPages.some(requiredPage => {
         return req.user.pageAccess.some(userPage => {
-          // Exact match
+          // Exact match only - no parent route access
           if (userPage === requiredPage) return true;
-          // Parent route match (e.g., /admin/registrar allows /admin/registrar/settings)
-          if (requiredPage.startsWith(userPage + '/')) return true;
           return false;
         });
       });
@@ -317,10 +312,8 @@ const requireSuperAdmin = (req, res, next) => {
   if (requiredPages && req.user.pageAccess && req.user.pageAccess.length > 0) {
     const hasPageAccess = requiredPages.some(requiredPage => {
       return req.user.pageAccess.some(userPage => {
-        // Exact match
+        // Exact match only - no parent route access
         if (userPage === requiredPage) return true;
-        // Parent route match
-        if (requiredPage.startsWith(userPage + '/')) return true;
         return false;
       });
     });
@@ -422,7 +415,19 @@ const API_PAGE_MAPPING = {
   '/api/analytics/combined': ['/admin/seniormanagement/charts'],
   '/api/analytics/active-sessions': ['/admin/seniormanagement/charts'],
   '/api/analytics/queue-ratings-summary': ['/admin/seniormanagement/charts'],
-  '/api/analytics/queue-by-department': ['/admin/seniormanagement/charts']
+  '/api/analytics/queue-by-department': ['/admin/seniormanagement/charts'],
+
+  // Public Queue Management API - used by Queue pages (admin interface)
+  '/api/public/queue-data': ['/admin/registrar/queue', '/admin/admissions/queue'],
+  '/api/public/queue-data/registrar': ['/admin/registrar/queue'],
+  '/api/public/queue-data/admissions': ['/admin/admissions/queue'],
+  '/api/public/queue/next': ['/admin/registrar/queue', '/admin/admissions/queue'],
+  '/api/public/queue/skip': ['/admin/registrar/queue', '/admin/admissions/queue'],
+  '/api/public/queue/complete': ['/admin/registrar/queue', '/admin/admissions/queue'],
+  '/api/public/queue/transfer': ['/admin/registrar/queue', '/admin/admissions/queue'],
+  '/api/public/queue/recall': ['/admin/registrar/queue', '/admin/admissions/queue'],
+  '/api/public/queue/windows': ['/admin/registrar/queue', '/admin/admissions/queue'],
+  '/api/public/queue/skipped': ['/admin/registrar/queue', '/admin/admissions/queue']
 };
 
 /**
@@ -497,19 +502,25 @@ const checkApiAccess = (req, res, next) => {
 
   // Check if user has access to at least one of the required pages
   const pageAccess = req.user.pageAccess || [];
+
+  // Check if user is Admin Staff (role includes "Admin Staff")
+  const isAdminStaff = req.user.role?.includes('Admin Staff');
+
   const hasAccess = requiredPages.some(requiredPage => {
-    // Check exact match
+    // Check exact match first
     if (pageAccess.includes(requiredPage)) {
       console.log(`   ✓ User has exact access to: ${requiredPage}`);
       return true;
     }
 
-    // Check if user has access to parent route
-    // e.g., if requiredPage is /admin/registrar/settings and user has /admin/registrar
-    const hasParentAccess = pageAccess.some(userPage => requiredPage.startsWith(userPage + '/'));
-    if (hasParentAccess) {
-      console.log(`   ✓ User has parent access to: ${requiredPage}`);
-      return true;
+    // For Admin roles (NOT Admin Staff), allow parent route access
+    // e.g., if user has /admin/registrar, they can access APIs requiring /admin/registrar/settings
+    if (!isAdminStaff) {
+      const parentRoute = requiredPage.substring(0, requiredPage.lastIndexOf('/'));
+      if (parentRoute && pageAccess.includes(parentRoute)) {
+        console.log(`   ✓ User has parent route access: ${parentRoute} (for ${requiredPage})`);
+        return true;
+      }
     }
 
     return false;

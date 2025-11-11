@@ -16,48 +16,32 @@ export const getDefaultRoute = (user) => {
   const pageAccess = user.pageAccess || [];
 
   // Define dashboard paths for each office
-  const dashboardPaths = {
-    'MIS': '/admin/mis',
-    'Registrar': '/admin/registrar',
-    'Admissions': '/admin/admissions',
-    'Senior Management': '/admin/seniormanagement/charts'
-  };
+  const allDashboardPaths = [
+    '/admin/mis',
+    '/admin/registrar',
+    '/admin/admissions',
+    '/admin/seniormanagement/charts'
+  ];
 
   // MIS Super Admin always goes to MIS dashboard
   if (user.role === 'MIS Super Admin') {
     return '/admin/mis';
   }
 
-  // Get the expected dashboard for the user's office
-  const expectedDashboard = dashboardPaths[user.office];
-
-  // Priority 1: Redirect to dashboard if it's in pageAccess
-  if (expectedDashboard && pageAccess.includes(expectedDashboard)) {
-    return expectedDashboard;
-  }
-
-  // Priority 2: For Admin Staff with assignedWindow and queue access, redirect to their window
-  if (user.role?.includes('Admin Staff') && user.assignedWindow) {
-    const assignedWindowId = typeof user.assignedWindow === 'object'
-      ? user.assignedWindow._id
-      : user.assignedWindow;
-
-    // Check if user has queue access
-    const officePrefix = user.office === 'Registrar' ? '/admin/registrar' : '/admin/admissions';
-    const queuePath = `${officePrefix}/queue`;
-
-    if (pageAccess.includes(queuePath) || pageAccess.some(path => path.startsWith(queuePath + '/'))) {
-      return `${queuePath}/${assignedWindowId}`;
+  // Priority 1: Check if user has access to ANY dashboard page
+  // This ensures dashboard pages are prioritized over other pages
+  for (const dashboardPath of allDashboardPaths) {
+    if (pageAccess.includes(dashboardPath)) {
+      return dashboardPath;
     }
   }
 
-  // Priority 3: Redirect to first page in pageAccess
+  // Priority 2: Redirect to first page in pageAccess array
+  // This is the main logic for users without dashboard access
   if (pageAccess.length > 0) {
-    // Filter out queue base paths (e.g., /admin/registrar/queue) if user has assignedWindow
-    // because they should go to specific window route
-    let firstPage = pageAccess[0];
+    const firstPage = pageAccess[0];
 
-    // If first page is a queue base path and user has assignedWindow, try to find a better route
+    // Special handling for queue pages with assigned windows
     if (user.assignedWindow && (firstPage === '/admin/registrar/queue' || firstPage === '/admin/admissions/queue')) {
       const assignedWindowId = typeof user.assignedWindow === 'object'
         ? user.assignedWindow._id
@@ -68,14 +52,9 @@ export const getDefaultRoute = (user) => {
     return firstPage;
   }
 
-  // Fallback: Use office-based default
-  if (expectedDashboard) {
-    return expectedDashboard;
-  }
-
-  // Final fallback
-  console.warn(`Unable to determine default route for user: ${user.email}. Redirecting to /admin`);
-  return '/admin';
+  // Fallback: Redirect to login if no page access
+  console.warn(`No page access found for user: ${user.email}. Redirecting to login.`);
+  return '/login';
 };
 
 /**
@@ -114,15 +93,11 @@ export const canAccessRoute = (user, route) => {
   // Check pageAccess array
   const pageAccess = user.pageAccess || [];
 
-  // Check for exact match or wildcard access
+  // Check for exact match or wildcard access ONLY
+  // No parent route access - each page must be explicitly granted
   const hasAccess = pageAccess.some(page => {
-    if (page === '*') return true; // Wildcard access
-    if (page === route) return true; // Exact match
-
-    // Check if the route starts with the allowed page (for parent routes)
-    // e.g., if user has access to '/admin/registrar', they can access '/admin/registrar/queue'
-    if (route.startsWith(page + '/')) return true;
-    if (route.startsWith(page)) return true;
+    if (page === '*') return true; // Wildcard access (MIS Super Admin only)
+    if (page === route) return true; // Exact match required
 
     return false;
   });

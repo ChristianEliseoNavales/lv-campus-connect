@@ -83,7 +83,7 @@ const Login = () => {
         )}
 
         {/* Content Stack */}
-        <div className="flex flex-col items-center space-y-6">
+        <div className="flex flex-col items-center space-y-4">
           {/* WELCOME text */}
           <h1 className="text-4xl font-bold text-[#1F3463] tracking-wide font-days-one">WELCOME</h1>
 
