@@ -117,10 +117,27 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
 
     await newWindow.save();
 
-    // Update user's assignedWindow field and pageAccess if assignedAdmin is set
+    // Update user's assignedWindows field and pageAccess if assignedAdmin is set
     if (assignedAdmin && adminUser) {
-      // Update assignedWindow field
-      await User.findByIdAndUpdate(assignedAdmin, { assignedWindow: newWindow._id });
+      console.log(`\n🔧 Assigning window "${newWindow.name}" (${newWindow._id}) to user ${adminUser.email}`);
+
+      // Add window to assignedWindows array (support multiple windows)
+      const currentAssignedWindows = adminUser.assignedWindows || [];
+      console.log(`   Current assignedWindows:`, currentAssignedWindows.map(w => w.toString()));
+
+      if (!currentAssignedWindows.some(w => w.toString() === newWindow._id.toString())) {
+        await User.findByIdAndUpdate(assignedAdmin, {
+          $addToSet: { assignedWindows: newWindow._id },
+          assignedWindow: newWindow._id // Keep for backward compatibility
+        });
+        console.log(`   ✅ Added window ${newWindow._id} to assignedWindows array`);
+
+        // Fetch updated user to verify
+        const updatedUser = await User.findById(assignedAdmin).select('assignedWindows');
+        console.log(`   Updated assignedWindows:`, updatedUser.assignedWindows.map(w => w.toString()));
+      } else {
+        console.log(`   ⚠️ Window ${newWindow._id} already in assignedWindows, skipping`);
+      }
 
       // For Admin Staff roles, also update pageAccess to include the specific queue route
       if (adminUser.role && adminUser.role.includes('Admin Staff')) {
@@ -130,7 +147,7 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
         if (!adminUser.pageAccess || !adminUser.pageAccess.includes(queueRoute)) {
           const updatedPageAccess = [...(adminUser.pageAccess || []), queueRoute];
           await User.findByIdAndUpdate(assignedAdmin, { pageAccess: updatedPageAccess });
-          console.log(`✅ Added queue route ${queueRoute} to Admin Staff user ${adminUser.email}`);
+          console.log(`   ✅ Added queue route ${queueRoute} to Admin Staff user ${adminUser.email}`);
         }
       }
     }
@@ -248,16 +265,25 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
 
     await window.save();
 
-    // Update user's assignedWindow field and pageAccess if assignedAdmin changed
+    // Update user's assignedWindows field and pageAccess if assignedAdmin changed
     if (assignedAdmin !== undefined) {
       const queueRoute = `/admin/${window.office}/queue/${id}`;
 
-      // Remove assignedWindow and queue route from old admin if exists
+      // Remove window from old admin's assignedWindows if exists
       if (oldAssignedAdmin && oldAssignedAdmin.toString() !== (assignedAdmin || '').toString()) {
         const oldAdmin = await User.findById(oldAssignedAdmin);
         if (oldAdmin) {
-          // Remove assignedWindow
-          await User.findByIdAndUpdate(oldAssignedAdmin, { assignedWindow: null });
+          // Remove from assignedWindows array
+          await User.findByIdAndUpdate(oldAssignedAdmin, {
+            $pull: { assignedWindows: id }
+          });
+
+          // Update assignedWindow to the first remaining window or null
+          const updatedOldAdmin = await User.findById(oldAssignedAdmin).populate('assignedWindows');
+          const newAssignedWindow = updatedOldAdmin.assignedWindows && updatedOldAdmin.assignedWindows.length > 0
+            ? updatedOldAdmin.assignedWindows[0]._id
+            : null;
+          await User.findByIdAndUpdate(oldAssignedAdmin, { assignedWindow: newAssignedWindow });
 
           // For Admin Staff, also remove the queue route from pageAccess
           if (oldAdmin.role && oldAdmin.role.includes('Admin Staff')) {
@@ -268,19 +294,22 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
         }
       }
 
-      // Set assignedWindow and add queue route for new admin if exists
+      // Add window to new admin's assignedWindows if exists
       if (assignedAdmin) {
         const newAdmin = await User.findById(assignedAdmin);
         if (newAdmin) {
-          // Set assignedWindow
-          await User.findByIdAndUpdate(assignedAdmin, { assignedWindow: id });
+          // Add to assignedWindows array (support multiple windows)
+          await User.findByIdAndUpdate(assignedAdmin, {
+            $addToSet: { assignedWindows: id },
+            assignedWindow: id // Keep for backward compatibility
+          });
 
           // For Admin Staff, also add the queue route to pageAccess
           if (newAdmin.role && newAdmin.role.includes('Admin Staff')) {
             if (!newAdmin.pageAccess || !newAdmin.pageAccess.includes(queueRoute)) {
               const updatedPageAccess = [...(newAdmin.pageAccess || []), queueRoute];
               await User.findByIdAndUpdate(assignedAdmin, { pageAccess: updatedPageAccess });
-              console.log(`✅ Added queue route ${queueRoute} to Admin Staff user ${newAdmin.email}`);
+              console.log(`   ✅ Added queue route ${queueRoute} to Admin Staff user ${newAdmin.email}`);
             }
           }
         }
@@ -319,12 +348,14 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
 
       // Notify new admin if exists
       if (assignedAdmin) {
-        io.emit('user-window-assignment-changed', {
+        const socketPayload = {
           userId: assignedAdmin.toString(),
           type: 'window-assigned',
           windowId: window._id.toString(),
           windowName: window.name
-        });
+        };
+        console.log(`\n📡 Emitting user-window-assignment-changed event:`, socketPayload);
+        io.emit('user-window-assignment-changed', socketPayload);
       }
     }
 
@@ -413,12 +444,21 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
       assignedAdmin: window.assignedAdmin
     };
 
-    // Remove assignedWindow and queue route from user if window had an assigned admin
+    // Remove window from assignedWindows and queue route from user if window had an assigned admin
     if (window.assignedAdmin) {
       const admin = await User.findById(window.assignedAdmin);
       if (admin) {
-        // Remove assignedWindow
-        await User.findByIdAndUpdate(window.assignedAdmin, { assignedWindow: null });
+        // Remove from assignedWindows array
+        await User.findByIdAndUpdate(window.assignedAdmin, {
+          $pull: { assignedWindows: id }
+        });
+
+        // Update assignedWindow to the first remaining window or null
+        const updatedAdmin = await User.findById(window.assignedAdmin).populate('assignedWindows');
+        const newAssignedWindow = updatedAdmin.assignedWindows && updatedAdmin.assignedWindows.length > 0
+          ? updatedAdmin.assignedWindows[0]._id
+          : null;
+        await User.findByIdAndUpdate(window.assignedAdmin, { assignedWindow: newAssignedWindow });
 
         // For Admin Staff, also remove the queue route from pageAccess
         if (admin.role && admin.role.includes('Admin Staff')) {

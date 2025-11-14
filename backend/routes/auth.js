@@ -90,7 +90,10 @@ router.post('/google', authLimiter, async (req, res) => {
     console.log('✅ Google token verified for:', email);
 
     // Check if user exists in database
-    let user = await User.findOne({ email }).select('-password').populate('assignedWindow', 'name office');
+    let user = await User.findOne({ email })
+      .select('-password')
+      .populate('assignedWindows', 'name office')
+      .populate('assignedWindow', 'name office'); // Keep for backward compatibility
 
     if (!user) {
       console.log('❌ User not found in database:', email);
@@ -216,7 +219,8 @@ router.post('/google', authLimiter, async (req, res) => {
       profilePicture: user.profilePicture,
       isActive: user.isActive,
       lastLogin: user.lastLogin,
-      assignedWindow: user.assignedWindow || null // Include assignedWindow for Admin Staff RBAC
+      assignedWindows: user.assignedWindows || [], // Multiple windows support
+      assignedWindow: user.assignedWindow || null // Keep for backward compatibility
     };
 
     res.json({
@@ -284,10 +288,11 @@ router.get('/verify', async (req, res) => {
       });
     }
 
-    // Fetch fresh user data from database with assignedWindow populated
+    // Fetch fresh user data from database with assignedWindows populated
     const user = await User.findById(decoded.id)
       .select('-password -googleId')
-      .populate('assignedWindow', 'name office');
+      .populate('assignedWindows', 'name office')
+      .populate('assignedWindow', 'name office'); // Keep for backward compatibility
 
     if (!user) {
       return res.status(404).json({
@@ -343,7 +348,8 @@ router.get('/verify', async (req, res) => {
       profilePicture: user.profilePicture,
       isActive: user.isActive,
       lastLogin: user.lastLogin,
-      assignedWindow: user.assignedWindow || null // Include assignedWindow for Admin Staff RBAC
+      assignedWindows: user.assignedWindows || [], // Multiple windows support
+      assignedWindow: user.assignedWindow || null // Keep for backward compatibility
     };
 
     res.json({

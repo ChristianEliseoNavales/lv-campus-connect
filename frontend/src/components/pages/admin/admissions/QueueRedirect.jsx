@@ -14,19 +14,24 @@ const QueueRedirect = () => {
   useEffect(() => {
     const determineRedirect = async () => {
       try {
-        // Admin Staff: Check for assigned window (role includes "Admin Staff")
+        // Admin Staff: Check for assigned windows (role includes "Admin Staff")
         const isAdminStaff = user?.role?.includes('Admin Staff');
 
         if (isAdminStaff) {
-          if (user?.assignedWindow) {
-            const assignedWindowId = typeof user.assignedWindow === 'object'
-              ? user.assignedWindow._id
-              : user.assignedWindow;
+          // Support both assignedWindows (array) and assignedWindow (single, deprecated)
+          const assignedWindows = user?.assignedWindows || (user?.assignedWindow ? [user.assignedWindow] : []);
+
+          if (assignedWindows.length > 0) {
+            // Redirect to first assigned window
+            const firstWindow = assignedWindows[0];
+            const assignedWindowId = typeof firstWindow === 'object'
+              ? firstWindow._id
+              : firstWindow;
 
             // Redirect to the assigned window
             setRedirectPath(`/admin/admissions/queue/${assignedWindowId}`);
           } else {
-            // Admin Staff has queue access but no assigned window
+            // Admin Staff has queue access but no assigned windows
             // Show the "not assigned" message
             setShowNoWindowMessage(true);
           }

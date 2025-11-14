@@ -93,17 +93,15 @@ const AdminLayout = ({ children }) => {
     // Listen for windows updates with cleanup
     const unsubscribeWindows = subscribe('windows-updated', (data) => {
       if (data.department === department) {
-        console.log(`📡 Windows updated for ${department}:`, data);
+        // console.log(`📡 Windows updated for ${department}:`, data);
         refetchWindows(); // Use optimized refetch
       }
     });
 
     // Listen for user window assignment changes
     const unsubscribeUserAssignment = subscribe('user-window-assignment-changed', async (data) => {
-      // Check if this event is for the current user
-      if (user && data.userId === user._id) {
-        console.log(`📡 Window assignment changed for current user:`, data);
-
+      // Check if this event is for the current user (try both _id and id)
+      if (user && (data.userId === user._id || data.userId === user.id)) {
         // Refresh user data to get updated assignedWindow
         const refreshed = await refreshUser();
 
@@ -317,17 +315,17 @@ const AdminLayout = ({ children }) => {
     const pageAccess = user?.pageAccess || [];
 
     // Debug logging for RBAC
-    console.log('🔍 RBAC Debug - User object:', {
-      role: user?.role,
-      assignedWindow: user?.assignedWindow,
-      assignedWindowType: typeof user?.assignedWindow,
-      assignedWindowId: user?.assignedWindow?._id || user?.assignedWindow,
-      assignedWindowIdType: typeof (user?.assignedWindow?._id || user?.assignedWindow),
-      office: user?.office,
-      pageAccess: pageAccess
-    });
-    console.log('🔍 RBAC Debug - Current path:', currentPath);
-    console.log('🔍 RBAC Debug - Windows available:', windows.length, windows.map(w => ({ id: w.id, name: w.name })));
+    // console.log('🔍 RBAC Debug - User object:', {
+    //   role: user?.role,
+    //   assignedWindow: user?.assignedWindow,
+    //   assignedWindowType: typeof user?.assignedWindow,
+    //   assignedWindowId: user?.assignedWindow?._id || user?.assignedWindow,
+    //   assignedWindowIdType: typeof (user?.assignedWindow?._id || user?.assignedWindow),
+    //   office: user?.office,
+    //   pageAccess: pageAccess
+    // });
+    // console.log('🔍 RBAC Debug - Current path:', currentPath);
+    // console.log('🔍 RBAC Debug - Windows available:', windows.length, windows.map(w => ({ id: w.id, name: w.name })));
 
     // Determine current office context based on URL for MIS Super Admin
     let currentOffice = null;
@@ -412,16 +410,6 @@ const AdminLayout = ({ children }) => {
       if (item.requiresWindows) {
         const officeWindows = windows.filter(w => w && w.id && w.name);
 
-        console.log('🪟 Window Filtering Debug:');
-        console.log('  - User role:', user?.role);
-        console.log('  - User role check (Admin Staff):', user?.role === 'Admin Staff');
-        console.log('  - User role check (Registrar Admin Staff):', user?.role === 'Registrar Admin Staff');
-        console.log('  - User role check (Admissions Admin Staff):', user?.role === 'Admissions Admin Staff');
-        console.log('  - User role includes "Admin Staff":', user?.role?.includes('Admin Staff'));
-        console.log('  - Assigned window:', user?.assignedWindow);
-        console.log('  - Office windows count:', officeWindows.length);
-        console.log('  - Office windows:', officeWindows.map(w => ({ id: w.id, name: w.name })));
-
         // Window filtering logic:
         // - Admin Staff: Only see their assigned window(s)
         // - Admin/Super Admin: See all windows
@@ -430,36 +418,24 @@ const AdminLayout = ({ children }) => {
         // Check if user is Admin Staff (role includes "Admin Staff")
         const isAdminStaff = user?.role?.includes('Admin Staff');
 
-        console.log('  - Is Admin Staff?', isAdminStaff);
-
-        // Only filter by assigned window if user is Admin Staff
+        // Only filter by assigned windows if user is Admin Staff
         if (isAdminStaff) {
-          console.log('  - User is Admin Staff, checking assigned window...');
+          // Support both assignedWindows (array) and assignedWindow (single, deprecated)
+          const assignedWindows = user?.assignedWindows || (user?.assignedWindow ? [user.assignedWindow] : []);
 
-          if (user?.assignedWindow) {
-            const assignedWindowId = typeof user.assignedWindow === 'object'
-              ? user.assignedWindow._id
-              : user.assignedWindow;
-
-            console.log('  - Filtering for Admin Staff, assigned window ID:', assignedWindowId);
+          if (assignedWindows.length > 0) {
+            // Extract window IDs from assignedWindows (handle both object and string formats)
+            const assignedWindowIds = assignedWindows.map(w =>
+              typeof w === 'object' ? String(w._id) : String(w)
+            );
 
             filteredWindows = officeWindows.filter(window => {
               const windowId = String(window.id || window._id);
-              const assignedId = String(assignedWindowId);
-              const match = windowId === assignedId;
-              console.log(`    - Window ${window.name} (${windowId}) vs Assigned (${assignedId}): ${match ? 'MATCH ✓' : 'no match ✗'}`);
-              return match;
+              return assignedWindowIds.includes(windowId);
             });
-
-            console.log('  - Filtered windows count:', filteredWindows.length);
-            console.log('  - Filtered windows:', filteredWindows.map(w => ({ id: w.id, name: w.name })));
           } else {
-            console.log('  - Admin Staff has NO assigned window, showing no windows');
-            filteredWindows = []; // Admin Staff without assigned window should see no windows
+            filteredWindows = []; // Admin Staff without assigned windows should see no windows
           }
-        } else {
-          console.log('  - No filtering applied (Admin/Super Admin or other role)');
-          console.log('  - User role:', user?.role);
         }
 
         // Only add queue item if there are windows to show
@@ -479,18 +455,18 @@ const AdminLayout = ({ children }) => {
       }
     });
 
-    console.log('📋 RBAC Debug - Navigation items count:', navigationItems.length);
-    console.log('📋 RBAC Debug - Navigation items:', navigationItems.map(i => i.name));
+    // console.log('📋 RBAC Debug - Navigation items count:', navigationItems.length);
+    // console.log('📋 RBAC Debug - Navigation items:', navigationItems.map(i => i.name));
 
     // For queue items, log the filtered windows
     const queueItem = navigationItems.find(item => item.isExpandable);
     if (queueItem) {
-      console.log('📋 RBAC Debug - Queue windows:', queueItem.children?.length || 0, 'windows');
-      console.log('📋 RBAC Debug - Queue window names:', queueItem.children?.map(w => w.name) || []);
+      // console.log('📋 RBAC Debug - Queue windows:', queueItem.children?.length || 0, 'windows');
+      // console.log('📋 RBAC Debug - Queue window names:', queueItem.children?.map(w => w.name) || []);
     }
 
     return navigationItems;
-  }, [windows, user?.role, user?.assignedWindow, user?.pageAccess, location.pathname, isDevelopmentMode, user]);
+  }, [windows, user?.role, user?.assignedWindows, user?.assignedWindow, user?.pageAccess, location.pathname, isDevelopmentMode, user]);
 
   // Get navigation items with error handling
   const navigationItems = useMemo(() => {

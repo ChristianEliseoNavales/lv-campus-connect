@@ -69,6 +69,12 @@ const userSchema = new mongoose.Schema({
   pageAccess: [{
     type: String
   }],
+  // Support for multiple window assignments
+  assignedWindows: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Window'
+  }],
+  // Deprecated: Keep for backward compatibility, will be removed in future
   assignedWindow: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Window',

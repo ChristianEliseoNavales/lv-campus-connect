@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import useGoogleAuth from '../hooks/useGoogleAuth';
 import { getDefaultRoute as getDefaultRouteUtil } from '../utils/roleRoutes';
+import API_CONFIG from '../config/api';
 
 const AuthContext = createContext();
 
@@ -30,8 +31,8 @@ export const AuthProvider = ({ children }) => {
         if (token && userData) {
           const parsedUser = JSON.parse(userData);
 
-          // Get backend URL from environment
-          const backendUrl = import.meta.env.VITE_CLOUD_BACKEND_URL || 'http://localhost:3001';
+          // Get backend URL - use getAdminUrl() for consistency
+          const backendUrl = API_CONFIG.getAdminUrl();
 
           // Verify token with backend
           const response = await fetch(`${backendUrl}/api/auth/verify`, {
@@ -77,8 +78,8 @@ export const AuthProvider = ({ children }) => {
 
       const credential = await signInWithGoogle();
 
-      // Get backend URL from environment
-      const backendUrl = import.meta.env.VITE_CLOUD_BACKEND_URL || 'http://localhost:3001';
+      // Get backend URL - use getAdminUrl() for consistency
+      const backendUrl = API_CONFIG.getAdminUrl();
 
       // Send credential to backend for verification
       const response = await fetch(`${backendUrl}/api/auth/google`, {
@@ -148,7 +149,8 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
 
-      const backendUrl = import.meta.env.VITE_CLOUD_BACKEND_URL || 'http://localhost:3001';
+      // Get backend URL - use getAdminUrl() for consistency
+      const backendUrl = API_CONFIG.getAdminUrl();
 
       const response = await fetch(`${backendUrl}/api/auth/verify`, {
         method: 'GET',
@@ -163,7 +165,6 @@ export const AuthProvider = ({ children }) => {
         if (data.success && data.user) {
           setUser(data.user);
           localStorage.setItem('userData', JSON.stringify(data.user));
-          console.log('✅ User data refreshed successfully');
           return true;
         }
       }

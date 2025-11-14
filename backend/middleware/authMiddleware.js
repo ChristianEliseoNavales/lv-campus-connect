@@ -60,10 +60,11 @@ const verifyToken = async (req, res, next) => {
     }
 
     // Fetch user from database to ensure they still exist and are active
-    // Populate assignedWindow for Admin Staff RBAC
+    // Populate assignedWindows and assignedWindow for Admin Staff RBAC
     const user = await User.findById(decoded.id)
       .select('-password')
-      .populate('assignedWindow', 'name office');
+      .populate('assignedWindows', 'name office')
+      .populate('assignedWindow', 'name office'); // Keep for backward compatibility
 
     if (!user) {
       return res.status(404).json({
@@ -90,7 +91,8 @@ const verifyToken = async (req, res, next) => {
       pageAccess: user.pageAccess || [],
       permissions: user.permissions || {},
       isActive: user.isActive,
-      assignedWindow: user.assignedWindow || null // Include assignedWindow for Admin Staff RBAC
+      assignedWindows: user.assignedWindows || [], // Multiple windows support
+      assignedWindow: user.assignedWindow || null // Keep for backward compatibility
     };
 
     next();

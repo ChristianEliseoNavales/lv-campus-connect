@@ -76,19 +76,19 @@ const Queue = () => {
       if (windowData?.id) {
         // Filter by windowId to ensure each window only sees queues assigned to it
         url += `?windowId=${encodeURIComponent(windowData.id)}`;
-        console.log('🔍 Fetching queues filtered by windowId:', windowData.id);
-        console.log('🪟 Window name:', windowData.name);
+        // console.log('🔍 Fetching queues filtered by windowId:', windowData.id);
+        // console.log('🪟 Window name:', windowData.name);
       }
 
       const response = await authFetch(url);
       const result = await response.json();
 
       if (result.success) {
-        console.log('📊 Queue data received:', {
-          waitingCount: result.data.waitingQueue.length,
-          currentlyServing: result.data.currentlyServing?.number || 'None',
-          filters: result.data.filters
-        });
+        // console.log('📊 Queue data received:', {
+        //   waitingCount: result.data.waitingQueue.length,
+        //   currentlyServing: result.data.currentlyServing?.number || 'None',
+        //   filters: result.data.filters
+        // });
 
         // Data is already filtered by the backend, so use it directly
         setQueueData(result.data.waitingQueue);
@@ -145,7 +145,7 @@ const Queue = () => {
     // Listen for queue updates
     newSocket.on('queue-updated', (data) => {
       if (data.department === 'admissions') {
-        console.log('📡 Real-time queue update received:', data);
+        // console.log('📡 Real-time queue update received:', data);
 
         // Handle specific queue update types
         switch (data.type) {
@@ -226,7 +226,7 @@ const Queue = () => {
     // Listen for window status updates
     newSocket.on('window-status-updated', (data) => {
       if (data.department === 'admissions' && data.windowId === windowData?.id) {
-        console.log('📡 Window status update received:', data);
+        // console.log('📡 Window status update received:', data);
         setIsWindowServing(data.data.isServing);
       }
     });
@@ -279,7 +279,7 @@ const Queue = () => {
           'Window Status Updated',
           `${windowData.name} has been ${action === 'pause' ? 'paused' : 'resumed'}`
         );
-        console.log(`✅ Window ${action}d:`, windowData.name);
+        // console.log(`✅ Window ${action}d:`, windowData.name);
       } else {
         throw new Error(result.error || 'Failed to update window status');
       }
@@ -297,7 +297,9 @@ const Queue = () => {
       return;
     }
 
-    if (queueData.length === 0) {
+    // Allow Next button to work even when no incoming queues if there's a current serving queue
+    // This will complete the current queue and show "no more queues" message
+    if (queueData.length === 0 && currentServing === 0) {
       showWarning('No Queue', 'No queues waiting for this service');
       return;
     }
@@ -338,7 +340,7 @@ const Queue = () => {
             'All queues have been served. Window is ready for new queues.'
           );
 
-          console.log('✅ No more queues waiting');
+          // console.log('✅ No more queues waiting');
         } else {
           // Fetch updated queue data to get complete information including idNumber
           await fetchQueueData();
@@ -359,7 +361,7 @@ const Queue = () => {
             `Queue ${String(result.data.queueNumber).padStart(2, '0')} called to ${result.data.windowName}`
           );
 
-          console.log('✅ Next queue called:', result.data);
+          // console.log('✅ Next queue called:', result.data);
         }
       } else {
         throw new Error(result.error || 'Failed to call next queue');
@@ -412,7 +414,7 @@ const Queue = () => {
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} recalled to ${result.data.windowName}`
         );
 
-        console.log('✅ Queue recalled:', result.data);
+        // console.log('✅ Queue recalled:', result.data);
       } else {
         throw new Error(result.error || 'Failed to recall queue');
       }
@@ -471,7 +473,7 @@ const Queue = () => {
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} recalled to ${result.data.windowName}`
         );
 
-        console.log('✅ Previous queue recalled:', result.data);
+        // console.log('✅ Previous queue recalled:', result.data);
       } else {
         throw new Error(result.error || 'Failed to recall previous queue');
       }
@@ -558,7 +560,7 @@ const Queue = () => {
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} transferred to ${result.data.toWindowName} and placed in waiting queue`
         );
 
-        console.log('✅ Queue transferred:', result.data);
+        // console.log('✅ Queue transferred:', result.data);
       } else {
         throw new Error(result.error || 'Failed to transfer queue');
       }
@@ -630,7 +632,7 @@ const Queue = () => {
           }`
         );
 
-        console.log('✅ Queue skipped:', result.data);
+        // console.log('✅ Queue skipped:', result.data);
       } else {
         throw new Error(result.error || 'Failed to skip queue');
       }
@@ -678,7 +680,7 @@ const Queue = () => {
           `${result.data.requeuedCount} queue${result.data.requeuedCount > 1 ? 's' : ''} re-queued successfully`
         );
 
-        console.log('✅ All skipped queues re-queued:', result.data);
+        // console.log('✅ All skipped queues re-queued:', result.data);
       } else {
         throw new Error(result.error || 'Failed to re-queue skipped queues');
       }
