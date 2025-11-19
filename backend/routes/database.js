@@ -29,7 +29,6 @@ const modelMap = {
   settings: Settings,
   rating: Rating,
   bulletin: Bulletin,
-  audittrail: AuditTrail,
   office: Office,
   chart: Chart
 };

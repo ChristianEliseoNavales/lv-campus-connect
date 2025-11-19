@@ -1,6 +1,7 @@
 const express = require('express');
 const { Window, Service, User } = require('../models');
 const { verifyToken, requireRole, checkApiAccess } = require('../middleware/authMiddleware');
+const { AuditService } = require('../middleware/auditMiddleware');
 const router = express.Router();
 
 // GET /api/windows - Get all windows
@@ -156,6 +157,25 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
     await newWindow.populate('serviceIds', 'name');
     await newWindow.populate('assignedAdmin', 'name email');
 
+    // Log successful window creation
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'CREATE',
+      resourceType: 'Window',
+      resourceId: newWindow._id,
+      resourceName: newWindow.name,
+      department: office,
+      req,
+      success: true,
+      newValues: {
+        name: newWindow.name,
+        office: newWindow.office,
+        serviceIds: newWindow.serviceIds.map(s => s.name || s),
+        assignedAdmin: newWindow.assignedAdmin?.email || null,
+        isOpen: newWindow.isOpen
+      }
+    });
+
     // Emit real-time update
     const io = req.app.get('io');
     io.to(`admin-${office}`).emit('windows-updated', {
@@ -200,6 +220,19 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating window:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'CREATE',
+      resourceType: 'Window',
+      resourceId: null,
+      resourceName: req.body.name || 'Unknown',
+      department: req.body.office || 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -247,7 +280,12 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
       }
     }
 
-    // Track old assigned admin for cleanup
+    // Track old values for audit logging
+    const oldValues = {
+      name: window.name,
+      serviceIds: window.serviceIds,
+      assignedAdmin: window.assignedAdmin
+    };
     const oldAssignedAdmin = window.assignedAdmin;
 
     // Validate assigned admin if provided
@@ -320,6 +358,28 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
     await window.populate('serviceIds', 'name');
     await window.populate('assignedAdmin', 'name email');
 
+    // Log successful window update
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'Window',
+      resourceId: window._id,
+      resourceName: window.name,
+      department: window.office,
+      req,
+      success: true,
+      oldValues: {
+        name: oldValues.name,
+        serviceIds: oldValues.serviceIds,
+        assignedAdmin: oldValues.assignedAdmin
+      },
+      newValues: {
+        name: window.name,
+        serviceIds: window.serviceIds.map(s => s.name || s),
+        assignedAdmin: window.assignedAdmin?.email || null
+      }
+    });
+
     // Emit real-time update
     const io = req.app.get('io');
     io.to(`admin-${window.office}`).emit('windows-updated', {
@@ -378,6 +438,19 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating window:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'Window',
+      resourceId: req.params.id,
+      resourceName: req.body.name || 'Unknown',
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -392,9 +465,26 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
       return res.status(404).json({ error: 'Window not found' });
     }
 
+    // Track old value for audit logging
+    const oldIsOpen = window.isOpen;
+
     // Toggle the isOpen status
     window.isOpen = !window.isOpen;
     await window.save();
+
+    // Log successful window toggle
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'Window',
+      resourceId: window._id,
+      resourceName: window.name,
+      department: window.office,
+      req,
+      success: true,
+      oldValues: { isOpen: oldIsOpen },
+      newValues: { isOpen: window.isOpen }
+    });
 
     // Emit real-time update
     const io = req.app.get('io');
@@ -423,6 +513,19 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
     });
   } catch (error) {
     console.error('Error toggling window:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'Window',
+      resourceId: req.params.id,
+      resourceName: 'Unknown',
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -472,6 +575,23 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
 
     await Window.findByIdAndDelete(id);
 
+    // Log successful window deletion
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'DELETE',
+      resourceType: 'Window',
+      resourceId: deletedWindow.id,
+      resourceName: deletedWindow.name,
+      department: deletedWindow.office,
+      req,
+      success: true,
+      oldValues: {
+        name: deletedWindow.name,
+        office: deletedWindow.office,
+        assignedAdmin: deletedWindow.assignedAdmin
+      }
+    });
+
     // Emit real-time update
     const io = req.app.get('io');
     io.to(`admin-${deletedWindow.office}`).emit('windows-updated', {
@@ -502,6 +622,19 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting window:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'DELETE',
+      resourceType: 'Window',
+      resourceId: req.params.id,
+      resourceName: 'Unknown',
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });

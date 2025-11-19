@@ -1,6 +1,7 @@
 const express = require('express');
 const { Service } = require('../models');
 const { verifyToken, requireRole, checkApiAccess } = require('../middleware/authMiddleware');
+const { AuditService } = require('../middleware/auditMiddleware');
 const router = express.Router();
 
 // GET /api/services - Get all services
@@ -105,6 +106,23 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
 
     await newService.save();
 
+    // Log successful service creation
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'CREATE',
+      resourceType: 'Service',
+      resourceId: newService._id,
+      resourceName: newService.name,
+      department: office,
+      req,
+      success: true,
+      newValues: {
+        name: newService.name,
+        office: newService.office,
+        isActive: newService.isActive
+      }
+    });
+
     // Emit real-time update
     const io = req.app.get('io');
     io.to(`admin-${office}`).emit('services-updated', {
@@ -128,6 +146,19 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating service:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'CREATE',
+      resourceType: 'Service',
+      resourceId: null,
+      resourceName: req.body.name || 'Unknown',
+      department: req.body.office || 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -142,9 +173,26 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
       return res.status(404).json({ error: 'Service not found' });
     }
 
+    // Track old value for audit logging
+    const oldIsActive = service.isActive;
+
     // Toggle the isActive status
     service.isActive = !service.isActive;
     await service.save();
+
+    // Log successful service toggle
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'Service',
+      resourceId: service._id,
+      resourceName: service.name,
+      department: service.office,
+      req,
+      success: true,
+      oldValues: { isActive: oldIsActive },
+      newValues: { isActive: service.isActive }
+    });
 
     // Emit real-time update
     const io = req.app.get('io');
@@ -167,6 +215,19 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
     });
   } catch (error) {
     console.error('Error toggling service:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'Service',
+      resourceId: req.params.id,
+      resourceName: 'Unknown',
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -189,6 +250,22 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
 
     await Service.findByIdAndDelete(id);
 
+    // Log successful service deletion
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'DELETE',
+      resourceType: 'Service',
+      resourceId: deletedService.id,
+      resourceName: deletedService.name,
+      department: deletedService.office,
+      req,
+      success: true,
+      oldValues: {
+        name: deletedService.name,
+        office: deletedService.office
+      }
+    });
+
     // Emit real-time update
     const io = req.app.get('io');
     io.to(`admin-${deletedService.office}`).emit('services-updated', {
@@ -203,6 +280,19 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting service:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'DELETE',
+      resourceType: 'Service',
+      resourceId: req.params.id,
+      resourceName: 'Unknown',
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });

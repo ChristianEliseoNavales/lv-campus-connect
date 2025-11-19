@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPlus, FaUpload } from 'react-icons/fa';
-import { FiEdit3 } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
 import { MdClose } from 'react-icons/md';
 import { ToastContainer } from '../../../ui/Toast';
@@ -329,12 +328,6 @@ const Bulletin = () => {
 
                   {/* Action Buttons - Bottom Right */}
                   <div className="absolute bottom-2.5 right-2.5 flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      className="bg-white rounded-full p-1.5 shadow-md hover:shadow-lg hover:bg-gray-50 transition-all"
-                      title="Edit"
-                    >
-                      <FiEdit3 className="text-lg text-[#1F3463]" />
-                    </button>
                     <button
                       onClick={() => {
                         setSelectedBulletinId(bulletin._id);

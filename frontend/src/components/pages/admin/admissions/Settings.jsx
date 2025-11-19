@@ -1442,9 +1442,9 @@ const Settings = () => {
         {/* Second div: Row 2, Column 1 only - Toggle Section */}
         <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-5 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-base font-medium text-gray-900">Tap to Enable Queueing</span>
+            <span className="text-lg font-semibold text-gray-900">Tap to Enable Queueing</span>
             {(isToggling || toggleCooldown > 0) && (
-              <span className="text-xs text-gray-500 mt-0.5">
+              <span className="text-sm text-gray-500 mt-1">
                 {isToggling ? 'Processing...' : `Wait ${toggleCooldown}s before next toggle`}
               </span>
             )}
@@ -1452,7 +1452,7 @@ const Settings = () => {
           <button
             onClick={handleToggleQueueing}
             disabled={isToggling || toggleCooldown > 0}
-            className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors focus:outline-none ${
+            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none ${
               isToggling || toggleCooldown > 0
                 ? 'opacity-50 cursor-not-allowed bg-gray-300'
                 : isQueueingEnabled
@@ -1462,7 +1462,7 @@ const Settings = () => {
           >
             <span
               className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                isQueueingEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                isQueueingEnabled ? 'translate-x-8' : 'translate-x-1'
               }`}
             />
             {isToggling && (

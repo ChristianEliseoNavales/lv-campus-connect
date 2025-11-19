@@ -1099,6 +1099,17 @@ router.post('/queue/recall', async (req, res) => {
     }).populate('visitationFormId');
 
     if (!currentQueue) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_RECALL',
+        queueId: null,
+        queueNumber: null,
+        department: window.office,
+        req,
+        success: false,
+        errorMessage: 'No queue currently being served at this window'
+      });
+
       return res.status(404).json({
         error: 'No queue currently being served at this window'
       });
@@ -1107,6 +1118,21 @@ router.post('/queue/recall', async (req, res) => {
     console.log('🔊 Recalling queue:', {
       queueNumber: currentQueue.queueNumber,
       windowName: window.name
+    });
+
+    // Log successful recall
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_RECALL',
+      queueId: currentQueue._id,
+      queueNumber: currentQueue.queueNumber,
+      department: window.office,
+      req,
+      success: true,
+      metadata: {
+        windowId: window._id,
+        windowName: window.name
+      }
     });
 
     // Emit real-time updates to admin dashboards
@@ -1145,6 +1171,18 @@ router.post('/queue/recall', async (req, res) => {
 
   } catch (error) {
     console.error('❌ RECALL queue error:', error);
+
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_RECALL',
+      queueId: null,
+      queueNumber: null,
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({
       error: 'Failed to recall queue',
       message: error.message
@@ -1241,6 +1279,17 @@ router.post('/queue/previous', async (req, res) => {
     }).sort({ completedAt: -1 }).populate('visitationFormId');
 
     if (!previousQueue) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_PREVIOUS',
+        queueId: null,
+        queueNumber: null,
+        department: window.office,
+        req,
+        success: false,
+        errorMessage: 'No previously served queue found for this window'
+      });
+
       return res.status(404).json({
         error: 'No previously served queue found for this window'
       });
@@ -1266,6 +1315,21 @@ router.post('/queue/previous', async (req, res) => {
     console.log('✅ Previous queue recalled:', {
       queueNumber: previousQueue.queueNumber,
       windowName: window.name
+    });
+
+    // Log successful previous operation
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_PREVIOUS',
+      queueId: previousQueue._id,
+      queueNumber: previousQueue.queueNumber,
+      department: window.office,
+      req,
+      success: true,
+      metadata: {
+        windowId: window._id,
+        windowName: window.name
+      }
     });
 
     // Emit real-time updates
@@ -1294,6 +1358,18 @@ router.post('/queue/previous', async (req, res) => {
 
   } catch (error) {
     console.error('❌ PREVIOUS queue error:', error);
+
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_PREVIOUS',
+      queueId: null,
+      queueNumber: null,
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({
       error: 'Failed to recall previous queue',
       message: error.message
@@ -1355,6 +1431,17 @@ router.post('/queue/transfer', async (req, res) => {
     }).populate('visitationFormId');
 
     if (!currentQueue) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_TRANSFER',
+        queueId: null,
+        queueNumber: null,
+        department: fromWindow.office,
+        req,
+        success: false,
+        errorMessage: 'No queue currently being served at source window'
+      });
+
       return res.status(404).json({
         error: 'No queue currently being served at source window'
       });
@@ -1390,6 +1477,23 @@ router.post('/queue/transfer', async (req, res) => {
       status: currentQueue.status,
       windowId: currentQueue.windowId,
       serviceId: currentQueue.serviceId
+    });
+
+    // Log successful transfer
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_TRANSFER',
+      queueId: currentQueue._id,
+      queueNumber: currentQueue.queueNumber,
+      department: fromWindow.office,
+      req,
+      success: true,
+      metadata: {
+        fromWindowId: fromWindow._id,
+        fromWindowName: fromWindow.name,
+        toWindowId: toWindow._id,
+        toWindowName: toWindow.name
+      }
     });
 
     // Emit real-time updates
@@ -1434,6 +1538,18 @@ router.post('/queue/transfer', async (req, res) => {
 
   } catch (error) {
     console.error('❌ TRANSFER queue error:', error);
+
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_TRANSFER',
+      queueId: null,
+      queueNumber: null,
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({
       error: 'Failed to transfer queue',
       message: error.message
@@ -1472,6 +1588,17 @@ router.post('/queue/skip', async (req, res) => {
     }).populate('visitationFormId');
 
     if (!currentQueue) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_SKIP',
+        queueId: null,
+        queueNumber: null,
+        department: window.office,
+        req,
+        success: false,
+        errorMessage: 'No queue currently being served at this window'
+      });
+
       return res.status(404).json({
         error: 'No queue currently being served at this window'
       });
@@ -1516,6 +1643,22 @@ router.post('/queue/skip', async (req, res) => {
       nextQueue: nextQueueData?.queueNumber || 'None'
     });
 
+    // Log successful skip
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_SKIP',
+      queueId: currentQueue._id,
+      queueNumber: currentQueue.queueNumber,
+      department: window.office,
+      req,
+      success: true,
+      metadata: {
+        windowId: window._id,
+        windowName: window.name,
+        nextQueueNumber: nextQueueData?.queueNumber || null
+      }
+    });
+
     // Emit real-time updates
     io.to(`admin-${window.office}`).emit('queue-updated', {
       type: 'queue-skipped',
@@ -1545,6 +1688,18 @@ router.post('/queue/skip', async (req, res) => {
 
   } catch (error) {
     console.error('❌ SKIP queue error:', error);
+
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_SKIP',
+      queueId: null,
+      queueNumber: null,
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({
       error: 'Failed to skip queue',
       message: error.message
@@ -1584,6 +1739,17 @@ router.post('/queue/requeue-all', async (req, res) => {
     }).sort({ skippedAt: 1 }); // Order by when they were skipped (earliest first)
 
     if (skippedQueues.length === 0) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_REQUEUE_ALL',
+        queueId: null,
+        queueNumber: null,
+        department: window.office,
+        req,
+        success: false,
+        errorMessage: 'No skipped queues found for this service'
+      });
+
       return res.status(404).json({
         error: 'No skipped queues found for this service'
       });
@@ -1611,6 +1777,22 @@ router.post('/queue/requeue-all', async (req, res) => {
       count: requeuedCount,
       department: window.office, // Keep 'department' key for backward compatibility
       services: window.serviceIds.map(s => s.name || s).join(', ')
+    });
+
+    // Log successful requeue-all
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_REQUEUE_ALL',
+      queueId: null,
+      queueNumber: null,
+      department: window.office,
+      req,
+      success: true,
+      metadata: {
+        windowId: window._id,
+        windowName: window.name,
+        requeuedCount
+      }
     });
 
     // Emit real-time updates
@@ -1651,6 +1833,18 @@ router.post('/queue/requeue-all', async (req, res) => {
 
   } catch (error) {
     console.error('❌ RE-QUEUE ALL error:', error);
+
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_REQUEUE_ALL',
+      queueId: null,
+      queueNumber: null,
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({
       error: 'Failed to re-queue skipped queues',
       message: error.message

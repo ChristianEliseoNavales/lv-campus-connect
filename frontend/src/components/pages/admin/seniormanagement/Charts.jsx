@@ -13,12 +13,14 @@ const Charts = () => {
   const [charts, setCharts] = useState([]);
   const [offices, setOffices] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedChartId, setSelectedChartId] = useState(null);
   const [selectedOfficeId, setSelectedOfficeId] = useState('');
   const [officeEmail, setOfficeEmail] = useState('');
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [socket, setSocket] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -224,6 +226,98 @@ const Charts = () => {
     }
   };
 
+  const handleEditChart = async () => {
+    if (!selectedChartId || !selectedOfficeId) {
+      showError('Missing Information', 'Please select an office');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const chartToEdit = charts.find(c => c._id === selectedChartId);
+
+      // If a new file is uploaded, handle file upload first
+      let imageData = chartToEdit.image;
+      if (uploadFile) {
+        // Delete old image from Cloudinary
+        if (chartToEdit?.image?.public_id) {
+          const publicIdEncoded = encodeURIComponent(chartToEdit.image.public_id);
+          await authFetch(`${API_CONFIG.getAdminUrl()}/api/charts/delete/${publicIdEncoded}`, {
+            method: 'DELETE'
+          });
+        }
+
+        // Upload new file
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+
+        const uploadResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/charts/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const uploadData = await uploadResponse.json();
+        imageData = {
+          public_id: uploadData.public_id,
+          secure_url: uploadData.secure_url,
+          url: uploadData.url,
+          resource_type: uploadData.resource_type,
+          filename: uploadData.filename,
+          originalName: uploadFile.name,
+          size: uploadFile.size,
+          mimeType: uploadFile.type
+        };
+      }
+
+      // Find the selected office
+      const selectedOffice = offices.find(o => o._id === selectedOfficeId);
+
+      // Update chart record in database
+      const chartData = {
+        officeId: selectedOfficeId,
+        officeName: selectedOffice.officeName,
+        image: imageData
+      };
+
+      const updateResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/chart/${selectedChartId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(chartData)
+      });
+
+      if (updateResponse.ok) {
+        // Update office email if provided and changed
+        if (officeEmail && officeEmail !== selectedOffice.officeEmail) {
+          await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/office/${selectedOfficeId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ officeEmail })
+          });
+        }
+
+        showSuccess('Success', 'Chart updated successfully');
+        setUploadFile(null);
+        setSelectedOfficeId('');
+        setOfficeEmail('');
+        setSelectedChartId(null);
+        setShowEditModal(false);
+        fetchCharts();
+        fetchOffices(); // Refresh offices to get updated email
+      } else {
+        showError('Error', 'Failed to update chart record');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      showError('Update Failed', error.message || 'Failed to update chart');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleDeleteChart = async () => {
     if (!selectedChartId) return;
 
@@ -336,6 +430,14 @@ const Charts = () => {
                   {/* Action Buttons - Bottom Right */}
                   <div className="absolute bottom-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      onClick={() => {
+                        setSelectedChartId(chart._id);
+                        setSelectedOfficeId(chart.officeId);
+                        const office = offices.find(o => o._id === chart.officeId);
+                        setOfficeEmail(office?.officeEmail || '');
+                        setUploadFile(null);
+                        setShowEditModal(true);
+                      }}
                       className="bg-white rounded-full p-2 shadow-md hover:shadow-lg hover:bg-gray-50 transition-all"
                       title="Edit"
                     >
@@ -475,6 +577,125 @@ const Charts = () => {
                 className="w-full px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploading ? 'Uploading...' : 'Upload Chart'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowEditModal(false);
+                setUploadFile(null);
+                setSelectedOfficeId('');
+                setOfficeEmail('');
+                setSelectedChartId(null);
+                setIsDragging(false);
+              }}
+              className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            >
+              <MdClose className="w-4 h-4" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h2 className="text-xl font-bold text-[#1F3463]">Edit Office Chart</h2>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-6 space-y-4">
+              {/* Office Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Department/Office
+                </label>
+                <select
+                  value={selectedOfficeId}
+                  onChange={handleOfficeChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
+                >
+                  <option value="">Select an office...</option>
+                  {offices.map((office) => (
+                    <option key={office._id} value={office._id}>
+                      {office.officeName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Office Email Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Email of Department/Office
+                </label>
+                <input
+                  type="email"
+                  value={officeEmail}
+                  onChange={(e) => setOfficeEmail(e.target.value)}
+                  placeholder="office@lvcampusconnect.edu"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
+                />
+              </div>
+
+              {/* File Upload Area with Drag & Drop */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Chart Image (JPG/PNG only) - Optional
+                </label>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  className={`border-2 rounded-xl p-8 text-center cursor-pointer transition-all ${
+                    isDragging
+                      ? 'border-[#1F3463] bg-blue-50 border-solid'
+                      : 'border-black border-dashed hover:bg-gray-50'
+                  }`}
+                >
+                  <FaUpload className={`text-4xl mx-auto mb-4 ${isDragging ? 'text-[#1F3463]' : 'text-black'}`} />
+                  <p className="text-sm font-medium text-gray-900 mb-2">
+                    {isDragging ? 'Drop file here' : 'Choose a new file or drag & drop it here'}
+                  </p>
+                  <p className="text-xs text-gray-600 mb-3">JPG or PNG, maximum 10MB</p>
+                  <p className="text-xs text-gray-500">Leave empty to keep current image</p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Selected File Display */}
+              {uploadFile && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-900">
+                    <strong>New File Selected:</strong> {uploadFile.name}
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Size: {(uploadFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-gray-200 px-6 py-4">
+              <button
+                onClick={handleEditChart}
+                disabled={updating || !selectedOfficeId}
+                className="w-full px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {updating ? 'Updating...' : 'Update Chart'}
               </button>
             </div>
           </div>

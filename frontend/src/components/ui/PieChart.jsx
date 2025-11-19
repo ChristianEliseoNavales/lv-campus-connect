@@ -12,6 +12,13 @@ import {
 import {
   ChartContainer,
 } from "@/components/ui/chart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import API_CONFIG from "../../config/api";
 import { authFetch } from "../../utils/apiClient";
 
@@ -125,7 +132,8 @@ const ErrorDisplay = ({ message }) => (
   </div>
 );
 
-export function ChartPieLegend({ userRole, timeRange = 'all' }) {
+export function ChartPieLegend({ userRole }) {
+  const [timeRange, setTimeRange] = React.useState("all");
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -283,6 +291,31 @@ export function ChartPieLegend({ userRole, timeRange = 'all' }) {
             {getDateRangeDescription(timeRange)} • {getOfficeLabel()}
           </CardDescription>
         </div>
+        <Select value={timeRange} onValueChange={setTimeRange}>
+          <SelectTrigger
+            className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
+            aria-label="Select a value"
+          >
+            <SelectValue placeholder="All Time" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="rounded-lg">
+              All Time
+            </SelectItem>
+            <SelectItem value="year" className="rounded-lg">
+              A Year
+            </SelectItem>
+            <SelectItem value="6months" className="rounded-lg">
+              6 Months
+            </SelectItem>
+            <SelectItem value="3months" className="rounded-lg">
+              3 Months
+            </SelectItem>
+            <SelectItem value="1month" className="rounded-lg">
+              This Month
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </CardHeader>
       <CardContent className="flex-1 px-2 pt-4 sm:px-6 sm:pt-6">
         {isLoading ? (

@@ -490,6 +490,24 @@ const AdminLayout = ({ children }) => {
     </svg>
   );
 
+  // User Avatar component with fallback to UserIcon
+  const UserAvatar = () => {
+    const [imageError, setImageError] = useState(false);
+
+    if (user?.profilePicture && !imageError) {
+      return (
+        <img
+          src={user.profilePicture}
+          alt={user.name || 'User'}
+          className="w-6 h-6 rounded-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      );
+    }
+
+    return <UserIcon />;
+  };
+
   const ChevronDownIcon = () => (
     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -696,7 +714,7 @@ const AdminLayout = ({ children }) => {
                 className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl transition-colors text-white"
                 style={{ backgroundColor: '#1F3463' }}
               >
-                <UserIcon />
+                <UserAvatar />
                 <span className="font-medium text-sm">{getDisplayName()}</span>
                 <ChevronDownIcon />
               </button>

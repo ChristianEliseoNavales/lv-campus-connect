@@ -263,9 +263,23 @@ router.put('/location/:department', verifyToken, checkApiAccess, async (req, res
       return res.status(400).json({ error: 'Office settings not found' });
     }
 
+    // Track old value for audit logging
+    const oldLocation = settings.officeSettings[department].location;
+
     // Update location for the specific office
     settings.officeSettings[department].location = location.trim();
     await settings.save();
+
+    // Log successful location update
+    await AuditService.logSettings({
+      user: req.user,
+      settingName: 'location',
+      department,
+      req,
+      success: true,
+      oldValue: oldLocation,
+      newValue: settings.officeSettings[department].location
+    });
 
     // Emit real-time update to specific rooms
     const io = req.app.get('io');
@@ -291,6 +305,16 @@ router.put('/location/:department', verifyToken, checkApiAccess, async (req, res
     });
   } catch (error) {
     console.error('Error updating location:', error);
+
+    await AuditService.logSettings({
+      user: req.user,
+      settingName: 'location',
+      department: req.params.department || 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
     res.status(500).json({ error: error.message });
   }
 });
