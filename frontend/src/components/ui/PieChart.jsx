@@ -236,13 +236,21 @@ export function ChartPieLegend({ userRole, timeRange = 'all' }) {
     }, {})
   };
 
+  // Helper function to get office label
+  const getOfficeLabel = () => {
+    if (isSuperAdmin) {
+      return 'Combined Offices';
+    }
+    return department === 'registrar' ? "Registrar's Office" : 'Admissions Office';
+  };
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle style={{ color: '#1F3463' }}>Service Distribution</CardTitle>
           <CardDescription>
-            {getDateRangeDescription(timeRange)} • {department === 'registrar' ? "Registrar's Office" : 'Admissions Office'}
+            {getDateRangeDescription(timeRange)} • {getOfficeLabel()}
           </CardDescription>
         </div>
       </CardHeader>

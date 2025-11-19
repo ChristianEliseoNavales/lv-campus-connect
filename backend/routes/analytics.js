@@ -93,14 +93,14 @@ router.get('/pie-chart/combined', verifyToken, checkApiAccess, async (req, res) 
     const services = await Service.find({
       _id: { $in: serviceIds },
       isActive: true
-    }).select('name department');
+    }).select('name office');
 
     // Create service lookup map
     const serviceMap = {};
     services.forEach(service => {
       serviceMap[service._id.toString()] = {
         name: service.name,
-        department: service.office // Use 'office' field from database
+        department: service.office // Map 'office' field to 'department' for frontend compatibility
       };
     });
 
