@@ -317,44 +317,44 @@ const DatabaseManager = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 flex items-center tracking-tight">
-            <MdStorage className="mr-3 text-[#1F3463] text-4xl" />
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center tracking-tight">
+            <MdStorage className="mr-2.5 text-[#1F3463] text-3xl" />
             Database Manager
           </h1>
-          <p className="text-base text-gray-600 mt-2">
+          <p className="text-sm text-gray-600 mt-1.5">
             Development tool for direct database record manipulation
           </p>
-          <div className="mt-3 px-4 py-2 bg-yellow-100 border border-yellow-300 rounded-lg inline-block">
-            <span className="text-sm font-bold text-yellow-800">⚠️ DEVELOPMENT ONLY</span>
+          <div className="mt-2.5 px-3 py-1.5 bg-yellow-100 border border-yellow-300 rounded-lg inline-block">
+            <span className="text-xs font-bold text-yellow-800">⚠️ DEVELOPMENT ONLY</span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="flex items-center space-x-2 px-5 py-2.5 text-white rounded-lg text-base font-semibold hover:bg-opacity-90 transition-colors disabled:opacity-50"
+            className="flex items-center space-x-1.5 px-4 py-2 text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-colors disabled:opacity-50"
             style={{ backgroundColor: '#1F3463' }}
           >
-            <MdRefresh className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            <MdRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
       </div>
 
       {/* Model Selection */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-          <MdTableChart className="mr-2 text-[#1F3463] text-xl" />
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+        <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
+          <MdTableChart className="mr-1.5 text-[#1F3463] text-lg" />
           Select Database Model
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {availableModels.map((model) => (
             <button
               key={model.name}

@@ -66,53 +66,53 @@ const QueueRedirect = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Header Skeleton */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+          <div className="flex items-center space-x-2.5">
+            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
             <div>
-              <div className="h-8 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
+              <div className="h-6 bg-gray-200 rounded w-40 mb-1.5 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-52 animate-pulse"></div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div className="w-24 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
-            <div className="w-20 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="flex items-center space-x-2.5">
+            <div className="w-20 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="w-16 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
           </div>
         </div>
 
         {/* Queue Interface Skeleton */}
-        <div className="grid grid-rows-3 gap-6 h-[600px]">
+        <div className="grid grid-rows-3 gap-5 h-[480px]">
           {/* Window Header Skeleton */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-            <div className="h-12 bg-gray-200 rounded w-64 mx-auto animate-pulse"></div>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5">
+            <div className="h-10 bg-gray-200 rounded w-52 mx-auto animate-pulse"></div>
           </div>
 
           {/* Main Control Area Skeleton */}
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-5">
             {/* Queue Display Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5">
               <div className="text-center">
-                <div className="h-6 bg-gray-200 rounded w-32 mx-auto mb-4 animate-pulse"></div>
-                <div className="h-24 bg-gray-200 rounded w-32 mx-auto animate-pulse"></div>
+                <div className="h-5 bg-gray-200 rounded w-24 mx-auto mb-3 animate-pulse"></div>
+                <div className="h-20 bg-gray-200 rounded w-24 mx-auto animate-pulse"></div>
               </div>
             </div>
 
             {/* Control Buttons Skeleton */}
-            <div className="col-span-2 grid grid-cols-2 gap-4">
+            <div className="col-span-2 grid grid-cols-2 gap-3">
               {[...Array(6)].map((_, index) => (
-                <div key={index} className="h-16 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div key={index} className="h-12 bg-gray-200 rounded-xl animate-pulse"></div>
               ))}
             </div>
           </div>
 
           {/* Skipped Queue Section Skeleton */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-            <div className="h-6 bg-gray-200 rounded w-32 mb-4 animate-pulse"></div>
-            <div className="grid grid-cols-6 gap-2">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5">
+            <div className="h-5 bg-gray-200 rounded w-24 mb-3 animate-pulse"></div>
+            <div className="grid grid-cols-6 gap-1.5">
               {[...Array(6)].map((_, index) => (
-                <div key={index} className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                <div key={index} className="h-10 bg-gray-200 rounded animate-pulse"></div>
               ))}
             </div>
           </div>

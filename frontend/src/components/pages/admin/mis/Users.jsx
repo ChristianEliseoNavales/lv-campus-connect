@@ -620,22 +620,22 @@ const Users = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
 
       {/* Show error if fetch failed */}
       {fetchError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <div className="flex">
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading users</h3>
-              <div className="mt-2 text-sm text-red-700">
+            <div className="ml-2.5">
+              <h3 className="text-xs font-medium text-red-800">Error loading users</h3>
+              <div className="mt-1.5 text-xs text-red-700">
                 <p>{fetchError}</p>
               </div>
-              <div className="mt-4">
+              <div className="mt-3">
                 <button
                   onClick={handleManualRefresh}
-                  className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
+                  className="bg-red-100 px-2.5 py-1.5 rounded-md text-xs font-medium text-red-800 hover:bg-red-200"
                 >
                   Try Again
                 </button>
@@ -646,24 +646,24 @@ const Users = () => {
       )}
 
       {/* Main Content Container - White background similar to Settings.jsx */}
-      <div className="bg-white p-6 border border-gray-200 rounded-xl">
+      <div className="bg-white p-5 border border-gray-200 rounded-xl">
 
         {/* Row 1 - Header */}
-        <div className="mb-6">
+        <div className="mb-5">
           <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">User Management</h1>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">User Management</h1>
             <div className="flex items-center space-x-1">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+              <p className="text-[8px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-2 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
                 title="Refresh users"
               >
                 <IoMdRefresh
-                  className={`w-5 h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-4 h-4 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -671,58 +671,58 @@ const Users = () => {
         </div>
 
         {/* Row 2 - Controls */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-5">
           {/* Left side - Pagination Control */}
-          <div className="flex items-center space-x-2">
-            <span className="text-base text-gray-700 font-medium">Showing</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-sm text-gray-700 font-medium">Showing</span>
             <div className="flex items-center space-x-1">
               <input
                 type="number"
                 value={usersPerPage}
                 onChange={(e) => setUsersPerPage(Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-16 px-2 py-1 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-12 px-1.5 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
               <div className="flex flex-col">
                 <button
                   onClick={() => handleUsersPerPageChange(1)}
-                  className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
+                  className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-base" />
+                  <MdKeyboardArrowUp className="text-sm" />
                 </button>
                 <button
                   onClick={() => handleUsersPerPageChange(-1)}
-                  className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
+                  className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-base" />
+                  <MdKeyboardArrowDown className="text-sm" />
                 </button>
               </div>
             </div>
-            <span className="text-base text-gray-700 font-medium">Users</span>
+            <span className="text-sm text-gray-700 font-medium">Users</span>
           </div>
 
           {/* Right side - Search, Filter dropdown, Add button */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* Search */}
             <div className="relative">
-              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
               <input
                 type="text"
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
-            <div className="flex items-center space-x-2">
-              <label className="text-base text-gray-700 font-medium">Filter by:</label>
+            <div className="flex items-center space-x-1.5">
+              <label className="text-sm text-gray-700 font-medium">Filter by:</label>
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-base"
+                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-sm"
               >
                 <option value="all">All</option>
                 <option value="active">Active</option>
@@ -736,7 +736,7 @@ const Users = () => {
             {/* Add Button */}
             <button
               onClick={openAddModal}
-              className="px-5 py-2.5 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-base font-semibold"
+              className="px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-sm font-semibold"
             >
               + Add User
             </button>
@@ -748,8 +748,8 @@ const Users = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-5 gap-4 text-sm font-medium text-gray-700 w-full">
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
+                <div className="grid grid-cols-5 gap-3 text-xs font-medium text-gray-700 w-full">
                   <div>Name</div>
                   <div>Email</div>
                   <div>Office</div>
@@ -761,38 +761,38 @@ const Users = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-6 py-4 h-16 flex items-center animate-pulse">
-                    <div className="grid grid-cols-5 gap-4 items-center w-full">
+                  <div key={index} className="px-5 py-3 h-12 flex items-center animate-pulse">
+                    <div className="grid grid-cols-5 gap-3 items-center w-full">
                       {/* Name Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-32"></div>
+                      <div className="h-3 bg-gray-200 rounded w-28"></div>
 
                       {/* Email Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-40"></div>
+                      <div className="h-3 bg-gray-200 rounded w-32"></div>
 
                       {/* Office Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
 
                       {/* Role Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-28"></div>
+                      <div className="h-3 bg-gray-200 rounded w-24"></div>
 
                       {/* Action Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-6"></div>
+                      <div className="h-3 bg-gray-200 rounded w-5"></div>
                     </div>
                   </div>
                 ))}
               </div>
             </>
           ) : currentUsers.length === 0 ? (
-            <div className="text-center py-12">
-              <MdPerson className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No users found</h3>
-              <p className="text-base text-gray-500">Try adjusting your search or filter criteria</p>
+            <div className="text-center py-10">
+              <MdPerson className="text-5xl text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No users found</h3>
+              <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-5 gap-4 text-base font-bold text-gray-700 w-full">
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
+                <div className="grid grid-cols-5 gap-3 text-sm font-bold text-gray-700 w-full">
                   <div>Name</div>
                   <div>Email</div>
                   <div>Office</div>
@@ -804,36 +804,36 @@ const Users = () => {
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
                 {currentUsers.map((user) => (
-                  <div key={user._id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
-                    <div className="grid grid-cols-5 gap-4 items-center w-full">
+                  <div key={user._id} className="px-5 py-3 hover:bg-gray-50 transition-colors h-12 flex items-center">
+                    <div className="grid grid-cols-5 gap-3 items-center w-full">
                       {/* Name */}
-                      <div className="text-base font-bold text-gray-900 truncate" title={user.name}>
+                      <div className="text-sm font-bold text-gray-900 truncate" title={user.name}>
                         {user.name}
                       </div>
 
                       {/* Email */}
-                      <div className="text-base font-medium text-gray-900 truncate" title={user.email}>
+                      <div className="text-sm font-medium text-gray-900 truncate" title={user.email}>
                         {user.email}
                       </div>
 
                       {/* Office */}
-                      <div className="text-base font-medium text-gray-900 truncate" title={user.office || 'N/A'}>
+                      <div className="text-sm font-medium text-gray-900 truncate" title={user.office || 'N/A'}>
                         {user.office || 'N/A'}
                       </div>
 
                       {/* Role */}
-                      <div className="text-base font-medium text-gray-900 truncate" title={user.role || 'N/A'}>
+                      <div className="text-sm font-medium text-gray-900 truncate" title={user.role || 'N/A'}>
                         {user.role || 'N/A'}
                       </div>
 
                       {/* Action */}
-                      <div className="text-sm">
+                      <div className="text-xs">
                         <button
                           onClick={() => openEditModal(user)}
-                          className="text-[#1F3463] hover:text-[#1F3463]/80 p-1 rounded"
+                          className="text-[#1F3463] hover:text-[#1F3463]/80 p-0.5 rounded"
                           title="Edit user"
                         >
-                          <FiEdit3 className="h-5 w-5" />
+                          <FiEdit3 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
@@ -846,22 +846,22 @@ const Users = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+          <div className="mt-5 flex items-center justify-between">
+            <div className="text-xs text-gray-700">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
 
               {/* Current Page Number */}
               <button
-                className="px-3 py-2 text-sm font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
+                className="px-2.5 py-1.5 text-xs font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
               >
                 {currentPage}
               </button>
@@ -869,7 +869,7 @@ const Users = () => {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -882,22 +882,22 @@ const Users = () => {
       {showAddEditModal && (
         <Portal>
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-lg p-5 w-full max-w-2xl mx-3 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">
               {editingUser ? 'Edit User' : 'Add New User'}
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-xs font-medium text-gray-900 mb-1.5">
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
                     formErrors.name
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-blue-500'
@@ -905,20 +905,20 @@ const Users = () => {
                   placeholder="Enter full name"
                 />
                 {formErrors.name && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
+                  <p className="mt-0.5 text-xs text-red-600">{formErrors.name}</p>
                 )}
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-xs font-medium text-gray-900 mb-1.5">
                   Email Address <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
                     formErrors.email
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-blue-500'
@@ -926,19 +926,19 @@ const Users = () => {
                   placeholder="Enter email address"
                 />
                 {formErrors.email && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                  <p className="mt-0.5 text-xs text-red-600">{formErrors.email}</p>
                 )}
               </div>
 
               {/* Office */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-xs font-medium text-gray-900 mb-1.5">
                   Office <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.office}
                   onChange={(e) => handleInputChange('office', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
                     formErrors.office
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-blue-500'
@@ -952,19 +952,19 @@ const Users = () => {
                   ))}
                 </select>
                 {formErrors.office && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.office}</p>
+                  <p className="mt-0.5 text-xs text-red-600">{formErrors.office}</p>
                 )}
               </div>
 
               {/* Access Level */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-xs font-medium text-gray-900 mb-1.5">
                   Access Level <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.accessLevel}
                   onChange={(e) => handleInputChange('accessLevel', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
                     formErrors.accessLevel
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-blue-500'
@@ -979,56 +979,56 @@ const Users = () => {
                   ))}
                 </select>
                 {formErrors.accessLevel && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.accessLevel}</p>
+                  <p className="mt-0.5 text-xs text-red-600">{formErrors.accessLevel}</p>
                 )}
                 {!formData.office && (
-                  <p className="mt-1 text-sm text-gray-500">Please select an office first</p>
+                  <p className="mt-0.5 text-xs text-gray-500">Please select an office first</p>
                 )}
               </div>
 
               {/* Page Access Control */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-3">
+                <label className="block text-xs font-medium text-gray-900 mb-2.5">
                   Page Access Permissions <span className="text-red-500">*</span>
                 </label>
                 {!formData.office && (
-                  <p className="text-sm text-gray-500 mb-2">Please select an office first to see available pages</p>
+                  <p className="text-xs text-gray-500 mb-1.5">Please select an office first to see available pages</p>
                 )}
                 {formData.office && formData.office !== 'MIS' && formData.accessLevel !== 'super_admin' && (
-                  <p className="text-sm text-blue-600 mb-2">
+                  <p className="text-xs text-blue-600 mb-1.5">
                     You can only select pages from the {formData.office} office
                   </p>
                 )}
                 {formData.office === 'MIS' && formData.accessLevel === 'super_admin' && (
-                  <p className="text-sm text-green-600 mb-2">
+                  <p className="text-xs text-green-600 mb-1.5">
                     As MIS Super Admin, you can select pages from all offices
                   </p>
                 )}
-                <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
+                <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
                   {/* Group pages by category */}
                   {['MIS', 'Registrar', 'Admissions', 'Senior Management'].map(category => {
                     const categoryPages = adminPages.filter(page => page.category === category);
                     if (categoryPages.length === 0) return null;
 
                     return (
-                      <div key={category} className="mb-4 last:mb-0">
-                        <h4 className="text-sm font-semibold text-[#1F3463] mb-2">{category} Pages</h4>
-                        <div className="space-y-2">
+                      <div key={category} className="mb-3 last:mb-0">
+                        <h4 className="text-xs font-semibold text-[#1F3463] mb-1.5">{category} Pages</h4>
+                        <div className="space-y-1.5">
                           {categoryPages.map(page => {
                             const isDisabled = isPageCheckboxDisabled(page);
                             return (
                               <label
                                 key={page.path}
-                                className={`flex items-center space-x-2 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                className={`flex items-center space-x-1.5 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                               >
                                 <input
                                   type="checkbox"
                                   checked={formData.pageAccess.includes(page.path)}
                                   onChange={(e) => handlePageAccessChange(page.path, e.target.checked)}
                                   disabled={isDisabled}
-                                  className="rounded border-gray-300 text-[#1F3463] focus:ring-[#1F3463] disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="rounded border-gray-300 text-[#1F3463] focus:ring-[#1F3463] disabled:opacity-50 disabled:cursor-not-allowed w-3 h-3"
                                 />
-                                <span className="text-sm text-gray-700">{page.label}</span>
+                                <span className="text-xs text-gray-700">{page.label}</span>
                               </label>
                             );
                           })}
@@ -1038,31 +1038,31 @@ const Users = () => {
                   })}
                 </div>
                 {formErrors.pageAccess && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.pageAccess}</p>
+                  <p className="mt-0.5 text-xs text-red-600">{formErrors.pageAccess}</p>
                 )}
               </div>
 
               {/* Status (for editing) */}
               {editingUser && (
                 <div>
-                  <label className="flex items-center space-x-2">
+                  <label className="flex items-center space-x-1.5">
                     <input
                       type="checkbox"
                       checked={formData.isActive}
                       onChange={(e) => handleInputChange('isActive', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3 h-3"
                     />
-                    <span className="text-sm font-medium text-gray-900">Active User</span>
+                    <span className="text-xs font-medium text-gray-900">Active User</span>
                   </label>
                 </div>
               )}
 
               {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-2.5 pt-3">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="px-3 py-1.5 text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
                   disabled={isSubmitting}
                 >
                   Cancel
@@ -1070,7 +1070,7 @@ const Users = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
                   style={{ backgroundColor: '#1F3463' }}
                 >
                   {isSubmitting ? 'Saving...' : (editingUser ? 'Update User' : 'Create User')}

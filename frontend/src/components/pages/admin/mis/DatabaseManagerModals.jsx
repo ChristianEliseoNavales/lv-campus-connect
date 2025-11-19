@@ -150,7 +150,7 @@ export const EditRecordModal = ({
           <select
             value={value}
             onChange={(e) => onInputChange(field.name, e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             required={field.required}
@@ -169,7 +169,7 @@ export const EditRecordModal = ({
           <textarea
             value={value}
             onChange={(e) => onInputChange(field.name, e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             rows={3}
@@ -183,7 +183,7 @@ export const EditRecordModal = ({
             type="checkbox"
             checked={value === true || value === 'true'}
             onChange={(e) => onInputChange(field.name, e.target.checked)}
-            className="w-4 h-4 text-[#1F3463] border-gray-300 rounded focus:ring-[#1F3463]"
+            className="w-3 h-3 text-[#1F3463] border-gray-300 rounded focus:ring-[#1F3463]"
           />
         );
 
@@ -193,7 +193,7 @@ export const EditRecordModal = ({
             type="number"
             value={value}
             onChange={(e) => onInputChange(field.name, e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             min={field.min}
@@ -208,7 +208,7 @@ export const EditRecordModal = ({
             type={field.type}
             value={value}
             onChange={(e) => onInputChange(field.name, e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             required={field.required}
@@ -218,52 +218,52 @@ export const EditRecordModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex items-center justify-between p-5 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">
             {editingRecord ? `Edit ${selectedModel} Record` : `Add New ${selectedModel} Record`}
           </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <MdClose className="w-6 h-6" />
+            <MdClose className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div className="space-y-3">
             {getFormFields().map((field) => (
               <div key={field.name}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">
                   {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                  {field.required && <span className="text-red-500 ml-0.5">*</span>}
                 </label>
                 {renderField(field)}
                 {formErrors[field.name] && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors[field.name]}</p>
+                  <p className="text-red-500 text-xs mt-0.5">{formErrors[field.name]}</p>
                 )}
               </div>
             ))}
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-2.5 mt-5 pt-5 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center space-x-2 px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-colors"
+              className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-colors"
             >
-              <MdSave className="w-4 h-4" />
+              <MdSave className="w-3 h-3" />
               <span>{editingRecord ? 'Update' : 'Create'} Record</span>
             </button>
           </div>
@@ -293,50 +293,50 @@ export const DeleteRecordModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <MdWarning className="w-6 h-6 text-red-500 mr-2" />
+        <div className="flex items-center justify-between p-5 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+            <MdWarning className="w-5 h-5 text-red-500 mr-1.5" />
             Confirm Delete
           </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <MdClose className="w-6 h-6" />
+            <MdClose className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          <p className="text-gray-700 mb-4">
+        <div className="p-5">
+          <p className="text-sm text-gray-700 mb-3">
             Are you sure you want to delete this {selectedModel} record?
           </p>
-          <div className="bg-gray-50 rounded-lg p-3 mb-4">
-            <p className="text-sm text-gray-600">
+          <div className="bg-gray-50 rounded-lg p-2.5 mb-3">
+            <p className="text-xs text-gray-600">
               <strong>Record:</strong> {getRecordIdentifier()}
             </p>
           </div>
-          <p className="text-sm text-red-600">
+          <p className="text-xs text-red-600">
             <strong>Warning:</strong> This action cannot be undone.
           </p>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+        <div className="flex justify-end space-x-2.5 p-5 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            <MdDelete className="w-4 h-4" />
+            <MdDelete className="w-3 h-3" />
             <span>Delete Record</span>
           </button>
         </div>
@@ -385,66 +385,66 @@ export const DeleteAllRecordsModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <MdWarning className="w-6 h-6 text-red-500 mr-2" />
+        <div className="flex items-center justify-between p-5 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+            <MdWarning className="w-5 h-5 text-red-500 mr-1.5" />
             Confirm Delete All
           </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <MdClose className="w-6 h-6" />
+            <MdClose className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          <p className="text-gray-700 mb-4">
+        <div className="p-5">
+          <p className="text-sm text-gray-700 mb-3">
             Are you sure you want to delete <strong>ALL {recordCount}</strong> {selectedModel} records?
           </p>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
             <div className="flex items-start">
-              <MdWarning className="w-5 h-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+              <MdWarning className="w-4 h-4 text-red-500 mt-0.5 mr-1.5 flex-shrink-0" />
               <div>
-                <p className="text-sm text-red-800 font-medium mb-1">
+                <p className="text-xs text-red-800 font-medium mb-0.5">
                   DANGER: This will permanently delete ALL records!
                 </p>
-                <p className="text-sm text-red-700">
+                <p className="text-xs text-red-700">
                   This action will remove all {selectedModel} records from the database and cannot be undone.
                 </p>
               </div>
             </div>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-xs text-gray-600">
             Type <strong>DELETE ALL</strong> below to confirm:
           </p>
           <input
             type="text"
             value={confirmText}
             placeholder="Type DELETE ALL to confirm"
-            className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full mt-1.5 px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
             onChange={handleConfirmTextChange}
           />
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+        <div className="flex justify-end space-x-2.5 p-5 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={!isConfirmEnabled}
-            className="delete-all-button flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="delete-all-button flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <MdDeleteSweep className="w-4 h-4" />
+            <MdDeleteSweep className="w-3 h-3" />
             <span>Delete All Records</span>
           </button>
         </div>

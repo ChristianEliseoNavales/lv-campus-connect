@@ -150,45 +150,45 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-sm bg-white hover:bg-gray-50 transition-colors"
+        className="flex items-center space-x-1.5 px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-xs bg-white hover:bg-gray-50 transition-colors"
       >
-        <HiCalendar className="text-gray-400 text-lg" />
+        <HiCalendar className="text-gray-400 text-base" />
         <span className="text-gray-700">{formatDate(value)}</span>
       </button>
 
       {/* Calendar Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 min-w-[280px]">
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 min-w-[224px]">
           {/* Month Navigation */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <button
               type="button"
               onClick={() => navigateMonth(-1)}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              className="p-0.5 hover:bg-gray-100 rounded transition-colors"
             >
-              <HiChevronLeft className="text-gray-600" />
+              <HiChevronLeft className="text-gray-600 text-sm" />
             </button>
-            <h3 className="text-sm font-medium text-gray-900">{monthYear}</h3>
+            <h3 className="text-xs font-medium text-gray-900">{monthYear}</h3>
             <button
               type="button"
               onClick={() => navigateMonth(1)}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              className="p-0.5 hover:bg-gray-100 rounded transition-colors"
             >
-              <HiChevronRight className="text-gray-600" />
+              <HiChevronRight className="text-gray-600 text-sm" />
             </button>
           </div>
 
           {/* Days of Week Header */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 mb-1.5">
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-              <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+              <div key={day} className="text-center text-[10px] font-medium text-gray-500 py-1.5">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar Days */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {days.map((date, index) => {
               const isFutureDate = date && isDateInFuture(date);
               return (
@@ -198,7 +198,7 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates
                   onClick={() => date && !isFutureDate && handleDateSelect(date)}
                   disabled={!date || isFutureDate}
                   className={`
-                    h-8 w-8 text-sm rounded transition-colors
+                    h-6 w-6 text-xs rounded transition-colors
                     ${!date ? 'invisible' : ''}
                     ${isFutureDate
                       ? 'text-gray-300 cursor-not-allowed'
@@ -217,11 +217,11 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates
           </div>
 
           {/* Footer Buttons */}
-          <div className="mt-4 pt-3 border-t border-gray-200 space-y-2">
+          <div className="mt-3 pt-2.5 border-t border-gray-200 space-y-1.5">
             <button
               type="button"
               onClick={() => handleDateSelect(getPhilippineDate())}
-              className="w-full px-3 py-2 text-sm text-[#1F3463] hover:bg-[#1F3463]/5 rounded transition-colors"
+              className="w-full px-2.5 py-1.5 text-xs text-[#1F3463] hover:bg-[#1F3463]/5 rounded transition-colors"
             >
               Today
             </button>
@@ -229,7 +229,7 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates
               <button
                 type="button"
                 onClick={() => handleDateSelect(null)}
-                className="w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                className="w-full px-2.5 py-1.5 text-xs text-gray-600 hover:bg-gray-50 rounded transition-colors"
               >
                 All Dates
               </button>

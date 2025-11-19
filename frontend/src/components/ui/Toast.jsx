@@ -97,12 +97,12 @@ const Toast = ({
 
   // Position configurations
   const positionConfig = {
-    'top-right': 'top-4 right-4',
-    'top-center': 'top-4 left-1/2 transform -translate-x-1/2',
-    'top-left': 'top-4 left-4',
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-center': 'bottom-4 left-1/2 transform -translate-x-1/2',
-    'bottom-left': 'bottom-4 left-4'
+    'top-right': 'top-3 right-3',
+    'top-center': 'top-3 left-1/2 transform -translate-x-1/2',
+    'top-left': 'top-3 left-3',
+    'bottom-right': 'bottom-3 right-3',
+    'bottom-center': 'bottom-3 left-1/2 transform -translate-x-1/2',
+    'bottom-left': 'bottom-3 left-3'
   };
 
   // Animation classes
@@ -119,7 +119,7 @@ const Toast = ({
   const IconComponent = config.icon;
 
   return (
-    <div 
+    <div
       className={`
         fixed z-50 max-w-sm w-full
         ${positionConfig[position]}
@@ -127,31 +127,31 @@ const Toast = ({
         ${className}
       `}
     >
-      <div 
+      <div
         className={`
           ${config.bgColor} ${config.borderColor}
-          border rounded-lg shadow-lg p-4
+          border rounded-lg shadow-lg p-3
           transition-all duration-300 ease-in-out
         `}
       >
         <div className="flex items-start">
           {/* Icon */}
           <div className="flex-shrink-0">
-            <IconComponent 
-              className={`h-6 w-6 ${config.iconColor}`} 
-              aria-hidden="true" 
+            <IconComponent
+              className={`h-5 w-5 ${config.iconColor}`}
+              aria-hidden="true"
             />
           </div>
 
           {/* Content */}
-          <div className="ml-3 flex-1">
+          <div className="ml-2.5 flex-1">
             {title && (
-              <h3 className={`text-sm font-semibold ${config.titleColor}`}>
+              <h3 className={`text-xs font-semibold ${config.titleColor}`}>
                 {title}
               </h3>
             )}
             {message && (
-              <p className={`text-sm ${config.messageColor} ${title ? 'mt-1' : ''}`}>
+              <p className={`text-xs ${config.messageColor} ${title ? 'mt-0.5' : ''}`}>
                 {message}
               </p>
             )}
@@ -159,18 +159,18 @@ const Toast = ({
 
           {/* Close Button */}
           {showCloseButton && (
-            <div className="ml-4 flex-shrink-0">
+            <div className="ml-3 flex-shrink-0">
               <button
                 onClick={handleClose}
                 className={`
-                  inline-flex rounded-md p-1.5 transition-colors duration-150
+                  inline-flex rounded-md p-1 transition-colors duration-150
                   ${config.closeButtonColor}
                   hover:bg-white hover:bg-opacity-20
                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
                 `}
               >
                 <span className="sr-only">Dismiss</span>
-                <XMarkIcon className="h-4 w-4" aria-hidden="true" />
+                <XMarkIcon className="h-3 w-3" aria-hidden="true" />
               </button>
             </div>
           )}

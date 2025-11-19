@@ -209,9 +209,9 @@ const Ratings = () => {
       stars.push(
         <span key={i}>
           {i <= rating ? (
-            <MdStar className="text-[#1F3463] text-2xl" />
+            <MdStar className="text-[#1F3463] text-xl" />
           ) : (
-            <MdStarBorder className="text-gray-300 text-2xl" />
+            <MdStarBorder className="text-gray-300 text-xl" />
           )}
         </span>
       );
@@ -220,26 +220,26 @@ const Ratings = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Main Content Container - White background similar to Settings.jsx */}
-      <div className="bg-white p-6 border border-gray-200 rounded-xl">
+      <div className="bg-white p-5 border border-gray-200 rounded-xl">
 
         {/* Row 1 - Header */}
-        <div className="mb-6">
+        <div className="mb-5">
           <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Ratings</h1>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Ratings</h1>
             <div className="flex items-center space-x-1">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+              <p className="text-[8px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-2 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
                 title="Refresh ratings"
               >
                 <IoMdRefresh
-                  className={`w-6 h-6 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-5 h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -247,42 +247,42 @@ const Ratings = () => {
         </div>
 
         {/* Row 2 - Controls */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-5">
           {/* Left side - Pagination Control */}
-          <div className="flex items-center space-x-2">
-            <span className="text-base text-gray-700 font-medium">Showing</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-sm text-gray-700 font-medium">Showing</span>
             <div className="flex items-center space-x-1">
               <input
                 type="number"
                 value={logsPerPage}
                 onChange={(e) => updateState('logsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-16 px-2 py-1 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-12 px-1.5 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
               <div className="flex flex-col">
                 <button
                   onClick={() => handleLogsPerPageChange(1)}
-                  className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
+                  className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-base" />
+                  <MdKeyboardArrowUp className="text-sm" />
                 </button>
                 <button
                   onClick={() => handleLogsPerPageChange(-1)}
-                  className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
+                  className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-base" />
+                  <MdKeyboardArrowDown className="text-sm" />
                 </button>
               </div>
             </div>
-            <span className="text-base text-gray-700 font-medium">Ratings</span>
+            <span className="text-sm text-gray-700 font-medium">Ratings</span>
           </div>
 
           {/* Right side - Date Filter, Search, Filter dropdown */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* Date Filter */}
-            <div className="flex items-center space-x-2">
-              <label className="text-base text-gray-700 font-medium">Date:</label>
+            <div className="flex items-center space-x-1.5">
+              <label className="text-sm text-gray-700 font-medium">Date:</label>
               <DatePicker
                 value={selectedDate}
                 onChange={(date) => updateState('selectedDate', date)}
@@ -292,23 +292,23 @@ const Ratings = () => {
 
             {/* Search */}
             <div className="relative">
-              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
               <input
                 type="text"
                 placeholder="Search ratings..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
-            <div className="flex items-center space-x-2">
-              <label className="text-base text-gray-700 font-medium">Filter by:</label>
+            <div className="flex items-center space-x-1.5">
+              <label className="text-sm text-gray-700 font-medium">Filter by:</label>
               <select
                 value={filterBy}
                 onChange={(e) => updateState('filterBy', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               >
                 <option value="all">All Ratings</option>
                 <option value="5_star">5 Stars</option>
@@ -328,8 +328,8 @@ const Ratings = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-4 gap-4 text-base font-bold text-gray-700 w-full">
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
+                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-gray-700 w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>Name</div>
@@ -340,14 +340,14 @@ const Ratings = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-6 py-4 h-16 flex items-center animate-pulse">
-                    <div className="grid grid-cols-4 gap-4 items-center w-full">
-                      <div className="h-4 bg-gray-200 rounded w-16"></div>
-                      <div className="h-4 bg-gray-200 rounded w-20"></div>
-                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                  <div key={index} className="px-5 py-3 h-12 flex items-center animate-pulse">
+                    <div className="grid grid-cols-4 gap-3 items-center w-full">
+                      <div className="h-3 bg-gray-200 rounded w-12"></div>
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
                       <div className="flex space-x-1">
                         {[...Array(5)].map((_, starIndex) => (
-                          <div key={starIndex} className="w-5 h-5 bg-gray-200 rounded"></div>
+                          <div key={starIndex} className="w-4 h-4 bg-gray-200 rounded"></div>
                         ))}
                       </div>
                     </div>
@@ -356,16 +356,16 @@ const Ratings = () => {
               </div>
             </>
           ) : currentRatings.length === 0 ? (
-            <div className="text-center py-12">
-              <MdStar className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No ratings found</h3>
-              <p className="text-base text-gray-500">Try adjusting your search or filter criteria</p>
+            <div className="text-center py-10">
+              <MdStar className="text-5xl text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No ratings found</h3>
+              <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-4 gap-4 text-base font-bold text-gray-700 w-full">
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
+                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-gray-700 w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>Name</div>
@@ -381,20 +381,20 @@ const Ratings = () => {
                   const { time, date } = formatDateTime(dateToFormat);
 
                   return (
-                    <div key={rating._id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
-                      <div className="grid grid-cols-4 gap-4 items-center w-full">
+                    <div key={rating._id} className="px-5 py-3 hover:bg-gray-50 transition-colors h-12 flex items-center">
+                      <div className="grid grid-cols-4 gap-3 items-center w-full">
                         {/* Time */}
-                        <div className="text-base font-bold text-gray-900 truncate">
+                        <div className="text-sm font-bold text-gray-900 truncate">
                           {time}
                         </div>
 
                         {/* Date */}
-                        <div className="text-base font-medium text-gray-900 truncate">
+                        <div className="text-sm font-medium text-gray-900 truncate">
                           {date}
                         </div>
 
                         {/* Name */}
-                        <div className="text-base font-medium text-gray-900 truncate" title={rating.customerName || 'Unknown Customer'}>
+                        <div className="text-sm font-medium text-gray-900 truncate" title={rating.customerName || 'Unknown Customer'}>
                           {rating.customerName || 'Unknown Customer'}
                         </div>
 
@@ -413,22 +413,22 @@ const Ratings = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6">
-            <div className="text-base text-gray-700 font-medium">
+          <div className="flex items-center justify-between mt-5">
+            <div className="text-sm text-gray-700 font-medium">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredRatings.length)} of {filteredRatings.length} ratings
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-base font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
 
               {/* Current Page Number */}
               <button
-                className="px-3 py-2 text-base font-semibold text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
+                className="px-2.5 py-1.5 text-sm font-semibold text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
               >
                 {currentPage}
               </button>
@@ -436,7 +436,7 @@ const Ratings = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-base font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

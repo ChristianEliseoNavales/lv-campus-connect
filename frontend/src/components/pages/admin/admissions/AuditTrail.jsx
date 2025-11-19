@@ -335,29 +335,29 @@ const AuditTrail = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Header Skeleton */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+          <div className="flex items-center space-x-2.5">
+            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
             <div>
-              <div className="h-8 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
+              <div className="h-6 bg-gray-200 rounded w-40 mb-1.5 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-52 animate-pulse"></div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div className="w-24 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
-            <div className="w-20 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="flex items-center space-x-2.5">
+            <div className="w-20 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="w-16 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
           </div>
         </div>
 
         {/* Filters Skeleton */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             {[...Array(5)].map((_, index) => (
               <div key={index}>
-                <div className="h-4 bg-gray-200 rounded w-20 mb-2 animate-pulse"></div>
-                <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+                <div className="h-3 bg-gray-200 rounded w-16 mb-1.5 animate-pulse"></div>
+                <div className="h-8 bg-gray-200 rounded-lg animate-pulse"></div>
               </div>
             ))}
           </div>
@@ -367,22 +367,22 @@ const AuditTrail = () => {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="divide-y divide-gray-200">
             {[...Array(7)].map((_, index) => (
-              <div key={index} className="p-6 animate-pulse">
+              <div key={index} className="p-5 animate-pulse">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
-                      <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-                      <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
-                    </div>
-                    <div className="h-4 bg-gray-200 rounded w-96 mb-2 animate-pulse"></div>
-                    <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-2.5 mb-1.5">
+                      <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
                       <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
-                      <div className="h-3 bg-gray-200 rounded w-32 animate-pulse"></div>
+                      <div className="h-5 bg-gray-200 rounded-full w-12 animate-pulse"></div>
+                    </div>
+                    <div className="h-3 bg-gray-200 rounded w-80 mb-1.5 animate-pulse"></div>
+                    <div className="flex items-center space-x-3 text-xs">
+                      <div className="h-2.5 bg-gray-200 rounded w-20 animate-pulse"></div>
+                      <div className="h-2.5 bg-gray-200 rounded w-24 animate-pulse"></div>
                     </div>
                   </div>
-                  <div className="ml-4">
-                    <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                  <div className="ml-3">
+                    <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
                   </div>
                 </div>
               </div>
@@ -392,10 +392,10 @@ const AuditTrail = () => {
 
         {/* Pagination Skeleton */}
         <div className="flex items-center justify-between">
-          <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-          <div className="flex space-x-2">
+          <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
+          <div className="flex space-x-1.5">
             {[...Array(5)].map((_, index) => (
-              <div key={index} className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+              <div key={index} className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -404,56 +404,56 @@ const AuditTrail = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <MdHistory className="text-4xl text-[#1F3463]" />
+        <div className="flex items-center space-x-2.5">
+          <MdHistory className="text-3xl text-[#1F3463]" />
           <div>
-            <h1 className="text-4xl font-bold text-[#1F3463] tracking-tight">Audit Trail</h1>
-            <p className="text-base text-gray-600">Admissions Department Security & Activity Log</p>
+            <h1 className="text-3xl font-bold text-[#1F3463] tracking-tight">Audit Trail</h1>
+            <p className="text-sm text-gray-600">Admissions Department Security & Activity Log</p>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
           <button
             onClick={handleRefresh}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg font-semibold text-base hover:bg-gray-700 transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-600 text-white rounded-lg font-semibold text-sm hover:bg-gray-700 transition-colors"
           >
-            <MdRefresh className="text-xl" />
+            <MdRefresh className="text-lg" />
             <span>Refresh</span>
           </button>
           <button
             onClick={handleExport}
-            className="flex items-center space-x-2 px-4 py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-base hover:bg-[#1F3463]/90 transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#1F3463] text-white rounded-lg font-semibold text-sm hover:bg-[#1F3463]/90 transition-colors"
           >
-            <MdDownload className="text-xl" />
+            <MdDownload className="text-lg" />
             <span>Export</span>
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           {/* Search */}
           <div className="relative">
-            <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+            <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
             <input
               type="text"
               placeholder="Search audit logs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+              className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
             />
           </div>
 
           {/* Category Filter */}
           <div className="relative">
-            <MdFilterList className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+            <MdFilterList className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent appearance-none"
+              className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent appearance-none"
             >
               <option value="all">All Categories</option>
               <option value="user_action">User Actions</option>
@@ -468,7 +468,7 @@ const AuditTrail = () => {
             <select
               value={filterSeverity}
               onChange={(e) => setFilterSeverity(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
             >
               <option value="all">All Severities</option>
               <option value="high">High</option>
@@ -483,7 +483,7 @@ const AuditTrail = () => {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
             >
               <option value="all">All Time</option>
               <option value="today">Today</option>
@@ -493,8 +493,8 @@ const AuditTrail = () => {
           </div>
 
           {/* Results Count */}
-          <div className="flex items-center justify-center bg-gray-50 rounded-lg px-4 py-2">
-            <span className="text-base text-gray-600 font-medium">
+          <div className="flex items-center justify-center bg-gray-50 rounded-lg px-3 py-1.5">
+            <span className="text-sm text-gray-600 font-medium">
               {filteredLogs.length} log{filteredLogs.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -504,54 +504,54 @@ const AuditTrail = () => {
       {/* Audit Logs Table */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {currentLogs.length === 0 ? (
-          <div className="text-center py-12">
-            <MdHistory className="text-6xl text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No audit logs found</h3>
-            <p className="text-base text-gray-500">Try adjusting your search or filter criteria</p>
+          <div className="text-center py-10">
+            <MdHistory className="text-5xl text-gray-300 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No audit logs found</h3>
+            <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
             {currentLogs.map((log) => (
-              <div key={log.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div key={log.id} className="p-5 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between">
                   {/* Main Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex items-center space-x-2.5 mb-1.5">
                       {/* Category Icon */}
-                      <div className="flex-shrink-0 text-gray-500 text-xl">
+                      <div className="flex-shrink-0 text-gray-500 text-lg">
                         {getCategoryIcon(log.category)}
                       </div>
 
                       {/* Action & Severity */}
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-xl font-bold text-gray-900">{log.action}</h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold border ${getSeverityColor(log.severity)}`}>
+                      <div className="flex items-center space-x-2.5">
+                        <h3 className="text-lg font-bold text-gray-900">{log.action}</h3>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${getSeverityColor(log.severity)}`}>
                           {log.severity.toUpperCase()}
                         </span>
                       </div>
                     </div>
 
                     {/* Description */}
-                    <p className="text-base text-gray-700 mb-3">{log.description}</p>
+                    <p className="text-sm text-gray-700 mb-2.5">{log.description}</p>
 
                     {/* Metadata Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-base">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                       <div>
-                        <span className="font-semibold text-gray-500">User:</span>
+                        <span className="font-semibold text-gray-500 text-xs">User:</span>
                         <p className="text-gray-900 font-medium">{log.userName}</p>
-                        <p className="text-gray-500 text-sm">{log.userId}</p>
+                        <p className="text-gray-500 text-xs">{log.userId}</p>
                       </div>
                       <div>
-                        <span className="font-semibold text-gray-500">Resource:</span>
+                        <span className="font-semibold text-gray-500 text-xs">Resource:</span>
                         <p className="text-gray-900 font-medium">{log.resource}</p>
                         {log.resourceId && (
-                          <p className="text-gray-500 text-sm font-mono">{log.resourceId}</p>
+                          <p className="text-gray-500 text-xs font-mono">{log.resourceId}</p>
                         )}
                       </div>
                       <div>
-                        <span className="font-semibold text-gray-500">Source:</span>
+                        <span className="font-semibold text-gray-500 text-xs">Source:</span>
                         <p className="text-gray-900 font-medium">{log.ipAddress}</p>
-                        <p className="text-gray-500 text-sm truncate" title={log.userAgent}>
+                        <p className="text-gray-500 text-xs truncate" title={log.userAgent}>
                           {log.userAgent.split(' ')[0]}
                         </p>
                       </div>
@@ -559,13 +559,13 @@ const AuditTrail = () => {
 
                     {/* Changes (if any) */}
                     {log.changes && (log.changes.before || log.changes.after) && (
-                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                        <span className="font-semibold text-gray-500 text-base">Changes:</span>
-                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="mt-3 p-2.5 bg-gray-50 rounded-lg">
+                        <span className="font-semibold text-gray-500 text-sm">Changes:</span>
+                        <div className="mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                           {log.changes.before && (
                             <div>
                               <span className="font-semibold text-red-600">Before:</span>
-                              <pre className="mt-1 text-gray-700 whitespace-pre-wrap">
+                              <pre className="mt-0.5 text-gray-700 whitespace-pre-wrap">
                                 {JSON.stringify(log.changes.before, null, 2)}
                               </pre>
                             </div>
@@ -573,7 +573,7 @@ const AuditTrail = () => {
                           {log.changes.after && (
                             <div>
                               <span className="font-semibold text-green-600">After:</span>
-                              <pre className="mt-1 text-gray-700 whitespace-pre-wrap">
+                              <pre className="mt-0.5 text-gray-700 whitespace-pre-wrap">
                                 {JSON.stringify(log.changes.after, null, 2)}
                               </pre>
                             </div>
@@ -584,9 +584,9 @@ const AuditTrail = () => {
                   </div>
 
                   {/* Timestamp & ID */}
-                  <div className="flex-shrink-0 text-right ml-4">
-                    <p className="text-base text-gray-600 font-medium">{formatTimestamp(log.timestamp)}</p>
-                    <p className="text-sm text-gray-500 font-mono mt-1">{log.id}</p>
+                  <div className="flex-shrink-0 text-right ml-3">
+                    <p className="text-sm text-gray-600 font-medium">{formatTimestamp(log.timestamp)}</p>
+                    <p className="text-xs text-gray-500 font-mono mt-0.5">{log.id}</p>
                   </div>
                 </div>
               </div>
@@ -597,22 +597,22 @@ const AuditTrail = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-3">
           <div className="flex items-center justify-between">
-            <div className="text-base text-gray-700 font-medium">
+            <div className="text-sm text-gray-700 font-medium">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredLogs.length)} of {filteredLogs.length} audit logs
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-base font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
 
               {/* Page Numbers */}
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-0.5">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
                   if (totalPages <= 5) {
@@ -629,7 +629,7 @@ const AuditTrail = () => {
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`px-3 py-2 text-base font-semibold rounded-md ${
+                      className={`px-2.5 py-1.5 text-sm font-semibold rounded-md ${
                         currentPage === pageNum
                           ? 'text-white bg-[#1F3463]'
                           : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
@@ -644,7 +644,7 @@ const AuditTrail = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-base font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

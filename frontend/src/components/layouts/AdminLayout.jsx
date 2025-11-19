@@ -485,19 +485,19 @@ const AdminLayout = ({ children }) => {
 
   // Icon components for header
   const UserIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   );
 
   const ChevronDownIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
     </svg>
   );
 
   const LogoutIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
     </svg>
   );
@@ -506,20 +506,20 @@ const AdminLayout = ({ children }) => {
     <div className="min-h-screen admin-layout" style={{ backgroundColor: '#efefef' }}>
       {/* Sidebar - fixed position, full height, no scrolling */}
       <div
-        className={`fixed left-0 top-0 h-screen shadow-xl transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-20' : 'w-72'} flex flex-col z-30 rounded-tr-3xl rounded-br-3xl`}
+        className={`fixed left-0 top-0 h-screen shadow-xl transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-16' : 'w-60'} flex flex-col z-30 rounded-tr-3xl rounded-br-3xl`}
         style={{
           background: 'linear-gradient(to bottom, #161F55 0%, #161F55 70%, #3044BB 100%)',
           // Ensure smooth transitions by preventing layout shifts
-          minWidth: isSidebarCollapsed ? '5rem' : '18rem'
+          minWidth: isSidebarCollapsed ? '4rem' : '15rem'
         }}
       >
         {/* Logo Section - centered */}
-        <div className="p-6 flex flex-col items-center">
+        <div className="p-5 flex flex-col items-center">
           {/* Logo - actual logo image */}
           <img
             src="/logo.png"
             alt="LV Logo"
-            className="w-16 h-16 flex-shrink-0 mb-3 object-contain"
+            className="w-12 h-12 flex-shrink-0 mb-2 object-contain"
           />
           {/* Title with fade animation - centered */}
           <div
@@ -529,23 +529,23 @@ const AdminLayout = ({ children }) => {
                 : 'opacity-100 h-auto transform scale-y-100'
             }`}
           >
-            <h1 className="text-lg font-bold text-white whitespace-nowrap text-center font-days-one">LVCampusConnect</h1>
+            <h1 className="text-base font-bold text-white whitespace-nowrap text-center font-days-one">LVCampusConnect</h1>
           </div>
         </div>
 
         {/* Menu Label - left-aligned */}
         <div
-          className={`px-6 mb-2 transition-all duration-300 ease-in-out overflow-hidden ${
+          className={`px-5 mb-1.5 transition-all duration-300 ease-in-out overflow-hidden ${
             isSidebarCollapsed
               ? 'opacity-0 h-0 transform scale-y-0'
               : 'opacity-100 h-auto transform scale-y-100'
           }`}
         >
-          <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Menu</h2>
+          <h2 className="text-xs font-semibold text-white uppercase tracking-wider">Menu</h2>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-2">
+        <nav className="flex-1 px-3 space-y-1.5">
           {navigationItems.map((item) => {
             const IconComponent = item.icon;
 
@@ -562,14 +562,14 @@ const AdminLayout = ({ children }) => {
                   {/* Parent item - expandable */}
                   <button
                     onClick={() => setIsQueueExpanded(!isQueueExpanded)}
-                    className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-2xl transition-all duration-300 ease-in-out ${
+                    className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2.5'} px-2.5 py-2.5 rounded-2xl transition-all duration-300 ease-in-out ${
                       isAnyChildActive || isExpanded || isQueueRoute
                         ? 'bg-white/40 text-white'
                         : 'text-white hover:bg-white/10'
                     }`}
                   >
                     {/* Icon - always visible with fixed width */}
-                    <IconComponent className="text-xl flex-shrink-0" />
+                    <IconComponent className="text-lg flex-shrink-0" />
 
                     {/* Text and chevron with fade and slide animation */}
                     <div
@@ -579,13 +579,13 @@ const AdminLayout = ({ children }) => {
                           : 'opacity-100 w-auto transform translate-x-0'
                       }`}
                     >
-                      <span className="font-medium whitespace-nowrap text-white">{item.name}</span>
+                      <span className="font-medium text-sm whitespace-nowrap text-white">{item.name}</span>
                       {!isSidebarCollapsed && (
-                        <div className="ml-2">
+                        <div className="ml-1.5">
                           {isExpanded ? (
-                            <MdExpandLess className="text-lg" />
+                            <MdExpandLess className="text-base" />
                           ) : (
-                            <MdExpandMore className="text-lg" />
+                            <MdExpandMore className="text-base" />
                           )}
                         </div>
                       )}
@@ -594,20 +594,20 @@ const AdminLayout = ({ children }) => {
 
                   {/* Child items - windows */}
                   {isExpanded && !isSidebarCollapsed && (
-                    <div className="ml-6 space-y-1">
+                    <div className="ml-5 space-y-1">
                       {item.children?.map((child) => (
                         <NavLink
                           key={child.path}
                           to={child.path}
                           className={({ isActive }) =>
-                            `flex items-center px-3 py-2 rounded-xl transition-all duration-300 ease-in-out ${
+                            `flex items-center px-2.5 py-1.5 rounded-xl transition-all duration-300 ease-in-out ${
                               isActive
                                 ? 'bg-white/50 text-white'
                                 : 'text-white/80 hover:bg-white/20 hover:text-white'
                             }`
                           }
                         >
-                          <span className="font-medium text-sm">{child.name}</span>
+                          <span className="font-medium text-xs">{child.name}</span>
                         </NavLink>
                       ))}
                     </div>
@@ -623,7 +623,7 @@ const AdminLayout = ({ children }) => {
                 to={item.path}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-2xl transition-all duration-300 ease-in-out ${
+                  `flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2.5'} px-2.5 py-2.5 rounded-2xl transition-all duration-300 ease-in-out ${
                     isActive
                       ? 'bg-white/40 text-white'
                       : 'text-white hover:bg-white/10'
@@ -631,7 +631,7 @@ const AdminLayout = ({ children }) => {
                 }
               >
                 {/* Icon - always visible with fixed width */}
-                <IconComponent className="text-xl flex-shrink-0" />
+                <IconComponent className="text-lg flex-shrink-0" />
 
                 {/* Text with fade and slide animation */}
                 <div
@@ -641,7 +641,7 @@ const AdminLayout = ({ children }) => {
                       : 'opacity-100 w-auto transform translate-x-0'
                   }`}
                 >
-                  <span className="font-medium whitespace-nowrap text-white">{item.name}</span>
+                  <span className="font-medium text-sm whitespace-nowrap text-white">{item.name}</span>
                 </div>
               </NavLink>
             );
@@ -652,40 +652,40 @@ const AdminLayout = ({ children }) => {
       {/* Main Content Area - with left margin to account for fixed sidebar */}
       <div
         className="flex flex-col min-h-screen transition-all duration-300 ease-in-out"
-        style={{ marginLeft: isSidebarCollapsed ? '5rem' : '18rem' }}
+        style={{ marginLeft: isSidebarCollapsed ? '4rem' : '15rem' }}
       >
         {/* Header - sticky position with scroll-based shadow animation */}
         <header
-          className={`sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-shadow duration-300 ease-in-out ${isScrolled ? 'shadow-md' : ''}`}
+          className={`sticky top-0 z-20 px-5 py-3 flex items-center justify-between transition-shadow duration-300 ease-in-out ${isScrolled ? 'shadow-md' : ''}`}
           style={{
             backgroundColor: '#efefef'
           }}
         >
           {/* Left side: Sidebar Toggle Button and Dev Mode Indicator */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2.5">
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="w-10 h-10 rounded-full hover:opacity-80 transition-opacity flex items-center justify-center text-white"
+              className="w-8 h-8 rounded-full hover:opacity-80 transition-opacity flex items-center justify-center text-white"
               style={{ backgroundColor: '#161F55' }}
             >
               {isSidebarCollapsed ? (
-                <MdChevronRight className="text-xl" />
+                <MdChevronRight className="text-lg" />
               ) : (
-                <MdChevronLeft className="text-xl" />
+                <MdChevronLeft className="text-lg" />
               )}
             </button>
 
             {/* Development Mode Indicator */}
             {isDevelopmentMode && (
-              <div className="flex items-center space-x-2 px-3 py-1.5 bg-yellow-100 border border-yellow-300 rounded-lg">
-                <span className="text-xs font-semibold text-yellow-800">DEV MODE</span>
-                <span className="text-xs text-yellow-700">• URL-based role switching enabled</span>
+              <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-yellow-100 border border-yellow-300 rounded-lg">
+                <span className="text-[10px] font-semibold text-yellow-800">DEV MODE</span>
+                <span className="text-[10px] text-yellow-700">• URL-based role switching enabled</span>
               </div>
             )}
           </div>
 
           {/* Right side: Notification Bell and User Profile */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2.5">
             {/* Notification Bell */}
             <NotificationBell />
 
@@ -693,31 +693,31 @@ const AdminLayout = ({ children }) => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="flex items-center space-x-3 px-4 py-2 rounded-xl transition-colors text-white"
+                className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl transition-colors text-white"
                 style={{ backgroundColor: '#1F3463' }}
               >
                 <UserIcon />
-                <span className="font-medium">{getDisplayName()}</span>
+                <span className="font-medium text-sm">{getDisplayName()}</span>
                 <ChevronDownIcon />
               </button>
 
               {/* User Dropdown */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="absolute right-0 mt-1.5 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                   {/* Office Switch Buttons - only visible for users with multi-office access */}
                   {canSwitchOffices() && getOfficeSwitchButtons().map((button) => (
                     <button
                       key={button.key}
                       onClick={button.onClick}
-                      className="w-full flex items-center space-x-2 px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="w-full flex items-center space-x-1.5 px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     >
-                      <MdSwapHoriz className="w-5 h-5" />
+                      <MdSwapHoriz className="w-4 h-4" />
                       <span>{button.text}</span>
                     </button>
                   ))}
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="w-full flex items-center space-x-1.5 px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                   >
                     <LogoutIcon />
                     <span>Sign Out</span>
@@ -731,7 +731,7 @@ const AdminLayout = ({ children }) => {
         {/* Page Content - natural flow, no internal scrolling */}
         <main
           ref={mainContentRef}
-          className="flex-1 p-6"
+          className="flex-1 p-5"
           style={{ backgroundColor: '#efefef' }}
         >
           {children}
@@ -739,11 +739,11 @@ const AdminLayout = ({ children }) => {
 
         {/* Footer */}
         <footer
-          className="px-6 py-4"
+          className="px-5 py-3"
           style={{ backgroundColor: '#efefef' }}
         >
           <div className="text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500">
               © 2025 LVCampusConnect LVCC - Developed by BSIS4 Group 6
             </p>
           </div>

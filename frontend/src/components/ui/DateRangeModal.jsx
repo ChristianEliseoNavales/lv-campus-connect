@@ -88,41 +88,41 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
   return (
     <div className="fixed inset-0 z-[70] overflow-y-auto">
       {/* Overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div 
+      <div className="flex min-h-full items-center justify-center p-3">
+        <div
           className="relative bg-white rounded-lg shadow-xl w-full max-w-md"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button - Circular Navy Blue with White Border */}
           <button
             onClick={onClose}
-            className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
             aria-label="Close"
           >
-            <MdClose className="w-4 h-4" />
+            <MdClose className="w-3 h-3" />
           </button>
 
           {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-xl font-bold text-[#1F3463]">
+          <div className="p-5 border-b border-gray-200">
+            <h3 className="text-lg font-bold text-[#1F3463]">
               Select Date Range for Report
             </h3>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-xs text-gray-600 mt-1.5">
               Choose the date range for generating the {userRole} analytical report
             </p>
           </div>
-          
+
           {/* Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-5 space-y-5">
             {/* Start Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Start Date
               </label>
               <DatePicker
@@ -135,7 +135,7 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
 
             {/* End Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 End Date
               </label>
               <DatePicker
@@ -148,15 +148,15 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
+                <p className="text-xs text-red-600">{error}</p>
               </div>
             )}
 
             {/* Date Range Summary */}
             {startDate && endDate && !error && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-800">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                <p className="text-xs text-blue-800">
                   <span className="font-medium">Selected Range (Philippine Time):</span>{' '}
                   {formatPhilippineDate(startDate, {
                     year: 'numeric',
@@ -170,7 +170,7 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
                     day: 'numeric'
                   })}
                 </p>
-                <p className="text-xs text-blue-600 mt-1">
+                <p className="text-[10px] text-blue-600 mt-0.5">
                   {Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1} days
                 </p>
               </div>
@@ -178,11 +178,11 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-gray-200 flex justify-end">
+          <div className="p-5 border-t border-gray-200 flex justify-end">
             <button
               onClick={handleGenerateReport}
               disabled={!startDate || !endDate}
-              className="px-6 py-3 bg-[#1F3463] text-white rounded-lg font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1F3463]"
+              className="px-5 py-2.5 bg-[#1F3463] text-sm text-white rounded-lg font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1F3463]"
             >
               Generate Report
             </button>

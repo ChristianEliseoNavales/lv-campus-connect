@@ -156,33 +156,33 @@ const RegistrarAdminDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Welcome Section Skeleton */}
         <div>
-          <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+          <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
         </div>
 
         {/* Dashboard Grid Skeleton */}
-        <div className="grid grid-cols-3 gap-6 min-h-[600px]">
+        <div className="grid grid-cols-3 gap-5 min-h-[480px]">
           {/* Row 1 - Upper row (40% height) */}
           <div className="col-span-1">
             {/* Window & Incoming Queue Table Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
-              <div className="space-y-2">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
+              <div className="space-y-1.5">
                 {/* Header Row Skeleton */}
                 <div className="bg-gray-300 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
-                  <div className="px-4 py-3 h-10"></div>
-                  <div className="px-4 py-3 h-10"></div>
+                  <div className="px-3 py-2.5 h-8"></div>
+                  <div className="px-3 py-2.5 h-8"></div>
                 </div>
 
                 {/* Data Rows Skeleton */}
                 {[...Array(4)].map((_, index) => (
                   <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
-                    <div className="px-4 py-3">
-                      <div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div>
+                    <div className="px-3 py-2.5">
+                      <div className="h-3 bg-gray-200 rounded w-12 mx-auto"></div>
                     </div>
-                    <div className="px-4 py-3">
-                      <div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div>
+                    <div className="px-3 py-2.5">
+                      <div className="h-3 bg-gray-200 rounded w-6 mx-auto"></div>
                     </div>
                   </div>
                 ))}
@@ -192,22 +192,22 @@ const RegistrarAdminDashboard = () => {
 
           <div className="col-span-1">
             {/* Window & Now Serving Table Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
-              <div className="space-y-2">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
+              <div className="space-y-1.5">
                 {/* Header Row Skeleton */}
                 <div className="bg-gray-300 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
-                  <div className="px-4 py-3 h-10"></div>
-                  <div className="px-4 py-3 h-10"></div>
+                  <div className="px-3 py-2.5 h-8"></div>
+                  <div className="px-3 py-2.5 h-8"></div>
                 </div>
 
                 {/* Data Rows Skeleton */}
                 {[...Array(4)].map((_, index) => (
                   <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
-                    <div className="px-4 py-3">
-                      <div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div>
+                    <div className="px-3 py-2.5">
+                      <div className="h-3 bg-gray-200 rounded w-12 mx-auto"></div>
                     </div>
-                    <div className="px-4 py-3">
-                      <div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div>
+                    <div className="px-3 py-2.5">
+                      <div className="h-3 bg-gray-200 rounded w-6 mx-auto"></div>
                     </div>
                   </div>
                 ))}
@@ -215,33 +215,33 @@ const RegistrarAdminDashboard = () => {
             </div>
           </div>
 
-          <div className="col-span-1 grid grid-rows-2 gap-3">
+          <div className="col-span-1 grid grid-rows-2 gap-2.5">
             {/* Statistics Cards Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
-              <div className="w-16 h-12 bg-gray-300 rounded mb-2 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 flex flex-col justify-center items-center">
+              <div className="w-12 h-10 bg-gray-300 rounded mb-1.5 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
             </div>
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
-              <div className="w-20 h-12 bg-gray-300 rounded mb-2 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 flex flex-col justify-center items-center">
+              <div className="w-16 h-10 bg-gray-300 rounded mb-1.5 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-28 animate-pulse"></div>
             </div>
           </div>
 
           {/* Row 2 - Lower row (60% height) */}
           <div className="col-span-2">
             {/* Area Chart Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
-              <div className="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
+              <div className="h-5 bg-gray-200 rounded w-32 mb-3 animate-pulse"></div>
               <div className="bg-gray-100 rounded-lg animate-pulse"></div>
             </div>
           </div>
 
           <div className="col-span-1">
             {/* Pie Chart Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
-              <div className="h-6 bg-gray-200 rounded w-32 mb-4 animate-pulse"></div>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
+              <div className="h-5 bg-gray-200 rounded w-28 mb-3 animate-pulse"></div>
               <div className="flex items-center justify-center h-full">
-                <div className="w-48 h-48 bg-gray-100 rounded-full animate-pulse"></div>
+                <div className="w-40 h-40 bg-gray-100 rounded-full animate-pulse"></div>
               </div>
             </div>
           </div>
@@ -251,15 +251,15 @@ const RegistrarAdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Welcome Section */}
       <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-bold text-[#1F3463] tracking-tight">
+        <h1 className="text-3xl font-bold text-[#1F3463] tracking-tight">
           Queue Monitoring
         </h1>
         <button
           onClick={() => setIsDateRangeModalOpen(true)}
-          className="px-6 py-3 bg-[#1F3463] text-white rounded-lg font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
+          className="px-5 py-2.5 bg-[#1F3463] text-white rounded-lg text-sm font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
         >
           View Analytic Report
         </button>
@@ -286,23 +286,23 @@ const RegistrarAdminDashboard = () => {
       />
 
       {/* New Grid Layout - 2 rows (40%/60%), 3 columns */}
-      <div className="grid grid-cols-3 gap-6 min-h-[600px]">
+      <div className="grid grid-cols-3 gap-5 min-h-[480px]">
         {/* Row 1 - Upper row (40% height) */}
         <div className="col-span-1">
           {/* Row 1, Column 1 - Window & Incoming Queue Table */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
-            <div className="space-y-2">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
+            <div className="space-y-1.5">
               {/* Header Row */}
               <div className="bg-[#1F3463] text-white rounded-lg grid grid-cols-2 gap-0">
-                <div className="px-4 py-3 text-center text-base font-bold">Window</div>
-                <div className="px-4 py-3 text-center text-base font-bold">Incoming Number</div>
+                <div className="px-3 py-2.5 text-center text-sm font-bold">Window</div>
+                <div className="px-3 py-2.5 text-center text-sm font-bold">Incoming Number</div>
               </div>
 
               {/* Data Rows */}
               {tableData.windows.slice(0, 4).map((window, index) => (
                 <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-4 py-3 text-base text-gray-900 font-medium text-center">{window.windowName}</div>
-                  <div className="px-4 py-3 text-base text-gray-900 font-bold text-center">
+                  <div className="px-3 py-2.5 text-sm text-gray-900 font-medium text-center">{window.windowName}</div>
+                  <div className="px-3 py-2.5 text-sm text-gray-900 font-bold text-center">
                     {window.incomingNumber > 0 ? window.incomingNumber : '-'}
                   </div>
                 </div>
@@ -311,8 +311,8 @@ const RegistrarAdminDashboard = () => {
               {/* Fill remaining rows if less than 4 windows */}
               {Array.from({ length: Math.max(0, 4 - tableData.windows.length) }).map((_, index) => (
                 <div key={`empty-${index}`} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-4 py-3 text-base text-gray-400 text-center">-</div>
-                  <div className="px-4 py-3 text-base text-gray-400 text-center">-</div>
+                  <div className="px-3 py-2.5 text-sm text-gray-400 text-center">-</div>
+                  <div className="px-3 py-2.5 text-sm text-gray-400 text-center">-</div>
                 </div>
               ))}
             </div>
@@ -321,19 +321,19 @@ const RegistrarAdminDashboard = () => {
 
         <div className="col-span-1">
           {/* Row 1, Column 2 - Window & Now Serving Table */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 h-full">
-            <div className="space-y-2">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
+            <div className="space-y-1.5">
               {/* Header Row */}
               <div className="bg-[#1F3463] text-white rounded-lg grid grid-cols-2 gap-0">
-                <div className="px-4 py-3 text-center text-base font-bold">Window</div>
-                <div className="px-4 py-3 text-center text-base font-bold">Now Serving</div>
+                <div className="px-3 py-2.5 text-center text-sm font-bold">Window</div>
+                <div className="px-3 py-2.5 text-center text-sm font-bold">Now Serving</div>
               </div>
 
               {/* Data Rows */}
               {tableData.windows.slice(0, 4).map((window, index) => (
                 <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-4 py-3 text-base text-gray-900 font-medium text-center">{window.windowName}</div>
-                  <div className="px-4 py-3 text-base text-gray-900 font-bold text-center">
+                  <div className="px-3 py-2.5 text-sm text-gray-900 font-medium text-center">{window.windowName}</div>
+                  <div className="px-3 py-2.5 text-sm text-gray-900 font-bold text-center">
                     {window.currentServingNumber > 0 ? window.currentServingNumber : '-'}
                   </div>
                 </div>
@@ -342,23 +342,23 @@ const RegistrarAdminDashboard = () => {
               {/* Fill remaining rows if less than 4 windows */}
               {Array.from({ length: Math.max(0, 4 - tableData.windows.length) }).map((_, index) => (
                 <div key={`empty-${index}`} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-4 py-3 text-base text-gray-400 text-center">-</div>
-                  <div className="px-4 py-3 text-base text-gray-400 text-center">-</div>
+                  <div className="px-3 py-2.5 text-sm text-gray-400 text-center">-</div>
+                  <div className="px-3 py-2.5 text-sm text-gray-400 text-center">-</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="col-span-1 grid grid-rows-2 gap-3">
+        <div className="col-span-1 grid grid-rows-2 gap-2.5">
           {/* Row 1, Column 3 - Statistics Cards */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
-            <div className="text-4xl font-bold text-[#1F3463] mb-2">{tableData.todayVisits}</div>
-            <div className="text-base text-gray-600 text-center font-medium">Visits Today</div>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 flex flex-col justify-center items-center">
+            <div className="text-3xl font-bold text-[#1F3463] mb-1.5">{tableData.todayVisits}</div>
+            <div className="text-sm text-gray-600 text-center font-medium">Visits Today</div>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 flex flex-col justify-center items-center">
-            <div className="text-4xl font-bold text-[#1F3463] mb-2">{tableData.averageTurnaroundTime}</div>
-            <div className="text-base text-gray-600 text-center font-medium">Average Turnaround Time</div>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 flex flex-col justify-center items-center">
+            <div className="text-3xl font-bold text-[#1F3463] mb-1.5">{tableData.averageTurnaroundTime}</div>
+            <div className="text-sm text-gray-600 text-center font-medium">Average Turnaround Time</div>
           </div>
         </div>
 

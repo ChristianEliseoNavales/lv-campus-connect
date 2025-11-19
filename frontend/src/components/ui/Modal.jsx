@@ -40,7 +40,7 @@ const Modal = ({
   };
 
   const CloseIcon = () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
   );
@@ -48,22 +48,22 @@ const Modal = ({
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto">
       {/* Overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
         onClick={closeOnOverlayClick ? onClose : undefined}
       />
-      
+
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div 
+      <div className="flex min-h-full items-center justify-center p-3">
+        <div
           className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} ${className}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200">
               {title && (
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-base font-semibold text-gray-900">
                   {title}
                 </h3>
               )}
@@ -77,9 +77,9 @@ const Modal = ({
               )}
             </div>
           )}
-          
+
           {/* Content */}
-          <div className="p-6">
+          <div className="p-5">
             {children}
           </div>
         </div>
@@ -90,7 +90,7 @@ const Modal = ({
 
 // Modal Header Component
 export const ModalHeader = ({ children, className = '' }) => (
-  <div className={`border-b border-gray-200 pb-4 mb-4 ${className}`}>
+  <div className={`border-b border-gray-200 pb-3 mb-3 ${className}`}>
     {children}
   </div>
 );
@@ -104,16 +104,16 @@ export const ModalBody = ({ children, className = '' }) => (
 
 // Modal Footer Component
 export const ModalFooter = ({ children, className = '' }) => (
-  <div className={`border-t border-gray-200 pt-4 mt-4 flex items-center justify-end space-x-3 ${className}`}>
+  <div className={`border-t border-gray-200 pt-3 mt-3 flex items-center justify-end space-x-2.5 ${className}`}>
     {children}
   </div>
 );
 
 // Confirmation Modal
-export const ConfirmModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
+export const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
   title = 'Confirm Action',
   message = 'Are you sure you want to proceed?',
   confirmText = 'Confirm',
@@ -140,14 +140,14 @@ export const ConfirmModal = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <div className="text-center">
-        <div className="text-4xl mb-4">{style.icon}</div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-gray-600 mb-6">{message}</p>
-        
-        <div className="flex space-x-3 justify-center">
+        <div className="text-3xl mb-3">{style.icon}</div>
+        <h3 className="text-base font-semibold text-gray-900 mb-1.5">{title}</h3>
+        <p className="text-sm text-gray-600 mb-5">{message}</p>
+
+        <div className="flex space-x-2.5 justify-center">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 active:bg-gray-50 active:scale-95 transition-all duration-150"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 active:bg-gray-50 active:scale-95 transition-all duration-150"
           >
             {cancelText}
           </button>
@@ -156,7 +156,7 @@ export const ConfirmModal = ({
               onConfirm();
               onClose();
             }}
-            className={`px-4 py-2 rounded-lg transition-colors ${style.confirmButton}`}
+            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${style.confirmButton}`}
           >
             {confirmText}
           </button>

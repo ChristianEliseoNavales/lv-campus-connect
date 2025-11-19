@@ -107,7 +107,7 @@ const ServiceDisplay = ({ services, totalServices, isPriority = false }) => {
   return (
     <div className="relative">
       <div
-        className="font-medium text-gray-900 cursor-pointer"
+        className="font-medium text-gray-900 cursor-pointer text-sm"
         onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -118,7 +118,7 @@ const ServiceDisplay = ({ services, totalServices, isPriority = false }) => {
       {/* Tooltip */}
       {showTooltip && services && services.length > 0 && (
         <div
-          className="fixed z-50 bg-[#1F3463] text-white text-sm px-3 py-2 rounded-lg shadow-lg max-w-xs break-words pointer-events-none"
+          className="fixed z-50 bg-[#1F3463] text-white text-xs px-2.5 py-1.5 rounded-lg shadow-lg max-w-xs break-words pointer-events-none"
           style={{
             left: tooltipPosition.x + 10,
             top: tooltipPosition.y - 10,
@@ -129,7 +129,7 @@ const ServiceDisplay = ({ services, totalServices, isPriority = false }) => {
           <div>{getAllServicesText()}</div>
           {/* Arrow */}
           <div
-            className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[#1F3463]"
+            className="absolute top-full left-3 w-0 h-0 border-l-3 border-r-3 border-t-3 border-transparent border-t-[#1F3463]"
           />
         </div>
       )}
@@ -207,7 +207,7 @@ const LocationAutocomplete = ({
 
   return (
     <div className="relative flex items-center">
-      <MdLocationOn className="absolute left-3 text-gray-500 text-lg z-10" />
+      <MdLocationOn className="absolute left-2.5 text-gray-500 text-base z-10" />
       <div className="relative flex-1">
         <input
           type="text"
@@ -217,7 +217,7 @@ const LocationAutocomplete = ({
           onBlur={handleInputBlur}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
-          className={`w-full pl-10 pr-8 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+          className={`w-full pl-8 pr-6 py-1.5 text-sm rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
             disabled ? 'bg-gray-100 cursor-not-allowed' : ''
           }`}
           style={{ backgroundColor: disabled ? '#f3f4f6' : '#efefef' }}
@@ -225,7 +225,7 @@ const LocationAutocomplete = ({
         />
         {!disabled && filteredOptions.length > 0 && (
           <MdKeyboardArrowDown
-            className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 transition-transform duration-200 ${
+            className={`absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 transition-transform duration-200 ${
               isOpen ? 'rotate-180' : ''
             }`}
           />
@@ -233,12 +233,12 @@ const LocationAutocomplete = ({
 
         {/* Dropdown */}
         {isOpen && filteredOptions.length > 0 && !disabled && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto z-20">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-20">
             {filteredOptions.map((option, index) => (
               <button
                 key={index}
                 onClick={() => handleOptionSelect(option)}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors duration-150"
+                className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors duration-150"
               >
                 {option}
               </button>
@@ -251,7 +251,7 @@ const LocationAutocomplete = ({
       <button
         onClick={handleSave}
         disabled={isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()}
-        className={`ml-3 px-4 py-2 text-sm rounded-full transition-colors ${
+        className={`ml-2.5 px-3 py-1.5 text-xs rounded-full transition-colors ${
           isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
             : 'bg-[#1F3463] text-white hover:opacity-90'
@@ -304,7 +304,7 @@ const AddEditWindowModal = ({
       />
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-3">
         <div
           className="relative bg-white rounded-xl shadow-xl w-full max-w-md"
           onClick={(e) => e.stopPropagation()}
@@ -312,23 +312,23 @@ const AddEditWindowModal = ({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
           >
-            <MdClose className="w-4 h-4" />
+            <MdClose className="w-3 h-3" />
           </button>
 
           {/* Row 1: Header */}
-          <div className="p-6">
-            <h3 className="text-2xl font-bold text-gray-900 tracking-wide">
+          <div className="p-5">
+            <h3 className="text-lg font-bold text-gray-900 tracking-wide">
               Adjusting Windows
             </h3>
           </div>
 
           {/* Modal Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-5 space-y-5">
             {/* Row 2: Window Name */}
             <div>
-              <label className="block text-base font-semibold text-gray-900 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                 Name for Window
               </label>
               <input
@@ -336,7 +336,7 @@ const AddEditWindowModal = ({
                 value={windowFormData.name}
                 onChange={(e) => onFormChange('name', e.target.value)}
                 disabled={windowFormData.isPriority}
-                className={`w-full px-3 py-2 border rounded-lg text-base focus:outline-none focus:ring-2 focus:border-transparent ${
+                className={`w-full px-2.5 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent ${
                   windowFormData.isPriority
                     ? 'bg-gray-100 cursor-not-allowed border-gray-300'
                     : errors.name
@@ -346,37 +346,37 @@ const AddEditWindowModal = ({
                 placeholder="Enter window name"
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600 font-medium">{errors.name}</p>
+                <p className="mt-1 text-xs text-red-600 font-medium">{errors.name}</p>
               )}
             </div>
 
             {/* Priority Checkbox */}
             <div>
-              <label className="flex items-center space-x-3 cursor-pointer">
+              <label className="flex items-center space-x-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={windowFormData.isPriority}
                   onChange={(e) => onFormChange('isPriority', e.target.checked)}
-                  className="w-5 h-5 text-[#1F3463] border-gray-300 rounded focus:ring-[#1F3463] focus:ring-2"
+                  className="w-4 h-4 text-[#1F3463] border-gray-300 rounded focus:ring-[#1F3463] focus:ring-2"
                 />
-                <span className="text-base font-semibold text-gray-900">
+                <span className="text-sm font-semibold text-gray-900">
                   Set as Priority
                 </span>
               </label>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-xs text-gray-500">
                 Priority windows automatically serve all services and handle PWD/Senior Citizen queues
               </p>
             </div>
 
             {/* Row 3: Service Selection */}
             <div>
-              <label className="block text-base font-semibold text-gray-900 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                 Services <span className="text-red-500">*</span>
                 {windowFormData.isPriority && (
-                  <span className="ml-2 text-sm text-gray-500">(All services auto-assigned for Priority window)</span>
+                  <span className="ml-1.5 text-xs text-gray-500">(All services auto-assigned for Priority window)</span>
                 )}
               </label>
-              <div className={`border rounded-lg p-3 max-h-40 overflow-y-auto ${
+              <div className={`border rounded-lg p-2.5 max-h-32 overflow-y-auto ${
                 windowFormData.isPriority
                   ? 'bg-gray-50 border-gray-300'
                   : errors.serviceIds
@@ -384,14 +384,14 @@ const AddEditWindowModal = ({
                   : 'border-gray-300'
               }`}>
                 {windowFormData.isPriority ? (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-gray-600 font-medium">All Services Assigned</p>
-                    <p className="text-xs text-gray-500 mt-1">Priority windows automatically handle all available services</p>
+                  <div className="text-center py-3">
+                    <p className="text-xs text-gray-600 font-medium">All Services Assigned</p>
+                    <p className="text-[10px] text-gray-500 mt-1">Priority windows automatically handle all available services</p>
                   </div>
                 ) : services.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No services available</p>
+                  <p className="text-gray-500 text-xs">No services available</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {(services || []).map((service) => {
                       // Check if service is assigned to another window (excluding current window being edited)
                       const assignedToOtherWindow = (windows || []).find(window => {
@@ -407,7 +407,7 @@ const AddEditWindowModal = ({
                       const isDisabled = assignedToOtherWindow && !isCurrentlyAssigned;
 
                       return (
-                        <label key={service.id} className={`flex items-center space-x-2 ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                        <label key={service.id} className={`flex items-center space-x-1.5 ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                           <input
                             type="checkbox"
                             checked={isCurrentlyAssigned}
@@ -420,16 +420,16 @@ const AddEditWindowModal = ({
                                 onFormChange('serviceIds', currentServices.filter(id => id !== service.id));
                               }
                             }}
-                            className={`w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
+                            className={`w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
                               isDisabled ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
                           />
-                          <div className="flex items-center space-x-2 flex-1">
-                            <span className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-900'}`}>
+                          <div className="flex items-center space-x-1.5 flex-1">
+                            <span className={`text-xs ${isDisabled ? 'text-gray-400' : 'text-gray-900'}`}>
                               {service.name}
                             </span>
                             {assignedToOtherWindow && (
-                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                              <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
                                 Assigned to {assignedToOtherWindow.name}
                               </span>
                             )}
@@ -441,19 +441,19 @@ const AddEditWindowModal = ({
                 )}
               </div>
               {errors.serviceIds && (
-                <p className="mt-1 text-sm text-red-600">{errors.serviceIds}</p>
+                <p className="mt-1 text-xs text-red-600">{errors.serviceIds}</p>
               )}
             </div>
 
             {/* Row 4: Assigned Admin */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-xs font-medium text-gray-900 mb-1.5">
                 Assigned Admin <span className="text-red-500">*</span>
               </label>
               <select
                 value={windowFormData.assignedAdmin}
                 onChange={(e) => onFormChange('assignedAdmin', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
                   errors.assignedAdmin
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
@@ -470,16 +470,16 @@ const AddEditWindowModal = ({
                 ))}
               </select>
               {errors.assignedAdmin && (
-                <p className="mt-1 text-sm text-red-600">{errors.assignedAdmin}</p>
+                <p className="mt-1 text-xs text-red-600">{errors.assignedAdmin}</p>
               )}
             </div>
 
             {/* Row 5: Action Buttons */}
-            <div className="flex space-x-3">
+            <div className="flex space-x-2.5">
               <button
                 onClick={handleSave}
                 disabled={!hasFormChanges()}
-                className={`flex-1 flex items-center justify-center space-x-2 p-3 rounded-lg transition-colors ${
+                className={`flex-1 flex items-center justify-center space-x-1.5 p-2.5 text-sm rounded-lg transition-colors ${
                   !hasFormChanges()
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'text-white hover:opacity-90'
@@ -491,7 +491,7 @@ const AddEditWindowModal = ({
               {isEditing && onRemove && (
                 <button
                   onClick={onRemove}
-                  className="flex items-center justify-center space-x-2 p-3 bg-red-600 text-white rounded-lg transition-colors hover:bg-red-700"
+                  className="flex items-center justify-center space-x-1.5 p-2.5 text-sm bg-red-600 text-white rounded-lg transition-colors hover:bg-red-700"
                 >
                   <span className="font-medium">Remove</span>
                 </button>
@@ -539,7 +539,7 @@ const AddServiceModal = ({
       />
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-3">
         <div
           className="relative bg-white rounded-xl shadow-xl w-full max-w-md"
           onClick={(e) => e.stopPropagation()}
@@ -547,30 +547,30 @@ const AddServiceModal = ({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
           >
-            <MdClose className="w-4 h-4" />
+            <MdClose className="w-3 h-3" />
           </button>
 
           {/* Row 1: Header */}
-          <div className="p-6">
-            <h3 className="text-xl font-semibold text-gray-900">
+          <div className="p-5">
+            <h3 className="text-lg font-semibold text-gray-900">
               Adding Service
             </h3>
           </div>
 
           {/* Modal Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-5 space-y-5">
             {/* Row 2: Service Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-xs font-medium text-gray-900 mb-1.5">
                 Name of the Service
               </label>
               <input
                 type="text"
                 value={serviceFormData.name}
                 onChange={(e) => onFormChange('name', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
                   errors.name
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
@@ -578,7 +578,7 @@ const AddServiceModal = ({
                 placeholder="Enter service name"
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                <p className="mt-1 text-xs text-red-600">{errors.name}</p>
               )}
             </div>
 
@@ -586,7 +586,7 @@ const AddServiceModal = ({
             <button
               onClick={handleSave}
               disabled={!hasFormChanges()}
-              className={`w-full flex items-center justify-center space-x-2 p-3 rounded-lg transition-colors ${
+              className={`w-full flex items-center justify-center space-x-1.5 p-2.5 text-sm rounded-lg transition-colors ${
                 !hasFormChanges()
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'text-white hover:opacity-90'
@@ -1314,70 +1314,70 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Settings Management Grid Skeleton */}
-        <div className="grid gap-4 h-[calc(100vh-12rem)] bg-white p-6 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
+        <div className="grid gap-3 h-[calc(100vh-10rem)] bg-white p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
           {/* Header Skeleton */}
-          <div className="col-span-2 row-span-1 bg-white rounded-xl p-6">
-            <div className="grid grid-cols-2 gap-4 items-center">
+          <div className="col-span-2 row-span-1 bg-white rounded-xl p-5">
+            <div className="grid grid-cols-2 gap-3 items-center">
               <div>
-                <div className="h-10 bg-gray-200 rounded w-80 animate-pulse"></div>
+                <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
               </div>
               <div className="flex justify-end">
-                <div className="h-16 bg-gray-200 rounded-lg w-64 animate-pulse"></div>
+                <div className="h-12 bg-gray-200 rounded-lg w-52 animate-pulse"></div>
               </div>
             </div>
           </div>
 
           {/* Toggle Section Skeleton */}
-          <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-6">
+          <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-5">
             <div className="flex items-center justify-between">
-              <div className="flex flex-col space-y-2">
-                <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div className="flex flex-col space-y-1.5">
+                <div className="h-5 bg-gray-200 rounded w-40 animate-pulse"></div>
+                <div className="h-3 bg-gray-200 rounded w-28 animate-pulse"></div>
               </div>
-              <div className="w-16 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="w-12 h-6 bg-gray-200 rounded-full animate-pulse"></div>
             </div>
           </div>
 
           {/* Services Section Skeleton */}
-          <div className="col-start-1 row-start-3 row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-6">
+          <div className="col-start-1 row-start-3 row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-5">
             <div className="h-full flex flex-col">
-              <div className="h-8 bg-gray-200 rounded w-24 mb-4 animate-pulse"></div>
-              <div className="flex-1 space-y-2 mb-4">
+              <div className="h-6 bg-gray-200 rounded w-20 mb-3 animate-pulse"></div>
+              <div className="flex-1 space-y-1.5 mb-3">
                 {[...Array(5)].map((_, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
+                  <div key={index} className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-4 bg-gray-200 rounded w-32"></div>
-                        <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                      <div className="flex items-center space-x-2.5">
+                        <div className="h-3 bg-gray-200 rounded w-28"></div>
+                        <div className="h-4 bg-gray-200 rounded-full w-12"></div>
                       </div>
-                      <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                      <div className="w-6 h-6 bg-gray-200 rounded-lg"></div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
             </div>
           </div>
 
           {/* Windows Section Skeleton */}
-          <div className="col-start-2 row-start-2 row-span-3 bg-white rounded-xl border border-gray-300 shadow-md p-6">
-            <div className="mb-4">
-              <div className="grid grid-cols-3 gap-4 items-center p-3">
-                <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
-                <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
-                <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="col-start-2 row-start-2 row-span-3 bg-white rounded-xl border border-gray-300 shadow-md p-5">
+            <div className="mb-3">
+              <div className="grid grid-cols-3 gap-3 items-center p-2.5">
+                <div className="h-5 bg-gray-200 rounded w-12 animate-pulse"></div>
+                <div className="h-5 bg-gray-200 rounded w-28 animate-pulse"></div>
+                <div className="h-8 bg-gray-200 rounded-lg animate-pulse"></div>
               </div>
             </div>
-            <div className="flex-1 flex flex-col space-y-3">
+            <div className="flex-1 flex flex-col space-y-2.5">
               {[...Array(4)].map((_, index) => (
-                <div key={index} className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
+                <div key={index} className="grid grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
                   <div className="flex items-center">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-3 bg-gray-200 rounded w-16"></div>
                   </div>
                   <div className="flex flex-col justify-center space-y-1">
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    <div className="h-3 bg-gray-200 rounded w-20"></div>
                     <div className="h-3 bg-gray-200 rounded w-32"></div>
                   </div>
                   <div className="flex items-center justify-center space-x-1">
@@ -1394,26 +1394,26 @@ const Settings = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
 
       {/* Settings Management Grid Container - with visible background, rounded corners, and padding */}
-      <div className="grid gap-4 h-[calc(100vh-12rem)] bg-white p-6 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
+      <div className="grid gap-3 h-[calc(100vh-10rem)] bg-white p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
         {/* First div: Row 1, spanning both columns */}
-        <div className="col-span-2 row-span-1 bg-white rounded-xl p-6">
-          <div className="grid grid-cols-3 gap-4 items-center">
+        <div className="col-span-2 row-span-1 bg-white rounded-xl p-5">
+          <div className="grid grid-cols-3 gap-3 items-center">
             {/* Column 1: Settings Management heading */}
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Settings Management</h1>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Settings Management</h1>
             </div>
 
             {/* Column 2: Queue Monitor Button */}
             <div className="flex justify-center">
               <button
                 onClick={() => window.open('/admin/registrar/queue-monitor', '_blank')}
-                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors duration-200 flex items-center space-x-2"
+                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 flex items-center space-x-1.5"
               >
-                <MdMonitor className="text-xl" />
+                <MdMonitor className="text-lg" />
                 <span>Open Queue Monitor</span>
               </button>
             </div>
@@ -1421,15 +1421,15 @@ const Settings = () => {
             {/* Column 3: Warning banner when queueing is enabled */}
             <div className="flex justify-end">
               {isQueueingEnabled && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center space-x-2 max-w-md">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 flex items-center space-x-1.5 max-w-md">
                   <div className="flex-shrink-0">
-                    <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-yellow-800">Settings Locked</h3>
-                    <p className="text-sm text-yellow-700">
+                    <h3 className="text-xs font-semibold text-yellow-800">Settings Locked</h3>
+                    <p className="text-xs text-yellow-700">
                       Management disabled while queueing is active.
                     </p>
                   </div>
@@ -1440,11 +1440,11 @@ const Settings = () => {
         </div>
 
         {/* Second div: Row 2, Column 1 only - Toggle Section */}
-        <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-6 flex items-center justify-between">
+        <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-5 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-xl font-semibold text-gray-900">Tap to Enable Queueing</span>
+            <span className="text-lg font-semibold text-gray-900">Tap to Enable Queueing</span>
             {(isToggling || toggleCooldown > 0) && (
-              <span className="text-base text-gray-500 mt-1">
+              <span className="text-sm text-gray-500 mt-1">
                 {isToggling ? 'Processing...' : `Wait ${toggleCooldown}s before next toggle`}
               </span>
             )}
@@ -1452,7 +1452,7 @@ const Settings = () => {
           <button
             onClick={handleToggleQueueing}
             disabled={isToggling || toggleCooldown > 0}
-            className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${
+            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none ${
               isToggling || toggleCooldown > 0
                 ? 'opacity-50 cursor-not-allowed bg-gray-300'
                 : isQueueingEnabled
@@ -1461,66 +1461,66 @@ const Settings = () => {
             }`}
           >
             <span
-              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                isQueueingEnabled ? 'translate-x-7' : 'translate-x-1'
+              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                isQueueingEnabled ? 'translate-x-8' : 'translate-x-1'
               }`}
             />
             {isToggling && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
           </button>
         </div>
 
         {/* Third div: Column 1, spanning rows 3-4 - Services Section */}
-        <div className="col-span-1 row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-6 flex flex-col">
+        <div className="col-span-1 row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-5 flex flex-col">
           {/* Row 1: Header */}
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Services</h2>
+          <div className="mb-3">
+            <h2 className="text-xl font-bold text-gray-900">Services</h2>
           </div>
 
           {/* Row 2: Content Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto mb-4 space-y-2">
+          <div className="flex-1 overflow-y-auto mb-3 space-y-1.5">
             {loading ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {[...Array(5)].map((_, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
+                  <div key={index} className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-4 bg-gray-200 rounded w-32"></div>
-                        <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                      <div className="flex items-center space-x-2.5">
+                        <div className="h-3 bg-gray-200 rounded w-28"></div>
+                        <div className="h-4 bg-gray-200 rounded-full w-12"></div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                      <div className="flex items-center space-x-1.5">
+                        <div className="w-6 h-6 bg-gray-200 rounded-lg"></div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : services.length === 0 ? (
-              <div className="text-center py-8 text-base text-gray-400 italic">
+              <div className="text-center py-6 text-sm text-gray-400 italic">
                 No services available. Add a service to get started.
               </div>
             ) : (
               (services || []).map((service) => (
                 <div
                   key={service.id}
-                  className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                  className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
                 >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-gray-900 font-semibold text-base">{service.name}</span>
+                  <div className="flex items-center space-x-2.5">
+                    <span className="text-gray-900 font-semibold text-sm">{service.name}</span>
                     {!service.isActive && (
-                      <span className="px-2.5 py-1 text-sm bg-gray-200 text-gray-600 rounded-full font-medium">
+                      <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-600 rounded-full font-medium">
                         Inactive
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1.5">
                     <button
                       onClick={() => handleRemoveService(service.id)}
                       disabled={isQueueingEnabled}
-                      className={`p-1.5 rounded-lg transition-colors ${
+                      className={`p-1 rounded-lg transition-colors ${
                         isQueueingEnabled
                           ? 'opacity-50 cursor-not-allowed text-gray-400'
                           : 'text-red-500 hover:text-red-600 hover:bg-red-50'
@@ -1531,7 +1531,7 @@ const Settings = () => {
                           : 'Remove Service'
                       }
                     >
-                      <AiOutlineMinusCircle className="text-xl" />
+                      <AiOutlineMinusCircle className="text-lg" />
                     </button>
                   </div>
                 </div>
@@ -1543,7 +1543,7 @@ const Settings = () => {
           <button
             onClick={handleAddService}
             disabled={isQueueingEnabled}
-            className={`flex items-center justify-center space-x-2 p-3 text-white rounded-lg text-base font-semibold transition-colors ${
+            className={`flex items-center justify-center space-x-1.5 p-2.5 text-white rounded-lg text-sm font-semibold transition-colors ${
               isQueueingEnabled
                 ? 'opacity-50 cursor-not-allowed'
                 : 'hover:opacity-90'
@@ -1551,18 +1551,18 @@ const Settings = () => {
             style={{ backgroundColor: '#1F3463' }}
             title={isQueueingEnabled ? 'Cannot add services while queueing is active' : 'Add Service'}
           >
-            <MdAdd className="text-xl" />
+            <MdAdd className="text-lg" />
             <span className="font-medium">Add Service</span>
           </button>
         </div>
 
         {/* Fourth div: Column 2, spanning rows 2-4 - Windows Management Section */}
-        <div className="col-start-2 row-start-2 row-span-3 bg-white rounded-xl border border-gray-300 shadow-md p-6 flex flex-col">
+        <div className="col-start-2 row-start-2 row-span-3 bg-white rounded-xl border border-gray-300 shadow-md p-5 flex flex-col">
           {/* Row 1: Table Header */}
-          <div className="mb-4">
-            <div className="grid grid-cols-3 gap-4 items-center p-3">
-              <div className="font-bold text-base text-gray-900">Window</div>
-              <div className="font-bold text-base text-gray-900">Service & Admin</div>
+          <div className="mb-3">
+            <div className="grid grid-cols-3 gap-3 items-center p-2.5">
+              <div className="font-bold text-sm text-gray-900">Window</div>
+              <div className="font-bold text-sm text-gray-900">Service & Admin</div>
               <div className="relative">
                 <LocationAutocomplete
                   value={locationText}
@@ -1579,16 +1579,16 @@ const Settings = () => {
           </div>
 
           {/* Rows 2-5: Container for displaying added windows - Fixed height for exactly 4 windows */}
-          <div className="flex-1 flex flex-col space-y-3" style={{ height: 'calc(100% - 4rem)' }}>
+          <div className="flex-1 flex flex-col space-y-2.5" style={{ height: 'calc(100% - 3.5rem)' }}>
             {(windows || []).slice(0, 4).map((window) => (
               <div
                 key={window.id}
-                className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0"
-                style={{ height: 'calc((100% - 0.75rem * 3) / 4)' }}
+                className="grid grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0"
+                style={{ height: 'calc((100% - 0.625rem * 3) / 4)' }}
               >
                 {/* Column 1: Window name */}
                 <div className="flex items-center">
-                  <span className="font-bold text-base text-gray-900">{window.name}</span>
+                  <span className="font-bold text-sm text-gray-900">{window.name}</span>
                 </div>
 
                 {/* Column 2: Split into 2 rows */}
@@ -1600,7 +1600,7 @@ const Settings = () => {
                     isPriority={window.name === 'Priority'}
                   />
                   {/* Row 2: Admin user email */}
-                  <div className="text-base text-gray-600">
+                  <div className="text-sm text-gray-600">
                     {window.assignedAdmin?.email || 'No admin assigned'}
                   </div>
                 </div>
@@ -1610,7 +1610,7 @@ const Settings = () => {
                   <button
                     onClick={() => !isQueueingEnabled && handleToggleWindow(window.id)}
                     disabled={isQueueingEnabled}
-                    className={`p-2 rounded-lg transition-colors ${
+                    className={`p-1.5 rounded-lg transition-colors ${
                       isQueueingEnabled
                         ? 'opacity-50 cursor-not-allowed text-gray-400'
                         : window.isOpen
@@ -1624,9 +1624,9 @@ const Settings = () => {
                     }
                   >
                     {window.isOpen ? (
-                      <AiOutlineEye className="text-2xl" />
+                      <AiOutlineEye className="text-xl" />
                     ) : (
-                      <AiOutlineEyeInvisible className="text-2xl" />
+                      <AiOutlineEyeInvisible className="text-xl" />
                     )}
                   </button>
                   <button

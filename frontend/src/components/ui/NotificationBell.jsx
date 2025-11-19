@@ -168,7 +168,7 @@ const NotificationBell = () => {
    * Get icon for notification type
    */
   const getNotificationIcon = (type) => {
-    const iconClass = "h-5 w-5";
+    const iconClass = "h-4 w-4";
     switch (type) {
       case 'success':
         return <MdCheckCircle className={`${iconClass} text-green-600`} />;
@@ -205,14 +205,14 @@ const NotificationBell = () => {
       {/* Notification Bell Button */}
       <button
         onClick={toggleDropdown}
-        className="relative flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 hover:bg-white/10"
+        className="relative flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 hover:bg-white/10"
         style={{ backgroundColor: '#1F3463' }}
       >
-        <BsBellFill className="h-6 w-6 text-white" />
-        
+        <BsBellFill className="h-3 w-3 text-white" />
+
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
+          <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -220,14 +220,14 @@ const NotificationBell = () => {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[600px] flex flex-col">
+        <div className="absolute right-0 mt-1.5 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[480px] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+          <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-200">
+            <h3 className="text-base font-semibold text-gray-900">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
               >
                 Mark all as read
               </button>
@@ -237,24 +237,24 @@ const NotificationBell = () => {
           {/* Notification List */}
           <div className="flex-1 overflow-y-auto">
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1F3463]"></div>
+              <div className="flex items-center justify-center py-10">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1F3463]"></div>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 px-4">
-                <BsBellFill className="h-12 w-12 text-gray-300 mb-3" />
-                <p className="text-gray-500 text-center">No notifications yet</p>
+              <div className="flex flex-col items-center justify-center py-10 px-3">
+                <BsBellFill className="h-10 w-10 text-gray-300 mb-2.5" />
+                <p className="text-sm text-gray-500 text-center">No notifications yet</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
                 {notifications.map((notification) => (
                   <div
                     key={notification._id}
-                    className={`px-4 py-3 hover:bg-gray-50 transition-colors ${
+                    className={`px-3 py-2.5 hover:bg-gray-50 transition-colors ${
                       !notification.isRead ? 'bg-blue-50/50' : ''
                     }`}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2.5">
                       {/* Icon */}
                       <div className="flex-shrink-0 mt-0.5">
                         {getNotificationIcon(notification.type)}
@@ -262,28 +262,28 @@ const NotificationBell = () => {
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
+                        <div className="flex items-start justify-between gap-1.5">
+                          <p className="text-xs font-semibold text-gray-900 truncate">
                             {notification.title}
                           </p>
                           <button
                             onClick={() => deleteNotification(notification._id)}
                             className="flex-shrink-0 text-gray-400 hover:text-gray-600"
                           >
-                            <MdClose className="h-4 w-4" />
+                            <MdClose className="h-3 w-3" />
                           </button>
                         </div>
-                        <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">
+                        <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">
                           {notification.message}
                         </p>
-                        <div className="flex items-center gap-3 mt-1.5">
-                          <span className="text-xs text-gray-500">
+                        <div className="flex items-center gap-2.5 mt-1">
+                          <span className="text-[10px] text-gray-500">
                             {formatTimestamp(notification.createdAt)}
                           </span>
                           {!notification.isRead && (
                             <button
                               onClick={() => markAsRead(notification._id)}
-                              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                              className="text-[10px] text-blue-600 hover:text-blue-800 font-medium"
                             >
                               Mark as read
                             </button>

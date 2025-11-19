@@ -255,26 +255,26 @@ const TransactionLogs = () => {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Main Content Container - White background similar to Settings.jsx */}
-      <div className="bg-white p-6 border border-gray-200 rounded-xl">
+      <div className="bg-white p-5 border border-gray-200 rounded-xl">
 
         {/* Row 1 - Header */}
-        <div className="mb-6">
+        <div className="mb-5">
           <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Transaction Logs</h1>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Transaction Logs</h1>
             <div className="flex items-center space-x-1">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+              <p className="text-[8px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-2 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
                 title="Refresh transaction logs"
               >
                 <IoMdRefresh
-                  className={`w-5 h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-4 h-4 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -282,42 +282,42 @@ const TransactionLogs = () => {
         </div>
 
         {/* Row 2 - Controls */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-5">
           {/* Left side - Pagination Control */}
-          <div className="flex items-center space-x-2">
-            <span className="text-base text-gray-700 font-medium">Showing</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-sm text-gray-700 font-medium">Showing</span>
             <div className="flex items-center space-x-1">
               <input
                 type="number"
                 value={logsPerPage}
                 onChange={(e) => updateState('logsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-16 px-2 py-1 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-12 px-1.5 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
               <div className="flex flex-col">
                 <button
                   onClick={() => handleLogsPerPageChange(1)}
-                  className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
+                  className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-base" />
+                  <MdKeyboardArrowUp className="text-sm" />
                 </button>
                 <button
                   onClick={() => handleLogsPerPageChange(-1)}
-                  className="p-1 text-gray-500 hover:text-[#1F3463] transition-colors"
+                  className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-base" />
+                  <MdKeyboardArrowDown className="text-sm" />
                 </button>
               </div>
             </div>
-            <span className="text-base text-gray-700 font-medium">Logs</span>
+            <span className="text-sm text-gray-700 font-medium">Logs</span>
           </div>
 
           {/* Right side - Date Filter, Search, Filter dropdown, Add button */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* Date Filter */}
-            <div className="flex items-center space-x-2">
-              <label className="text-base text-gray-700 font-medium">Date:</label>
+            <div className="flex items-center space-x-1.5">
+              <label className="text-sm text-gray-700 font-medium">Date:</label>
               <DatePicker
                 value={selectedDate}
                 onChange={(date) => updateState('selectedDate', date)}
@@ -327,23 +327,23 @@ const TransactionLogs = () => {
 
             {/* Search */}
             <div className="relative">
-              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
               <input
                 type="text"
                 placeholder="Search logs..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
-            <div className="flex items-center space-x-2">
-              <label className="text-base text-gray-700 font-medium">Filter by:</label>
+            <div className="flex items-center space-x-1.5">
+              <label className="text-sm text-gray-700 font-medium">Filter by:</label>
               <select
                 value={filterBy}
                 onChange={(e) => updateState('filterBy', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-base"
+                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-sm"
               >
                 <option value="all">All</option>
                 <option value="complete">Complete</option>
@@ -357,7 +357,7 @@ const TransactionLogs = () => {
             {/* Add Button */}
             <button
               onClick={handleAddTransaction}
-              className="px-5 py-2.5 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-base font-semibold"
+              className="px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-sm font-semibold"
             >
               + Add Transaction
             </button>
@@ -369,8 +369,8 @@ const TransactionLogs = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-8 gap-4 text-sm font-medium text-gray-700 w-full">
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
+                <div className="grid grid-cols-8 gap-3 text-xs font-medium text-gray-700 w-full">
                   <div>Queue No.</div>
                   <div>Name</div>
                   <div>Purpose of Visit</div>
@@ -385,50 +385,50 @@ const TransactionLogs = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-6 py-4 h-16 flex items-center animate-pulse">
-                    <div className="grid grid-cols-8 gap-4 items-center w-full">
+                  <div key={index} className="px-5 py-3 h-12 flex items-center animate-pulse">
+                    <div className="grid grid-cols-8 gap-3 items-center w-full">
                       {/* Queue No. Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-8"></div>
+                      <div className="h-3 bg-gray-200 rounded w-6"></div>
 
                       {/* Name Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
 
                       {/* Purpose of Visit Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-32"></div>
+                      <div className="h-3 bg-gray-200 rounded w-24"></div>
 
                       {/* Priority Skeleton */}
-                      <div className="h-6 bg-gray-200 rounded-full w-12"></div>
+                      <div className="h-5 bg-gray-200 rounded-full w-10"></div>
 
                       {/* Role Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+                      <div className="h-3 bg-gray-200 rounded w-12"></div>
 
                       {/* Turnaround Time Skeleton */}
-                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
 
                       {/* Remarks Skeleton */}
-                      <div className="flex items-center space-x-2">
-                        <div className="h-4 bg-gray-200 rounded flex-1"></div>
-                        <div className="h-5 w-5 bg-gray-200 rounded"></div>
+                      <div className="flex items-center space-x-1.5">
+                        <div className="h-3 bg-gray-200 rounded flex-1"></div>
+                        <div className="h-4 w-4 bg-gray-200 rounded"></div>
                       </div>
 
                       {/* Status Skeleton */}
-                      <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                      <div className="h-5 bg-gray-200 rounded-full w-12"></div>
                     </div>
                   </div>
                 ))}
               </div>
             </>
           ) : currentLogs.length === 0 ? (
-            <div className="text-center py-12">
-              <BiSolidNotepad className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No transaction logs found</h3>
-              <p className="text-base text-gray-500">Try adjusting your search or filter criteria</p>
+            <div className="text-center py-10">
+              <BiSolidNotepad className="text-5xl text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No transaction logs found</h3>
+              <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 h-16 flex items-center">
-                <div className="grid grid-cols-8 gap-4 text-base font-bold text-gray-700 w-full">
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
+                <div className="grid grid-cols-8 gap-3 text-sm font-bold text-gray-700 w-full">
                   <div>Queue No.</div>
                   <div>Name</div>
                   <div>Purpose of Visit</div>
@@ -443,26 +443,26 @@ const TransactionLogs = () => {
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
                 {currentLogs.map((log) => (
-                  <div key={log.id} className="px-6 py-4 hover:bg-gray-50 transition-colors h-16 flex items-center">
-                    <div className="grid grid-cols-8 gap-4 items-center w-full">
+                  <div key={log.id} className="px-5 py-3 hover:bg-gray-50 transition-colors h-12 flex items-center">
+                    <div className="grid grid-cols-8 gap-3 items-center w-full">
                       {/* Queue No. */}
-                      <div className="text-base font-bold text-gray-900 truncate">
+                      <div className="text-sm font-bold text-gray-900 truncate">
                         #{log.queueNumber.toString().padStart(2, '0')}
                       </div>
 
                       {/* Name */}
-                      <div className="text-base font-medium text-gray-900 truncate" title={log.customerName}>
+                      <div className="text-sm font-medium text-gray-900 truncate" title={log.customerName}>
                         {log.customerName}
                       </div>
 
                       {/* Purpose of Visit */}
-                      <div className="text-base font-medium text-gray-900 truncate" title={log.purposeOfVisit}>
+                      <div className="text-sm font-medium text-gray-900 truncate" title={log.purposeOfVisit}>
                         {log.purposeOfVisit}
                       </div>
 
                       {/* Priority */}
-                      <div className="text-sm truncate">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                      <div className="text-xs truncate">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                           log.priority === 'Yes' ? 'text-red-600 bg-red-50' : 'text-gray-600 bg-gray-50'
                         }`}>
                           {log.priority}
@@ -470,19 +470,19 @@ const TransactionLogs = () => {
                       </div>
 
                       {/* Role */}
-                      <div className="text-base font-medium text-gray-900 truncate" title={log.role}>
+                      <div className="text-sm font-medium text-gray-900 truncate" title={log.role}>
                         {log.role}
                       </div>
 
                       {/* Turnaround Time */}
-                      <div className="text-base text-gray-900 font-mono font-semibold truncate">
+                      <div className="text-sm text-gray-900 font-mono font-semibold truncate">
                         {log.turnaroundTime}
                       </div>
 
                       {/* Remarks */}
-                      <div className="text-sm">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-900 flex-1 truncate text-base">
+                      <div className="text-xs">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-gray-900 flex-1 truncate text-sm">
                             {log.remarks || 'No remarks'}
                           </span>
                           <button
@@ -490,14 +490,14 @@ const TransactionLogs = () => {
                             className="text-gray-400 hover:text-[#1F3463] transition-colors"
                             title="Edit remarks"
                           >
-                            <PiNotePencilDuotone className="text-xl" />
+                            <PiNotePencilDuotone className="text-lg" />
                           </button>
                         </div>
                       </div>
 
                       {/* Status */}
-                      <div className="text-sm">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(log.status)}`}>
+                      <div className="text-xs">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(log.status)}`}>
                           {log.status}
                         </span>
                       </div>
@@ -511,22 +511,22 @@ const TransactionLogs = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+          <div className="mt-5 flex items-center justify-between">
+            <div className="text-xs text-gray-700">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredLogs.length)} of {filteredLogs.length} logs
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
 
               {/* Current Page Number */}
               <button
-                className="px-3 py-2 text-sm font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
+                className="px-2.5 py-1.5 text-xs font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
               >
                 {currentPage}
               </button>
@@ -534,7 +534,7 @@ const TransactionLogs = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -554,65 +554,65 @@ const TransactionLogs = () => {
           />
 
           {/* Modal */}
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-center justify-center p-3">
             <div
               className="relative bg-white rounded-lg shadow-xl w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="flex items-center justify-between p-5 border-b border-gray-200">
+                <h3 className="text-base font-semibold text-gray-900">
                   Edit Remarks - Queue #{selectedLog?.queueNumber?.toString().padStart(2, '0')}
                 </h3>
                 <button
                   onClick={handleCancelEdit}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
               {/* Content */}
-              <div className="p-6">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="p-5">
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
                     Customer: {selectedLog?.customerName}
                   </label>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
                     Service: {selectedLog?.purposeOfVisit}
                   </label>
                 </div>
 
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="mb-5">
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
                     Remarks
                   </label>
                   <textarea
                     value={remarksValue}
                     onChange={(e) => setRemarksValue(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                     rows={4}
                     maxLength={500}
                     placeholder="Add remarks about this transaction..."
                   />
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-[10px] text-gray-500 mt-1">
                     {remarksValue.length}/500 characters
                   </div>
                 </div>
 
-                <div className="flex space-x-3 justify-end">
+                <div className="flex space-x-2.5 justify-end">
                   <button
                     onClick={handleCancelEdit}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveRemarks}
                     disabled={savingRemarks}
-                    className="px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {savingRemarks ? 'Saving...' : 'Save'}
                   </button>
