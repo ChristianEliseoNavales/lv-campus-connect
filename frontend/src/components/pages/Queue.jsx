@@ -132,6 +132,53 @@ const ConfirmationModal = ({ isOpen, onYes, onNo }) => {
   );
 };
 
+// Service Unavailable Modal Component
+const ServiceUnavailableModal = ({ isOpen, onClose, officeName, serviceName }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl mx-4 text-center relative">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full border-2 flex items-center justify-center hover:bg-gray-100 transition-colors"
+          style={{ borderColor: '#1F3463', color: '#1F3463' }}
+        >
+          <span className="text-2xl font-bold">×</span>
+        </button>
+
+        {/* Header */}
+        <h2 className="text-4xl font-semibold mb-4" style={{ color: '#1F3463' }}>
+          Service Unavailable
+        </h2>
+
+        {/* Message */}
+        <p className="text-2xl text-gray-600 mb-8">
+          The "{serviceName}" service is not currently available in the {officeName}.
+          <br />
+          <br />
+          Please check if the office is open or try again later.
+        </p>
+
+        {/* OK Button */}
+        <button
+          onClick={onClose}
+          className="w-48 text-white rounded-3xl shadow-lg drop-shadow-md py-4 px-8 active:shadow-md active:scale-95 transition-all duration-150 border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200"
+          style={{ backgroundColor: '#1F3463' }}
+          onTouchStart={(e) => e.target.style.backgroundColor = '#1A2E56'}
+          onTouchEnd={(e) => e.target.style.backgroundColor = '#1F3463'}
+          onMouseDown={(e) => e.target.style.backgroundColor = '#1A2E56'}
+          onMouseUp={(e) => e.target.style.backgroundColor = '#1F3463'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#1F3463'}
+        >
+          <span className="text-2xl font-semibold">OK</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Office Mismatch Modal Component
 const OfficeMismatchModal = ({ isOpen, onConfirm, onClose, currentOffice, suggestedOffice }) => {
   if (!isOpen || !suggestedOffice) return null;
@@ -242,6 +289,8 @@ const Queue = () => {
   const [studentStatus, setStudentStatus] = useState(null);
   const [showOfficeMismatchModal, setShowOfficeMismatchModal] = useState(false);
   const [suggestedOffice, setSuggestedOffice] = useState(null);
+  const [showServiceUnavailableModal, setShowServiceUnavailableModal] = useState(false);
+  const [serviceUnavailableInfo, setServiceUnavailableInfo] = useState({ officeName: '', serviceName: '' });
   const [showForm, setShowForm] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(true);
   const [activeField, setActiveField] = useState('name');
@@ -1267,27 +1316,97 @@ const Queue = () => {
   // Office mismatch modal handlers
   const handleOfficeMismatchConfirm = async () => {
     if (suggestedOffice) {
-      // Switch to the suggested office and proceed directly to result
-      setSelectedDepartment(departmentData[suggestedOffice.key]);
-      setShowOfficeMismatchModal(false);
-      setSuggestedOffice(null);
+      console.log('🔄 [FRONTEND] Checking if Enroll service is available in', suggestedOffice.name);
 
-      // For Enroll service, set required fields and submit to backend
-      console.log('🔄 [FRONTEND] Office mismatch resolved - setting Enroll service defaults and submitting');
-      setSelectedRole('Student'); // Enroll is always for students
-      setPriorityStatus('no'); // Default priority status
+      // First, check if the target office is open
+      const isOfficeOpen = await checkOfficeStatus(suggestedOffice.key);
 
-      // Submit to backend to ensure queue entry is recorded in database
-      console.log('🚀 [FRONTEND] Submitting Enroll service after office switch...');
+      if (!isOfficeOpen) {
+        console.log('❌ [FRONTEND] Target office is closed');
+        setShowOfficeMismatchModal(false);
+        setSuggestedOffice(null);
+        setServiceUnavailableInfo({
+          officeName: suggestedOffice.name,
+          serviceName: 'Enroll'
+        });
+        setShowServiceUnavailableModal(true);
+        return;
+      }
 
-      // Submit immediately with explicit values to avoid state timing issues
-      handleEnrollSubmission();
+      // Check if Enroll service is available in the target office
+      try {
+        const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/services/${suggestedOffice.key}`);
+        const data = await response.json();
+
+        console.log('📋 [FRONTEND] Services in target office:', data);
+
+        if (!data.isEnabled) {
+          console.log('❌ [FRONTEND] Target office is not enabled');
+          setShowOfficeMismatchModal(false);
+          setSuggestedOffice(null);
+          setServiceUnavailableInfo({
+            officeName: suggestedOffice.name,
+            serviceName: 'Enroll'
+          });
+          setShowServiceUnavailableModal(true);
+          return;
+        }
+
+        const enrollServiceAvailable = data.services?.some(service => service.name === 'Enroll');
+
+        if (!enrollServiceAvailable) {
+          console.log('❌ [FRONTEND] Enroll service not available in target office');
+          setShowOfficeMismatchModal(false);
+          setSuggestedOffice(null);
+          setServiceUnavailableInfo({
+            officeName: suggestedOffice.name,
+            serviceName: 'Enroll'
+          });
+          setShowServiceUnavailableModal(true);
+          return;
+        }
+
+        console.log('✅ [FRONTEND] Enroll service is available in target office');
+
+        // Switch to the suggested office and proceed directly to result
+        setSelectedDepartment(departmentData[suggestedOffice.key]);
+        setShowOfficeMismatchModal(false);
+        setSuggestedOffice(null);
+
+        // For Enroll service, set required fields and submit to backend
+        console.log('🔄 [FRONTEND] Office mismatch resolved - setting Enroll service defaults and submitting');
+        setSelectedRole('Student'); // Enroll is always for students
+        setPriorityStatus('no'); // Default priority status
+
+        // Submit to backend to ensure queue entry is recorded in database
+        console.log('🚀 [FRONTEND] Submitting Enroll service after office switch...');
+
+        // Submit immediately with explicit values to avoid state timing issues
+        handleEnrollSubmission();
+      } catch (error) {
+        console.error('❌ [FRONTEND] Error checking service availability:', error);
+        setShowOfficeMismatchModal(false);
+        setSuggestedOffice(null);
+        setServiceUnavailableInfo({
+          officeName: suggestedOffice.name,
+          serviceName: 'Enroll'
+        });
+        setShowServiceUnavailableModal(true);
+      }
     }
   };
 
   const handleOfficeMismatchClose = () => {
     setShowOfficeMismatchModal(false);
     setSuggestedOffice(null);
+  };
+
+  const handleServiceUnavailableClose = () => {
+    setShowServiceUnavailableModal(false);
+    setServiceUnavailableInfo({ officeName: '', serviceName: '' });
+    // Reset to service selection step
+    setCurrentStep('service');
+    setStudentStatus(null);
   };
 
   // Check if form steps are valid
@@ -2228,6 +2347,14 @@ const Queue = () => {
           onClose={handleOfficeMismatchClose}
           currentOffice={selectedDepartment?.name === "Registrar's Office" ? "Registrar" : "Admissions"}
           suggestedOffice={suggestedOffice}
+        />
+
+        {/* Service Unavailable Modal */}
+        <ServiceUnavailableModal
+          isOpen={showServiceUnavailableModal}
+          onClose={handleServiceUnavailableClose}
+          officeName={serviceUnavailableInfo.officeName}
+          serviceName={serviceUnavailableInfo.serviceName}
         />
       </>
     );

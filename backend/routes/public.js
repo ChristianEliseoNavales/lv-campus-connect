@@ -4,6 +4,37 @@ const { Queue, VisitationForm, Service, Window, Settings, Rating, Bulletin, Offi
 const { AuditService } = require('../middleware/auditMiddleware');
 const router = express.Router();
 
+/**
+ * Helper function to get display customer name for queue entries
+ * Handles special case for Enroll service without visitation form
+ * @param {Object} queueEntry - Queue entry object (should be populated with visitationFormId)
+ * @param {Object} serviceObj - Service object (optional, will be fetched if not provided)
+ * @returns {Promise<string>} Display customer name
+ */
+async function getDisplayCustomerName(queueEntry, serviceObj = null) {
+  // If visitation form exists, use the customer name from it
+  if (queueEntry.visitationFormId?.customerName) {
+    return queueEntry.visitationFormId.customerName;
+  }
+
+  // For Enroll service without visitation form, use office-specific labels
+  // Fetch service if not provided
+  if (!serviceObj) {
+    serviceObj = await Service.findById(queueEntry.serviceId);
+  }
+
+  if (serviceObj && serviceObj.name === 'Enroll') {
+    if (queueEntry.office === 'registrar') {
+      return 'Enrollee'; // Continuing students in Registrar's Office
+    } else if (queueEntry.office === 'admissions') {
+      return 'New Student'; // Incoming new students in Admissions Office
+    }
+  }
+
+  // Fallback for other cases
+  return 'Anonymous Customer';
+}
+
 // GET /api/public/queue/:department - Get queue data for department
 router.get('/queue/:department', async (req, res) => {
   try {
@@ -392,6 +423,10 @@ router.post('/queue', async (req, res) => {
     // Populate the queue entry for response
     await queueEntry.populate('visitationFormId');
 
+    // Determine customer name for display using helper function
+    const displayCustomerName = await getDisplayCustomerName(queueEntry, serviceObj);
+    console.log('👤 [BACKEND] Display customer name:', displayCustomerName);
+
     // Emit real-time update to admin dashboards
     const io = req.app.get('io');
     io.to(`admin-${office}`).emit('queue-updated', {
@@ -400,7 +435,7 @@ router.post('/queue', async (req, res) => {
       data: {
         id: queueEntry._id,
         queueNumber: queueEntry.queueNumber,
-        customerName: visitationForm ? visitationForm.customerName : 'Enroll Service', // Handle null visitationForm for Enroll service
+        customerName: displayCustomerName,
         role: queueEntry.role,
         service: serviceObj.name,
         status: queueEntry.status,
@@ -529,11 +564,14 @@ router.get('/queue-data/:department', async (req, res) => {
         // Find service by serviceId
         const service = await Service.findById(queue.serviceId);
 
+        // Get display customer name using helper function
+        const displayCustomerName = await getDisplayCustomerName(queue, service);
+
         return {
           id: queue._id,
           number: queue.queueNumber,
           status: queue.status,
-          name: queue.visitationFormId?.customerName || 'Unknown',
+          name: displayCustomerName,
           role: queue.role,
           service: service ? service.name : 'Unknown Service',
           isPriority: queue.isPriority,
@@ -548,6 +586,9 @@ router.get('/queue-data/:department', async (req, res) => {
     if (currentlyServing) {
       const currentService = await Service.findById(currentlyServing.serviceId);
 
+      // Get display customer name using helper function
+      const displayCustomerName = await getDisplayCustomerName(currentlyServing, currentService);
+
       // Debug logging for idNumber
       console.log('🔍 [BACKEND] currentlyServing object:', {
         queueNumber: currentlyServing.queueNumber,
@@ -555,12 +596,13 @@ router.get('/queue-data/:department', async (req, res) => {
         visitationFormId: currentlyServing.visitationFormId?._id,
         idNumberFromVisitationForm: currentlyServing.visitationFormId?.idNumber,
         idNumberDirect: currentlyServing.idNumber,
-        isPriority: currentlyServing.isPriority
+        isPriority: currentlyServing.isPriority,
+        displayCustomerName
       });
 
       currentServingData = {
         number: currentlyServing.queueNumber,
-        name: currentlyServing.visitationFormId?.customerName || 'Unknown',
+        name: displayCustomerName,
         role: currentlyServing.role,
         purpose: currentService ? currentService.name : 'Unknown Service',
         windowId: currentlyServing.windowId,
@@ -719,13 +761,16 @@ router.post('/queue/:id/rating', async (req, res) => {
     queueEntry.rating = rating;
     await queueEntry.save();
 
+    // Determine customer name for rating using helper function
+    const ratingCustomerName = await getDisplayCustomerName(queueEntry);
+
     // Create a Rating document for the Ratings page
     try {
       const ratingData = {
         rating: rating,
         ratingType: 'overall_experience', // Default rating type for queue submissions
         queueId: queueEntry._id,
-        customerName: queueEntry.visitationFormId?.customerName || 'Anonymous Customer',
+        customerName: ratingCustomerName,
         customerRole: queueEntry.role,
         office: queueEntry.office,
         status: 'approved' // Auto-approve queue ratings
@@ -941,10 +986,13 @@ router.post('/queue/next', async (req, res) => {
     // Mark the next queue as serving
     await nextQueue.markAsServing(windowId, adminId);
 
+    // Get display customer name using helper function
+    const displayCustomerName = await getDisplayCustomerName(nextQueue);
+
     console.log('✅ Queue marked as serving:', {
       queueNumber: nextQueue.queueNumber,
       windowId,
-      customerName: nextQueue.visitationFormId?.customerName
+      customerName: displayCustomerName
     });
 
     // Log queue call action
@@ -959,7 +1007,7 @@ router.post('/queue/next', async (req, res) => {
       metadata: {
         windowId,
         windowName: window.name,
-        customerName: nextQueue.visitationFormId?.customerName,
+        customerName: displayCustomerName,
         serviceId: nextQueue.serviceId
       }
     });
@@ -971,7 +1019,7 @@ router.post('/queue/next', async (req, res) => {
       windowId,
       data: {
         queueNumber: nextQueue.queueNumber,
-        customerName: nextQueue.visitationFormId?.customerName,
+        customerName: displayCustomerName,
         service: nextQueue.serviceId,
         role: nextQueue.role,
         idNumber: nextQueue.visitationFormId?.idNumber || nextQueue.idNumber || ''
@@ -1005,7 +1053,7 @@ router.post('/queue/next', async (req, res) => {
       message: 'Next queue called successfully',
       data: {
         queueNumber: nextQueue.queueNumber,
-        customerName: nextQueue.visitationFormId?.customerName,
+        customerName: displayCustomerName,
         windowName: window.name,
         announcement: `Queue number ${String(nextQueue.queueNumber).padStart(2, '0')} please proceed to ${window.name}`
       }
@@ -1454,9 +1502,10 @@ router.post('/queue/skip', async (req, res) => {
     let nextQueueData = null;
     if (nextQueue) {
       await nextQueue.markAsServing(windowId, adminId);
+      const displayCustomerName = await getDisplayCustomerName(nextQueue);
       nextQueueData = {
         queueNumber: nextQueue.queueNumber,
-        customerName: nextQueue.visitationFormId?.customerName,
+        customerName: displayCustomerName,
         role: nextQueue.role,
         idNumber: nextQueue.visitationFormId?.idNumber || nextQueue.idNumber || ''
       };

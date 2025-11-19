@@ -146,10 +146,30 @@ router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
         statusDisplay = 'Waiting';
       }
 
+      // Determine customer name using same logic as queue display
+      let customerName;
+      if (transaction.visitationFormId?.customerName) {
+        customerName = transaction.visitationFormId.customerName;
+      } else {
+        // For Enroll service without visitation form, use office-specific labels
+        const serviceName = serviceMap[transaction.serviceId];
+        if (serviceName === 'Enroll') {
+          if (transaction.office === 'registrar') {
+            customerName = 'Enrollee';
+          } else if (transaction.office === 'admissions') {
+            customerName = 'New Student';
+          } else {
+            customerName = 'N/A (Enroll Service)';
+          }
+        } else {
+          customerName = 'Anonymous Customer';
+        }
+      }
+
       return {
         id: transaction._id,
         queueNumber: transaction.queueNumber,
-        customerName: transaction.visitationFormId?.customerName || 'N/A (Enroll Service)',
+        customerName,
         purposeOfVisit: serviceMap[transaction.serviceId] || 'Unknown Service',
         priority: transaction.isPriority ? (transaction.visitationFormId?.idNumber || 'No') : 'No',
         role: transaction.role,
