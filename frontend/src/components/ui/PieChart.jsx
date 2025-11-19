@@ -133,22 +133,52 @@ export function ChartPieLegend({ userRole, timeRange = 'all' }) {
   const [department, setDepartment] = useState(null); // ✅ FIX: Initialize to null instead of 'registrar'
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  // Determine department and super admin status based on user role or URL
+  // Determine department and super admin status based on URL path first, then user role
   useEffect(() => {
-    const isSuper = userRole === 'super_admin' || userRole === 'MIS Super Admin' || window.location.pathname.startsWith('/admin/mis');
-    setIsSuperAdmin(isSuper);
+    const currentPath = window.location.pathname;
 
-    if (!isSuper) {
-      const dept = getDepartmentFromContext(userRole);
-      setDepartment(dept);
+    // Priority 1: Check URL path to determine context
+    // If Super Admin is viewing Registrar/Admissions dashboard, show department-specific data
+    if (currentPath.startsWith('/admin/registrar')) {
+      setIsSuperAdmin(false);
+      setDepartment('registrar');
 
-      // Log for debugging
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 PieChart department detection:', {
-          userRole,
-          detectedDepartment: dept,
-          currentPath: window.location.pathname
-        });
+        console.log('🔍 PieChart: Super Admin viewing Registrar dashboard - showing Registrar data only');
+      }
+    } else if (currentPath.startsWith('/admin/admissions')) {
+      setIsSuperAdmin(false);
+      setDepartment('admissions');
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 PieChart: Super Admin viewing Admissions dashboard - showing Admissions data only');
+      }
+    } else if (currentPath.startsWith('/admin/mis')) {
+      // MIS dashboard - show combined data for Super Admin
+      const isSuper = userRole === 'super_admin' || userRole === 'MIS Super Admin';
+      setIsSuperAdmin(isSuper);
+      setDepartment(null);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 PieChart: MIS dashboard - showing combined data');
+      }
+    } else {
+      // Priority 2: Fallback to user role if path doesn't match known patterns
+      const isSuper = userRole === 'super_admin' || userRole === 'MIS Super Admin';
+      setIsSuperAdmin(isSuper);
+
+      if (!isSuper) {
+        const dept = getDepartmentFromContext(userRole);
+        setDepartment(dept);
+
+        // Log for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 PieChart department detection:', {
+            userRole,
+            detectedDepartment: dept,
+            currentPath
+          });
+        }
       }
     }
   }, [userRole]);
