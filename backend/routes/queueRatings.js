@@ -102,10 +102,36 @@ router.get('/', verifyToken, checkApiAccess, [
       { $unwind: { path: '$visitationForm', preserveNullAndEmptyArrays: true } },
       { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
       
-      // Add computed fields
+      // Add computed fields with conditional logic for customerName
       {
         $addFields: {
-          customerName: '$visitationForm.customerName',
+          customerName: {
+            $cond: {
+              // If visitationForm.customerName exists, use it
+              if: { $ne: ['$visitationForm.customerName', null] },
+              then: '$visitationForm.customerName',
+              else: {
+                $cond: {
+                  // If service is 'Enroll', use office-specific labels
+                  if: { $eq: ['$service.name', 'Enroll'] },
+                  then: {
+                    $cond: {
+                      if: { $eq: ['$office', 'registrar'] },
+                      then: 'Enrollee',
+                      else: {
+                        $cond: {
+                          if: { $eq: ['$office', 'admissions'] },
+                          then: 'New Student',
+                          else: 'Anonymous Customer'
+                        }
+                      }
+                    }
+                  },
+                  else: 'Anonymous Customer'
+                }
+              }
+            }
+          },
           serviceName: '$service.name',
           department: '$office'
         }
