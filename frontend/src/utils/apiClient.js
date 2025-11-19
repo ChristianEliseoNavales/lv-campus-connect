@@ -61,10 +61,16 @@ export const authFetch = async (url, options = {}) => {
   const token = getAuthToken();
 
   // Prepare headers
+  // IMPORTANT: Do NOT set Content-Type for FormData - browser will auto-set with boundary
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+
+  // Only set Content-Type if body is NOT FormData
+  // FormData requires browser to automatically set Content-Type with boundary
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // Add Authorization header if token exists
   if (token) {

@@ -159,8 +159,8 @@ const Charts = () => {
       const formData = new FormData();
       formData.append('file', uploadFile);
 
-      // Upload file to backend (Cloudinary)
-      const uploadResponse = await fetch(`${API_CONFIG.getAdminUrl()}/api/charts/upload`, {
+      // Upload file to backend (Cloudinary) with authentication
+      const uploadResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/charts/upload`, {
         method: 'POST',
         body: formData
       });
@@ -190,7 +190,7 @@ const Charts = () => {
         }
       };
 
-      const createResponse = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/chart`, {
+      const createResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/chart`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(chartData)
@@ -199,7 +199,7 @@ const Charts = () => {
       if (createResponse.ok) {
         // Update office email if provided
         if (officeEmail && officeEmail !== selectedOffice.officeEmail) {
-          await fetch(`${API_CONFIG.getAdminUrl()}/api/database/office/${selectedOfficeId}`, {
+          await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/office/${selectedOfficeId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ officeEmail })
@@ -234,13 +234,13 @@ const Charts = () => {
       // Delete from Cloudinary first
       if (chartToDelete?.image?.public_id) {
         const publicIdEncoded = encodeURIComponent(chartToDelete.image.public_id);
-        await fetch(`${API_CONFIG.getAdminUrl()}/api/charts/delete/${publicIdEncoded}`, {
+        await authFetch(`${API_CONFIG.getAdminUrl()}/api/charts/delete/${publicIdEncoded}`, {
           method: 'DELETE'
         });
       }
 
       // Delete from database
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/database/chart/${selectedChartId}`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/chart/${selectedChartId}`, {
         method: 'DELETE'
       });
 
