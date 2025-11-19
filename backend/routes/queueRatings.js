@@ -106,11 +106,9 @@ router.get('/', verifyToken, checkApiAccess, [
       {
         $addFields: {
           customerName: {
-            $cond: {
-              // If visitationForm.customerName exists, use it
-              if: { $ne: ['$visitationForm.customerName', null] },
-              then: '$visitationForm.customerName',
-              else: {
+            $ifNull: [
+              '$visitationForm.customerName',
+              {
                 $cond: {
                   // If service is 'Enroll', use office-specific labels
                   if: { $eq: ['$service.name', 'Enroll'] },
@@ -130,7 +128,7 @@ router.get('/', verifyToken, checkApiAccess, [
                   else: 'Anonymous Customer'
                 }
               }
-            }
+            ]
           },
           serviceName: '$service.name',
           department: '$office'
@@ -179,10 +177,17 @@ router.get('/', verifyToken, checkApiAccess, [
     ];
 
     const result = await Queue.aggregate(pipeline);
-    
+
     const total = result[0].metadata[0]?.total || 0;
     const ratings = result[0].data || [];
     const totalPages = Math.ceil(total / parseInt(limit));
+
+    // Debug logging for Enroll service ratings
+    const enrollRatings = ratings.filter(r => r.serviceName === 'Enroll');
+    if (enrollRatings.length > 0) {
+      console.log('🎓 [QUEUE-RATINGS] Found Enroll service ratings:', enrollRatings.length);
+      console.log('🎓 [QUEUE-RATINGS] Sample Enroll rating:', JSON.stringify(enrollRatings[0], null, 2));
+    }
 
     res.json({
       success: true,
