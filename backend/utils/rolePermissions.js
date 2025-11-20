@@ -29,18 +29,18 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/registrar/queue',
         '/admin/registrar/transaction-logs',
         '/admin/registrar/settings',
+        '/admin/registrar/faq',
 
         // Admissions routes
         '/admin/admissions',
         '/admin/admissions/queue',
         '/admin/admissions/transaction-logs',
         '/admin/admissions/settings',
+        '/admin/admissions/faq',
 
         // Senior Management routes
         '/admin/seniormanagement/charts',
-
-        // Shared routes (accessible by all offices when granted)
-        '/admin/shared/faq'
+        '/admin/seniormanagement/faq'
       ];
 
     case 'MIS Admin':
@@ -61,7 +61,8 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/registrar',
         '/admin/registrar/queue',
         '/admin/registrar/transaction-logs',
-        '/admin/registrar/settings'
+        '/admin/registrar/settings',
+        '/admin/registrar/faq'
       ];
 
     case 'Admissions Admin':
@@ -70,13 +71,15 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/admissions',
         '/admin/admissions/queue',
         '/admin/admissions/transaction-logs',
-        '/admin/admissions/settings'
+        '/admin/admissions/settings',
+        '/admin/admissions/faq'
       ];
 
     case 'Senior Management Admin':
-      // Senior Management admin has access to charts only
+      // Senior Management admin has access to charts and FAQ
       return [
-        '/admin/seniormanagement/charts'
+        '/admin/seniormanagement/charts',
+        '/admin/seniormanagement/faq'
       ];
 
     // Admin Staff roles get base queue access
@@ -225,13 +228,10 @@ const validatePageAccessForOffice = (pageAccess, office, accessLevel) => {
     };
   }
 
-  // Check that all pageAccess routes belong to the user's office or are shared routes
+  // Check that all pageAccess routes belong to the user's office
   const invalidRoutes = pageAccess.filter(route => {
     // Allow wildcard only for MIS Super Admin (already handled above)
     if (route === '*') return true;
-
-    // Allow shared routes for all offices
-    if (route.startsWith('/admin/shared/')) return false;
 
     // Check if route starts with the allowed prefix for this office
     return !route.startsWith(allowedPrefix);

@@ -134,9 +134,9 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/admin/mis/faq" element={
-            <ProtectedRoute requiredRoles={['super_admin']}>
+            <ProtectedRoute>
               <AdminLayout>
-                <MISFAQ />
+                <SharedFAQ />
               </AdminLayout>
             </ProtectedRoute>
           } />
@@ -196,6 +196,13 @@ function App() {
               </AdminLayout>
             </ProtectedRoute>
           } />
+          <Route path="/admin/registrar/faq" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <SharedFAQ />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
 
           {/* Admissions Admin Routes */}
           <Route path="/admin/admissions" element={
@@ -245,6 +252,13 @@ function App() {
               </AdminLayout>
             </ProtectedRoute>
           } />
+          <Route path="/admin/admissions/faq" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <SharedFAQ />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
 
           {/* Senior Management Admin Routes */}
           <Route path="/admin/seniormanagement/charts" element={
@@ -254,9 +268,7 @@ function App() {
               </AdminLayout>
             </ProtectedRoute>
           } />
-
-          {/* Shared Admin Routes (accessible by all offices when granted) */}
-          <Route path="/admin/shared/faq" element={
+          <Route path="/admin/seniormanagement/faq" element={
             <ProtectedRoute>
               <AdminLayout>
                 <SharedFAQ />
