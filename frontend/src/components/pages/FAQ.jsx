@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { io } from 'socket.io-client';
+import { FaSearch } from 'react-icons/fa';
 import API_CONFIG from '../../config/api';
+import HolographicKeyboard from '../ui/HolographicKeyboard';
 
 const FAQ = () => {
   const [openFAQ, setOpenFAQ] = useState(null);
   const [faqData, setFaqData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Animation variants for staggered effects
   const containerVariants = {
@@ -101,15 +106,61 @@ const FAQ = () => {
     setOpenFAQ(openFAQ === id ? null : id);
   };
 
+  // Keyboard handlers
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+    setShowKeyboard(true);
+  };
+
+  const handleSearchBlur = () => {
+    setIsSearchFocused(false);
+  };
+
+  const hideKeyboard = () => {
+    setShowKeyboard(false);
+    setIsSearchFocused(false);
+  };
+
+  const handleKeyPress = (key) => {
+    setSearchTerm(prev => prev + key);
+  };
+
+  const handleBackspace = () => {
+    setSearchTerm(prev => prev.slice(0, -1));
+  };
+
+  const handleSpace = () => {
+    setSearchTerm(prev => prev + ' ');
+  };
+
+  const handleSearch = () => {
+    // Search is already handled by the filter, this is just for the button
+    // Could add additional logic here if needed
+    console.log('Searching for:', searchTerm);
+  };
+
+  // Filter FAQs based on search term
+  const filteredFAQs = faqData.filter((faq) => {
+    if (!searchTerm.trim()) return true;
+
+    const searchLower = searchTerm.toLowerCase();
+    const questionMatch = faq.question.toLowerCase().includes(searchLower);
+    const answerMatch = faq.answer.toLowerCase().includes(searchLower);
+    const categoryMatch = faq.category?.toLowerCase().includes(searchLower);
+
+    return questionMatch || answerMatch || categoryMatch;
+  });
+
   return (
-    <motion.div
-      className="h-full flex flex-col"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* Main Content Area */}
-      <div className="flex-grow flex items-center justify-center p-6">
+    <>
+      <motion.div
+        className="h-full flex flex-col"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Main Content Area */}
+        <div className="flex-grow flex items-center justify-center p-6">
         {/* White Background Container with Fixed Height and Scrollable Content */}
         <div className="bg-white rounded-xl shadow-xl drop-shadow-lg w-full max-w-3xl h-[60vh] flex flex-col overflow-hidden">
           {/* Header inside white container */}
@@ -120,6 +171,34 @@ const FAQ = () => {
             <h1 className="text-4xl font-semibold text-center drop-shadow-lg" style={{ color: '#161F55' }}>
               FREQUENTLY ASKED QUESTIONS
             </h1>
+
+            {/* Search Input with Button */}
+            <div className="mt-4 max-w-2xl mx-auto">
+              <div className="flex gap-2.5 items-center">
+                <div className="flex-grow relative">
+                  <input
+                    type="text"
+                    placeholder="Search FAQs..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={handleSearchFocus}
+                    onBlur={handleSearchBlur}
+                    className={`w-full px-4 py-3 border-2 rounded-3xl text-base focus:outline-none transition-colors shadow-lg focus:shadow-xl ${
+                      isSearchFocused
+                        ? 'border-[#1F3463] bg-blue-50'
+                        : 'border-gray-300 active:border-gray-400'
+                    }`}
+                  />
+                </div>
+                <button
+                  onClick={handleSearch}
+                  className="bg-[#FFE251] text-[#1A2E56] px-4 py-3 rounded-3xl transition-all duration-150 focus:outline-none flex items-center gap-1.5 shadow-lg active:shadow-md active:scale-95 drop-shadow-md"
+                >
+                  <FaSearch className="w-3.5 h-3.5" />
+                  <span className="font-semibold text-sm">Search</span>
+                </button>
+              </div>
+            </div>
           </motion.div>
 
           {/* Scrollable FAQ Content */}
@@ -139,8 +218,24 @@ const FAQ = () => {
                 <div className="flex justify-center items-center py-10">
                   <p className="text-gray-600 text-base">No FAQs available at the moment.</p>
                 </div>
+              ) : filteredFAQs.length === 0 ? (
+                <div className="flex justify-center items-center py-10">
+                  <div className="text-center">
+                    <svg className="w-16 h-16 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <p className="text-gray-600 text-base">No FAQs found matching "{searchTerm}"</p>
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="mt-3 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                      style={{ backgroundColor: '#1F3463' }}
+                    >
+                      Clear Search
+                    </button>
+                  </div>
+                </div>
               ) : (
-                faqData.map((faq, index) => (
+                filteredFAQs.map((faq, index) => (
                 <motion.div
                   key={faq.id}
                   className="bg-gray-50 rounded-lg shadow-lg drop-shadow-sm border border-gray-200 overflow-hidden"
@@ -193,7 +288,20 @@ const FAQ = () => {
           </div>
         </div>
       </div>
-    </motion.div>
+      </motion.div>
+
+      {/* Holographic Keyboard Overlay */}
+      <HolographicKeyboard
+        onKeyPress={handleKeyPress}
+        onBackspace={handleBackspace}
+        onSpace={handleSpace}
+        onHide={hideKeyboard}
+        isVisible={showKeyboard}
+        activeInputValue={searchTerm}
+        activeInputLabel="SEARCH"
+        activeInputPlaceholder="Search FAQs..."
+      />
+    </>
   );
 };
 
