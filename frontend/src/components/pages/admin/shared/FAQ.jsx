@@ -194,9 +194,7 @@ const FAQ = () => {
       errors.answer = 'Answer cannot exceed 2000 characters';
     }
 
-    if (!formData.category) {
-      errors.category = 'Category is required';
-    }
+    // Office is auto-set from user context, no validation needed
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -634,36 +632,20 @@ const FAQ = () => {
                     </div>
                   </div>
 
-                  {/* Status and Office Info Row */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Office (Read-only display) */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Office
-                      </label>
-                      <div className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          {user?.office || 'MIS'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">Auto-set based on your office</p>
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Status
-                      </label>
-                      <select
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">Only active FAQs are shown in the kiosk</p>
-                    </div>
+                  {/* Status */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">Only active FAQs are shown in the kiosk</p>
                   </div>
                 </div>
 

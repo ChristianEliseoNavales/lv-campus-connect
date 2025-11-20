@@ -394,8 +394,8 @@ const API_PAGE_MAPPING = {
   // Audit Trail API - used by MIS Audit Trail page
   '/api/audit-trail': ['/admin/mis/audit-trail'],
 
-  // Database API - used by MIS Database Manager page
-  '/api/database': ['/admin/mis/database-manager'],
+  // Database API - used by MIS Database Manager page and Senior Management Charts page
+  '/api/database': ['/admin/mis/database-manager', '/admin/seniormanagement/charts'],
 
   // Charts API - used by Senior Management Charts page
   '/api/charts': ['/admin/seniormanagement/charts'],
