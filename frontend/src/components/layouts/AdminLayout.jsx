@@ -35,6 +35,7 @@ const AdminLayout = ({ children }) => {
   const [isScrollable, setIsScrollable] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isQueueExpanded, setIsQueueExpanded] = useState(false);
+  const [profilePictureError, setProfilePictureError] = useState(false);
 
   // Use centralized Socket context
   const { joinRoom, leaveRoom, subscribe } = useSocket();
@@ -46,6 +47,11 @@ const AdminLayout = ({ children }) => {
 
   // Development mode detection - check if using URL-based role switching
   const isDevelopmentMode = user?.id === 'dev-bypass-user';
+
+  // Reset profile picture error when user changes
+  useEffect(() => {
+    setProfilePictureError(false);
+  }, [user?.profilePicture]);
 
   // Determine department based on current admin context (URL path) - memoized
   const department = useMemo(() => {
@@ -489,11 +495,26 @@ const AdminLayout = ({ children }) => {
   };
 
   // Icon components for header
-  const UserIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-  );
+  const UserIcon = () => {
+    // If user has a profile picture from Google and it hasn't failed to load, display it
+    if (user?.profilePicture && !profilePictureError) {
+      return (
+        <img
+          src={user.profilePicture}
+          alt={user.name || 'User'}
+          className="w-8 h-8 rounded-full object-cover border-2 border-white"
+          onError={() => setProfilePictureError(true)}
+        />
+      );
+    }
+
+    // Fallback SVG icon
+    return (
+      <svg className="w-8 h-8 p-1 rounded-full bg-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    );
+  };
 
   const ChevronDownIcon = () => (
     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
