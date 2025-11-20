@@ -41,6 +41,10 @@ const auditTrailSchema = new mongoose.Schema({
       'SETTINGS_UPDATE', 'SYSTEM_CONFIG_CHANGE',
       // Bulletin actions
       'BULLETIN_CREATE', 'BULLETIN_UPDATE', 'BULLETIN_DELETE', 'BULLETIN_PUBLISH', 'BULLETIN_UNPUBLISH',
+      // FAQ actions
+      'FAQ_CREATE', 'FAQ_UPDATE', 'FAQ_DELETE', 'FAQ_READ',
+      // Rating actions
+      'RATING_CREATE', 'RATING_UPDATE', 'RATING_DELETE', 'RATING_READ',
       // System actions
       'SYSTEM_BACKUP', 'SYSTEM_RESTORE', 'DATA_EXPORT', 'DATA_IMPORT',
       // Other actions
@@ -55,7 +59,7 @@ const auditTrailSchema = new mongoose.Schema({
   // Target resource information
   resourceType: {
     type: String,
-    enum: ['User', 'Queue', 'Service', 'Window', 'Settings', 'Bulletin', 'Rating', 'System', 'Other'],
+    enum: ['User', 'Queue', 'Service', 'Window', 'Settings', 'Bulletin', 'FAQ', 'Rating', 'System', 'Other'],
     required: true
   },
   resourceId: {

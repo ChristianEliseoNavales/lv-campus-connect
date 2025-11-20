@@ -96,25 +96,25 @@ const Users = () => {
     { id: 'mis_audit_trail', label: 'MIS Audit Trail', category: 'MIS', path: '/admin/mis/audit-trail' },
     { id: 'mis_bulletin', label: 'MIS Bulletin', category: 'MIS', path: '/admin/mis/bulletin' },
     { id: 'mis_ratings', label: 'MIS Ratings', category: 'MIS', path: '/admin/mis/ratings' },
-    { id: 'mis_faq', label: 'FAQ Management', category: 'MIS', path: '/admin/shared/faq' },
+    { id: 'mis_faq', label: 'FAQ Management', category: 'MIS', path: '/admin/mis/faq' },
 
     // Registrar Admin Pages
     { id: 'registrar_dashboard', label: 'Registrar Dashboard', category: 'Registrar', path: '/admin/registrar' },
     { id: 'registrar_queue', label: 'Registrar Queue Management', category: 'Registrar', path: '/admin/registrar/queue' },
     { id: 'registrar_transaction_logs', label: 'Registrar Transaction Logs', category: 'Registrar', path: '/admin/registrar/transaction-logs' },
     { id: 'registrar_settings', label: 'Registrar Settings', category: 'Registrar', path: '/admin/registrar/settings' },
-    { id: 'registrar_faq', label: 'FAQ Management', category: 'Registrar', path: '/admin/shared/faq' },
+    { id: 'registrar_faq', label: 'FAQ Management', category: 'Registrar', path: '/admin/registrar/faq' },
 
     // Admissions Admin Pages
     { id: 'admissions_dashboard', label: 'Admissions Dashboard', category: 'Admissions', path: '/admin/admissions' },
     { id: 'admissions_queue', label: 'Admissions Queue Management', category: 'Admissions', path: '/admin/admissions/queue' },
     { id: 'admissions_transaction_logs', label: 'Admissions Transaction Logs', category: 'Admissions', path: '/admin/admissions/transaction-logs' },
     { id: 'admissions_settings', label: 'Admissions Settings', category: 'Admissions', path: '/admin/admissions/settings' },
-    { id: 'admissions_faq', label: 'FAQ Management', category: 'Admissions', path: '/admin/shared/faq' },
+    { id: 'admissions_faq', label: 'FAQ Management', category: 'Admissions', path: '/admin/admissions/faq' },
 
     // Senior Management Admin Pages
     { id: 'senior_management_charts', label: 'Senior Management Charts', category: 'Senior Management', path: '/admin/seniormanagement/charts' },
-    { id: 'senior_management_faq', label: 'FAQ Management', category: 'Senior Management', path: '/admin/shared/faq' }
+    { id: 'senior_management_faq', label: 'FAQ Management', category: 'Senior Management', path: '/admin/seniormanagement/faq' }
   ];
 
   // Helper function to get default page access based on office and access level

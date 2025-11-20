@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "vite build",
+    "build": "vite build --mode production",
     "build:cloud": "vite build --mode production",
-    "build:kiosk": "vite build --mode development",
+    "build:kiosk": "vite build --mode kiosk",
     "lint": "eslint .",
     "preview": "vite preview"
   },

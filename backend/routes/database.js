@@ -33,6 +33,20 @@ const modelMap = {
   chart: Chart
 };
 
+// Resource type mapping for audit trail (maps model names to valid AuditTrail enum values)
+const resourceTypeMap = {
+  user: 'User',
+  queue: 'Queue',
+  visitationform: 'Other', // VisitationForm is not a primary resource, use 'Other'
+  window: 'Window',
+  service: 'Service',
+  settings: 'Settings',
+  rating: 'Rating',
+  bulletin: 'Bulletin',
+  office: 'Other', // Office is not in enum, use 'Other'
+  chart: 'Other' // Chart is not in enum, use 'Other'
+};
+
 // Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
 // Middleware to get model from params
@@ -186,7 +200,7 @@ router.post('/:model',
       await AuditService.logCRUD({
         user: req.user,
         action: 'CREATE',
-        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceType: resourceTypeMap[req.modelName] || 'Other',
         resourceId: record._id,
         resourceName: record.name || record.email || record._id.toString(),
         req,
@@ -213,7 +227,7 @@ router.post('/:model',
       await AuditService.logCRUD({
         user: req.user,
         action: 'CREATE',
-        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceType: resourceTypeMap[req.modelName] || 'Other',
         resourceName: req.body.name || req.body.email || 'Unknown',
         req,
         success: false,
@@ -262,7 +276,7 @@ router.put('/:model/:id',
         await AuditService.logCRUD({
           user: req.user,
           action: 'UPDATE',
-          resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+          resourceType: resourceTypeMap[req.modelName] || 'Other',
           resourceId: req.params.id,
           req,
           success: false,
@@ -287,7 +301,7 @@ router.put('/:model/:id',
       await AuditService.logCRUD({
         user: req.user,
         action: 'UPDATE',
-        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceType: resourceTypeMap[req.modelName] || 'Other',
         resourceId: record._id,
         resourceName: record.name || record.email || record._id.toString(),
         req,
@@ -315,7 +329,7 @@ router.put('/:model/:id',
       await AuditService.logCRUD({
         user: req.user,
         action: 'UPDATE',
-        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceType: resourceTypeMap[req.modelName] || 'Other',
         resourceId: req.params.id,
         req,
         success: false,
@@ -367,7 +381,7 @@ router.delete('/:model/delete-all',
       await AuditService.logCRUD({
         user: req.user,
         action: 'DELETE',
-        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceType: resourceTypeMap[req.modelName] || 'Other',
         resourceName: `All ${req.modelName} records`,
         req,
         success: true,
@@ -386,7 +400,7 @@ router.delete('/:model/delete-all',
       await AuditService.logCRUD({
         user: req.user,
         action: 'DELETE',
-        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceType: resourceTypeMap[req.modelName] || 'Other',
         resourceName: `All ${req.modelName} records`,
         req,
         success: false,
@@ -418,7 +432,7 @@ router.delete('/:model/:id',
         await AuditService.logCRUD({
           user: req.user,
           action: 'DELETE',
-          resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+          resourceType: resourceTypeMap[req.modelName] || 'Other',
           resourceId: req.params.id,
           req,
           success: false,
@@ -437,7 +451,7 @@ router.delete('/:model/:id',
         await AuditService.logCRUD({
           user: req.user,
           action: 'DELETE',
-          resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+          resourceType: resourceTypeMap[req.modelName] || 'Other',
           resourceId: req.params.id,
           req,
           success: false,
@@ -453,7 +467,7 @@ router.delete('/:model/:id',
       await AuditService.logCRUD({
         user: req.user,
         action: 'DELETE',
-        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceType: resourceTypeMap[req.modelName] || 'Other',
         resourceId: record._id,
         resourceName: record.name || record.email || record._id.toString(),
         req,
@@ -486,7 +500,7 @@ router.delete('/:model/:id',
       await AuditService.logCRUD({
         user: req.user,
         action: 'DELETE',
-        resourceType: req.modelName.charAt(0).toUpperCase() + req.modelName.slice(1),
+        resourceType: resourceTypeMap[req.modelName] || 'Other',
         resourceId: req.params.id,
         req,
         success: false,

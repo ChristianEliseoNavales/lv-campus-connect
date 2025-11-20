@@ -12,6 +12,10 @@
 const CLOUD_BACKEND_URL = import.meta.env.VITE_CLOUD_BACKEND_URL || 'https://lvcampusconnect-backend.onrender.com';
 const LOCAL_BACKEND_URL = import.meta.env.VITE_LOCAL_BACKEND_URL || 'http://localhost:5000';
 
+// Environment mode - determines which backend to use
+const NODE_ENV = import.meta.env.VITE_NODE_ENV || import.meta.env.MODE || 'development';
+const IS_DEVELOPMENT = NODE_ENV === 'development';
+
 /**
  * Detect if the current page is a kiosk page
  * Kiosk pages are public-facing pages that don't require authentication
@@ -57,6 +61,14 @@ const getBackendUrl = (operation = 'default') => {
     return 'http://localhost:5000'; // Hardcoded for printing reliability
   }
 
+  // DEVELOPMENT MODE: Use local backend for EVERYTHING (except explicit cloud requests)
+  // This allows full local testing before deployment
+  if (IS_DEVELOPMENT) {
+    console.log(`🔧 DEVELOPMENT MODE: Using LOCAL backend for ${operation}`);
+    return LOCAL_BACKEND_URL;
+  }
+
+  // PRODUCTION MODE: Use hybrid architecture
   // Explicit operation types
   if (operation === 'kiosk') {
     console.log('🖥️ Using LOCAL backend for:', operation);
@@ -86,10 +98,17 @@ const getBackendUrl = (operation = 'default') => {
 
 /**
  * Get Socket.io URL based on context
- * - Kiosk pages connect to local backend for real-time updates
- * - Admin pages connect to cloud backend for real-time updates
+ * - Development: Always use local backend
+ * - Production: Kiosk pages use local backend, Admin pages use cloud backend
  */
 const getSocketUrl = () => {
+  // DEVELOPMENT MODE: Always use local backend
+  if (IS_DEVELOPMENT) {
+    console.log('🔌 Socket.io: DEVELOPMENT MODE - Connecting to LOCAL backend');
+    return LOCAL_BACKEND_URL;
+  }
+
+  // PRODUCTION MODE: Use hybrid architecture
   if (isKioskPage()) {
     console.log('🔌 Socket.io: Connecting to LOCAL backend');
     return LOCAL_BACKEND_URL;
@@ -181,9 +200,13 @@ const API_CONFIG = {
 
   // Convenience methods for common operations
   getKioskUrl: () => LOCAL_BACKEND_URL,
-  getAdminUrl: () => CLOUD_BACKEND_URL,
+  getAdminUrl: () => IS_DEVELOPMENT ? LOCAL_BACKEND_URL : CLOUD_BACKEND_URL,
   // CRITICAL: Printing ALWAYS uses localhost for thermal printer access
   getPrintUrl: () => 'http://localhost:5000',
+
+  // Environment info
+  isDevelopment: () => IS_DEVELOPMENT,
+  getEnvironment: () => NODE_ENV,
 
   // API Endpoints
   API_ENDPOINTS,
@@ -192,12 +215,17 @@ const API_CONFIG = {
 
 // Log configuration on load
 console.log('🌐 API Configuration loaded:');
+console.log('  - Environment:', NODE_ENV, IS_DEVELOPMENT ? '(DEVELOPMENT MODE)' : '(PRODUCTION MODE)');
 console.log('  - Cloud Backend:', CLOUD_BACKEND_URL);
 console.log('  - Local Backend:', LOCAL_BACKEND_URL);
 console.log('  - Current Page:', window.location.pathname);
 console.log('  - Is Kiosk Page:', isKioskPage());
 console.log('  - Is Admin Page:', isAdminPage());
 console.log('  - Active Backend:', getBackendUrl());
+if (IS_DEVELOPMENT) {
+  console.log('  ⚠️ DEVELOPMENT MODE: All API calls will use LOCAL backend (localhost:5000)');
+  console.log('  ⚠️ Make sure your local backend is running!');
+}
 
 export default API_CONFIG;
 

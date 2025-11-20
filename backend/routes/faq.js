@@ -5,12 +5,6 @@ const FAQ = require('../models/FAQ');
 const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 const { AuditService } = require('../middleware/auditMiddleware');
 
-// Function to get Socket.io instance
-const getIO = () => {
-  const app = require('../server');
-  return app.get('io');
-};
-
 // Validation rules for FAQ
 const faqValidation = [
   body('question')
@@ -156,7 +150,7 @@ router.post('/', verifyToken, checkApiAccess, faqValidation, async (req, res) =>
 
     // Emit Socket.io event for real-time updates
     try {
-      const io = getIO();
+      const io = req.app.get('io');
       if (io) {
         // Emit to shared admin room (accessible by all admin users with FAQ access)
         io.to('admin-shared-faq').emit('faq-updated', {
@@ -268,7 +262,7 @@ router.put('/:id', verifyToken, checkApiAccess, faqValidation, async (req, res) 
 
     // Emit Socket.io event for real-time updates
     try {
-      const io = getIO();
+      const io = req.app.get('io');
       if (io) {
         // Emit to shared admin room (accessible by all admin users with FAQ access)
         io.to('admin-shared-faq').emit('faq-updated', {
@@ -349,7 +343,7 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
 
     // Emit Socket.io event for real-time updates
     try {
-      const io = getIO();
+      const io = req.app.get('io');
       if (io) {
         // Emit to shared admin room (accessible by all admin users with FAQ access)
         io.to('admin-shared-faq').emit('faq-updated', {

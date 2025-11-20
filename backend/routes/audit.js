@@ -17,6 +17,8 @@ const validateAuditLog = [
       'WINDOW_CREATE', 'WINDOW_UPDATE', 'WINDOW_DELETE', 'WINDOW_OPEN', 'WINDOW_CLOSE',
       'SETTINGS_UPDATE', 'SYSTEM_CONFIG_CHANGE',
       'BULLETIN_CREATE', 'BULLETIN_UPDATE', 'BULLETIN_DELETE', 'BULLETIN_PUBLISH', 'BULLETIN_UNPUBLISH',
+      'FAQ_CREATE', 'FAQ_UPDATE', 'FAQ_DELETE', 'FAQ_READ',
+      'RATING_CREATE', 'RATING_UPDATE', 'RATING_DELETE', 'RATING_READ',
       'SYSTEM_BACKUP', 'SYSTEM_RESTORE', 'DATA_EXPORT', 'DATA_IMPORT',
       'OTHER'
     ])
@@ -26,7 +28,7 @@ const validateAuditLog = [
     .isLength({ min: 1, max: 500 })
     .withMessage('Action description must be between 1 and 500 characters'),
   body('resourceType')
-    .isIn(['User', 'Queue', 'Service', 'Window', 'Settings', 'Bulletin', 'Rating', 'System', 'Other'])
+    .isIn(['User', 'Queue', 'Service', 'Window', 'Settings', 'Bulletin', 'FAQ', 'Rating', 'System', 'Other'])
     .withMessage('Invalid resource type'),
   body('department')
     .optional()
