@@ -21,11 +21,11 @@ const faqValidation = [
     .trim()
     .notEmpty().withMessage('Answer is required')
     .isLength({ min: 10, max: 2000 }).withMessage('Answer must be between 10 and 2000 characters'),
-  body('category')
+  body('office')
     .trim()
-    .notEmpty().withMessage('Category is required')
-    .isIn(['General', 'Registration', 'Financial', 'Academic', 'Campus Life', 'Technology'])
-    .withMessage('Invalid category'),
+    .notEmpty().withMessage('Office is required')
+    .isIn(['MIS', 'Registrar', 'Admissions', 'Senior Management'])
+    .withMessage('Invalid office'),
   body('order')
     .optional()
     .isInt({ min: 0 }).withMessage('Order must be a non-negative integer'),
@@ -37,30 +37,34 @@ const faqValidation = [
 // GET /api/faq - Get all FAQs (with optional filtering)
 router.get('/', verifyToken, checkApiAccess, async (req, res) => {
   try {
-    const { category, status, search } = req.query;
-    
+    const { status, search } = req.query;
+
     let query = {};
-    
-    if (category) {
-      query.category = category;
+
+    // Office-based filtering:
+    // - MIS users see ALL FAQs
+    // - Other offices only see FAQs from their office
+    const userOffice = req.user.office;
+    if (userOffice !== 'MIS') {
+      query.office = userOffice;
     }
-    
+
     if (status) {
       query.status = status;
     }
-    
+
     if (search) {
       query.$or = [
         { question: { $regex: search, $options: 'i' } },
         { answer: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     const faqs = await FAQ.find(query)
       .populate('createdBy', 'name email')
       .populate('updatedBy', 'name email')
-      .sort({ category: 1, order: 1, createdAt: -1 });
-    
+      .sort({ office: 1, order: 1, createdAt: -1 });
+
     res.json({
       success: true,
       count: faqs.length,
@@ -154,7 +158,8 @@ router.post('/', verifyToken, checkApiAccess, faqValidation, async (req, res) =>
     try {
       const io = getIO();
       if (io) {
-        io.to('admin-mis').emit('faq-updated', {
+        // Emit to shared admin room (accessible by all admin users with FAQ access)
+        io.to('admin-shared-faq').emit('faq-updated', {
           type: 'faq-created',
           data: faq
         });
@@ -265,7 +270,8 @@ router.put('/:id', verifyToken, checkApiAccess, faqValidation, async (req, res) 
     try {
       const io = getIO();
       if (io) {
-        io.to('admin-mis').emit('faq-updated', {
+        // Emit to shared admin room (accessible by all admin users with FAQ access)
+        io.to('admin-shared-faq').emit('faq-updated', {
           type: 'faq-updated',
           data: faq
         });
@@ -345,7 +351,8 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
     try {
       const io = getIO();
       if (io) {
-        io.to('admin-mis').emit('faq-updated', {
+        // Emit to shared admin room (accessible by all admin users with FAQ access)
+        io.to('admin-shared-faq').emit('faq-updated', {
           type: 'faq-deleted',
           data: { id: req.params.id }
         });

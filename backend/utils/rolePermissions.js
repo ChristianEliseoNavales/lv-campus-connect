@@ -37,7 +37,10 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/admissions/settings',
 
         // Senior Management routes
-        '/admin/seniormanagement/charts'
+        '/admin/seniormanagement/charts',
+
+        // Shared routes (accessible by all offices when granted)
+        '/admin/shared/faq'
       ];
 
     case 'MIS Admin':
@@ -222,10 +225,13 @@ const validatePageAccessForOffice = (pageAccess, office, accessLevel) => {
     };
   }
 
-  // Check that all pageAccess routes belong to the user's office
+  // Check that all pageAccess routes belong to the user's office or are shared routes
   const invalidRoutes = pageAccess.filter(route => {
     // Allow wildcard only for MIS Super Admin (already handled above)
     if (route === '*') return true;
+
+    // Allow shared routes for all offices
+    if (route.startsWith('/admin/shared/')) return false;
 
     // Check if route starts with the allowed prefix for this office
     return !route.startsWith(allowedPrefix);

@@ -385,6 +385,9 @@ const API_PAGE_MAPPING = {
   // Bulletin API - used by MIS Bulletin page
   '/api/bulletin': ['/admin/mis/bulletin'],
 
+  // FAQ API - used by Shared FAQ page (accessible by all offices when granted)
+  '/api/faq': ['/admin/shared/faq', '/admin/mis/faq'],
+
   // Ratings API - used by MIS Ratings page
   '/api/ratings': ['/admin/mis/ratings'],
 

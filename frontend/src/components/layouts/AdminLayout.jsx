@@ -361,7 +361,6 @@ const AdminLayout = ({ children }) => {
       '/admin/mis/database-manager': { name: 'Database Manager', path: '/admin/mis/database-manager', icon: MdStorage, office: 'mis' },
       '/admin/mis/audit-trail': { name: 'Audit Trail', path: '/admin/mis/audit-trail', icon: MdHistory, office: 'mis' },
       '/admin/mis/bulletin': { name: 'Bulletin', path: '/admin/mis/bulletin', icon: MdNewspaper, office: 'mis' },
-      '/admin/mis/faq': { name: 'FAQs', path: '/admin/mis/faq', icon: MdQuestionAnswer, office: 'mis' },
       '/admin/mis/ratings': { name: 'Ratings', path: '/admin/mis/ratings', icon: MdStar, office: 'mis' },
 
       // Registrar items
@@ -391,7 +390,10 @@ const AdminLayout = ({ children }) => {
       '/admin/admissions/settings': { name: 'Settings', path: '/admin/admissions/settings', icon: MdSettings, office: 'admissions' },
 
       // Senior Management items
-      '/admin/seniormanagement/charts': { name: 'Charts', path: '/admin/seniormanagement/charts', icon: MdBarChart, office: 'seniormanagement' }
+      '/admin/seniormanagement/charts': { name: 'Charts', path: '/admin/seniormanagement/charts', icon: MdBarChart, office: 'seniormanagement' },
+
+      // Shared items (accessible by all offices when granted)
+      '/admin/shared/faq': { name: 'FAQs', path: '/admin/shared/faq', icon: MdQuestionAnswer, office: 'shared' }
     };
 
     // Build navigation items based on pageAccess and current office context
@@ -402,8 +404,8 @@ const AdminLayout = ({ children }) => {
 
     // Filter items for the current office
     Object.values(allPossibleItems).forEach(item => {
-      // Only show items from the current office context
-      if (item.office !== targetOffice) return;
+      // Show items from the current office context OR shared items
+      if (item.office !== targetOffice && item.office !== 'shared') return;
 
       // Check if user has access to this path
       if (!hasAccessToPath(item.path)) return;

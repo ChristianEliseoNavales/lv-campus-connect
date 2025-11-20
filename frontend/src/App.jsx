@@ -39,6 +39,9 @@ import AdmissionsSettings from './components/pages/admin/admissions/Settings';
 // Senior Management Admin Pages
 import SeniorManagementCharts from './components/pages/admin/seniormanagement/Charts';
 
+// Shared Admin Pages
+import SharedFAQ from './components/pages/admin/shared/FAQ';
+
 import {
   Home,
   Bulletin,
@@ -248,6 +251,15 @@ function App() {
             <ProtectedRoute requiredRoles={['super_admin', 'senior_management_admin']}>
               <AdminLayout>
                 <SeniorManagementCharts />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+
+          {/* Shared Admin Routes (accessible by all offices when granted) */}
+          <Route path="/admin/shared/faq" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <SharedFAQ />
               </AdminLayout>
             </ProtectedRoute>
           } />

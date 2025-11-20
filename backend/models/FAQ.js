@@ -15,13 +15,13 @@ const faqSchema = new mongoose.Schema({
     minlength: [10, 'Answer must be at least 10 characters long'],
     maxlength: [2000, 'Answer cannot exceed 2000 characters']
   },
-  category: {
+  office: {
     type: String,
-    required: [true, 'Category is required'],
+    required: [true, 'Office is required'],
     trim: true,
     enum: {
-      values: ['General', 'Registration', 'Financial', 'Academic', 'Campus Life', 'Technology'],
-      message: '{VALUE} is not a valid category'
+      values: ['MIS', 'Registrar', 'Admissions', 'Senior Management'],
+      message: '{VALUE} is not a valid office'
     }
   },
   order: {
@@ -55,27 +55,23 @@ const faqSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-faqSchema.index({ category: 1, order: 1 });
+faqSchema.index({ office: 1, order: 1 });
 faqSchema.index({ status: 1, isActive: 1 });
 faqSchema.index({ createdAt: -1 });
 
-// Static method to get all active FAQs sorted by category and order
-faqSchema.statics.getActiveFAQs = function() {
-  return this.find({ 
-    status: 'active', 
-    isActive: true 
-  })
-    .sort({ category: 1, order: 1, createdAt: 1 })
-    .select('-__v');
-};
+// Static method to get all active FAQs sorted by order
+// If office is provided, filter by office; otherwise return all
+faqSchema.statics.getActiveFAQs = function(office = null) {
+  const query = {
+    status: 'active',
+    isActive: true
+  };
 
-// Static method to get FAQs by category
-faqSchema.statics.getFAQsByCategory = function(category) {
-  return this.find({ 
-    category, 
-    status: 'active', 
-    isActive: true 
-  })
+  if (office) {
+    query.office = office;
+  }
+
+  return this.find(query)
     .sort({ order: 1, createdAt: 1 })
     .select('-__v');
 };
