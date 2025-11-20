@@ -49,7 +49,7 @@ const queueSchema = new mongoose.Schema({
   // Status Management
   status: {
     type: String,
-    enum: ['waiting', 'serving', 'completed', 'skipped', 'cancelled'],
+    enum: ['waiting', 'serving', 'completed', 'skipped', 'cancelled', 'no-show'],
     default: 'waiting'
   },
   isCurrentlyServing: {

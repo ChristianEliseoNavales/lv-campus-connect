@@ -75,7 +75,7 @@ router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
     // Build query filter
     let queryFilter = {
       office: department,
-      status: { $in: ['completed', 'skipped', 'serving', 'waiting'] }
+      status: { $in: ['completed', 'skipped', 'serving', 'waiting', 'no-show'] }
     };
 
     // Add date filter if provided
@@ -144,6 +144,8 @@ router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
         statusDisplay = 'Skipped';
       } else if (transaction.status === 'waiting') {
         statusDisplay = 'Waiting';
+      } else if (transaction.status === 'no-show') {
+        statusDisplay = 'No-show/Cancelled';
       }
 
       // Determine customer name using same logic as queue display

@@ -98,7 +98,7 @@ const queueSchema = new mongoose.Schema({
   role: { type: String, enum: ['Visitor', 'Student', 'Teacher', 'Alumni'], required: true },
   studentStatus: { type: String, enum: ['incoming_new', 'continuing'], required: false },
   isPriority: { type: Boolean, default: false },
-  status: { type: String, enum: ['waiting', 'serving', 'completed', 'skipped', 'cancelled'], default: 'waiting' },
+  status: { type: String, enum: ['waiting', 'serving', 'completed', 'skipped', 'cancelled', 'no-show'], default: 'waiting' },
   isCurrentlyServing: { type: Boolean, default: false },
   queuedAt: { type: Date, default: Date.now },
   calledAt: { type: Date },

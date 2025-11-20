@@ -60,7 +60,7 @@ export const EditRecordModal = ({
         ]},
         { name: 'isPriority', label: 'Priority', type: 'checkbox' },
         { name: 'status', label: 'Status', type: 'select', options: [
-          'waiting', 'serving', 'completed', 'skipped', 'cancelled'
+          'waiting', 'serving', 'completed', 'skipped', 'cancelled', 'no-show'
         ]},
         { name: 'idNumber', label: 'ID Number', type: 'text' }
       ],

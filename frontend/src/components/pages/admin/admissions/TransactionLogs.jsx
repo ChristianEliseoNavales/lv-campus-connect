@@ -139,6 +139,8 @@ const TransactionLogs = () => {
         filtered = filtered.filter(log => log.status === 'Waiting');
       } else if (filterBy === 'skipped') {
         filtered = filtered.filter(log => log.status === 'Skipped');
+      } else if (filterBy === 'no-show') {
+        filtered = filtered.filter(log => log.status === 'No-show/Cancelled');
       }
     }
 
@@ -351,6 +353,7 @@ const TransactionLogs = () => {
                 <option value="serving">Now Serving</option>
                 <option value="waiting">Waiting</option>
                 <option value="skipped">Skipped</option>
+                <option value="no-show">No-show/Cancelled</option>
                 <option value="priority">Priority</option>
               </select>
             </div>

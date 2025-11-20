@@ -1730,12 +1730,19 @@ router.post('/queue/requeue-all', async (req, res) => {
       });
     }
 
-    // Find all skipped queues for any of this window's services
+    // Get today's date boundaries to filter only today's skipped queues
+    const { getPhilippineDayBoundaries } = require('../utils/philippineTimezone');
+    const today = new Date();
+    const { startOfDay } = getPhilippineDayBoundaries(today);
+
+    // Find all skipped queues for any of this window's services from TODAY only
+    // Exclude queues that have been marked as 'no-show' (old skipped queues)
     const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
     const skippedQueues = await Queue.find({
       office: window.office,
       serviceId: { $in: serviceIds },
-      status: 'skipped'
+      status: 'skipped',
+      skippedAt: { $gte: startOfDay } // Only queues skipped today
     }).sort({ skippedAt: 1 }); // Order by when they were skipped (earliest first)
 
     if (skippedQueues.length === 0) {
@@ -1747,24 +1754,26 @@ router.post('/queue/requeue-all', async (req, res) => {
         department: window.office,
         req,
         success: false,
-        errorMessage: 'No skipped queues found for this service'
+        errorMessage: 'No skipped queues from today found for this service'
       });
 
       return res.status(404).json({
-        error: 'No skipped queues found for this service'
+        error: 'No skipped queues from today found for this service'
       });
     }
 
     const currentTime = new Date();
     const requeuedCount = skippedQueues.length;
 
-    // Update all skipped queues to waiting status with new timestamps
+    // Update all skipped queues from TODAY to waiting status with new timestamps
     // This places them at the end of the current waiting queue
+    // Old skipped queues (from previous days) are excluded and remain as 'no-show'
     await Queue.updateMany(
       {
         office: window.office,
         serviceId: { $in: serviceIds },
-        status: 'skipped'
+        status: 'skipped',
+        skippedAt: { $gte: startOfDay } // Only update today's skipped queues
       },
       {
         status: 'waiting',

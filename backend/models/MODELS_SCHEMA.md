@@ -35,7 +35,7 @@ This document provides a comprehensive overview of all database models in the LV
 | `role` | String | Required, enum: ['Visitor', 'Student', 'Teacher', 'Alumni'] | - | Customer role |
 | `studentStatus` | String | enum: ['incoming_new', 'continuing'], required if role='Student' | - | Student enrollment status |
 | `isPriority` | Boolean | - | false | Priority queue flag |
-| `status` | String | enum: ['waiting', 'serving', 'completed', 'skipped', 'cancelled'] | 'waiting' | Current queue status |
+| `status` | String | enum: ['waiting', 'serving', 'completed', 'skipped', 'cancelled', 'no-show'] | 'waiting' | Current queue status |
 | `isCurrentlyServing` | Boolean | - | false | Currently being served flag |
 | `queuedAt` | Date | - | Date.now | Queue creation timestamp |
 | `calledAt` | Date | - | - | When customer was called |

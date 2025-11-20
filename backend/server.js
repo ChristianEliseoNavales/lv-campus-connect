@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./config/db');
+const { initializeQueueCleanup } = require('./services/queueCleanupService');
 
 // Load environment variables
 dotenv.config();
@@ -187,4 +188,7 @@ server.listen(PORT, () => {
   console.log(`📊 Health Check: http://localhost:${PORT}/api/health`);
   console.log(`🔌 Socket.io enabled for real-time updates`);
   console.log('✅ Server ready for connections');
+
+  // Initialize queue cleanup service after server starts
+  initializeQueueCleanup();
 });
