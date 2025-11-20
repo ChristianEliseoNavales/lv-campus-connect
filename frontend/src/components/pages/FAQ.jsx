@@ -1,70 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
+import API_CONFIG from '../../config/api';
 
 const FAQ = () => {
   const [openFAQ, setOpenFAQ] = useState(null);
+  const [faqData, setFaqData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
 
-  const faqData = [
-    {
-      id: 1,
-      category: 'General',
-      question: 'What are the university office hours?',
-      answer: 'Most university offices are open Monday through Friday from 8:00 AM to 5:00 PM. Some offices may have extended hours or Saturday availability. Check with specific departments for their individual schedules.'
-    },
-    {
-      id: 2,
-      category: 'Registration',
-      question: 'How do I register for classes?',
-      answer: 'You can register for classes through the student portal during your designated registration period. Make sure to meet with your academic advisor first to plan your course schedule and ensure you meet all prerequisites.'
-    },
-    {
-      id: 3,
-      category: 'Financial',
-      question: 'When is tuition due?',
-      answer: 'Tuition payments are typically due before the start of each semester. Fall semester payments are due in August, and Spring semester payments are due in January. Payment plans are available through Financial Services.'
-    },
-    {
-      id: 4,
-      category: 'Academic',
-      question: 'How do I request a transcript?',
-      answer: 'Official transcripts can be requested through the Registrar Office. You can submit requests in person, by mail, or through the online student portal. There is a processing fee for each transcript.'
-    },
-    {
-      id: 5,
-      category: 'Campus Life',
-      question: 'Where can I get a student ID card?',
-      answer: 'Student ID cards are issued at the Student Services office in the Student Center. Bring a valid photo ID and proof of enrollment. Replacement cards have a small fee.'
-    },
-    {
-      id: 6,
-      category: 'Technology',
-      question: 'How do I access the campus WiFi?',
-      answer: 'Connect to the "University-WiFi" network using your student credentials. If you have trouble connecting, contact the IT Help Desk for assistance.'
-    },
-    {
-      id: 7,
-      category: 'Financial',
-      question: 'How do I apply for financial aid?',
-      answer: 'Complete the FAFSA (Free Application for Federal Student Aid) online. The university school code is required for the application. Contact Financial Services for assistance with the application process.'
-    },
-    {
-      id: 8,
-      category: 'Academic',
-      question: 'What is the grade appeal process?',
-      answer: 'If you believe a grade was assigned in error, first discuss the matter with your instructor. If unresolved, you can file a formal grade appeal through the Academic Affairs office within 30 days of receiving the grade.'
-    },
-    {
-      id: 9,
-      category: 'Campus Life',
-      question: 'Where can I park on campus?',
-      answer: 'Student parking is available in designated lots with a valid parking permit. Permits can be purchased from Student Services. Visitor parking is available in marked areas for short-term visits.'
-    },
-    {
-      id: 10,
-      category: 'General',
-      question: 'How do I contact campus security?',
-      answer: 'Campus Security can be reached 24/7 at (123) 456-7890. For emergencies, dial 911. Security offices are located at the main gate and in the Student Center.'
+  // Initialize Socket.io connection
+  useEffect(() => {
+    const newSocket = io(API_CONFIG.getKioskUrl());
+    setSocket(newSocket);
+
+    // Join kiosk room for real-time updates
+    newSocket.emit('join-room', 'kiosk');
+
+    // Listen for FAQ updates
+    newSocket.on('faq-updated', (data) => {
+      console.log('📡 FAQ update received in kiosk:', data);
+      fetchFAQs();
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  // Fetch FAQs on component mount
+  useEffect(() => {
+    fetchFAQs();
+  }, []);
+
+  const fetchFAQs = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/faq`);
+      if (response.ok) {
+        const result = await response.json();
+        // Transform API data to match component structure
+        const transformedData = (result.data || []).map((faq, index) => ({
+          id: faq._id || index + 1,
+          category: faq.category,
+          question: faq.question,
+          answer: faq.answer
+        }));
+        setFaqData(transformedData);
+      } else {
+        console.error('Failed to fetch FAQs');
+      }
+    } catch (error) {
+      console.error('Error fetching FAQs:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const toggleFAQ = (id) => {
     setOpenFAQ(openFAQ === id ? null : id);
@@ -86,7 +76,19 @@ const FAQ = () => {
           {/* Scrollable FAQ Content */}
           <div className="flex-grow overflow-y-auto px-8 pb-8">
             <div className="space-y-3 max-w-4xl mx-auto">
-              {faqData.map((faq) => (
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3463] mx-auto mb-4"></div>
+                    <p className="text-gray-600 text-lg">Loading FAQs...</p>
+                  </div>
+                </div>
+              ) : faqData.length === 0 ? (
+                <div className="flex justify-center items-center py-12">
+                  <p className="text-gray-600 text-lg">No FAQs available at the moment.</p>
+                </div>
+              ) : (
+                faqData.map((faq) => (
                 <div
                   key={faq.id}
                   className="bg-gray-50 rounded-lg shadow-lg drop-shadow-sm border border-gray-200 overflow-hidden"
@@ -131,7 +133,8 @@ const FAQ = () => {
                     </div>
                   )}
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ const getDefaultPageAccess = (role, office = null) => {
         '/admin/mis/database-manager',
         '/admin/mis/audit-trail',
         '/admin/mis/bulletin',
+        '/admin/mis/faq',
         '/admin/mis/ratings',
 
         // Registrar routes

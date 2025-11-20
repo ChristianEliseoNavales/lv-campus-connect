@@ -95,6 +95,7 @@ const Users = () => {
     { id: 'database_manager', label: 'Database Manager', category: 'MIS', path: '/admin/mis/database-manager' },
     { id: 'mis_audit_trail', label: 'MIS Audit Trail', category: 'MIS', path: '/admin/mis/audit-trail' },
     { id: 'mis_bulletin', label: 'MIS Bulletin', category: 'MIS', path: '/admin/mis/bulletin' },
+    { id: 'mis_faq', label: 'MIS FAQs', category: 'MIS', path: '/admin/mis/faq' },
     { id: 'mis_ratings', label: 'MIS Ratings', category: 'MIS', path: '/admin/mis/ratings' },
 
     // Registrar Admin Pages
@@ -124,6 +125,7 @@ const Users = () => {
         '/admin/mis/database-manager',
         '/admin/mis/audit-trail',
         '/admin/mis/bulletin',
+        '/admin/mis/faq',
         '/admin/mis/ratings'
       ],
       'Registrar': [

@@ -1908,6 +1908,33 @@ router.get('/bulletin', async (req, res) => {
   }
 });
 
+// GET /api/public/faq - Get all active FAQs for kiosk display
+router.get('/faq', async (req, res) => {
+  try {
+    const FAQ = require('../models/FAQ');
+
+    const faqs = await FAQ.find({
+      status: 'active',
+      isActive: true
+    })
+      .select('question answer category order')
+      .sort({ category: 1, order: 1, createdAt: 1 });
+
+    res.json({
+      success: true,
+      data: faqs,
+      count: faqs.length
+    });
+  } catch (error) {
+    console.error('Error fetching FAQs:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch FAQs',
+      message: error.message
+    });
+  }
+});
+
 // GET /api/public/office - Get all offices for directory display
 router.get('/office', async (req, res) => {
   try {

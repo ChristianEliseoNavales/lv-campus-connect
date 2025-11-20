@@ -17,6 +17,7 @@ import FixUsers from './components/pages/admin/mis/FixUsers';
 import DatabaseManager from './components/pages/admin/mis/DatabaseManager';
 import MISAuditTrail from './components/pages/admin/mis/AuditTrail';
 import MISBulletin from './components/pages/admin/mis/Bulletin';
+import MISFAQ from './components/pages/admin/mis/FAQ';
 import MISRatings from './components/pages/admin/mis/Ratings';
 
 // Registrar Admin Pages
@@ -126,6 +127,13 @@ function App() {
             <ProtectedRoute requiredRoles={['super_admin']}>
               <AdminLayout>
                 <MISBulletin />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/mis/faq" element={
+            <ProtectedRoute requiredRoles={['super_admin']}>
+              <AdminLayout>
+                <MISFAQ />
               </AdminLayout>
             </ProtectedRoute>
           } />
