@@ -15,16 +15,23 @@ async function updateOldSkippedQueues() {
   try {
     console.log('🧹 [Queue Cleanup] Starting cleanup of old skipped queues...');
 
-    // Get today's date boundaries in Philippine timezone
-    const today = new Date();
-    const { startOfDay } = getPhilippineDayBoundaries(today);
+    // Get today's date string in Philippine timezone
+    const { getPhilippineDateString } = require('../utils/philippineTimezone');
+    const todayString = getPhilippineDateString();
+    const { startOfDay } = getPhilippineDayBoundaries(todayString);
 
+    console.log(`🧹 [Queue Cleanup] Today's date: ${todayString}`);
     console.log(`🧹 [Queue Cleanup] Today's start (Philippine Time): ${startOfDay.toISOString()}`);
 
     // Find all skipped queues from before today
+    // Also include queues without skippedAt timestamp (old database data)
     const oldSkippedQueues = await Queue.find({
       status: 'skipped',
-      skippedAt: { $lt: startOfDay } // Skipped before today
+      $or: [
+        { skippedAt: { $lt: startOfDay } }, // Skipped before today
+        { skippedAt: { $exists: false } },  // No skippedAt timestamp (old data)
+        { skippedAt: null }                 // Null skippedAt timestamp
+      ]
     });
 
     if (oldSkippedQueues.length === 0) {
@@ -42,7 +49,11 @@ async function updateOldSkippedQueues() {
     const updateResult = await Queue.updateMany(
       {
         status: 'skipped',
-        skippedAt: { $lt: startOfDay }
+        $or: [
+          { skippedAt: { $lt: startOfDay } }, // Skipped before today
+          { skippedAt: { $exists: false } },  // No skippedAt timestamp (old data)
+          { skippedAt: null }                 // Null skippedAt timestamp
+        ]
       },
       {
         $set: {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown, MdStar, MdStarBorder } from 'react-icons/md';
 import { IoMdRefresh } from 'react-icons/io';
 import { ToastContainer, DatePicker } from '../../../ui';
+import Pagination from '../../../ui/Pagination';
 import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
@@ -417,30 +418,12 @@ const Ratings = () => {
             <div className="text-sm text-gray-700 font-medium">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredRatings.length)} of {filteredRatings.length} ratings
             </div>
-            <div className="flex items-center space-x-1.5">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-
-              {/* Current Page Number */}
-              <button
-                className="px-2.5 py-1.5 text-sm font-semibold text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
-              >
-                {currentPage}
-              </button>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              size="md"
+            />
           </div>
         )}
       </div>

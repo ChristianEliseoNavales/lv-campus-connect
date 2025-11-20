@@ -1146,9 +1146,11 @@ const Queue = () => {
   };
 
   // Special handler for Enroll service submission with explicit values
-  const handleEnrollSubmission = async () => {
+  // Accepts optional officeKey parameter to override selectedDepartment (for office switching)
+  const handleEnrollSubmission = async (officeKey = null) => {
     try {
       console.log('🎓 [FRONTEND] Starting handleEnrollSubmission');
+      console.log('🎓 [FRONTEND] Office key parameter:', officeKey);
 
       // Map frontend studentStatus values to backend enum values
       const mapStudentStatus = (status) => {
@@ -1165,9 +1167,19 @@ const Queue = () => {
         return status; // Return as-is if already in correct format
       };
 
+      // Determine office: use parameter if provided, otherwise use selectedDepartment
+      let office;
+      if (officeKey) {
+        office = officeKey; // Use the explicitly passed office key
+        console.log('🔄 [FRONTEND] Using explicit office key:', office);
+      } else {
+        office = selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions';
+        console.log('🔄 [FRONTEND] Using selectedDepartment office:', office);
+      }
+
       // Prepare submission data with explicit values for Enroll service
       const submissionData = {
-        office: selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions',
+        office: office,
         service: 'Enroll',
         role: 'Student', // Always Student for Enroll service
         studentStatus: studentStatus ? mapStudentStatus(studentStatus) : 'continuing',
@@ -1423,7 +1435,6 @@ const Queue = () => {
         // Switch to the suggested office and proceed directly to result
         setSelectedDepartment(departmentData[suggestedOffice.key]);
         setShowOfficeMismatchModal(false);
-        setSuggestedOffice(null);
 
         // For Enroll service, set required fields and submit to backend
         console.log('🔄 [FRONTEND] Office mismatch resolved - setting Enroll service defaults and submitting');
@@ -1432,9 +1443,14 @@ const Queue = () => {
 
         // Submit to backend to ensure queue entry is recorded in database
         console.log('🚀 [FRONTEND] Submitting Enroll service after office switch...');
+        console.log('🚀 [FRONTEND] Target office key:', suggestedOffice.key);
 
-        // Submit immediately with explicit values to avoid state timing issues
-        handleEnrollSubmission();
+        // Submit immediately with explicit office key to avoid state timing issues
+        // Pass the suggestedOffice.key directly to ensure correct office is used
+        handleEnrollSubmission(suggestedOffice.key);
+
+        // Clear suggestedOffice after submission
+        setSuggestedOffice(null);
       } catch (error) {
         console.error('❌ [FRONTEND] Error checking service availability:', error);
         setShowOfficeMismatchModal(false);

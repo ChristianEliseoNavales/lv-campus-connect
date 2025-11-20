@@ -4,6 +4,7 @@ import { IoMdRefresh } from 'react-icons/io';
 import { BiSolidNotepad } from 'react-icons/bi';
 import { PiNotePencilDuotone } from 'react-icons/pi';
 import { ToastContainer, DatePicker } from '../../../ui';
+import Pagination from '../../../ui/Pagination';
 import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
@@ -519,30 +520,12 @@ const TransactionLogs = () => {
             <div className="text-xs text-gray-700">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredLogs.length)} of {filteredLogs.length} logs
             </div>
-            <div className="flex items-center space-x-1.5">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-
-              {/* Current Page Number */}
-              <button
-                className="px-2.5 py-1.5 text-xs font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
-              >
-                {currentPage}
-              </button>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              size="sm"
+            />
           </div>
         )}
 

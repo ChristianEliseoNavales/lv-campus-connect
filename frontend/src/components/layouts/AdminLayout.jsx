@@ -16,7 +16,8 @@ import {
   MdBarChart,
   MdSwapHoriz,
   MdStorage,
-  MdMonitor
+  MdMonitor,
+  MdQuestionAnswer
 } from 'react-icons/md';
 import { BiSolidNotepad } from 'react-icons/bi';
 import { useSocket } from '../../contexts/SocketContext';
@@ -360,6 +361,7 @@ const AdminLayout = ({ children }) => {
       '/admin/mis/database-manager': { name: 'Database Manager', path: '/admin/mis/database-manager', icon: MdStorage, office: 'mis' },
       '/admin/mis/audit-trail': { name: 'Audit Trail', path: '/admin/mis/audit-trail', icon: MdHistory, office: 'mis' },
       '/admin/mis/bulletin': { name: 'Bulletin', path: '/admin/mis/bulletin', icon: MdNewspaper, office: 'mis' },
+      '/admin/mis/faq': { name: 'FAQs', path: '/admin/mis/faq', icon: MdQuestionAnswer, office: 'mis' },
       '/admin/mis/ratings': { name: 'Ratings', path: '/admin/mis/ratings', icon: MdStar, office: 'mis' },
 
       // Registrar items

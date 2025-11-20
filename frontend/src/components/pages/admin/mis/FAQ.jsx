@@ -4,6 +4,7 @@ import { IoMdRefresh } from 'react-icons/io';
 import { FiEdit3 } from 'react-icons/fi';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { ToastContainer, ConfirmModal } from '../../../ui';
+import Pagination from '../../../ui/Pagination';
 import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import Portal from '../../../ui/Portal';
@@ -554,30 +555,12 @@ const FAQ = () => {
             <div className="text-sm text-gray-700 font-medium">
               Showing {indexOfFirstFAQ + 1} to {Math.min(indexOfLastFAQ, filteredFAQs.length)} of {filteredFAQs.length} FAQs
             </div>
-            <div className="flex items-center space-x-1.5">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-
-              {/* Current Page Number */}
-              <button
-                className="px-2.5 py-1.5 text-sm font-semibold text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
-              >
-                {currentPage}
-              </button>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              size="md"
+            />
           </div>
         )}
         </div>

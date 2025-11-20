@@ -41,7 +41,7 @@ const ResponsiveGrid = ({
         };
       case 2:
         return {
-          containerClass: 'grid grid-cols-2 gap-x-26 gap-y-6 max-w-4xl mx-auto',
+          containerClass: 'grid grid-cols-2 gap-x-24 gap-y-6 max-w-4xl mx-auto',
           itemClass: 'w-64'
         };
       case 3:
