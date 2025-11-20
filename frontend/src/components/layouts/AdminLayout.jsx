@@ -35,6 +35,8 @@ const AdminLayout = ({ children }) => {
   const [isScrollable, setIsScrollable] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isQueueExpanded, setIsQueueExpanded] = useState(false);
+  // Track the last office context to maintain it when navigating to shared routes
+  const [lastOfficeContext, setLastOfficeContext] = useState(null);
 
   // Use centralized Socket context
   const { joinRoom, leaveRoom, subscribe } = useSocket();
@@ -237,7 +239,21 @@ const AdminLayout = ({ children }) => {
     const currentPath = location.pathname;
     const buttons = [];
 
+    // Determine the effective office context (use lastOfficeContext for shared routes)
+    let effectiveOffice = null;
     if (currentPath.startsWith('/admin/mis')) {
+      effectiveOffice = 'mis';
+    } else if (currentPath.startsWith('/admin/registrar')) {
+      effectiveOffice = 'registrar';
+    } else if (currentPath.startsWith('/admin/admissions')) {
+      effectiveOffice = 'admissions';
+    } else if (currentPath.startsWith('/admin/seniormanagement')) {
+      effectiveOffice = 'seniormanagement';
+    } else if (currentPath.startsWith('/admin/shared')) {
+      effectiveOffice = lastOfficeContext;
+    }
+
+    if (effectiveOffice === 'mis') {
       // When viewing MIS pages - show ALL target paths: Registrar, Admissions, Senior Management
       buttons.push({
         key: 'registrar',
@@ -254,7 +270,7 @@ const AdminLayout = ({ children }) => {
         text: 'Switch to Senior Management',
         onClick: () => handleOfficeSwitch('seniormanagement')
       });
-    } else if (currentPath.startsWith('/admin/registrar')) {
+    } else if (effectiveOffice === 'registrar') {
       // When viewing Registrar pages - show MIS, Admissions, Senior Management
       buttons.push({
         key: 'mis',
@@ -271,7 +287,7 @@ const AdminLayout = ({ children }) => {
         text: 'Switch to Senior Management',
         onClick: () => handleOfficeSwitch('seniormanagement')
       });
-    } else if (currentPath.startsWith('/admin/admissions')) {
+    } else if (effectiveOffice === 'admissions') {
       // When viewing Admissions pages - show MIS, Registrar, Senior Management
       buttons.push({
         key: 'mis',
@@ -288,7 +304,7 @@ const AdminLayout = ({ children }) => {
         text: 'Switch to Senior Management',
         onClick: () => handleOfficeSwitch('seniormanagement')
       });
-    } else if (currentPath.startsWith('/admin/seniormanagement')) {
+    } else if (effectiveOffice === 'seniormanagement') {
       // When viewing Senior Management pages - show MIS, Registrar, Admissions
       buttons.push({
         key: 'mis',
@@ -338,6 +354,16 @@ const AdminLayout = ({ children }) => {
       currentOffice = 'seniormanagement';
     } else if (currentPath.startsWith('/admin/mis')) {
       currentOffice = 'mis';
+    } else if (currentPath.startsWith('/admin/shared')) {
+      // For shared routes, use the last office context
+      currentOffice = lastOfficeContext;
+    }
+
+    // Update lastOfficeContext when we're on a non-shared route
+    if (currentOffice && !currentPath.startsWith('/admin/shared')) {
+      if (currentOffice !== lastOfficeContext) {
+        setLastOfficeContext(currentOffice);
+      }
     }
 
     // Helper function to check if user has access to a specific path
@@ -470,7 +496,7 @@ const AdminLayout = ({ children }) => {
     }
 
     return navigationItems;
-  }, [windows, user?.role, user?.assignedWindows, user?.assignedWindow, user?.pageAccess, location.pathname, isDevelopmentMode, user]);
+  }, [windows, user?.role, user?.assignedWindows, user?.assignedWindow, user?.pageAccess, location.pathname, isDevelopmentMode, user, lastOfficeContext, setLastOfficeContext]);
 
   // Get navigation items with error handling
   const navigationItems = useMemo(() => {
