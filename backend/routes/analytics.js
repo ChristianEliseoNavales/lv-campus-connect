@@ -1269,6 +1269,181 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       }));
 
       console.log('✅ Window Performance Mapped:', reportData.windowPerformance);
+
+      // 8. Monthly Breakdown - Detailed data for each month in the date range
+      const monthlyBreakdown = [];
+
+      // Generate list of months in the date range
+      const currentDate = new Date(startDate);
+      const endDateObj = new Date(endDate);
+
+      while (currentDate <= endDateObj) {
+        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        // Ensure we don't go beyond the requested end date
+        const effectiveEnd = monthEnd > endDateObj ? endDateObj : monthEnd;
+        const effectiveStart = monthStart < startDate ? startDate : monthStart;
+
+        console.log(`📅 Processing month: ${monthStart.toISOString().substring(0, 7)}`);
+
+        // Get data for this specific month
+        const monthData = {
+          year: currentDate.getFullYear(),
+          month: currentDate.getMonth() + 1,
+          monthName: currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          dateRange: {
+            start: effectiveStart.toISOString(),
+            end: effectiveEnd.toISOString()
+          }
+        };
+
+        // Total visits for this month
+        monthData.totalVisits = await Queue.countDocuments({
+          office: departmentFilter,
+          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+          queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
+        });
+
+        // Average turnaround time for this month
+        const monthTurnaroundStats = await Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: 'completed',
+            completedAt: { $exists: true },
+            queuedAt: { $exists: true, $gte: effectiveStart, $lte: effectiveEnd }
+          }},
+          { $group: {
+            _id: null,
+            avgTurnaround: {
+              $avg: {
+                $subtract: ['$completedAt', '$queuedAt']
+              }
+            }
+          }}
+        ]);
+
+        monthData.avgTurnaroundMinutes = monthTurnaroundStats.length > 0 ?
+          Math.round(monthTurnaroundStats[0].avgTurnaround / 60000) : 0;
+
+        // Service distribution for this month
+        const monthServiceDistribution = await Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
+          }},
+          { $group: { _id: '$serviceId', count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+        ]);
+
+        const monthServiceIds = monthServiceDistribution.map(s => s._id);
+        const monthServices = await Service.find({ _id: { $in: monthServiceIds } });
+        const monthServiceMap = monthServices.reduce((map, s) => {
+          map[s._id.toString()] = s.name;
+          return map;
+        }, {});
+
+        monthData.serviceDistribution = monthServiceDistribution.map(s => ({
+          service: monthServiceMap[s._id] || 'Unknown',
+          count: s.count
+        }));
+
+        // Visitor breakdown by role for this month
+        const monthRoleBreakdown = await Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
+          }},
+          { $group: { _id: '$role', count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+        ]);
+
+        monthData.visitorsByRole = monthRoleBreakdown.map(r => ({
+          role: r._id,
+          count: r.count
+        }));
+
+        // Peak hours for this month
+        const monthPeakHours = await Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
+          }},
+          { $group: {
+            _id: { $hour: '$queuedAt' },
+            count: { $sum: 1 }
+          }},
+          { $sort: { count: -1 } },
+          { $limit: 5 }
+        ]);
+
+        monthData.peakHours = monthPeakHours.map(h => ({
+          hour: h._id,
+          count: h.count
+        }));
+
+        // Peak days for this month
+        const monthPeakDays = await Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
+          }},
+          { $group: {
+            _id: { $dayOfWeek: '$queuedAt' },
+            count: { $sum: 1 }
+          }},
+          { $sort: { count: -1 } }
+        ]);
+
+        monthData.peakDays = monthPeakDays.map(d => ({
+          day: dayNames[d._id - 1],
+          count: d.count
+        }));
+
+        // Window performance for this month
+        const monthWindowPerformance = await Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: 'completed',
+            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
+          }},
+          { $group: {
+            _id: '$windowId',
+            totalServed: { $sum: 1 },
+            avgTurnaround: {
+              $avg: {
+                $subtract: ['$completedAt', '$queuedAt']
+              }
+            }
+          }},
+          { $sort: { totalServed: -1 } }
+        ]);
+
+        const monthWindowIds = monthWindowPerformance.map(w => w._id);
+        const monthWindows = await Window.find({ _id: { $in: monthWindowIds } });
+        const monthWindowMap = monthWindows.reduce((map, w) => {
+          map[w._id.toString()] = w.name;
+          return map;
+        }, {});
+
+        monthData.windowPerformance = monthWindowPerformance.map(w => ({
+          window: monthWindowMap[w._id] || 'Unknown',
+          totalServed: w.totalServed,
+          avgTurnaroundMinutes: Math.round(w.avgTurnaround / 60000)
+        }));
+
+        monthlyBreakdown.push(monthData);
+
+        // Move to next month
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+
+      reportData.monthlyBreakdown = monthlyBreakdown;
+      console.log('✅ Monthly Breakdown Generated:', monthlyBreakdown.length, 'months');
     }
 
     // Add metadata with Philippine timezone formatting
