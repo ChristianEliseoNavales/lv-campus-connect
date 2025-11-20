@@ -1861,6 +1861,170 @@ router.post('/queue/requeue-all', async (req, res) => {
   }
 });
 
+// POST /api/public/queue/requeue-selected - Re-queue selected skipped queue numbers
+router.post('/queue/requeue-selected', async (req, res) => {
+  try {
+    const { windowId, adminId, queueNumbers } = req.body;
+    const io = req.app.get('io');
+
+    console.log('🔄 RE-QUEUE SELECTED request:', { windowId, adminId, queueNumbers });
+
+    if (!windowId) {
+      return res.status(400).json({
+        error: 'Window ID is required'
+      });
+    }
+
+    if (!queueNumbers || !Array.isArray(queueNumbers) || queueNumbers.length === 0) {
+      return res.status(400).json({
+        error: 'Queue numbers array is required and must not be empty'
+      });
+    }
+
+    // Get window information
+    const window = await Window.findById(windowId);
+
+    if (!window) {
+      return res.status(404).json({
+        error: 'Window not found'
+      });
+    }
+
+    // Get today's date boundaries to filter only today's skipped queues
+    const { getPhilippineDayBoundaries } = require('../utils/philippineTimezone');
+    const today = new Date();
+    const { startOfDay } = getPhilippineDayBoundaries(today);
+
+    // Find selected skipped queues for this window's services from TODAY only
+    const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
+    const skippedQueues = await Queue.find({
+      office: window.office,
+      serviceId: { $in: serviceIds },
+      status: 'skipped',
+      queueNumber: { $in: queueNumbers },
+      skippedAt: { $gte: startOfDay } // Only queues skipped today
+    }).sort({ skippedAt: 1 }); // Order by when they were skipped (earliest first)
+
+    if (skippedQueues.length === 0) {
+      await AuditService.logQueue({
+        user: req.user,
+        action: 'QUEUE_REQUEUE_SELECTED',
+        queueId: null,
+        queueNumber: null,
+        department: window.office,
+        req,
+        success: false,
+        errorMessage: 'No matching skipped queues from today found'
+      });
+
+      return res.status(404).json({
+        error: 'No matching skipped queues from today found'
+      });
+    }
+
+    const currentTime = new Date();
+    const requeuedCount = skippedQueues.length;
+
+    // Update selected skipped queues to waiting status with new timestamps
+    await Queue.updateMany(
+      {
+        office: window.office,
+        serviceId: { $in: serviceIds },
+        status: 'skipped',
+        queueNumber: { $in: queueNumbers },
+        skippedAt: { $gte: startOfDay }
+      },
+      {
+        status: 'waiting',
+        queuedAt: currentTime, // Set new timestamp to place at end of queue
+        skippedAt: null // Clear the skipped timestamp
+      }
+    );
+
+    console.log('✅ Re-queued selected skipped queues:', {
+      count: requeuedCount,
+      queueNumbers,
+      department: window.office,
+      services: window.serviceIds.map(s => s.name || s).join(', ')
+    });
+
+    // Log successful requeue-selected
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_REQUEUE_SELECTED',
+      queueId: null,
+      queueNumber: null,
+      department: window.office,
+      req,
+      success: true,
+      metadata: {
+        windowId: window._id,
+        windowName: window.name,
+        requeuedCount,
+        queueNumbers
+      }
+    });
+
+    // Emit real-time updates
+    io.to(`admin-${window.office}`).emit('queue-updated', {
+      type: 'queue-requeued-selected',
+      department: window.office,
+      windowId,
+      data: {
+        requeuedCount,
+        queueNumbers,
+        windowName: window.name,
+        serviceName: window.serviceIds && window.serviceIds.length > 0
+          ? window.serviceIds.map(s => s.name || s).join(', ')
+          : 'No services assigned'
+      }
+    });
+
+    // Also emit to kiosk room for public display updates
+    io.to('kiosk').emit('queue-updated', {
+      type: 'queue-requeued-selected',
+      department: window.office,
+      data: {
+        requeuedCount,
+        queueNumbers
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `${requeuedCount} queue${requeuedCount > 1 ? 's' : ''} re-queued successfully`,
+      data: {
+        requeuedCount,
+        queueNumbers,
+        windowName: window.name,
+        serviceName: window.serviceIds && window.serviceIds.length > 0
+          ? window.serviceIds.map(s => s.name || s).join(', ')
+          : 'No services assigned',
+        department: window.office
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ RE-QUEUE SELECTED error:', error);
+
+    await AuditService.logQueue({
+      user: req.user,
+      action: 'QUEUE_REQUEUE_SELECTED',
+      queueId: null,
+      queueNumber: null,
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
+    res.status(500).json({
+      error: 'Failed to re-queue selected queues',
+      message: error.message
+    });
+  }
+});
+
 // GET /api/public/queue/windows/:department - Get available windows for transfer
 router.get('/queue/windows/:department', async (req, res) => {
   try {

@@ -45,6 +45,9 @@ const Queue = () => {
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Selected skipped queue numbers for selective requeue
+  const [selectedSkippedQueues, setSelectedSkippedQueues] = useState([]);
+
   // Debug: Log currentServingPerson changes
   useEffect(() => {
     if (windowData?.name === 'Priority') {
@@ -113,6 +116,11 @@ const Queue = () => {
         setQueueData(result.data.waitingQueue);
         setSkippedQueue(result.data.skippedQueue);
         setCurrentServingPerson(result.data.currentlyServing);
+
+        // Clear selected skipped queues if they no longer exist in the skipped queue
+        setSelectedSkippedQueues(prev =>
+          prev.filter(num => result.data.skippedQueue.includes(num))
+        );
 
         // Debug logging for Priority window ID Number
         // if (windowData?.name === 'Priority' && result.data.currentlyServing) {
@@ -675,7 +683,21 @@ const Queue = () => {
     }
   };
 
-  const handleRequeueAll = async () => {
+  // Toggle selection of a skipped queue number
+  const handleToggleSkippedQueue = (queueNumber) => {
+    setSelectedSkippedQueues(prev => {
+      if (prev.includes(queueNumber)) {
+        // Deselect if already selected
+        return prev.filter(num => num !== queueNumber);
+      } else {
+        // Select if not already selected
+        return [...prev, queueNumber];
+      }
+    });
+  };
+
+  // Handle requeue - either all or selected based on selection state
+  const handleRequeue = async () => {
     if (!windowData) {
       showError('Error', 'Window data not available');
       return;
@@ -686,23 +708,36 @@ const Queue = () => {
       return;
     }
 
+    // Determine if we're requeuing all or selected
+    const isRequeueSelected = selectedSkippedQueues.length > 0;
+    const endpoint = isRequeueSelected ? '/api/public/queue/requeue-selected' : '/api/public/queue/requeue-all';
+    const requestBody = {
+      windowId: windowData.id,
+      adminId: user?.id || '507f1f77bcf86cd799439011'
+    };
+
+    // Add queueNumbers if requeuing selected
+    if (isRequeueSelected) {
+      requestBody.queueNumbers = selectedSkippedQueues;
+    }
+
     setActionLoading(prev => ({ ...prev, requeueAll: true }));
 
     try {
-      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/public/queue/requeue-all`, {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          windowId: windowData.id,
-          adminId: user?.id || '507f1f77bcf86cd799439011' // Valid ObjectId for development
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Clear selection after successful requeue
+        setSelectedSkippedQueues([]);
+
         // Refresh queue data to update waiting and skipped queue lists
         fetchQueueData();
 
@@ -711,17 +746,20 @@ const Queue = () => {
           `${result.data.requeuedCount} queue${result.data.requeuedCount > 1 ? 's' : ''} re-queued successfully`
         );
 
-        // console.log('✅ All skipped queues re-queued:', result.data);
+        // console.log('✅ Queues re-queued:', result.data);
       } else {
-        throw new Error(result.error || 'Failed to re-queue skipped queues');
+        throw new Error(result.error || 'Failed to re-queue queues');
       }
     } catch (error) {
-      console.error('❌ Re-queue all error:', error);
+      console.error('❌ Re-queue error:', error);
       showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, requeueAll: false }));
     }
   };
+
+  // Legacy function for backward compatibility (now calls handleRequeue)
+  const handleRequeueAll = handleRequeue;
 
   if (loading) {
     return (
@@ -962,29 +1000,44 @@ const Queue = () => {
               <h3 className="text-xl font-bold text-gray-700 tracking-wide">SKIPPED</h3>
             </div>
             <div className="flex flex-wrap gap-2.5">
-              {skippedQueue.map((number, index) => (
-                <div key={index} className="bg-[#3930A8] text-white rounded-lg px-4 py-2 shadow-md">
-                  <span className="text-lg font-bold tracking-wide">
-                    {String(number).padStart(2, '0')}
-                  </span>
-                </div>
-              ))}
+              {skippedQueue.map((number, index) => {
+                const isSelected = selectedSkippedQueues.includes(number);
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleToggleSkippedQueue(number)}
+                    className={`rounded-lg px-4 py-2 shadow-md transition-all duration-200 ${
+                      isSelected
+                        ? 'bg-[#FFE251] text-[#1F3463] ring-2 ring-[#1F3463] ring-offset-2'
+                        : 'bg-[#3930A8] text-white hover:bg-[#2F2580]'
+                    }`}
+                  >
+                    <span className="text-lg font-bold tracking-wide">
+                      {String(number).padStart(2, '0')}
+                    </span>
+                  </button>
+                );
+              })}
               {skippedQueue.length === 0 && (
                 <div className="text-gray-400 italic text-sm">No skipped queue numbers</div>
               )}
             </div>
           </div>
 
-          {/* RE-QUEUE ALL Button */}
+          {/* RE-QUEUE Button - Dynamic text based on selection */}
           {skippedQueue.length > 0 && (
             <button
-              onClick={handleRequeueAll}
+              onClick={handleRequeue}
               disabled={actionLoading.requeueAll}
-              className={`rounded-full bg-[#3930A8] text-white font-bold text-sm tracking-wide px-6 py-2.5 hover:bg-[#2F2580] transition-colors duration-200 flex items-center justify-center min-w-[112px] ${
+              className={`rounded-full bg-[#3930A8] text-white font-bold text-sm tracking-wide px-6 py-2.5 hover:bg-[#2F2580] transition-colors duration-200 flex items-center justify-center min-w-[140px] ${
                 actionLoading.requeueAll ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {actionLoading.requeueAll ? 'Re-queuing...' : 'RE-QUEUE ALL'}
+              {actionLoading.requeueAll
+                ? 'Re-queuing...'
+                : selectedSkippedQueues.length > 0
+                  ? `RE-QUEUE (${selectedSkippedQueues.length})`
+                  : 'RE-QUEUE ALL'}
             </button>
           )}
         </div>
