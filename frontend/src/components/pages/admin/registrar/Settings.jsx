@@ -1336,7 +1336,7 @@ const Settings = () => {
                 <div className="h-5 bg-gray-200 rounded w-40 animate-pulse"></div>
                 <div className="h-3 bg-gray-200 rounded w-28 animate-pulse"></div>
               </div>
-              <div className="w-12 h-6 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="w-14 h-7 bg-gray-200 rounded-full animate-pulse"></div>
             </div>
           </div>
 
@@ -1452,7 +1452,7 @@ const Settings = () => {
           <button
             onClick={handleToggleQueueing}
             disabled={isToggling || toggleCooldown > 0}
-            className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors focus:outline-none ${
+            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none ${
               isToggling || toggleCooldown > 0
                 ? 'opacity-50 cursor-not-allowed bg-gray-300'
                 : isQueueingEnabled
@@ -1462,7 +1462,7 @@ const Settings = () => {
           >
             <span
               className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                isQueueingEnabled ? 'translate-x-6' : 'translate-x-1'
+                isQueueingEnabled ? 'translate-x-8' : 'translate-x-1'
               }`}
             />
             {isToggling && (
