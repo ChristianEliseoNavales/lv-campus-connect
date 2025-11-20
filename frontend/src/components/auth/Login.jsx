@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../ui';
 
@@ -55,19 +56,105 @@ const Login = () => {
     </svg>
   );
 
+  // Animation variants for staggered effects
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.4
+      }
+    }
+  };
+
+  const logoVariants = {
+    hidden: { opacity: 0, scale: 0.5, rotate: -10 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: {
+        type: "spring",
+        stiffness: 120,
+        damping: 12,
+        duration: 0.5
+      }
+    }
+  };
+
+  const errorVariants = {
+    hidden: { opacity: 0, y: -20, scale: 0.9 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 150,
+        damping: 15,
+        duration: 0.3
+      }
+    },
+    exit: {
+      opacity: 0,
+      y: -20,
+      scale: 0.9,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
   return (
     <div
       className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 admin-layout bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: 'url(/login-bg.jpg)' }}
     >
       {/* Blurred background overlay */}
-      <div className="absolute inset-0 backdrop-blur-md"></div>
+      <motion.div
+        className="absolute inset-0 backdrop-blur-md"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      />
 
       {/* Centered white container */}
-      <div className="relative z-10 bg-white rounded-3xl shadow-2xl p-12 max-w-md w-full border-t-8 border-[#1F3463]">
+      <motion.div
+        className="relative z-10 bg-white rounded-3xl shadow-2xl p-12 max-w-md w-full border-t-8 border-[#1F3463]"
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 100,
+          damping: 15,
+          duration: 0.5
+        }}
+      >
         {/* Error Messages */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <motion.div
+            className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+            variants={errorVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
@@ -79,25 +166,46 @@ const Login = () => {
                 <p className="text-sm text-red-700 mt-1">{error}</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Content Stack */}
-        <div className="flex flex-col items-center space-y-4">
+        <motion.div
+          className="flex flex-col items-center space-y-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* WELCOME text */}
-          <h1 className="text-4xl font-bold text-[#1F3463] tracking-wide font-days-one">WELCOME</h1>
+          <motion.h1
+            className="text-4xl font-bold text-[#1F3463] tracking-wide font-days-one"
+            variants={itemVariants}
+          >
+            WELCOME
+          </motion.h1>
 
           {/* LVCampusConnect text with logo */}
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="LVCampusConnect Logo" className="w-12 h-12" />
+          <motion.div
+            className="flex items-center gap-3"
+            variants={itemVariants}
+          >
+            <motion.img
+              src="/logo.png"
+              alt="LVCampusConnect Logo"
+              className="w-12 h-12"
+              variants={logoVariants}
+            />
             <h2 className="text-2xl font-semibold text-[#1F3463] font-days-one">LVCampusConnect</h2>
-          </div>
+          </motion.div>
 
           {/* Sign in with Google button */}
-          <button
+          <motion.button
             onClick={handleGoogleSignIn}
             disabled={!isGoogleLoaded || isSigningIn || isLoading}
             className="w-full flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm bg-[#1F3463] text-white hover:bg-[#1F3463]-20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1F3463] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            variants={itemVariants}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             {isSigningIn || isLoading ? (
               <LoadingSpinner size="sm" />
@@ -107,28 +215,38 @@ const Login = () => {
                 <span className="ml-3 font-medium">Sign in with Google</span>
               </>
             )}
-          </button>
+          </motion.button>
 
           {/* Google Sign In Button Container (for fallback) */}
-          <div id="google-signin-button" className="w-full flex justify-center"></div>
+          <motion.div
+            id="google-signin-button"
+            className="w-full flex justify-center"
+            variants={itemVariants}
+          />
 
           {/* Loading State */}
           {!isGoogleLoaded && (
-            <div className="text-center py-4">
+            <motion.div
+              className="text-center py-4"
+              variants={itemVariants}
+            >
               <LoadingSpinner size="sm" />
               <p className="text-sm text-gray-500 mt-2">Loading Google Sign-In...</p>
-            </div>
+            </motion.div>
           )}
 
           {/* Contact info */}
-          <p className="text-sm text-gray-600 text-center">
+          <motion.p
+            className="text-sm text-gray-600 text-center"
+            variants={itemVariants}
+          >
             Need help? Contact IT Support at{' '}
             <a href="mailto:lvcampusconnect@gmail.com" className="text-[#1F3463] hover:underline font-medium">
               lvcampusconnect@gmail.com
             </a>
-          </p>
-        </div>
-      </div>
+          </motion.p>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
