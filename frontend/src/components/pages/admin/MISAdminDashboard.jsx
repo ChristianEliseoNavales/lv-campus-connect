@@ -226,16 +226,11 @@ const MISAdminDashboard = () => {
             <div className="grid grid-cols-2 gap-0 h-full">
               {/* Left Column - Total Users */}
               <div className="border-r border-[#1F3463] pr-3 flex flex-col justify-between items-center text-center">
-                {/* Top Section - Title and Icon */}
                 <div className="flex flex-col items-center">
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Total Users</p>
-                  <FaUsers className="text-3xl text-[#1F3463]" />
+                  <p className="text-sm font-semibold text-gray-700 mb-2.5">Total Users</p>
+                  <FaUsers className="text-3xl text-[#1F3463] mb-3" />
+                  <p className="text-3xl font-bold text-[#1F3463] mb-5">{stats.totalUsers}</p>
                 </div>
-
-                {/* Middle Section - Number */}
-                <p className="text-5xl font-bold text-[#1F3463]">{stats.totalUsers}</p>
-
-                {/* Bottom Section - Button */}
                 <button
                   onClick={() => navigate('/admin/mis/users')}
                   className="bg-[#1F3463] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition"
@@ -250,9 +245,9 @@ const MISAdminDashboard = () => {
                 <div className="flex-1 overflow-y-auto space-y-1.5 w-full">
                   {activeSessions.length > 0 ? (
                     activeSessions.map((session, index) => (
-                      <div key={index} className="flex items-start justify-evenly space-x-1.5 text-xs">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-1"></div>
-                        <div className="flex-1 min-w-0 text-left">
+                      <div key={index} className="flex items-center justify-center space-x-1.5 text-xs">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></div>
+                        <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-800 truncate text-xs">{session.name}</p>
                           <p className="text-[10px] text-gray-500">({session.role.replace('_', ' ')})</p>
                         </div>
@@ -271,10 +266,10 @@ const MISAdminDashboard = () => {
         <div className="col-span-1">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full flex flex-col justify-center items-center text-center">
             <div className="w-full">
-              <p className="text-sm font-semibold text-gray-700 mb-3">Kiosk Total Ratings</p>
-              <p className="text-4xl font-bold text-[#1F3463] mb-4">{kioskRatings.totalRatings}</p>
+              <p className="text-sm font-semibold text-gray-700 mb-5">Kiosk Total Ratings</p>
+              <p className="text-4xl font-bold text-[#1F3463] mb-5">{kioskRatings.totalRatings}</p>
 
-              <p className="text-sm font-semibold text-gray-700 mb-2">Average Rating</p>
+              <p className="text-sm font-semibold text-gray-700 mb-2.5">Average Rating</p>
               <div className="flex items-center justify-center space-x-0.5">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <div key={star}>
@@ -293,7 +288,7 @@ const MISAdminDashboard = () => {
                   </div>
                 ))}
               </div>
-              <p className="text-sm text-gray-600 mt-2 font-medium">{kioskRatings.averageRating.toFixed(2)} / 5.0</p>
+              <p className="text-sm text-gray-600 mt-1.5 font-medium">{kioskRatings.averageRating.toFixed(2)} / 5.0</p>
             </div>
           </div>
         </div>

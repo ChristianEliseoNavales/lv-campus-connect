@@ -58,7 +58,7 @@ const KioskLayout = ({ children, customFooter = null }) => {
       </header>
 
       {/* Main Content - Full width utilization for 16:9 landscape */}
-      <main className="flex-grow px-6 py-6 overflow-auto w-full">
+      <main className="flex-grow px-5 py-5 overflow-auto w-full">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -78,23 +78,23 @@ const KioskLayout = ({ children, customFooter = null }) => {
           customFooter
         ) : (
           <div
-            className="relative w-full px-8"
+            className="relative w-full px-6"
             style={{
               background: 'linear-gradient(to top, #1F3463 0%, rgba(255, 255, 255, 0.0) 70%)'
             }}
           >
             {/* Digital Clock - Positioned to the left of navigation */}
-            <div className="absolute left-8 bottom-4 z-10">
+            <div className="absolute left-6 bottom-3 z-10">
               <DigitalClock />
             </div>
 
             {/* Navigation Container - Centered and anchored to bottom */}
             <div className="flex justify-center">
-              <nav className="flex justify-center items-center space-x-6 pt-6 pb-4 px-12 w-full max-w-5xl rounded-t-full border-r-8 border-l-8" style={{ backgroundColor: '#1F3463', borderRightColor: '#FFE251', borderLeftColor: '#FFE251' }}>
+              <nav className="flex justify-center items-center space-x-4 pt-4 pb-2.5 px-8 w-full max-w-4xl rounded-t-full" style={{ backgroundColor: '#1F3463', borderRight: '5px solid #FFE251', borderLeft: '5px solid #FFE251' }}>
                 <NavLink
                   to="/"
                   className={({ isActive }) =>
-                    `w-36 h-24 flex flex-col items-center justify-center px-6 py-4 rounded-full transition-all duration-150 ${
+                    `w-28 h-20 flex flex-col items-center justify-center px-5 py-3 rounded-full transition-all duration-150 ${
                       isActive
                         ? 'font-bold shadow-md'
                         : 'active:bg-white active:bg-opacity-20 active:scale-95'
@@ -105,14 +105,14 @@ const KioskLayout = ({ children, customFooter = null }) => {
                     color: isActive ? '#1F3463' : 'white'
                   })}
                 >
-                  <HiHome className="w-12 h-12" />
-                  <span className="mt-1 font-bold text-xl">HOME</span>
+                  <HiHome className="w-10 h-10" />
+                  <span className="mt-0.5 font-bold text-lg">HOME</span>
                 </NavLink>
 
                 <NavLink
                   to="/bulletin"
                   className={({ isActive }) =>
-                    `w-36 h-24 flex flex-col items-center justify-center px-6 py-4 rounded-full transition-all duration-150 ${
+                    `w-28 h-20 flex flex-col items-center justify-center px-5 py-3 rounded-full transition-all duration-150 ${
                       isActive
                         ? 'font-bold shadow-md'
                         : 'active:bg-white active:bg-opacity-20 active:scale-95'
@@ -123,14 +123,14 @@ const KioskLayout = ({ children, customFooter = null }) => {
                     color: isActive ? '#1F3463' : 'white'
                   })}
                 >
-                  <BiSolidNotepad className="w-12 h-12" />
-                  <span className="mt-1 font-bold text-lg text-center leading-tight">BULLETIN</span>
+                  <BiSolidNotepad className="w-10 h-10" />
+                  <span className="mt-0.5 font-bold text-base text-center leading-tight">BULLETIN</span>
                 </NavLink>
 
                 <NavLink
                   to="/map"
                   className={({ isActive }) =>
-                    `w-36 h-24 flex flex-col items-center justify-center px-6 py-4 rounded-full transition-all duration-150 ${
+                    `w-28 h-20 flex flex-col items-center justify-center px-5 py-3 rounded-full transition-all duration-150 ${
                       isActive
                         ? 'font-bold shadow-md'
                         : 'active:bg-white active:bg-opacity-20 active:scale-95'
@@ -141,14 +141,14 @@ const KioskLayout = ({ children, customFooter = null }) => {
                     color: isActive ? '#1F3463' : 'white'
                   })}
                 >
-                  <FaLocationDot className="w-12 h-12" />
-                  <span className="mt-1 font-bold text-xl">MAP</span>
+                  <FaLocationDot className="w-10 h-10" />
+                  <span className="mt-0.5 font-bold text-lg">MAP</span>
                 </NavLink>
 
                 <NavLink
                   to="/directory"
                   className={({ isActive }) =>
-                    `w-36 h-24 flex flex-col items-center justify-center px-6 py-4 rounded-full transition-all duration-150 ${
+                    `w-28 h-20 flex flex-col items-center justify-center px-5 py-3 rounded-full transition-all duration-150 ${
                       isActive
                         ? 'font-bold shadow-md'
                         : 'active:bg-white active:bg-opacity-20 active:scale-95'
@@ -159,14 +159,14 @@ const KioskLayout = ({ children, customFooter = null }) => {
                     color: isActive ? '#1F3463' : 'white'
                   })}
                 >
-                  <FaUserFriends className="w-12 h-12" />
-                  <span className="mt-1 font-bold text-xl">DIRECTORY</span>
+                  <FaUserFriends className="w-10 h-10" />
+                  <span className="mt-0.5 font-bold text-lg">DIRECTORY</span>
                 </NavLink>
 
                 <NavLink
                   to="/queue"
                   className={({ isActive }) =>
-                    `w-36 h-24 flex flex-col items-center justify-center px-6 py-4 rounded-full transition-all duration-150 ${
+                    `w-28 h-20 flex flex-col items-center justify-center px-5 py-3 rounded-full transition-all duration-150 ${
                       isActive
                         ? 'font-bold shadow-md'
                         : 'active:bg-white active:bg-opacity-20 active:scale-95'
@@ -177,14 +177,14 @@ const KioskLayout = ({ children, customFooter = null }) => {
                     color: isActive ? '#1F3463' : 'white'
                   })}
                 >
-                  <MdQueue className="w-12 h-12" />
-                  <span className="mt-1 font-bold text-xl">QUEUE</span>
+                  <MdQueue className="w-10 h-10" />
+                  <span className="mt-0.5 font-bold text-lg">QUEUE</span>
                 </NavLink>
 
                 <NavLink
                   to="/faq"
                   className={({ isActive }) =>
-                    `w-36 h-24 flex flex-col items-center justify-center px-6 py-4 rounded-full transition-all duration-150 ${
+                    `w-28 h-20 flex flex-col items-center justify-center px-5 py-3 rounded-full transition-all duration-150 ${
                       isActive
                         ? 'font-bold shadow-md'
                         : 'active:bg-white active:bg-opacity-20 active:scale-95'
@@ -195,8 +195,8 @@ const KioskLayout = ({ children, customFooter = null }) => {
                     color: isActive ? '#1F3463' : 'white'
                   })}
                 >
-                  <TbMessage2Question className="w-12 h-12" />
-                  <span className="mt-1 font-bold text-xl">FAQ</span>
+                  <TbMessage2Question className="w-10 h-10" />
+                  <span className="mt-0.5 font-bold text-lg">FAQ</span>
                 </NavLink>
               </nav>
             </div>

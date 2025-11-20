@@ -48,7 +48,8 @@ const DatabaseManager = () => {
     { name: 'Service', label: 'Services', description: 'Available services' },
     { name: 'Settings', label: 'System Settings', description: 'System configuration' },
     { name: 'Rating', label: 'Ratings & Feedback', description: 'Customer ratings and feedback' },
-    { name: 'Bulletin', label: 'Bulletins', description: 'News and announcements' }
+    { name: 'Bulletin', label: 'Bulletins', description: 'News and announcements' },
+    { name: 'AuditTrail', label: 'Audit Trail', description: 'System audit logs' }
   ];
 
   const recordsPerPage = 10;

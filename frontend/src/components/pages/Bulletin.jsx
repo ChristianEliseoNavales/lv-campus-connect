@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { MdClose } from 'react-icons/md';
 import { io } from 'socket.io-client';
@@ -11,6 +12,47 @@ const Bulletin = () => {
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
+
+  // Animation variants for staggered effects
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const bulletinItemVariants = {
+    hidden: { opacity: 0, scale: 0.85, y: 40 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
+  };
+
+  const paginationVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        delay: 0.4
+      }
+    }
+  };
 
   // Fetch bulletins from API
   const fetchBulletins = async () => {
@@ -114,7 +156,7 @@ const Bulletin = () => {
   // Button styling helper
   const getButtonStyles = (isDisabled) => {
     return {
-      className: `w-16 h-16 rounded-full flex items-center justify-center transition-all duration-150 ${
+      className: `w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 ${
         isDisabled
           ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-md'
           : 'bg-white text-[#1F3463] active:bg-[#1F3463] active:text-white active:scale-95 shadow-lg active:shadow-md drop-shadow-md'
@@ -139,26 +181,36 @@ const Bulletin = () => {
   if (bulletins.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-2xl text-gray-500">No bulletins available</div>
+        <div className="text-xl text-gray-500">No bulletins available</div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <motion.div
+      className="h-full flex flex-col"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* Main Content Area - 3-Column Grid Layout */}
-      <div className="flex-grow flex items-center justify-center px-20">
-        <div className="w-full max-w-7xl mx-auto">
+      <div className="flex-grow flex items-center justify-center px-16">
+        <motion.div
+          className="w-full max-w-7xl mx-auto"
+          variants={containerVariants}
+        >
           {/* Dynamic Container: Flex for centering when < 3 items, Grid for 3 items */}
           {currentPageData.items.length < 3 ? (
             // Flex container for centering 1-2 items
-            <div className="flex justify-center items-center gap-8 h-full">
+            <div className="flex justify-center items-center gap-6 h-full">
               {currentPageData.items.map((bulletin, index) => (
-                <div
+                <motion.div
                   key={bulletin._id}
                   className="flex items-center justify-center"
-                  style={{ width: 'calc((100% - 64px) / 3)' }} // Match grid column width
+                  style={{ width: 'calc((100% - 48px) / 3)' }} // Match grid column width (80% of 64px = 51.2px ≈ 48px)
                   onClick={() => openFullscreen(bulletin)}
+                  variants={bulletinItemVariants}
+                  custom={index}
                 >
                   {/* Media Container with square aspect ratio and cursor pointer */}
                   <div className="w-full aspect-square bg-transparent rounded-lg overflow-hidden shadow-xl drop-shadow-lg cursor-pointer hover:shadow-2xl transition-shadow">
@@ -187,17 +239,19 @@ const Bulletin = () => {
                       />
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : (
             // Grid container for 3 items
-            <div className="grid grid-cols-3 gap-8 h-full">
+            <div className="grid grid-cols-3 gap-6 h-full">
               {currentPageData.items.map((bulletin, index) => (
-                <div
+                <motion.div
                   key={bulletin._id}
                   className="flex items-center justify-center"
                   onClick={() => openFullscreen(bulletin)}
+                  variants={bulletinItemVariants}
+                  custom={index}
                 >
                   {/* Media Container with square aspect ratio and cursor pointer */}
                   <div className="w-full aspect-square bg-transparent rounded-lg overflow-hidden shadow-xl drop-shadow-lg cursor-pointer hover:shadow-2xl transition-shadow">
@@ -226,34 +280,37 @@ const Bulletin = () => {
                       />
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Pagination Controls - Same pattern as Directory page */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center mt-8 mb-4">
+        <motion.div
+          className="flex justify-center items-center mt-6 mb-3"
+          variants={paginationVariants}
+        >
           {/* Previous Button - Always visible with disabled state */}
           <button
             onClick={isPrevDisabled ? undefined : goToPrevPage}
             disabled={isPrevDisabled}
-            className={`mr-8 ${getButtonStyles(isPrevDisabled).className}`}
+            className={`mr-6 ${getButtonStyles(isPrevDisabled).className}`}
             style={getButtonStyles(isPrevDisabled).style}
             aria-label="Previous page"
           >
-            <ChevronLeftIcon className="w-8 h-8" />
+            <ChevronLeftIcon className="w-6 h-6" />
           </button>
 
           {/* Page Indicator Dots */}
-          <div className="flex items-center space-x-3 mx-8">
+          <div className="flex items-center space-x-2.5 mx-6">
             {Array.from({ length: totalPages }, (_, index) => (
               <button
                 key={index}
                 onClick={() => goToPage(index)}
-                className={`w-4 h-4 rounded-full transition-all duration-150 ${
+                className={`w-3 h-3 rounded-full transition-all duration-150 ${
                   index === currentPage
                     ? 'bg-blue-600'
                     : 'bg-gray-300 active:bg-gray-400 active:scale-95'
@@ -268,29 +325,42 @@ const Bulletin = () => {
           <button
             onClick={isNextDisabled ? undefined : goToNextPage}
             disabled={isNextDisabled}
-            className={`ml-8 ${getButtonStyles(isNextDisabled).className}`}
+            className={`ml-6 ${getButtonStyles(isNextDisabled).className}`}
             style={getButtonStyles(isNextDisabled).style}
             aria-label="Next page"
           >
-            <ChevronRightIcon className="w-8 h-8" />
+            <ChevronRightIcon className="w-6 h-6" />
           </button>
-        </div>
+        </motion.div>
       )}
 
       {/* Fullscreen Modal with Animations */}
-      {fullscreenMedia && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50 transition-opacity duration-300 ease-in-out">
+      <AnimatePresence>
+        {fullscreenMedia && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           {/* Close Button - Top Right */}
           <button
             onClick={closeFullscreen}
-            className="absolute top-6 right-6 z-[60] w-12 h-12 rounded-full border-2 border-white bg-transparent hover:bg-white hover:bg-opacity-20 flex items-center justify-center text-white transition-all duration-200"
+            className="absolute top-5 right-5 z-[60] w-10 h-10 rounded-full border-2 border-white bg-transparent hover:bg-white hover:bg-opacity-20 flex items-center justify-center text-white transition-all duration-200"
             aria-label="Close fullscreen"
           >
-            <MdClose className="w-8 h-8" />
+            <MdClose className="w-6 h-6" />
           </button>
 
           {/* Media Container with Scale Animation */}
-          <div className="flex items-center justify-center animate-scale-in">
+          <motion.div
+            className="flex items-center justify-center"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             {isVideo(fullscreenMedia) ? (
               <video
                 src={getMediaUrl(fullscreenMedia)}
@@ -314,10 +384,11 @@ const Bulletin = () => {
                 }}
               />
             )}
-          </div>
-        </div>
-      )}
-    </div>
+          </motion.div>
+        </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

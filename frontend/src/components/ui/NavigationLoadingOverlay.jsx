@@ -31,10 +31,10 @@ const NavigationLoadingOverlay = () => {
           repeat: Infinity,
           ease: "linear"
         }}
-        className="relative mb-6"
+        className="relative mb-5"
       >
         {/* Outer Ring */}
-        <div className="w-20 h-20 rounded-full border-4 border-[#FFE251] border-t-transparent"></div>
+        <div className="w-16 h-16 rounded-full border-3 border-[#FFE251] border-t-transparent"></div>
 
         {/* Inner Circle */}
         <motion.div
@@ -46,9 +46,9 @@ const NavigationLoadingOverlay = () => {
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-[#FFE251] flex items-center justify-center"
+          className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-[#FFE251] flex items-center justify-center"
         >
-          <div className="w-6 h-6 rounded-full bg-[#1F3463]"></div>
+          <div className="w-5 h-5 rounded-full bg-[#1F3463]"></div>
         </motion.div>
       </motion.div>
 
@@ -59,17 +59,17 @@ const NavigationLoadingOverlay = () => {
         transition={{ duration: 0.3, delay: 0.1 }}
         className="text-center"
       >
-        <p className="text-2xl font-semibold text-[#1F3463]">
+        <p className="text-xl font-semibold text-[#1F3463]">
           Loading
         </p>
 
         {/* Animated Dots */}
-        <div className="flex justify-center space-x-1 mt-2">
+        <div className="flex justify-center space-x-0.5 mt-1.5">
           {[0, 1, 2].map((index) => (
             <motion.div
               key={index}
               animate={{
-                y: [0, -6, 0],
+                y: [0, -5, 0],
                 opacity: [0.5, 1, 0.5],
               }}
               transition={{
@@ -78,7 +78,7 @@ const NavigationLoadingOverlay = () => {
                 delay: index * 0.15,
                 ease: "easeInOut"
               }}
-              className="w-2 h-2 bg-[#1F3463] rounded-full"
+              className="w-1.5 h-1.5 bg-[#1F3463] rounded-full"
             ></motion.div>
           ))}
         </div>

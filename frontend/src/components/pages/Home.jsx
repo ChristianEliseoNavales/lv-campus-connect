@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../../config/api';
 
@@ -16,6 +17,62 @@ const Home = () => {
   });
   const [socket, setSocket] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Animation variants for staggered effects
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.12,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 40, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.5
+      }
+    }
+  };
+
+  const queueDisplayVariants = {
+    hidden: { opacity: 0, x: -50 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
+  };
+
+  const actionButtonVariants = {
+    hidden: { opacity: 0, scale: 0.8, y: 30 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 120,
+        damping: 12,
+        duration: 0.6
+      }
+    }
+  };
 
   // Initialize Socket.io connection
   useEffect(() => {
@@ -130,16 +187,16 @@ const Home = () => {
   const QueueSkeleton = () => (
     <div className="animate-pulse">
       {/* Window Grid Skeleton - Always 4 rows */}
-      <div className="grid grid-cols-2 gap-2 h-full">
+      <div className="grid grid-cols-2 gap-1.5 h-full">
         {[...Array(4)].map((_, rowIndex) => (
           <React.Fragment key={rowIndex}>
             {/* Window Name Skeleton */}
             <div className="bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center">
-              <div className="bg-gray-300 h-6 w-20 rounded"></div>
+              <div className="bg-gray-300 h-5 w-16 rounded"></div>
             </div>
             {/* Queue Number Skeleton */}
             <div className="bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center">
-              <div className="bg-gray-300 h-8 w-12 rounded"></div>
+              <div className="bg-gray-300 h-6 w-10 rounded"></div>
             </div>
           </React.Fragment>
         ))}
@@ -154,30 +211,30 @@ const Home = () => {
     return (
       <div className="h-full flex flex-col">
         {/* Office Name Header - Added rounded corners to all four corners */}
-        <div className="bg-[#1F3463] text-white text-center py-4 rounded-lg">
-          <h3 className="text-3xl font-bold">{title}</h3>
+        <div className="bg-[#1F3463] text-white text-center py-3 rounded-lg">
+          <h3 className="text-2xl font-bold">{title}</h3>
         </div>
 
         {/* NOW SERVING Section */}
-        <div className="text-center py-4">
-          <p className="text-2xl font-bold" style={{ color: '#1F3463' }}>NOW SERVING</p>
+        <div className="text-center py-3">
+          <p className="text-xl font-bold" style={{ color: '#1F3463' }}>NOW SERVING</p>
         </div>
 
         {/* Labels positioned OUTSIDE and ABOVE the grid - Updated for 50/50 split */}
-        <div className="mx-4 mb-2">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="mx-3 mb-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
             <div className="text-center">
-              <span className="font-semibold text-gray-700 text-sm">WINDOW</span>
+              <span className="font-semibold text-gray-700 text-xs">WINDOW</span>
             </div>
             <div className="text-center">
-              <span className="font-semibold text-gray-700 text-sm">QUEUE NO.</span>
+              <span className="font-semibold text-gray-700 text-xs">QUEUE NO.</span>
             </div>
           </div>
         </div>
 
         {/* Queue Grid Container */}
-        <div className="flex-grow mx-4 mb-4">
-          <div className="h-full p-2">
+        <div className="flex-grow mx-3 mb-3">
+          <div className="h-full p-1.5">
             {/* Show skeleton loading when section is updating */}
             {sectionLoading[department] ? (
               <QueueSkeleton />
@@ -185,13 +242,13 @@ const Home = () => {
               /* Office Closed Message */
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <p className="text-xl font-bold text-gray-600 mb-2">Office Closed</p>
-                  <p className="text-sm text-gray-500">Please try again later</p>
+                  <p className="text-lg font-bold text-gray-600 mb-1.5">Office Closed</p>
+                  <p className="text-xs text-gray-500">Please try again later</p>
                 </div>
               </div>
             ) : (
               /* Fixed 4-Row Grid Layout - Always shows exactly 4 rows */
-              <div className="grid grid-cols-2 gap-2 h-full">
+              <div className="grid grid-cols-2 gap-1.5 h-full">
                 {[...Array(4)].map((_, rowIndex) => {
                   const window = data?.windows?.[rowIndex];
                   const isRealWindow = window && window.name;
@@ -205,7 +262,7 @@ const Home = () => {
                           ? 'bg-white border-gray-400'
                           : 'bg-gray-100 border-gray-300'
                       }`}>
-                        <span className={`text-lg font-bold ${
+                        <span className={`text-base font-bold ${
                           isRealWindow && isWindowOpen
                             ? 'text-gray-900'
                             : 'text-gray-500'
@@ -219,7 +276,7 @@ const Home = () => {
                           ? 'bg-white border-gray-400'
                           : 'bg-gray-100 border-gray-300'
                       }`}>
-                        <span className="text-xl font-bold" style={{
+                        <span className="text-lg font-bold" style={{
                           color: isRealWindow && isWindowOpen ? '#1F3463' : '#9CA3AF'
                         }}>
                           {loading ? '--' :
@@ -242,16 +299,24 @@ const Home = () => {
 
 
   return (
-    <div className="h-full flex flex-col">
+    <motion.div
+      className="h-full flex flex-col"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
 
       {/* 3-Column Grid Layout */}
       <div className="flex-grow grid grid-cols-3 gap-0 h-full">
         {/* Columns 1-2 Combined (Registrar's and Admissions Office) - Single parent container */}
-        <div className="col-span-2 px-4">
+        <motion.div
+          className="col-span-2 px-3"
+          variants={queueDisplayVariants}
+        >
           {/* White background container wrapping both office sections */}
-          <div className="h-full bg-white rounded-lg shadow-xl drop-shadow-lg p-6">
+          <div className="h-full bg-white rounded-lg shadow-xl drop-shadow-lg p-5">
             {/* Grid container for both office sections */}
-            <div className="h-full grid grid-cols-2 gap-6">
+            <div className="h-full grid grid-cols-2 gap-5">
               {/* Column 1 - Registrar's Office */}
               <div className="h-full">
                 <EnhancedQueueDisplay
@@ -269,25 +334,29 @@ const Home = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Column 3 - New Queue/Directory Section */}
-        <div className="col-span-1 flex flex-col gap-6 pl-6">
+        <motion.div
+          className="col-span-1 flex flex-col gap-5 pl-5"
+          variants={containerVariants}
+        >
           {/* Row 1 - FIND OFFICE LOCATIONS */}
-          <div
-            className="flex-1 bg-[#FFE251] rounded-2xl shadow-xl drop-shadow-lg active:shadow-lg active:scale-95 transition-all duration-150 p-6 cursor-pointer relative overflow-hidden"
+          <motion.div
+            className="flex-1 bg-[#FFE251] rounded-2xl shadow-xl drop-shadow-lg active:shadow-lg active:scale-95 transition-all duration-150 p-5 cursor-pointer relative overflow-hidden"
             onClick={() => navigate('/map')}
+            variants={actionButtonVariants}
           >
             {/* Button text positioned at top-left */}
-            <div className="absolute top-6 left-6">
-              <h3 className="text-3xl font-bold text-[#1F3463] leading-tight" style={{ textShadow: '1px 1px 2px rgba(255, 255, 255, 0.8)' }}>FIND OFFICE LOCATIONS</h3>
+            <div className="absolute top-5 left-5">
+              <h3 className="text-2xl font-bold text-[#1F3463] leading-tight" style={{ textShadow: '1px 1px 2px rgba(255, 255, 255, 0.8)' }}>FIND OFFICE LOCATIONS</h3>
             </div>
 
             {/* Decorative images */}
             <img
               src="/home/1a.png"
               alt=""
-              className="absolute bottom-6 left-6 w-auto h-auto max-w-24 max-h-24"
+              className="absolute bottom-5 left-5 w-auto h-auto max-w-20 max-h-20"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
@@ -295,7 +364,7 @@ const Home = () => {
             <img
               src="/home/2a.png"
               alt=""
-              className="absolute bottom-6 right-6 w-auto h-auto max-w-24 max-h-24"
+              className="absolute bottom-5 right-5 w-auto h-auto max-w-20 max-h-20"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
@@ -303,28 +372,29 @@ const Home = () => {
             <img
               src="/home/3a.png"
               alt=""
-              className="absolute top-6 right-6 w-auto h-auto max-w-24 max-h-24"
+              className="absolute top-5 right-5 w-auto h-auto max-w-20 max-h-20"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
             />
-          </div>
+          </motion.div>
 
           {/* Row 2 - GET A QUEUE NUMBER */}
-          <div
-            className="flex-1 bg-[#FFE251] rounded-2xl shadow-xl drop-shadow-lg active:shadow-lg active:scale-95 transition-all duration-150 p-6 cursor-pointer relative overflow-hidden"
+          <motion.div
+            className="flex-1 bg-[#FFE251] rounded-2xl shadow-xl drop-shadow-lg active:shadow-lg active:scale-95 transition-all duration-150 p-5 cursor-pointer relative overflow-hidden"
             onClick={() => navigate('/queue')}
+            variants={actionButtonVariants}
           >
             {/* Button text positioned at top-left */}
-            <div className="absolute top-6 left-6">
-              <h3 className="text-3xl font-bold text-[#1F3463] leading-tight" style={{ textShadow: '1px 1px 2px rgba(255, 255, 255, 0.8)' }}>GET A QUEUE NUMBER</h3>
+            <div className="absolute top-5 left-5">
+              <h3 className="text-2xl font-bold text-[#1F3463] leading-tight" style={{ textShadow: '1px 1px 2px rgba(255, 255, 255, 0.8)' }}>GET A QUEUE NUMBER</h3>
             </div>
 
             {/* Decorative images */}
             <img
               src="/home/1b.png"
               alt=""
-              className="absolute bottom-6 left-6 w-auto h-auto max-w-24 max-h-24"
+              className="absolute bottom-5 left-5 w-auto h-auto max-w-20 max-h-20"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
@@ -332,7 +402,7 @@ const Home = () => {
             <img
               src="/home/2b.png"
               alt=""
-              className="absolute bottom-6 right-6 w-auto h-auto max-w-24 max-h-24"
+              className="absolute bottom-5 right-5 w-auto h-auto max-w-20 max-h-20"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
@@ -340,15 +410,15 @@ const Home = () => {
             <img
               src="/home/3b.png"
               alt=""
-              className="absolute top-6 right-6 w-auto h-auto max-w-24 max-h-24"
+              className="absolute top-5 right-5 w-auto h-auto max-w-20 max-h-20"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
             />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

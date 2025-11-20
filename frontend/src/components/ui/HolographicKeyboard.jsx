@@ -227,15 +227,15 @@ const HolographicKeyboard = ({
       style={{ backdropFilter: 'blur(2px)' }}
     >
       {/* Input Field Display - Single or Multiple Fields */}
-      <div className="mb-8 w-full max-w-4xl px-8 relative">
+      <div className="mb-6 w-full max-w-4xl px-6 relative">
         {/* Form Container */}
-        <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-xl p-6 shadow-2xl drop-shadow-2xl border border-white border-opacity-30">
+        <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-xl p-5 shadow-2xl drop-shadow-2xl border border-white border-opacity-30">
           {showAllFields && allFieldsData ? (
             /* Multi-Field Display for Visitation Form */
-            <div className="space-y-4">
+            <div className="space-y-3">
               {allFieldsData.map((field) => (
                 <div key={field.name}>
-                  <label className="block text-lg font-semibold text-gray-700 mb-2">
+                  <label className="block text-base font-semibold text-gray-700 mb-1.5">
                     {field.label}
                   </label>
                   <div className="relative">
@@ -245,7 +245,7 @@ const HolographicKeyboard = ({
                       placeholder={field.placeholder}
                       // TEMPORARY: readOnly removed for testing - restore for production
                       onClick={() => onFieldFocus && onFieldFocus(field.name)}
-                      className={`w-full px-4 py-4 border-2 rounded-lg text-xl bg-white focus:outline-none shadow-inner cursor-pointer transition-all duration-150 ${
+                      className={`w-full px-3 py-3 border-2 rounded-lg text-lg bg-white focus:outline-none shadow-inner cursor-pointer transition-all duration-150 ${
                         activeFieldName === field.name
                           ? 'border-[#1F3463] bg-blue-50'
                           : formErrors[field.name]
@@ -256,16 +256,16 @@ const HolographicKeyboard = ({
                     {activeFieldName === field.name && (
                       <div
                         className="absolute top-1/2 transform -translate-y-1/2"
-                        style={{ left: `${calculateCursorPosition(field.value, '20px')}px` }}
+                        style={{ left: `${calculateCursorPosition(field.value, '18px')}px` }}
                       >
-                        <div className="w-1 h-6 bg-[#1F3463] animate-pulse"></div>
+                        <div className="w-1 h-5 bg-[#1F3463] animate-pulse"></div>
                       </div>
                     )}
                   </div>
                   {/* Validation Error Message - Always visible when error exists */}
                   {formErrors[field.name] && (
-                    <p className="mt-2 text-sm text-red-600 font-medium flex items-center">
-                      <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <p className="mt-1.5 text-xs text-red-600 font-medium flex items-center">
+                      <svg className="w-3 h-3 mr-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                       {formErrors[field.name]}
@@ -278,7 +278,7 @@ const HolographicKeyboard = ({
             /* Single Field Display for Other Forms */
             <div>
               {activeInputLabel && (
-                <label className="block text-lg font-semibold text-gray-700 mb-2">
+                <label className="block text-base font-semibold text-gray-700 mb-1.5">
                   {activeInputLabel}
                 </label>
               )}
@@ -288,7 +288,7 @@ const HolographicKeyboard = ({
                   value={activeInputValue}
                   placeholder={activeInputPlaceholder}
                   // TEMPORARY: readOnly removed for testing - restore for production
-                  className={`w-full px-4 py-4 border-2 rounded-lg text-xl bg-white focus:outline-none shadow-inner ${
+                  className={`w-full px-3 py-3 border-2 rounded-lg text-lg bg-white focus:outline-none shadow-inner ${
                     activeInputError
                       ? 'border-red-500 bg-red-50'
                       : 'border-[#1F3463]'
@@ -296,15 +296,15 @@ const HolographicKeyboard = ({
                 />
                 <div
                   className="absolute top-1/2 transform -translate-y-1/2"
-                  style={{ left: `${calculateCursorPosition(activeInputValue, '20px')}px` }}
+                  style={{ left: `${calculateCursorPosition(activeInputValue, '18px')}px` }}
                 >
-                  <div className="w-1 h-6 bg-[#1F3463] animate-pulse"></div>
+                  <div className="w-1 h-5 bg-[#1F3463] animate-pulse"></div>
                 </div>
               </div>
               {/* Validation Error Message - Always visible when error exists */}
               {activeInputError && (
-                <p className="mt-2 text-sm text-red-600 font-medium flex items-center">
-                  <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <p className="mt-1.5 text-xs text-red-600 font-medium flex items-center">
+                  <svg className="w-3 h-3 mr-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   {activeInputError}
@@ -316,13 +316,13 @@ const HolographicKeyboard = ({
 
         {/* Navigation Buttons - Positioned outside the form container */}
         {showNavigationButtons && navigationButtons && (
-          <div className="absolute left-[calc(100%+1rem)] top-1/2 transform -translate-y-1/2 flex flex-col space-y-4">
+          <div className="absolute left-[calc(100%+0.8rem)] top-1/2 transform -translate-y-1/2 flex flex-col space-y-3">
             {navigationButtons.map((button, index) => (
               <button
                 key={index}
                 onClick={button.onClick}
                 disabled={button.disabled}
-                className={`w-24 h-24 rounded-full border-2 border-white font-bold text-sm transition-all duration-150 shadow-lg ${
+                className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
                   button.disabled
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : button.variant === 'next'
@@ -340,28 +340,28 @@ const HolographicKeyboard = ({
       {/* Holographic Keyboard */}
       <div
         ref={keyboardRef}
-        className="bg-transparent rounded-xl p-6 max-w-5xl mx-auto"
+        className="bg-transparent rounded-xl p-5 max-w-5xl mx-auto"
       >
         {/* Number Row with Dynamic Shift Character Display */}
-        <div className="flex justify-center gap-3 mb-4">
+        <div className="flex justify-center gap-2.5 mb-3">
           {numberRowKeys.map((keyData, index) => (
             <button
               key={index}
               onClick={() => handleKeyPress(keyData)}
-              className="w-20 h-16 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-lg font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex flex-col items-center justify-center"
+              className="w-16 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex flex-col items-center justify-center"
             >
               {/* Dynamic character display based on Shift state */}
               {isShiftActive ? (
                 <>
                   {/* Shift active: Special character prominent, number secondary */}
-                  <span className="text-xs opacity-60 transition-all duration-150">{keyData.normal}</span>
-                  <span className="text-2xl transition-all duration-150">{keyData.shift}</span>
+                  <span className="text-[10px] opacity-60 transition-all duration-150">{keyData.normal}</span>
+                  <span className="text-xl transition-all duration-150">{keyData.shift}</span>
                 </>
               ) : (
                 <>
                   {/* Shift inactive: Number prominent, special character secondary */}
-                  <span className="text-xs opacity-75 transition-all duration-150">{keyData.shift}</span>
-                  <span className="text-2xl transition-all duration-150">{keyData.normal}</span>
+                  <span className="text-[10px] opacity-75 transition-all duration-150">{keyData.shift}</span>
+                  <span className="text-xl transition-all duration-150">{keyData.normal}</span>
                 </>
               )}
             </button>
@@ -371,20 +371,20 @@ const HolographicKeyboard = ({
             <button
               key={`additional-${index}`}
               onClick={() => handleKeyPress(keyData)}
-              className="w-20 h-16 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-lg font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex flex-col items-center justify-center"
+              className="w-16 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex flex-col items-center justify-center"
             >
               {/* Dynamic character display based on Shift state */}
               {isShiftActive ? (
                 <>
                   {/* Shift active: Special character prominent, normal character secondary */}
-                  <span className="text-xs opacity-60 transition-all duration-150">{keyData.normal}</span>
-                  <span className="text-2xl transition-all duration-150">{keyData.shift}</span>
+                  <span className="text-[10px] opacity-60 transition-all duration-150">{keyData.normal}</span>
+                  <span className="text-xl transition-all duration-150">{keyData.shift}</span>
                 </>
               ) : (
                 <>
                   {/* Shift inactive: Normal character prominent, special character secondary */}
-                  <span className="text-xs opacity-75 transition-all duration-150">{keyData.shift}</span>
-                  <span className="text-2xl transition-all duration-150">{keyData.normal}</span>
+                  <span className="text-[10px] opacity-75 transition-all duration-150">{keyData.shift}</span>
+                  <span className="text-xl transition-all duration-150">{keyData.normal}</span>
                 </>
               )}
             </button>
@@ -393,18 +393,18 @@ const HolographicKeyboard = ({
 
         {/* Letter Rows */}
         {keyboardRows.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex justify-center gap-3 mb-4">
+          <div key={rowIndex} className="flex justify-center gap-2.5 mb-3">
             {/* Add Shift key to the third row (before letters) */}
             {rowIndex === 2 && (
               <button
                 onClick={handleShiftToggle}
-                className={`w-24 h-16 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-sm font-bold text-white active:scale-95 shadow-lg transition-all duration-150 select-none flex items-center justify-center gap-1 ${
+                className={`w-20 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xs font-bold text-white active:scale-95 shadow-lg transition-all duration-150 select-none flex items-center justify-center gap-0.5 ${
                   isShiftActive
                     ? 'bg-[#1F3463] bg-opacity-80 border-opacity-100'
                     : 'active:bg-white active:bg-opacity-20 active:border-opacity-80'
                 }`}
               >
-                <FaArrowUp className="w-3 h-3" />
+                <FaArrowUp className="w-2.5 h-2.5" />
                 SHIFT
               </button>
             )}
@@ -413,7 +413,7 @@ const HolographicKeyboard = ({
               <button
                 key={keyIndex}
                 onClick={() => handleKeyPress(keyData)}
-                className="w-20 h-16 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-2xl font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
+                className="w-16 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xl font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
               >
                 {isShiftActive ? keyData.shift : keyData.normal}
               </button>
@@ -423,7 +423,7 @@ const HolographicKeyboard = ({
             {rowIndex === 2 && (
               <button
                 onClick={onBackspace}
-                className="w-24 h-16 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-sm font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
+                className="w-20 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xs font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
               >
                 ⌫ BACK
               </button>
@@ -432,23 +432,23 @@ const HolographicKeyboard = ({
         ))}
 
         {/* Bottom Row with Spacebar */}
-        <div className="flex justify-center gap-3 mb-4">
+        <div className="flex justify-center gap-2.5 mb-3">
           {/* Spacebar */}
           <button
             onClick={onSpace}
-            className="w-80 h-16 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-lg font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
+            className="w-64 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
           >
             SPACE
           </button>
         </div>
 
         {/* Hide Button */}
-        <div className="flex justify-center mt-6">
+        <div className="flex justify-center mt-5">
           <button
             onClick={onHide}
-            className="flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-white font-semibold active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150"
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-white font-semibold active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150"
           >
-            <FaChevronDown className="w-4 h-4" />
+            <FaChevronDown className="w-3 h-3" />
             Click to hide keyboard
           </button>
         </div>

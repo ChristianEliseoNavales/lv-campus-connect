@@ -117,6 +117,20 @@ export const EditRecordModal = ({
         { name: 'isVisible', label: 'Visible', type: 'checkbox' },
         { name: 'showOnHomepage', label: 'Show on Homepage', type: 'checkbox' }
       ],
+      AuditTrail: [
+        { name: 'action', label: 'Action', type: 'text', required: true },
+        { name: 'actionDescription', label: 'Description', type: 'text', required: true },
+        { name: 'resourceType', label: 'Resource Type', type: 'select', required: true, options: [
+          'User', 'Queue', 'Service', 'Window', 'Settings', 'Bulletin', 'Rating', 'System', 'Other'
+        ]},
+        { name: 'ipAddress', label: 'IP Address', type: 'text', required: true },
+        { name: 'requestMethod', label: 'Request Method', type: 'select', required: true, options: [
+          'GET', 'POST', 'PUT', 'PATCH', 'DELETE'
+        ]},
+        { name: 'requestUrl', label: 'Request URL', type: 'text', required: true },
+        { name: 'statusCode', label: 'Status Code', type: 'number', required: true },
+        { name: 'success', label: 'Success', type: 'checkbox', required: true }
+      ],
       Settings: [
         { name: 'systemName', label: 'System Name', type: 'text' },
         { name: 'systemVersion', label: 'System Version', type: 'text' }

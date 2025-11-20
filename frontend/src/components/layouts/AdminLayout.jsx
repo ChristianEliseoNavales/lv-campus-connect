@@ -16,8 +16,7 @@ import {
   MdBarChart,
   MdSwapHoriz,
   MdStorage,
-  MdMonitor,
-  MdQuestionAnswer
+  MdMonitor
 } from 'react-icons/md';
 import { BiSolidNotepad } from 'react-icons/bi';
 import { useSocket } from '../../contexts/SocketContext';
@@ -361,7 +360,6 @@ const AdminLayout = ({ children }) => {
       '/admin/mis/database-manager': { name: 'Database Manager', path: '/admin/mis/database-manager', icon: MdStorage, office: 'mis' },
       '/admin/mis/audit-trail': { name: 'Audit Trail', path: '/admin/mis/audit-trail', icon: MdHistory, office: 'mis' },
       '/admin/mis/bulletin': { name: 'Bulletin', path: '/admin/mis/bulletin', icon: MdNewspaper, office: 'mis' },
-      '/admin/mis/faq': { name: 'FAQs', path: '/admin/mis/faq', icon: MdQuestionAnswer, office: 'mis' },
       '/admin/mis/ratings': { name: 'Ratings', path: '/admin/mis/ratings', icon: MdStar, office: 'mis' },
 
       // Registrar items
@@ -491,24 +489,6 @@ const AdminLayout = ({ children }) => {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   );
-
-  // User Avatar component with fallback to UserIcon
-  const UserAvatar = () => {
-    const [imageError, setImageError] = useState(false);
-
-    if (user?.profilePicture && !imageError) {
-      return (
-        <img
-          src={user.profilePicture}
-          alt={user.name || 'User'}
-          className="w-6 h-6 rounded-full object-cover"
-          onError={() => setImageError(true)}
-        />
-      );
-    }
-
-    return <UserIcon />;
-  };
 
   const ChevronDownIcon = () => (
     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -716,7 +696,7 @@ const AdminLayout = ({ children }) => {
                 className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl transition-colors text-white"
                 style={{ backgroundColor: '#1F3463' }}
               >
-                <UserAvatar />
+                <UserIcon />
                 <span className="font-medium text-sm">{getDisplayName()}</span>
                 <ChevronDownIcon />
               </button>

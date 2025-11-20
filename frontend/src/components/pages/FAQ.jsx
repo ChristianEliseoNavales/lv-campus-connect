@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../../config/api';
 
@@ -7,6 +8,46 @@ const FAQ = () => {
   const [faqData, setFaqData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
+
+  // Animation variants for staggered effects
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const headerVariants = {
+    hidden: { opacity: 0, y: -30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.5
+      }
+    }
+  };
+
+  const faqItemVariants = {
+    hidden: { opacity: 0, x: -30 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.5
+      }
+    }
+  };
 
   // Initialize Socket.io connection
   useEffect(() => {
@@ -61,50 +102,63 @@ const FAQ = () => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <motion.div
+      className="h-full flex flex-col"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Main Content Area */}
-      <div className="flex-grow flex items-center justify-center p-8">
+      <div className="flex-grow flex items-center justify-center p-6">
         {/* White Background Container with Fixed Height and Scrollable Content */}
         <div className="bg-white rounded-xl shadow-xl drop-shadow-lg w-full max-w-3xl h-[60vh] flex flex-col overflow-hidden">
           {/* Header inside white container */}
-          <div className="pt-8 pb-6 px-8 flex-shrink-0">
-            <h1 className="text-5xl font-semibold text-center drop-shadow-lg" style={{ color: '#161F55' }}>
+          <motion.div
+            className="pt-6 pb-5 px-6 flex-shrink-0"
+            variants={headerVariants}
+          >
+            <h1 className="text-4xl font-semibold text-center drop-shadow-lg" style={{ color: '#161F55' }}>
               FREQUENTLY ASKED QUESTIONS
             </h1>
-          </div>
+          </motion.div>
 
           {/* Scrollable FAQ Content */}
-          <div className="flex-grow overflow-y-auto px-8 pb-8">
-            <div className="space-y-3 max-w-4xl mx-auto">
+          <div className="flex-grow overflow-y-auto px-6 pb-6">
+            <motion.div
+              className="space-y-2.5 max-w-4xl mx-auto"
+              variants={containerVariants}
+            >
               {loading ? (
-                <div className="flex justify-center items-center py-12">
+                <div className="flex justify-center items-center py-10">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3463] mx-auto mb-4"></div>
-                    <p className="text-gray-600 text-lg">Loading FAQs...</p>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1F3463] mx-auto mb-3"></div>
+                    <p className="text-gray-600 text-base">Loading FAQs...</p>
                   </div>
                 </div>
               ) : faqData.length === 0 ? (
-                <div className="flex justify-center items-center py-12">
-                  <p className="text-gray-600 text-lg">No FAQs available at the moment.</p>
+                <div className="flex justify-center items-center py-10">
+                  <p className="text-gray-600 text-base">No FAQs available at the moment.</p>
                 </div>
               ) : (
-                faqData.map((faq) => (
-                <div
+                faqData.map((faq, index) => (
+                <motion.div
                   key={faq.id}
                   className="bg-gray-50 rounded-lg shadow-lg drop-shadow-sm border border-gray-200 overflow-hidden"
+                  variants={faqItemVariants}
+                  custom={index}
                 >
                   <button
                     onClick={() => toggleFAQ(faq.id)}
-                    className="w-full px-6 py-4 text-left active:bg-gray-100 focus:outline-none focus:bg-gray-100 active:scale-95 transition-all duration-150"
+                    className="w-full px-5 py-3 text-left active:bg-gray-100 focus:outline-none focus:bg-gray-100 active:scale-95 transition-all duration-150"
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-semibold text-gray-800 pr-4">
+                      <h3 className="text-lg font-semibold text-gray-800 pr-3">
                         {faq.question}
                       </h3>
                       <div className="flex-shrink-0">
                         {openFAQ === faq.id ? (
                           <svg
-                            className="w-6 h-6 transition-transform duration-200"
+                            className="w-5 h-5 transition-transform duration-200"
                             style={{ color: '#1F3463' }}
                             fill="currentColor"
                             viewBox="0 0 20 20"
@@ -113,7 +167,7 @@ const FAQ = () => {
                           </svg>
                         ) : (
                           <svg
-                            className="w-6 h-6 transition-transform duration-200"
+                            className="w-5 h-5 transition-transform duration-200"
                             style={{ color: '#1F3463' }}
                             fill="currentColor"
                             viewBox="0 0 20 20"
@@ -126,20 +180,20 @@ const FAQ = () => {
                   </button>
 
                   {openFAQ === faq.id && (
-                    <div className="px-6 pb-4 border-t border-gray-100 animate-fadeIn bg-white">
-                      <p className="text-lg text-gray-700 leading-relaxed pt-4">
+                    <div className="px-5 pb-3 border-t border-gray-100 animate-fadeIn bg-white">
+                      <p className="text-base text-gray-700 leading-relaxed pt-3">
                         {faq.answer}
                       </p>
                     </div>
                   )}
-                </div>
+                </motion.div>
                 ))
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

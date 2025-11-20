@@ -28,19 +28,19 @@ const CircularHelpButton = ({ onClick, className = '' }) => {
     <button
       onClick={handleClick}
       className={`
-        fixed top-[150px] right-6 z-30
-        w-14 h-14
-        rounded-full 
+        fixed top-[120px] right-5 z-30
+        w-11 h-11
+        rounded-full
         border-2 border-white
         flex items-center justify-center
         shadow-lg drop-shadow-md
-        active:scale-95 active:shadow-md 
+        active:scale-95 active:shadow-md
         transition-all duration-150
-        focus:outline-none focus:ring-4 focus:ring-white focus:ring-opacity-30
+        focus:outline-none focus:ring-3 focus:ring-white focus:ring-opacity-30
         touch-target-lg
         ${className}
       `}
-      style={{ 
+      style={{
         backgroundColor: '#1F3463',
         color: 'white'
       }}
@@ -68,7 +68,7 @@ const CircularHelpButton = ({ onClick, className = '' }) => {
       aria-label="Help - Get assistance or view frequently asked questions"
       title="Help"
     >
-      <FaQuestion className="w-6 h-6" />
+      <FaQuestion className="w-5 h-5" />
     </button>
   );
 };

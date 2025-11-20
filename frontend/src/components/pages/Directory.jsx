@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { ResponsiveGrid } from '../ui';
 import DirectoryLayout from '../layouts/DirectoryLayout';
 import { KioskLayout } from '../layouts';
@@ -14,6 +15,61 @@ const Directory = () => {
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
   // Fixed layout structure
+
+  // Animation variants for staggered effects
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.12,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const headerVariants = {
+    hidden: { opacity: 0, y: -30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.5
+      }
+    }
+  };
+
+  const gridItemVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: 30 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
+  };
+
+  const detailsVariants = {
+    hidden: { opacity: 0, x: 50 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
+  };
 
   // Initialize Socket.io connection for real-time updates
   useEffect(() => {
@@ -447,12 +503,12 @@ const Directory = () => {
 
   // Component to render individual staff member in triangular org chart
   const StaffMember = ({ person, isHead = false }) => (
-    <div className="flex flex-col items-center justify-center space-y-3 w-40">
+    <div className="flex flex-col items-center justify-center space-y-2.5 w-32">
       {/* Avatar Icon - Perfectly Centered with Enhanced Styling */}
-      <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto ${
         isHead ? 'text-white' : 'text-white'
       }`} style={{ backgroundColor: 'transparent', border: '2px solid #1F3463' }}>
-        <svg className="w-8 h-8" viewBox="0 0 24 24" style={{ color: '#1F3463' }}>
+        <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ color: '#1F3463' }}>
           {/* Person figure - solid fill with same color as text */}
           <g fill="currentColor">
             {/* Head */}
@@ -465,10 +521,10 @@ const Directory = () => {
 
       {/* Name and Title - Center Aligned with Consistent Navy Blue Color */}
       <div className="text-center w-full">
-        <h3 className="text-xl font-semibold text-center leading-tight whitespace-nowrap" style={{ color: '#1F3463' }}>
+        <h3 className="text-lg font-semibold text-center leading-tight whitespace-nowrap" style={{ color: '#1F3463' }}>
           {person.name}
         </h3>
-        <p className="text-lg text-center mt-1 whitespace-nowrap" style={{ color: '#1F3463' }}>
+        <p className="text-base text-center mt-0.5 whitespace-nowrap" style={{ color: '#1F3463' }}>
           {person.title}
         </p>
       </div>
@@ -499,22 +555,33 @@ const Directory = () => {
   if (!selectedDepartment) {
     return (
       <KioskLayout>
-        <div className="h-full flex flex-col">
+        <motion.div
+          className="h-full flex flex-col"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Office Selection Grid */}
           <div className="flex-grow flex items-center justify-center h-full">
             {/* Centered Header-Grid Unit with Flexible Positioning */}
-            <div className="flex flex-col items-center justify-center w-full px-20 h-full">
+            <div className="flex flex-col items-center justify-center w-full px-16 h-full">
               {/* Header - Positioned above grid with proper spacing */}
-              <div className="mb-8">
-                <h2 className="text-5xl font-semibold text-center drop-shadow-lg whitespace-nowrap" style={{ color: '#1F3463' }}>
+              <motion.div
+                className="mb-6"
+                variants={headerVariants}
+              >
+                <h2 className="text-4xl font-semibold text-center drop-shadow-lg whitespace-nowrap" style={{ color: '#1F3463' }}>
                   SELECT OFFICE
                 </h2>
-              </div>
+              </motion.div>
 
               {/* Responsive Grid Container - Natural flow positioning */}
-              <div className="flex-shrink-0 w-full">
+              <motion.div
+                className="flex-shrink-0 w-full"
+                variants={gridItemVariants}
+              >
                 {loading ? (
-                  <div className="h-64 flex items-center justify-center">
+                  <div className="h-52 flex items-center justify-center">
                     <NavigationLoadingOverlay />
                   </div>
                 ) : (
@@ -523,7 +590,7 @@ const Directory = () => {
                     onItemClick={(office) => setSelectedDepartment(office._id)}
                     renderItem={(office) => (
                       <div className="text-center">
-                        <h3 className="text-2xl font-semibold text-white">
+                        <h3 className="text-xl font-semibold text-white">
                           {office.officeName}
                         </h3>
                       </div>
@@ -532,10 +599,10 @@ const Directory = () => {
                     isDirectoryPage={true}
                   />
                 )}
-              </div>
+              </motion.div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </KioskLayout>
     );
   }
@@ -544,19 +611,27 @@ const Directory = () => {
   return (
         /* Office Details View - Use DirectoryLayout */
         <DirectoryLayout>
-          <div className="h-full flex flex-col">
+          <motion.div
+            className="h-full flex flex-col"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {/* Main Content Area - Display office-specific directory images */}
             <div className="flex-grow flex items-center justify-center">
-              <div className="w-full max-w-4xl mx-auto">
+              <motion.div
+                className="w-full max-w-4xl mx-auto"
+                variants={detailsVariants}
+              >
                 {/* Office Email Display - Positioned above office content */}
                 {(() => {
                   const selectedOffice = offices.find(o => o._id === selectedDepartment);
                   return selectedOffice?.officeEmail && (
-                    <div className="mb-6 text-center">
-                      <div className="bg-white bg-opacity-95 rounded-lg shadow-lg drop-shadow-md px-6 py-4 inline-block">
-                        <div className="flex items-center justify-center space-x-3">
+                    <div className="mb-5 text-center">
+                      <div className="bg-white bg-opacity-95 rounded-lg shadow-lg drop-shadow-md px-5 py-3 inline-block">
+                        <div className="flex items-center justify-center space-x-2.5">
                           <svg
-                            className="w-6 h-6"
+                            className="w-5 h-5"
                             style={{ color: '#1F3463' }}
                             fill="currentColor"
                             viewBox="0 0 20 20"
@@ -565,7 +640,7 @@ const Directory = () => {
                             <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                           </svg>
                           <span
-                            className="text-2xl font-semibold"
+                            className="text-xl font-semibold"
                             style={{ color: '#1F3463' }}
                           >
                             {selectedOffice.officeEmail}
@@ -589,39 +664,39 @@ const Directory = () => {
                   />
                 ) : (
                   /* Placeholder for offices without charts */
-                  <div className="bg-white bg-opacity-90 rounded-lg shadow-xl drop-shadow-lg p-12 text-center">
-                    <h2 className="text-5xl font-bold mb-6" style={{ color: '#1F3463' }}>
+                  <div className="bg-white bg-opacity-90 rounded-lg shadow-xl drop-shadow-lg p-10 text-center">
+                    <h2 className="text-4xl font-bold mb-5" style={{ color: '#1F3463' }}>
                       {offices.find(o => o._id === selectedDepartment)?.officeName}
                     </h2>
-                    <p className="text-2xl text-gray-600 mb-8">
+                    <p className="text-xl text-gray-600 mb-6">
                       Directory chart coming soon
                     </p>
                   </div>
                 )}
-              </div>
+              </motion.div>
             </div>
 
             {/* Navigation Buttons - Positioned at bottom-left corner */}
-            <div className="fixed bottom-6 left-6 flex flex-col space-y-4 z-50">
+            <div className="fixed bottom-5 left-5 flex flex-col space-y-3 z-50">
               {/* Location Button */}
               <button
-                className="w-20 h-20 bg-[#FFE251] text-[#1A2E56] border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-md active:drop-shadow-sm active:bg-[#1A2E56] active:scale-95 transition-all duration-150 flex flex-col items-center justify-center focus:outline-none focus:ring-4 focus:ring-blue-200"
+                className="w-16 h-16 bg-[#FFE251] text-[#1A2E56] border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-md active:drop-shadow-sm active:bg-[#1A2E56] active:scale-95 transition-all duration-150 flex flex-col items-center justify-center focus:outline-none focus:ring-3 focus:ring-blue-200"
                 aria-label="Find office location"
               >
-                <FaLocationDot className="w-6 h-6 mb-1" />
-                <span className="text-lg font-semibold">Location</span>
+                <FaLocationDot className="w-5 h-5 mb-0.5" />
+                <span className="text-base font-semibold">Location</span>
               </button>
 
               {/* Back Button */}
               <button
                 onClick={() => setSelectedDepartment(null)}
-                className="w-20 h-20 bg-[#FFE251] text-[#1A2E56] border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-md active:drop-shadow-sm active:bg-[#1A2E56] active:scale-95 transition-all duration-150 flex flex-col items-center justify-center focus:outline-none focus:ring-4 focus:ring-blue-200"
+                className="w-16 h-16 bg-[#FFE251] text-[#1A2E56] border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-md active:drop-shadow-sm active:bg-[#1A2E56] active:scale-95 transition-all duration-150 flex flex-col items-center justify-center focus:outline-none focus:ring-3 focus:ring-blue-200"
                 aria-label="Go back to directory listing"
               >
-                <span className="text-lg font-semibold">BACK</span>
+                <span className="text-base font-semibold">BACK</span>
               </button>
             </div>
-          </div>
+          </motion.div>
     </DirectoryLayout>
   );
 };

@@ -36,39 +36,39 @@ const ResponsiveGrid = ({
     switch (count) {
       case 1:
         return {
-          containerClass: 'grid grid-cols-1 gap-8 max-w-md mx-auto',
+          containerClass: 'grid grid-cols-1 gap-6 max-w-md mx-auto',
           itemClass: 'w-full'
         };
       case 2:
         return {
-          containerClass: 'grid grid-cols-2 gap-x-32 gap-y-8 max-w-4xl mx-auto',
-          itemClass: 'w-80'
+          containerClass: 'grid grid-cols-2 gap-x-26 gap-y-6 max-w-4xl mx-auto',
+          itemClass: 'w-64'
         };
       case 3:
         return {
-          containerClass: 'grid grid-cols-3 gap-8 max-w-5xl mx-auto',
-          itemClass: 'w-72'
+          containerClass: 'grid grid-cols-3 gap-6 max-w-5xl mx-auto',
+          itemClass: 'w-58'
         };
       case 4:
         return {
-          containerClass: 'grid grid-cols-2 gap-x-24 gap-y-8 max-w-4xl mx-auto',
-          itemClass: 'w-80'
+          containerClass: 'grid grid-cols-2 gap-x-20 gap-y-6 max-w-4xl mx-auto',
+          itemClass: 'w-64'
         };
       case 5:
         return {
-          containerClass: 'grid gap-8 max-w-5xl mx-auto',
-          itemClass: 'w-72',
+          containerClass: 'grid gap-6 max-w-5xl mx-auto',
+          itemClass: 'w-58',
           customLayout: true
         };
       case 6:
         return {
-          containerClass: 'grid grid-cols-3 gap-8 max-w-6xl mx-auto',
-          itemClass: 'w-72'
+          containerClass: 'grid grid-cols-3 gap-6 max-w-6xl mx-auto',
+          itemClass: 'w-58'
         };
       default:
         return {
-          containerClass: 'grid grid-cols-3 gap-8 max-w-6xl mx-auto',
-          itemClass: 'w-72'
+          containerClass: 'grid grid-cols-3 gap-6 max-w-6xl mx-auto',
+          itemClass: 'w-58'
         };
     }
   };
@@ -77,9 +77,9 @@ const ResponsiveGrid = ({
 
   // Default button styling for kiosk interface with touch press animations
   const defaultButtonClass = `
-    text-white rounded-3xl shadow-lg drop-shadow-md p-6
+    text-white rounded-3xl shadow-lg drop-shadow-md p-5
     active:scale-95 active:shadow-md transition-all duration-150
-    border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200
+    border-2 border-transparent focus:outline-none focus:ring-3 focus:ring-blue-200
     ${layout.itemClass}
   `;
 
@@ -127,9 +127,9 @@ const ResponsiveGrid = ({
 
   // Render 5-item special layout
   const renderFiveItemLayout = () => (
-    <div className="grid gap-8 max-w-5xl mx-auto">
+    <div className="grid gap-6 max-w-5xl mx-auto">
       {/* First Row - 3 items */}
-      <div className="grid grid-cols-3 gap-8">
+      <div className="grid grid-cols-3 gap-6">
         {currentItems.slice(0, 3).map((item, index) => (
           <button
             key={index}
@@ -142,7 +142,7 @@ const ResponsiveGrid = ({
           >
             {renderItem ? renderItem(item, startIndex + index) : (
               <div className="text-center">
-                <h3 className="text-xl font-semibold text-white">
+                <h3 className="text-lg font-semibold text-white">
                   {item.name || item.title || item}
                 </h3>
               </div>
@@ -150,9 +150,9 @@ const ResponsiveGrid = ({
           </button>
         ))}
       </div>
-      
+
       {/* Second Row - 2 items centered */}
-      <div className="grid grid-cols-2 gap-8 max-w-xl mx-auto">
+      <div className="grid grid-cols-2 gap-6 max-w-xl mx-auto">
         {currentItems.slice(3, 5).map((item, index) => (
           <button
             key={index + 3}
@@ -165,7 +165,7 @@ const ResponsiveGrid = ({
           >
             {renderItem ? renderItem(item, startIndex + index + 3) : (
               <div className="text-center">
-                <h3 className="text-xl font-semibold text-white">
+                <h3 className="text-lg font-semibold text-white">
                   {item.name || item.title || item}
                 </h3>
               </div>
@@ -194,7 +194,7 @@ const ResponsiveGrid = ({
         >
           {renderItem ? renderItem(item, startIndex + index) : (
             <div className="text-center">
-              <h3 className="text-xl font-semibold text-white">
+              <h3 className="text-lg font-semibold text-white">
                 {item.name || item.title || item}
               </h3>
             </div>
@@ -217,20 +217,20 @@ const ResponsiveGrid = ({
     if (isDirectoryPage) {
       // Inverted colors for Directory page with disabled state support (touch press animations)
       return {
-        className: `flex items-center justify-center w-16 h-16 rounded-full focus:outline-none transition-all duration-150 ${
+        className: `flex items-center justify-center w-12 h-12 rounded-full focus:outline-none transition-all duration-150 ${
           disabled
             ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-md'
-            : 'bg-white text-[#1F3463] shadow-lg active:scale-95 active:shadow-md focus:ring-4 focus:ring-blue-200 cursor-pointer'
+            : 'bg-white text-[#1F3463] shadow-lg active:scale-95 active:shadow-md focus:ring-3 focus:ring-blue-200 cursor-pointer'
         }`,
         style: {}
       };
     } else {
       // Standard colors for other pages with disabled state support (touch press animations)
       return {
-        className: `flex items-center justify-center w-16 h-16 rounded-full text-white transition-all duration-150 focus:outline-none ${
+        className: `flex items-center justify-center w-12 h-12 rounded-full text-white transition-all duration-150 focus:outline-none ${
           disabled
             ? 'cursor-not-allowed shadow-md opacity-50'
-            : 'shadow-lg active:scale-95 active:shadow-md focus:ring-4 focus:ring-blue-200 cursor-pointer'
+            : 'shadow-lg active:scale-95 active:shadow-md focus:ring-3 focus:ring-blue-200 cursor-pointer'
         }`,
         style: { backgroundColor: disabled ? '#9CA3AF' : '#1F3463' }
       };
@@ -249,7 +249,7 @@ const ResponsiveGrid = ({
           <button
             onClick={isPrevDisabled ? undefined : goToPrevPage}
             disabled={isPrevDisabled}
-            className={`absolute left-4 top-1/2 transform -translate-y-1/2 z-10 ${getButtonStyles(isPrevDisabled).className}`}
+            className={`absolute left-3 top-1/2 transform -translate-y-1/2 z-10 ${getButtonStyles(isPrevDisabled).className}`}
             style={getButtonStyles(isPrevDisabled).style}
             onTouchStart={!isPrevDisabled ? handleTouchStart : undefined}
             onTouchEnd={!isPrevDisabled ? handleTouchEnd : undefined}
@@ -258,7 +258,7 @@ const ResponsiveGrid = ({
             onMouseLeave={!isPrevDisabled ? handleMouseLeave : undefined}
             aria-label="Previous page"
           >
-            <ChevronLeftIcon className="w-8 h-8" />
+            <ChevronLeftIcon className="w-6 h-6" />
           </button>
         )}
 
@@ -272,7 +272,7 @@ const ResponsiveGrid = ({
           <button
             onClick={isNextDisabled ? undefined : goToNextPage}
             disabled={isNextDisabled}
-            className={`absolute right-4 top-1/2 transform -translate-y-1/2 z-10 ${getButtonStyles(isNextDisabled).className}`}
+            className={`absolute right-3 top-1/2 transform -translate-y-1/2 z-10 ${getButtonStyles(isNextDisabled).className}`}
             style={getButtonStyles(isNextDisabled).style}
             onTouchStart={!isNextDisabled ? handleTouchStart : undefined}
             onTouchEnd={!isNextDisabled ? handleTouchEnd : undefined}
@@ -281,34 +281,34 @@ const ResponsiveGrid = ({
             onMouseLeave={!isNextDisabled ? handleMouseLeave : undefined}
             aria-label="Next page"
           >
-            <ChevronRightIcon className="w-8 h-8" />
+            <ChevronRightIcon className="w-6 h-6" />
           </button>
         )}
       </div>
 
       {/* Page Indicators with Navigation Buttons */}
       {showPagination && totalPages > 1 && (
-        <div className={`flex justify-center items-center ${isDirectoryPage ? 'mt-8 mb-4' : 'mt-12 mb-8'}`}>
+        <div className={`flex justify-center items-center ${isDirectoryPage ? 'mt-6 mb-3' : 'mt-10 mb-6'}`}>
           {/* Previous Button for Directory Page - Always visible with disabled state */}
           {isDirectoryPage && (
             <button
               onClick={isPrevDisabled ? undefined : goToPrevPage}
               disabled={isPrevDisabled}
-              className={`mr-8 ${getButtonStyles(isPrevDisabled).className}`}
+              className={`mr-6 ${getButtonStyles(isPrevDisabled).className}`}
               style={getButtonStyles(isPrevDisabled).style}
               aria-label="Previous page"
             >
-              <ChevronLeftIcon className="w-8 h-8" />
+              <ChevronLeftIcon className="w-6 h-6" />
             </button>
           )}
 
           {/* Page Indicator Dots - Show for all pages */}
-          <div className={`flex items-center space-x-3 ${isDirectoryPage ? 'mx-8' : 'mx-4'}`}>
+          <div className={`flex items-center space-x-2.5 ${isDirectoryPage ? 'mx-6' : 'mx-3'}`}>
             {Array.from({ length: totalPages }, (_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentPage(index)}
-                className={`w-4 h-4 rounded-full transition-all duration-200 ${
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
                   index === currentPage
                     ? 'bg-blue-600'
                     : 'bg-gray-300 hover:bg-gray-400'
@@ -324,11 +324,11 @@ const ResponsiveGrid = ({
             <button
               onClick={isNextDisabled ? undefined : goToNextPage}
               disabled={isNextDisabled}
-              className={`ml-8 ${getButtonStyles(isNextDisabled).className}`}
+              className={`ml-6 ${getButtonStyles(isNextDisabled).className}`}
               style={getButtonStyles(isNextDisabled).style}
               aria-label="Next page"
             >
-              <ChevronRightIcon className="w-8 h-8" />
+              <ChevronRightIcon className="w-6 h-6" />
             </button>
           )}
         </div>

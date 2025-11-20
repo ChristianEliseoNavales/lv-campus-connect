@@ -1,37 +1,55 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown } from 'react-icons/md';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown, MdQuestionAnswer } from 'react-icons/md';
 import { IoMdRefresh } from 'react-icons/io';
 import { FiEdit3 } from 'react-icons/fi';
 import { FaPlus, FaTrash } from 'react-icons/fa';
-import { useToast, ToastContainer, ConfirmModal } from '../../../ui';
+import { ToastContainer, ConfirmModal } from '../../../ui';
+import { useNotification } from '../../../../hooks/useNotification';
+import useURLState from '../../../../hooks/useURLState';
 import Portal from '../../../ui/Portal';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
 
+// Define initial state outside component to prevent recreation
+const INITIAL_URL_STATE = {
+  searchTerm: '',
+  filterCategory: 'all',
+  filterStatus: 'all',
+  faqsPerPage: 10,
+  currentPage: 1
+};
+
 const FAQ = () => {
+  // URL-persisted state management
+  const { state: urlState, updateState } = useURLState(INITIAL_URL_STATE);
+
+  // Extract URL state values
+  const { searchTerm, filterCategory, filterStatus, faqsPerPage, currentPage } = urlState;
+
+  // Non-persisted state (resets on navigation)
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [faqsPerPage] = useState(10);
-  const [sortField, setSortField] = useState('category');
-  const [sortDirection, setSortDirection] = useState('asc');
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingFAQ, setEditingFAQ] = useState(null);
   const [deletingFAQ, setDeleteingFAQ] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [socket, setSocket] = useState(null);
-  const { toasts, removeToast, showSuccess, showError } = useToast();
+  const [fetchError, setFetchError] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
+
+  // Ref to track if we've shown an error for the current fetch attempt
+  const errorShownRef = useRef(false);
+
+  // Notifications (saves to database)
+  const { toasts, removeToast, showSuccess, showError } = useNotification();
 
   const [formData, setFormData] = useState({
     question: '',
     answer: '',
     category: 'General',
-    order: 0,
     status: 'active'
   });
 
@@ -63,77 +81,97 @@ const FAQ = () => {
     fetchFAQs();
   }, []);
 
-  const fetchFAQs = async () => {
+  // Fetch FAQs function
+  const fetchFAQs = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
+    errorShownRef.current = false;
+
     try {
-      setLoading(true);
       const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/faq`);
-      if (response.ok) {
-        const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
         setFaqs(result.data || []);
+        setLastRefreshTime(new Date());
       } else {
-        showError('Error', 'Failed to fetch FAQs');
+        throw new Error(result.error || 'Failed to fetch FAQs');
       }
     } catch (error) {
       console.error('Error fetching FAQs:', error);
-      showError('Error', 'Failed to fetch FAQs');
+      setFetchError(error.message);
+      setFaqs([]);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+    try {
+      await fetchFAQs();
+      showSuccess('Refreshed', 'FAQs updated successfully');
+    } catch (error) {
+      console.error('Manual refresh error:', error);
+      showError('Refresh Failed', 'Unable to update FAQs');
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  // Filter and search FAQs
+  // Format refresh time
+  const formatRefreshTime = (date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+  };
+
+  // Handle FAQs per page change with arrow buttons
+  const handleFaqsPerPageChange = (delta) => {
+    const newValue = Math.max(5, Math.min(50, faqsPerPage + delta));
+    updateState('faqsPerPage', newValue);
+    updateState('currentPage', 1); // Reset to first page
+  };
+
+  // Filter and search FAQs - Sort alphabetically by question
   const filteredFAQs = useMemo(() => {
-    return faqs.filter(faq => {
-      const matchesSearch = 
+    const filtered = faqs.filter(faq => {
+      const matchesSearch =
         faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
         faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesCategory = filterCategory === 'all' || faq.category === filterCategory;
       const matchesStatus = filterStatus === 'all' || faq.status === filterStatus;
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [faqs, searchTerm, filterCategory, filterStatus]);
 
-  // Sort FAQs
-  const sortedFAQs = useMemo(() => {
-    const sorted = [...filteredFAQs];
-    sorted.sort((a, b) => {
-      let aValue = a[sortField];
-      let bValue = b[sortField];
-
-      if (sortField === 'createdAt' || sortField === 'updatedAt') {
-        aValue = new Date(aValue);
-        bValue = new Date(bValue);
-      }
-
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+    // Sort alphabetically by question
+    return filtered.sort((a, b) => {
+      return a.question.toLowerCase().localeCompare(b.question.toLowerCase());
     });
-    return sorted;
-  }, [filteredFAQs, sortField, sortDirection]);
+  }, [faqs, searchTerm, filterCategory, filterStatus]);
 
   // Pagination
   const indexOfLastFAQ = currentPage * faqsPerPage;
   const indexOfFirstFAQ = indexOfLastFAQ - faqsPerPage;
-  const currentFAQs = sortedFAQs.slice(indexOfFirstFAQ, indexOfLastFAQ);
-  const totalPages = Math.ceil(sortedFAQs.length / faqsPerPage);
+  const currentFAQs = filteredFAQs.slice(indexOfFirstFAQ, indexOfLastFAQ);
+  const totalPages = Math.ceil(filteredFAQs.length / faqsPerPage);
 
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const SortIcon = ({ field }) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? 
-      <MdKeyboardArrowUp className="inline ml-1" /> : 
-      <MdKeyboardArrowDown className="inline ml-1" />;
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    updateState('currentPage', newPage);
   };
 
   const validateForm = () => {
@@ -169,7 +207,6 @@ const FAQ = () => {
       question: '',
       answer: '',
       category: 'General',
-      order: 0,
       status: 'active'
     });
     setFormErrors({});
@@ -182,7 +219,6 @@ const FAQ = () => {
       question: faq.question,
       answer: faq.answer,
       category: faq.category,
-      order: faq.order || 0,
       status: faq.status
     });
     setFormErrors({});
@@ -196,7 +232,6 @@ const FAQ = () => {
       question: '',
       answer: '',
       category: 'General',
-      order: 0,
       status: 'active'
     });
     setFormErrors({});
@@ -294,218 +329,261 @@ const FAQ = () => {
     }
   };
 
+  // Force recompile
   return (
-    <div className="p-5">
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+    <>
+      <div className="space-y-5">
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-[#1F3463]">FAQ Management</h1>
-        <p className="text-sm text-gray-600 mt-1">Manage frequently asked questions for the kiosk system</p>
-      </div>
+        {/* Main Content Container - White background similar to Ratings.jsx */}
+        <div className="bg-white p-5 border border-gray-200 rounded-xl">
 
-      {/* Controls */}
-      <div className="bg-white rounded-lg shadow-md p-4 mb-5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          {/* Left side - Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 flex-1">
+        {/* Row 1 - Header */}
+        <div className="mb-5">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">FAQs</h1>
+            <div className="flex items-center space-x-1">
+              <p className="text-[8px] text-gray-500 uppercase tracking-wide">
+                As of {formatRefreshTime(lastRefreshTime)}
+              </p>
+              <button
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                title="Refresh FAQs"
+              >
+                <IoMdRefresh
+                  className={`w-5 h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2 - Controls */}
+        <div className="flex justify-between items-center mb-5">
+          {/* Left side - Pagination Control */}
+          <div className="flex items-center space-x-1.5">
+            <span className="text-sm text-gray-700 font-medium">Showing</span>
+            <div className="flex items-center space-x-1">
+              <input
+                type="number"
+                value={faqsPerPage}
+                onChange={(e) => updateState('faqsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
+                className="w-12 px-1.5 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                min="5"
+                max="50"
+              />
+              <div className="flex flex-col">
+                <button
+                  onClick={() => handleFaqsPerPageChange(1)}
+                  className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
+                >
+                  <MdKeyboardArrowUp className="text-sm" />
+                </button>
+                <button
+                  onClick={() => handleFaqsPerPageChange(-1)}
+                  className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
+                >
+                  <MdKeyboardArrowDown className="text-sm" />
+                </button>
+              </div>
+            </div>
+            <span className="text-sm text-gray-700 font-medium">FAQs</span>
+          </div>
+
+          {/* Right side - Search, Filters, Add button */}
+          <div className="flex items-center space-x-3">
             {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+            <div className="relative">
+              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
               <input
                 type="text"
                 placeholder="Search FAQs..."
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                onChange={(e) => updateState('searchTerm', e.target.value)}
+                className="w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Category Filter */}
-            <select
-              value={filterCategory}
-              onChange={(e) => {
-                setFilterCategory(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
-            >
-              <option value="all">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <div className="flex items-center space-x-1.5">
+              <label className="text-sm text-gray-700 font-medium">Category:</label>
+              <select
+                value={filterCategory}
+                onChange={(e) => updateState('filterCategory', e.target.value)}
+                className="px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+              >
+                <option value="all">All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
 
             {/* Status Filter */}
-            <select
-              value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+            <div className="flex items-center space-x-1.5">
+              <label className="text-sm text-gray-700 font-medium">Status:</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => updateState('filterStatus', e.target.value)}
+                className="px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
 
-          {/* Right side - Refresh and Add buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={fetchFAQs}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <IoMdRefresh className={`text-lg ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
+            {/* Add FAQ Button */}
             <button
               onClick={openAddModal}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#2d4a7a] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#2d4a7a] transition-colors font-medium"
             >
-              <FaPlus />
+              <FaPlus className="text-xs" />
               Add FAQ
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-[#1F3463] text-white">
-              <tr>
-                <th
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-[#2d4a7a]"
-                  onClick={() => handleSort('category')}
-                >
-                  Category <SortIcon field="category" />
-                </th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-[#2d4a7a]"
-                  onClick={() => handleSort('question')}
-                >
-                  Question <SortIcon field="question" />
-                </th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-[#2d4a7a]"
-                  onClick={() => handleSort('order')}
-                >
-                  Order <SortIcon field="order" />
-                </th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-[#2d4a7a]"
-                  onClick={() => handleSort('status')}
-                >
-                  Status <SortIcon field="status" />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
-                    <div className="flex justify-center items-center">
-                      <IoMdRefresh className="animate-spin text-2xl mr-2" />
-                      Loading FAQs...
+        {/* FAQs Table */}
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          {loading ? (
+            <>
+              {/* Table Header */}
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
+                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-gray-700 w-full">
+                  <div>Category</div>
+                  <div>Question</div>
+                  <div>Status</div>
+                  <div>Actions</div>
+                </div>
+              </div>
+
+              {/* Skeleton Loading Rows */}
+              <div className="divide-y divide-gray-200">
+                {[...Array(7)].map((_, index) => (
+                  <div key={index} className="px-5 py-3 h-12 flex items-center animate-pulse">
+                    <div className="grid grid-cols-4 gap-3 items-center w-full">
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      <div className="h-3 bg-gray-200 rounded w-full"></div>
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                      <div className="flex space-x-2">
+                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ) : currentFAQs.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
-                    No FAQs found
-                  </td>
-                </tr>
-              ) : (
-                currentFAQs.map((faq) => (
-                  <tr key={faq._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {faq.category}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 max-w-md">
-                      <div className="line-clamp-2">{faq.question}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {faq.order}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        faq.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {faq.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : currentFAQs.length === 0 ? (
+            <div className="text-center py-10">
+              <MdQuestionAnswer className="text-5xl text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No FAQs found</h3>
+              <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+            </div>
+          ) : (
+            <>
+              {/* Table Header */}
+              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
+                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-gray-700 w-full">
+                  <div>Category</div>
+                  <div>Question</div>
+                  <div>Status</div>
+                  <div>Actions</div>
+                </div>
+              </div>
+
+              {/* Table Body */}
+              <div className="divide-y divide-gray-200">
+                {currentFAQs.map((faq) => (
+                  <div key={faq._id} className="px-5 py-3 hover:bg-gray-50 transition-colors h-12 flex items-center">
+                    <div className="grid grid-cols-4 gap-3 items-center w-full">
+                      {/* Category */}
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {faq.category}
+                        </span>
+                      </div>
+
+                      {/* Question */}
+                      <div className="text-sm font-medium text-gray-900 truncate" title={faq.question}>
+                        {faq.question}
+                      </div>
+
+                      {/* Status */}
+                      <div className="text-sm truncate">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          faq.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {faq.status}
+                        </span>
+                      </div>
+
+                      {/* Actions */}
                       <div className="flex gap-2">
                         <button
                           onClick={() => openEditModal(faq)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Edit FAQ"
                         >
-                          <FiEdit3 className="text-lg" />
+                          <FiEdit3 className="text-base" />
                         </button>
                         <button
                           onClick={() => openDeleteModal(faq)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Delete FAQ"
                         >
-                          <FaTrash className="text-base" />
+                          <FaTrash className="text-sm" />
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Pagination */}
-        {!loading && sortedFAQs.length > 0 && (
-          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {indexOfFirstFAQ + 1} to {Math.min(indexOfLastFAQ, sortedFAQs.length)} of {sortedFAQs.length} FAQs
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1 text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-5">
+            <div className="text-sm text-gray-700 font-medium">
+              Showing {indexOfFirstFAQ + 1} to {Math.min(indexOfLastFAQ, filteredFAQs.length)} of {filteredFAQs.length} FAQs
+            </div>
+            <div className="flex items-center space-x-1.5">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+
+              {/* Current Page Number */}
+              <button
+                className="px-2.5 py-1.5 text-sm font-semibold text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
+              >
+                {currentPage}
+              </button>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
             </div>
           </div>
         )}
+        </div>
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal - Rendered outside space-y-5 container */}
       {showAddEditModal && (
         <Portal>
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -588,7 +666,7 @@ const FAQ = () => {
                     </div>
                   </div>
 
-                  {/* Category and Order Row */}
+                  {/* Category and Status Row */}
                   <div className="grid grid-cols-2 gap-4">
                     {/* Category */}
                     <div>
@@ -616,36 +694,21 @@ const FAQ = () => {
                       )}
                     </div>
 
-                    {/* Order */}
+                    {/* Status */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Display Order
+                        Status
                       </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.order}
-                        onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Lower numbers appear first</p>
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">Only active FAQs are shown in the kiosk</p>
                     </div>
-                  </div>
-
-                  {/* Status */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                    <p className="text-xs text-gray-500 mt-1">Only active FAQs are shown in the kiosk</p>
                   </div>
                 </div>
 
@@ -687,7 +750,7 @@ const FAQ = () => {
           confirmButtonClass="bg-red-600 hover:bg-red-700"
         />
       )}
-    </div>
+    </>
   );
 };
 

@@ -37,23 +37,23 @@ const DigitalClock = () => {
   };
 
   return (
-    <div className="bg-[#1F3463] rounded-lg p-4 flex gap-4 items-center">
+    <div className="bg-[#1F3463] rounded-lg p-2 flex gap-2 items-center">
       {/* Column 1 - Time (wider column) */}
-      <div className="bg-white rounded-lg px-6 py-6 flex-grow">
-        <div className="text-3xl font-bold text-[#1F3463] text-center">
+      <div className="bg-white rounded-lg px-3 py-3 flex-grow">
+        <div className="text-xl font-bold text-[#1F3463] text-center">
           {formatTime(currentTime)}
         </div>
       </div>
 
       {/* Column 2 - Date (narrower column) */}
-      <div className="flex flex-col items-center justify-center text-white space-y-1">
-        <div className="text-lg font-semibold">
+      <div className="flex flex-col items-center justify-center text-white space-y-0">
+        <div className="text-sm font-semibold">
           {formatDayOfWeek(currentTime)}
         </div>
-        <div className="text-xl font-bold">
+        <div className="text-base font-bold">
           {formatDayNumber(currentTime)}
         </div>
-        <div className="text-lg font-semibold">
+        <div className="text-sm font-semibold">
           {formatMonth(currentTime)}
         </div>
       </div>

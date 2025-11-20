@@ -63,19 +63,19 @@ const InstructionModeOverlay = ({ isVisible, onClose }) => {
           absolute z-[41]
           bg-[#1F3463] bg-opacity-95
           text-white
-          px-8 py-6
+          px-6 py-5
           rounded-2xl
           shadow-2xl drop-shadow-2xl
           border-3 border-white border-opacity-50
           max-w-sm
           animate-bounce-in animate-instruction-pulse
-          before:content-[''] before:absolute before:w-0 before:h-0 before:border-[15px]
+          before:content-[''] before:absolute before:w-0 before:h-0 before:border-[12px]
           ${getArrowClasses()}
           ${className}
         `}
         style={position}
       >
-        <p className="text-xl font-bold leading-tight tracking-wide">{text}</p>
+        <p className="text-lg font-bold leading-tight tracking-wide">{text}</p>
       </div>
     );
   };

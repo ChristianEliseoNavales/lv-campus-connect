@@ -138,6 +138,105 @@ const IdlePage = () => {
 
   const dateInfo = formatDate(currentTime);
 
+  // Enhanced animation variants for staggered effects
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 60, scale: 0.9 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
+  };
+
+  const logoVariants = {
+    hidden: { opacity: 0, scale: 0.5, rotate: -10 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: {
+        type: "spring",
+        stiffness: 120,
+        damping: 12,
+        duration: 0.8
+      }
+    }
+  };
+
+  const textVariants = {
+    hidden: { opacity: 0, x: -50 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.7
+      }
+    }
+  };
+
+  const timeVariants = {
+    hidden: { opacity: 0, scale: 0.8, y: -30 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 120,
+        damping: 12,
+        duration: 0.7
+      }
+    }
+  };
+
+  const dateBoxVariants = {
+    hidden: { opacity: 0, scale: 0.7, rotateY: -20 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotateY: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.8
+      }
+    }
+  };
+
+  const dateItemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 120,
+        damping: 12
+      }
+    }
+  };
+
   return (
     <div
       className="w-screen h-screen overflow-hidden grid grid-cols-4 bg-cover bg-center bg-no-repeat cursor-pointer kiosk-layout font-kiosk-public relative"
@@ -151,99 +250,137 @@ const IdlePage = () => {
       }}
     >
       {/* Navy blue overlay with 70% opacity */}
-      <div
+      <motion.div
         className="absolute inset-0 z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.7 }}
+        transition={{ duration: 0.5 }}
         style={{
-          backgroundColor: '#1F3463',
-          opacity: 0.7
+          backgroundColor: '#1F3463'
         }}
       />
 
       {/* Column 1 - Left sidebar (25% width) */}
-      <div className="col-span-1 flex flex-col justify-center items-center p-8 pb-[250px] text-center relative z-20">
+      <motion.div
+        className="col-span-1 flex flex-col justify-center items-center p-6 pb-[200px] text-center relative z-20"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Logo and Branding */}
         <motion.div
-          className="mb-10 flex flex-col items-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0 }}
+          className="mb-8 flex flex-col items-center"
+          variants={itemVariants}
         >
-          <div className="flex items-center space-x-4 mb-8">
-            <img
+          <div className="flex items-center space-x-3 mb-6">
+            <motion.img
               src="/idle/logo.png"
               alt="Logo"
-              className="w-16 h-16 object-contain drop-shadow-lg"
+              className="w-12 h-12 object-contain drop-shadow-lg"
+              variants={logoVariants}
             />
-            <div className="text-white text-3xl font-days-one">
+            <motion.div
+              className="text-white text-2xl font-days-one"
+              variants={textVariants}
+            >
               LVCampusConnect
-            </div>
+            </motion.div>
           </div>
-          <div className="text-white text-3xl">
+          <motion.div
+            className="text-white text-2xl"
+            variants={textVariants}
+            transition={{ delay: 0.1 }}
+          >
             WELCOME TO LA VERDAD
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Time Display */}
         <motion.div
-          className="mb-10"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
+          className="mb-8"
+          variants={itemVariants}
         >
-          <div className="text-white text-6xl font-bold mb-2">
+          <motion.div
+            className="text-white text-5xl font-bold mb-1.5"
+            variants={timeVariants}
+          >
             {formatTime(currentTime)}
-          </div>
-          <div className="text-white text-3xl font-semibold">
+          </motion.div>
+          <motion.div
+            className="text-white text-2xl font-semibold"
+            variants={textVariants}
+            transition={{ delay: 0.15 }}
+          >
             {formatDay(currentTime)}
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Date Box */}
         <motion.div
-          className="text-white bg-white bg-opacity-30 rounded-2xl p-[50px] shadow-lg"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          className="text-white bg-white bg-opacity-30 rounded-2xl p-[40px] shadow-lg"
+          variants={dateBoxVariants}
         >
-          <div className="text-7xl font-bold mb-6" >
+          <motion.div
+            className="text-6xl font-bold mb-5"
+            variants={dateItemVariants}
+          >
             {dateInfo.day}
-          </div>
-          <div className="text-5xl font-semibold mb-1" >
+          </motion.div>
+          <motion.div
+            className="text-4xl font-semibold mb-0.5"
+            variants={dateItemVariants}
+          >
             {dateInfo.month}
-          </div>
-          <div className="text-3xl">
+          </motion.div>
+          <motion.div
+            className="text-2xl"
+            variants={dateItemVariants}
+          >
             {dateInfo.year}
-          </div>
+          </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Columns 2-4 - Right section with carousel (75% width) */}
       <div className="col-span-3 relative flex flex-col z-20">
         {/* Main content area with carousel */}
-        <div className="flex-grow relative overflow-hidden px-4 py-8 pb-[250px]">
+        <div className="flex-grow relative overflow-hidden px-3 py-6 pb-[200px]">
           {/* Carousel Container with Flex Layout */}
           <motion.div
             className="relative w-full h-full flex items-center"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
+            initial={{ opacity: 0, x: 100, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{
+              type: "spring",
+              stiffness: 80,
+              damping: 15,
+              duration: 0.8,
+              delay: 0.4
+            }}
           >
             {/* Image Carousel Container - Centered between arrows with controlled height */}
-            <div className="flex-grow relative mx-8 flex flex-col">
+            <div className="flex-grow relative mx-6 flex flex-col">
               {/* Image Container with explicit height to ensure visibility */}
               <div
                 className="relative w-full flex items-center justify-center"
                 style={{
-                  height: 'calc(100vh - 320px)',
-                  minHeight: '400px'
+                  height: 'calc(100vh - 256px)',
+                  minHeight: '320px'
                 }}
               >
                 {carouselImages.map((image, index) => (
-                  <div
+                  <motion.div
                     key={index}
-                    className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${
-                      index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className="absolute inset-0 flex items-center justify-center"
+                    initial={{ opacity: 0 }}
+                    animate={{
+                      opacity: index === currentImageIndex ? 1 : 0,
+                      scale: index === currentImageIndex ? 1 : 0.95,
+                      transition: {
+                        opacity: { duration: 1 },
+                        scale: { duration: 1, type: "spring", stiffness: 100 }
+                      }
+                    }}
                   >
                     <img
                       src={image.src}
@@ -257,7 +394,7 @@ const IdlePage = () => {
                         e.target.parentElement.style.borderRadius = '0.5rem';
                       }}
                     />
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -268,9 +405,15 @@ const IdlePage = () => {
       {/* Footer Image - Positioned at bottom spanning full width */}
       <motion.footer
         className="absolute bottom-0 left-0 right-0 z-20"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
+        transition={{
+          type: "spring",
+          stiffness: 100,
+          damping: 15,
+          duration: 0.7,
+          delay: 0.6
+        }}
       >
         <img
           src="/idle/footer.png"
@@ -281,19 +424,56 @@ const IdlePage = () => {
 
       {/* TAP TO START with Touch Icon - Bottom Right Corner */}
       <motion.div
-        className="absolute bottom-6 right-[350px] z-30 flex items-center space-x-4 animate-tap-attention"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.5 }}
+        className="absolute bottom-5 right-[280px] z-30 flex items-center space-x-3"
+        initial={{ opacity: 0, scale: 0.5, y: 30 }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          transition: {
+            type: "spring",
+            stiffness: 120,
+            damping: 12,
+            duration: 0.8,
+            delay: 0.8
+          }
+        }}
       >
-        <img
+        <motion.img
           src="/idle/touch.png"
           alt="Touch Icon"
-          className="w-[100px] h-[100px] object-contain animate-glow-pulse"
+          className="w-[80px] h-[80px] object-contain"
+          animate={{
+            y: [0, -6, 0],
+            filter: [
+              'drop-shadow(0 0 6px rgba(255, 226, 81, 0.4))',
+              'drop-shadow(0 0 16px rgba(255, 226, 81, 0.8))',
+              'drop-shadow(0 0 6px rgba(255, 226, 81, 0.4))'
+            ]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
         />
-        <div className="text-white text-5xl font-bold tracking-wider animate-glow-pulse">
+        <motion.div
+          className="text-white text-4xl font-bold tracking-wider"
+          animate={{
+            filter: [
+              'drop-shadow(0 0 6px rgba(255, 226, 81, 0.4))',
+              'drop-shadow(0 0 16px rgba(255, 226, 81, 0.8))',
+              'drop-shadow(0 0 6px rgba(255, 226, 81, 0.4))'
+            ]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
           TAP TO START
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );

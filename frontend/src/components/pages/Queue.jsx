@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import KioskLayout from '../layouts/KioskLayout';
 import QueueLayout from '../layouts/QueueLayout';
 import { ResponsiveGrid } from '../ui';
@@ -26,15 +26,15 @@ const DataPrivacyModal = ({ isOpen, onNext, onPrevious, consent, setConsent }) =
       {/* Modal Container - Centered with buttons positioned relative to it */}
       <div className="relative flex items-center">
         {/* Modal Content - Perfectly centered */}
-        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-10 mx-4 max-w-4xl w-full">
+        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-8 mx-3 max-w-4xl w-full">
           {/* Modal Header */}
-          <h2 className="text-5xl font-bold text-gray-800 mb-8 text-center">
+          <h2 className="text-4xl font-bold text-gray-800 mb-6 text-center">
             PRIVACY NOTICE
           </h2>
 
           {/* Privacy Notice Text */}
-          <div className="mb-8 text-gray-700 leading-relaxed">
-            <p className="mb-6 text-xl">
+          <div className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-5 text-lg">
               Please be informed that we are collecting your personal information for the purpose of
               recording and monitoring as we follow the Data Privacy Act of 2012. The storage, use,
               and disposal of your personal information will be governed by LVCC's Data Privacy Policies.
@@ -42,18 +42,18 @@ const DataPrivacyModal = ({ isOpen, onNext, onPrevious, consent, setConsent }) =
           </div>
 
           {/* Consent Checkbox */}
-          <div className="mb-10">
-            <label className="flex items-center space-x-6 cursor-pointer group">
+          <div className="mb-8">
+            <label className="flex items-center space-x-5 cursor-pointer group">
               <input
                 type="checkbox"
                 checked={consent}
                 onChange={(e) => setConsent(e.target.checked)}
-                className="mt-1 h-10 w-10 text-[#1F3463] border-4 border-gray-400 rounded-lg focus:ring-[#1F3463] focus:ring-4 focus:border-[#1F3463] transition-all duration-200 touch-target-lg shadow-lg hover:shadow-xl active:scale-95 cursor-pointer"
+                className="mt-1 h-8 w-8 text-[#1F3463] border-3 border-gray-400 rounded-lg focus:ring-[#1F3463] focus:ring-3 focus:border-[#1F3463] transition-all duration-200 touch-target-lg shadow-lg hover:shadow-xl active:scale-95 cursor-pointer"
                 style={{
                   accentColor: '#1F3463'
                 }}
               />
-              <span className="text-gray-700 leading-relaxed text-xl flex-1 pt-2">
+              <span className="text-gray-700 leading-relaxed text-lg flex-1 pt-1.5">
                 I voluntarily give my consent to LVCC in collecting, processing, recording, using,
                 and retaining my personal information for the above-mentioned purpose in accordance
                 with this Privacy Notice.
@@ -63,12 +63,12 @@ const DataPrivacyModal = ({ isOpen, onNext, onPrevious, consent, setConsent }) =
         </div>
 
         {/* Buttons positioned adjacent to modal's right edge */}
-        <div className="absolute left-full ml-4 top-1/2 transform -translate-y-1/2 flex flex-col space-y-4 z-[10000]">
+        <div className="absolute left-full ml-3 top-1/2 transform -translate-y-1/2 flex flex-col space-y-3 z-[10000]">
           {/* Next Button (top) */}
           <button
             onClick={onNext}
             disabled={!consent}
-            className={`w-24 h-24 rounded-full border-2 border-white font-bold text-sm transition-all duration-150 shadow-lg ${
+            className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
               consent
                 ? 'bg-[#FFE251] text-[#1A2E56] active:shadow-md active:scale-95'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -80,7 +80,7 @@ const DataPrivacyModal = ({ isOpen, onNext, onPrevious, consent, setConsent }) =
           {/* Previous Button (bottom) */}
           <button
             onClick={onPrevious}
-            className="w-24 h-24 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-sm active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+            className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
           >
             PREVIOUS
           </button>
@@ -102,19 +102,19 @@ const ConfirmationModal = ({ isOpen, onYes, onNo }) => {
       {/* Modal Container - Centered with buttons positioned below */}
       <div className="relative flex flex-col items-center">
         {/* Modal Content - Perfectly centered */}
-        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-8 mx-4 max-w-lg w-full">
+        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-6 mx-3 max-w-lg w-full">
           {/* Modal Message */}
-          <h2 className="text-3xl font-bold text-gray-800 text-center">
+          <h2 className="text-2xl font-bold text-gray-800 text-center">
             Are you ready to submit your information?
           </h2>
         </div>
 
         {/* Buttons positioned below modal */}
-        <div className="flex space-x-8 mt-8">
+        <div className="flex space-x-6 mt-6">
           {/* Yes Button */}
           <button
             onClick={onYes}
-            className="w-24 h-24 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-sm active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+            className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
           >
             YES
           </button>
@@ -122,7 +122,7 @@ const ConfirmationModal = ({ isOpen, onYes, onNo }) => {
           {/* No Button */}
           <button
             onClick={onNo}
-            className="w-24 h-24 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-sm active:bg-gray-600 transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+            className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-gray-600 transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
           >
             NO
           </button>
@@ -138,23 +138,23 @@ const ServiceUnavailableModal = ({ isOpen, onClose, officeName, serviceName }) =
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl mx-4 text-center relative">
+      <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-2xl mx-3 text-center relative">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-10 h-10 rounded-full border-2 flex items-center justify-center hover:bg-gray-100 transition-colors"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full border-2 flex items-center justify-center hover:bg-gray-100 transition-colors"
           style={{ borderColor: '#1F3463', color: '#1F3463' }}
         >
-          <span className="text-2xl font-bold">×</span>
+          <span className="text-xl font-bold">×</span>
         </button>
 
         {/* Header */}
-        <h2 className="text-4xl font-semibold mb-4" style={{ color: '#1F3463' }}>
+        <h2 className="text-3xl font-semibold mb-3" style={{ color: '#1F3463' }}>
           Service Unavailable
         </h2>
 
         {/* Message */}
-        <p className="text-2xl text-gray-600 mb-8">
+        <p className="text-lg text-gray-600 mb-6">
           The "{serviceName}" service is not currently available in the {officeName}.
           <br />
           <br />
@@ -164,7 +164,7 @@ const ServiceUnavailableModal = ({ isOpen, onClose, officeName, serviceName }) =
         {/* OK Button */}
         <button
           onClick={onClose}
-          className="w-48 text-white rounded-3xl shadow-lg drop-shadow-md py-4 px-8 active:shadow-md active:scale-95 transition-all duration-150 border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200"
+          className="w-38 text-white rounded-3xl shadow-lg drop-shadow-md py-3 px-6 active:shadow-md active:scale-95 transition-all duration-150 border-2 border-transparent focus:outline-none focus:ring-3 focus:ring-blue-200"
           style={{ backgroundColor: '#1F3463' }}
           onTouchStart={(e) => e.target.style.backgroundColor = '#1A2E56'}
           onTouchEnd={(e) => e.target.style.backgroundColor = '#1F3463'}
@@ -172,7 +172,7 @@ const ServiceUnavailableModal = ({ isOpen, onClose, officeName, serviceName }) =
           onMouseUp={(e) => e.target.style.backgroundColor = '#1F3463'}
           onMouseLeave={(e) => e.target.style.backgroundColor = '#1F3463'}
         >
-          <span className="text-2xl font-semibold">OK</span>
+          <span className="text-lg font-semibold">OK</span>
         </button>
       </div>
     </div>
@@ -185,21 +185,21 @@ const OfficeMismatchModal = ({ isOpen, onConfirm, onClose, currentOffice, sugges
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl mx-4 text-center">
+      <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-2xl mx-3 text-center">
         {/* Header */}
-        <h2 className="text-4xl font-semibold mb-4" style={{ color: '#1F3463' }}>
+        <h2 className="text-3xl font-semibold mb-3" style={{ color: '#1F3463' }}>
           You Selected {currentOffice}'s Office
         </h2>
 
         {/* Subtext */}
-        <p className="text-2xl text-gray-600 mb-8">
+        <p className="text-lg text-gray-600 mb-6">
           Please switch to
         </p>
 
         {/* Suggested Office Button */}
         <button
           onClick={onConfirm}
-          className="w-80 text-white rounded-3xl shadow-lg drop-shadow-md p-6 active:shadow-md active:scale-95 transition-all duration-150 border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200 mb-6"
+          className="w-64 text-white rounded-3xl shadow-lg drop-shadow-md p-5 active:shadow-md active:scale-95 transition-all duration-150 border-2 border-transparent focus:outline-none focus:ring-3 focus:ring-blue-200 mb-5"
           style={{ backgroundColor: '#1F3463' }}
           onTouchStart={(e) => e.target.style.backgroundColor = '#1A2E56'}
           onTouchEnd={(e) => e.target.style.backgroundColor = '#1F3463'}
@@ -209,15 +209,15 @@ const OfficeMismatchModal = ({ isOpen, onConfirm, onClose, currentOffice, sugges
         >
           <div className="text-center flex flex-col items-center">
             {/* Office Image */}
-            <div className="mb-4">
+            <div className="mb-3">
               <img
                 src={`/queue/${suggestedOffice.key}.png`}
                 alt={`${suggestedOffice.name} Icon`}
-                className="w-34 h-34 object-contain rounded-xl mx-auto"
+                className="w-27 h-27 object-contain rounded-xl mx-auto"
               />
             </div>
             {/* Office Name */}
-            <h3 className="text-2xl font-semibold text-white">
+            <h3 className="text-lg font-semibold text-white">
               {suggestedOffice.name}
             </h3>
           </div>
@@ -227,7 +227,7 @@ const OfficeMismatchModal = ({ isOpen, onConfirm, onClose, currentOffice, sugges
         <div>
           <button
             onClick={onClose}
-            className="text-gray-500 active:text-gray-700 text-sm underline transition-colors duration-150"
+            className="text-gray-500 active:text-gray-700 text-xs underline transition-colors duration-150"
           >
             Continue with current selection
           </button>
@@ -249,25 +249,25 @@ const PrintErrorModal = ({ isOpen, onClose, message }) => {
       {/* Modal Container - Centered */}
       <div className="relative flex flex-col items-center">
         {/* Modal Content */}
-        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-10 mx-4 max-w-2xl w-full text-center">
+        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-8 mx-3 max-w-2xl w-full text-center">
           {/* Error Icon */}
-          <div className="mb-6">
-            <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
-              <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-5">
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
           </div>
 
           {/* Error Message */}
-          <p className="text-2xl font-semibold text-gray-800 mb-8">
+          <p className="text-lg font-semibold text-gray-800 mb-6">
             {message}
           </p>
 
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="px-12 py-4 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xl active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+            className="px-10 py-3 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-lg active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
           >
             OK
           </button>
@@ -338,6 +338,58 @@ const Queue = () => {
     email: '',
     address: ''
   });
+
+  // Animation variants for staggered effects
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.12,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const headerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        delay: 0.1
+      }
+    }
+  };
+
+  const gridItemVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: 30 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
+  };
+
+  const formVariants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
+  };
 
   // Validation functions
   const validateName = (name) => {
@@ -2114,13 +2166,21 @@ const Queue = () => {
   if (currentStep === 'department') {
     return (
       <KioskLayout>
-        <div className="h-full flex flex-col">
+        <motion.div
+          className="h-full flex flex-col"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Office Selection Grid */}
           <div className="flex-grow flex items-center justify-center h-full">
             {/* Centered Header-Grid Unit with Fixed Positioning */}
             <div className="flex flex-col items-center w-full px-20">
               {/* Fixed Header - Absolute positioning to prevent movement */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -mt-32">
+              <motion.div
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -mt-32"
+                variants={headerVariants}
+              >
                 <h2 className="text-5xl font-semibold text-center drop-shadow-lg whitespace-nowrap mb-2" style={{ color: '#1F3463' }}>
                   SELECT OFFICE
                 </h2>
@@ -2128,22 +2188,27 @@ const Queue = () => {
                 <p className="text-3xl font-bold text-center drop-shadow-lg mb-16" style={{ color: '#1F3463' }}>
                   CUT OFF TIME: 5:00 PM
                 </p>
-              </div>
+              </motion.div>
 
               {/* Office Grid Container - Fixed positioning below header */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-14">
+              <motion.div
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-14"
+                variants={containerVariants}
+              >
                 <div className="grid grid-cols-2 gap-x-32 gap-y-8 max-w-4xl mx-auto">
-                  {offices.filter(office => office && office.key).map((office) => {
+                  {offices.filter(office => office && office.key).map((office, index) => {
                     const status = officeStatus[office.key] || { isEnabled: false, loading: false };
                     const isDisabled = !status.isEnabled;
                     const isLoading = status.loading;
 
                     return (
-                      <button
+                      <motion.button
                         key={office.key}
                         onClick={() => !isDisabled && handleOfficeSelect(office.key)}
                         disabled={isDisabled || isLoading}
-                        className={`w-80 text-white rounded-3xl shadow-lg drop-shadow-md p-6 transition-all duration-200 border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200 relative ${
+                        variants={gridItemVariants}
+                        custom={index}
+                        className={`w-64 text-white rounded-3xl shadow-lg drop-shadow-md p-5 transition-all duration-200 border-2 border-transparent focus:outline-none focus:ring-3 focus:ring-blue-200 relative ${
                           isDisabled
                             ? 'opacity-90 cursor-not-allowed bg-gray-500'
                             : isLoading
@@ -2156,40 +2221,40 @@ const Queue = () => {
                       >
                         <div className="text-center flex flex-col items-center">
                           {/* Office Image */}
-                          <div className="mb-4">
+                          <div className="mb-3">
                             <img
                               src={`/queue/${office.key}.png`}
                               alt={`${office.name} Icon`}
-                              className={`w-34 h-34 object-contain rounded-xl ${isDisabled ? 'grayscale' : ''}`}
+                              className={`w-27 h-27 object-contain rounded-xl ${isDisabled ? 'grayscale' : ''}`}
                             />
                           </div>
                           {/* Office Name */}
-                          <h3 className="text-2xl font-semibold text-white">
+                          <h3 className="text-lg font-semibold text-white">
                             {office.name}
                           </h3>
                           {/* Status Badge */}
                           {isLoading ? (
-                            <div className="mt-2 px-3 py-1 bg-yellow-500 text-white text-sm rounded-full">
+                            <div className="mt-1.5 px-2.5 py-0.5 bg-yellow-500 text-white text-xs rounded-full">
                               Checking...
                             </div>
                           ) : isDisabled ? (
-                            <div className="mt-2 px-3 py-1 bg-red-500 text-white text-sm rounded-full">
+                            <div className="mt-1.5 px-2.5 py-0.5 bg-red-500 text-white text-xs rounded-full">
                               Closed
                             </div>
                           ) : (
-                            <div className="mt-2 px-3 py-1 bg-green-500 text-white text-sm rounded-full">
+                            <div className="mt-1.5 px-2.5 py-0.5 bg-green-500 text-white text-xs rounded-full">
                               Open
                             </div>
                           )}
                         </div>
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </KioskLayout>
     );
   }
@@ -2205,34 +2270,34 @@ const Queue = () => {
               {/* Centered Header-Grid Unit */}
               <div className="flex flex-col items-center w-full">
                 {/* Fixed Header */}
-                <div className="flex-shrink-0 pb-2">
-                  <h2 className="text-5xl font-semibold text-center drop-shadow-lg" style={{ color: '#1F3463' }}>
+                <div className="flex-shrink-0 pb-1.5">
+                  <h2 className="text-4xl font-semibold text-center drop-shadow-lg" style={{ color: '#1F3463' }}>
                     SELECT OFFICE
                   </h2>
                 </div>
 
                 {/* Centered Grid Container */}
-                <div className="pt-4">
+                <div className="pt-3">
                   {/* 2 Office Grid - Disabled state */}
-                  <div className="grid grid-cols-2 gap-x-32 gap-y-8 max-w-4xl mx-auto">
+                  <div className="grid grid-cols-2 gap-x-26 gap-y-6 max-w-4xl mx-auto">
                   {offices.filter(office => office && office.key).map((office) => (
                     <button
                       key={office.key}
                       disabled
-                      className="w-80 text-white rounded-3xl shadow-lg drop-shadow-md p-6 opacity-60 cursor-not-allowed border-2 border-transparent"
+                      className="w-64 text-white rounded-3xl shadow-lg drop-shadow-md p-5 opacity-60 cursor-not-allowed border-2 border-transparent"
                       style={{ backgroundColor: '#1F3463' }}
                     >
                       <div className="text-center flex flex-col items-center">
                         {/* Office Image */}
-                        <div className="mb-4 px-4">
+                        <div className="mb-3 px-3">
                           <img
                             src={`/queue/${office.key}.png`}
                             alt={`${office.name} Icon`}
-                            className="w-24 h-24 object-contain rounded-xl"
+                            className="w-20 h-20 object-contain rounded-xl"
                           />
                         </div>
                         {/* Office Name */}
-                        <h3 className="text-2xl font-semibold text-white">
+                        <h3 className="text-lg font-semibold text-white">
                           {office.name}
                         </h3>
                       </div>
@@ -2265,10 +2330,10 @@ const Queue = () => {
           {/* Service Selection Grid */}
           <div className="flex-grow flex items-center justify-center h-full">
             {/* Centered Header-Grid Unit with Flexible Positioning */}
-            <div className="flex flex-col items-center justify-center w-full px-20 h-full">
+            <div className="flex flex-col items-center justify-center w-full px-16 h-full">
               {/* Header - Positioned above grid with proper spacing */}
-              <div className="mb-8">
-                <h2 className="text-5xl font-semibold text-center drop-shadow-lg whitespace-nowrap" style={{ color: '#1F3463' }}>
+              <div className="mb-6">
+                <h2 className="text-4xl font-semibold text-center drop-shadow-lg whitespace-nowrap" style={{ color: '#1F3463' }}>
                   WHAT WOULD YOU LIKE TO DO?
                 </h2>
               </div>
@@ -2280,7 +2345,7 @@ const Queue = () => {
                   onItemClick={(service) => handleServiceSelect(service)}
                   renderItem={(service) => (
                     <div className="text-center">
-                      <h3 className="text-2xl font-semibold text-white">
+                      <h3 className="text-lg font-semibold text-white">
                         {service}
                       </h3>
                     </div>
@@ -2310,12 +2375,12 @@ const Queue = () => {
         <QueueLayout>
           <div className="h-full flex flex-col items-center justify-center">
             {/* Header */}
-            <div className="mb-12">
-              <h2 className="text-5xl font-semibold text-center drop-shadow-lg whitespace-nowrap mb-4" style={{ color: '#1F3463' }}>
+            <div className="mb-10">
+              <h2 className="text-4xl font-semibold text-center drop-shadow-lg whitespace-nowrap mb-3" style={{ color: '#1F3463' }}>
                 ARE YOU AN INCOMING NEW STUDENT?
               </h2>
               {/* Subheader */}
-              <p className="text-3xl font-light text-center drop-shadow-lg" style={{ color: '#1F3463' }}>
+              <p className="text-2xl font-light text-center drop-shadow-lg" style={{ color: '#1F3463' }}>
                 *A MINOR OF AGE ISN'T ALLOWED TO PROCESS ENROLLMENT
               </p>
             </div>
@@ -2327,7 +2392,7 @@ const Queue = () => {
                 onItemClick={(option) => handleStudentStatusSelect(option.key)}
                 renderItem={(option) => (
                   <div className="text-center">
-                    <h3 className="text-2xl font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-white">
                       {option.label}
                     </h3>
                   </div>
@@ -2367,8 +2432,8 @@ const Queue = () => {
       <QueueLayout>
         <div className="h-full flex flex-col items-center justify-center">
           {/* Header */}
-          <div className="mb-12">
-            <h2 className="text-5xl font-semibold text-center drop-shadow-lg whitespace-nowrap" style={{ color: '#1F3463' }}>
+          <div className="mb-10">
+            <h2 className="text-4xl font-semibold text-center drop-shadow-lg whitespace-nowrap" style={{ color: '#1F3463' }}>
               SELECT ROLE
             </h2>
           </div>
@@ -2380,7 +2445,7 @@ const Queue = () => {
               onItemClick={(role) => handleRoleSelect(role)}
               renderItem={(role) => (
                 <div className="text-center">
-                  <h3 className="text-xl font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-white">
                     {role}
                   </h3>
                 </div>
@@ -2401,14 +2466,14 @@ const Queue = () => {
       <QueueLayout>
         <div className="h-full flex flex-col items-center justify-center">
           {/* Header */}
-          <div className="mb-12">
-            <h2 className="text-5xl font-semibold text-center drop-shadow-lg whitespace-nowrap mb-4" style={{ color: '#1F3463' }}>
+          <div className="mb-10">
+            <h2 className="text-4xl font-semibold text-center drop-shadow-lg whitespace-nowrap mb-3" style={{ color: '#1F3463' }}>
               DO YOU BELONG TO THE FOLLOWING?
             </h2>
             {/* Subheader with bulleted format */}
-            <div className="text-3xl font-semibold text-center drop-shadow-lg" style={{ color: '#1F3463' }}>
-              <div className="mb-2">• PERSON WITH DISABILITIES (PWD)</div>
-              <div className="mb-2">• SENIOR CITIZEN</div>
+            <div className="text-2xl font-semibold text-center drop-shadow-lg" style={{ color: '#1F3463' }}>
+              <div className="mb-1.5">• PERSON WITH DISABILITIES (PWD)</div>
+              <div className="mb-1.5">• SENIOR CITIZEN</div>
             </div>
           </div>
 
@@ -2419,7 +2484,7 @@ const Queue = () => {
               onItemClick={(option) => handlePrioritySelect(option.key)}
               renderItem={(option) => (
                 <div className="text-center">
-                  <h3 className="text-xl font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-white">
                     {option.label}
                   </h3>
                 </div>
@@ -2440,12 +2505,12 @@ const Queue = () => {
     <>
       <KioskLayout>
         <div className="h-full flex flex-col items-center justify-center">
-          <h2 className="text-2xl font-semibold text-gray-600 mb-4">
+          <h2 className="text-lg font-semibold text-gray-600 mb-3">
             Something went wrong. Please start over.
           </h2>
           <button
             onClick={handleBackToOffices}
-            className="px-6 py-3 bg-[#1F3463] text-white rounded-lg active:bg-[#1A2E56] active:scale-95 transition-all duration-150"
+            className="px-5 py-2.5 bg-[#1F3463] text-white rounded-lg active:bg-[#1A2E56] active:scale-95 transition-all duration-150"
           >
             Back to Department Selection
           </button>
