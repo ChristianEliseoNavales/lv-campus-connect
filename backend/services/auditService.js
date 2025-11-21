@@ -63,10 +63,10 @@ class AuditService {
       const requestUrl = req?.originalUrl || req?.url || 'unknown';
 
       // Determine department/office based on user role (supports both old and new role formats)
-      let department = user?.office || 'Unknown';
+      let department = user?.office;
 
       // If office is not set, try to extract from combined role format
-      if (department === 'Unknown' && userRole) {
+      if (!department && userRole) {
         // New format: "MIS Super Admin", "Registrar Admin", etc.
         if (userRole.includes('MIS')) department = 'MIS';
         else if (userRole.includes('Registrar')) department = 'Registrar';
@@ -77,6 +77,12 @@ class AuditService {
         else if (userRole === 'registrar_admin') department = 'Registrar';
         else if (userRole === 'admissions_admin') department = 'Admissions';
         else if (userRole === 'senior_management_admin') department = 'HR';
+      }
+
+      // If still no department, set to null (will be excluded from audit data)
+      // This prevents "Unknown" from being saved which is not in the enum
+      if (!department) {
+        department = null;
       }
 
       // Create audit trail entry

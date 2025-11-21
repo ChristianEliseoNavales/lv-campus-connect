@@ -116,9 +116,10 @@ router.post('/google', authLimiter, async (req, res) => {
     // Check if user is active
     if (!user.isActive) {
       console.log('❌ User account is inactive:', email);
-      
+
       await AuditService.logAuth({
         action: 'LOGIN_FAILED',
+        user, // Pass the user object so we have userId and office
         email,
         req,
         success: false,

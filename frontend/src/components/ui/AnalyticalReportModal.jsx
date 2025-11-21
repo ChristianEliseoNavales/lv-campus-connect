@@ -93,14 +93,20 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
           pdf.addPage();
         }
 
-        // Capture the page as canvas
+        // Capture the page as canvas with exact dimensions
         const canvas = await html2canvas(pages[i], {
           scale: 2,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
           width: pages[i].offsetWidth,
-          height: pages[i].offsetHeight
+          height: pages[i].offsetHeight,
+          x: 0,
+          y: 0,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: pages[i].offsetWidth,
+          windowHeight: pages[i].offsetHeight
         });
 
         // Add to PDF (full page, no margins since content already has margins)
@@ -219,59 +225,69 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                     <img
                       src="/analytics/report-header.png"
                       alt="Report Header"
-                      className="w-full h-auto"
+                      className="w-full"
+                      style={{ display: 'block', height: 'auto', maxHeight: '30mm', objectFit: 'contain' }}
                     />
                   </div>
 
                   {/* Content Area with Padding */}
-                  <div style={{ padding: '0 20mm 0 20mm' }}>
+                  <div style={{ padding: '0 20mm 30mm 20mm' }}>
                     {/* Report Title Section */}
-                    <div className="text-center pb-6 mb-6">
-                      <h2 className="text-xl font-semibold text-gray-700 mb-4">
+                    <div className="text-center pb-3 mb-3 border-b-2 border-gray-200">
+                      <h2 className="text-2xl font-bold text-[#1F3463] mb-2 tracking-tight">
                         {userRole} Analytical Report
                       </h2>
-                      <p className="text-sm text-gray-600">
-                        Report Period: {reportData.metadata?.reportPeriod}
+                      <p className="text-sm font-medium text-gray-700">
+                        {reportData.metadata?.reportPeriod}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        Generated: {new Date(reportData.metadata?.generatedAt).toLocaleString()}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Generated: {new Date(reportData.metadata?.generatedAt).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                     </div>
 
                   {/* Executive Summary */}
-                  <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                    <h3 className="text-xl font-bold text-[#1F3463] mb-4">Executive Summary</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 mb-3 shadow-sm border border-gray-200">
+                    <h3 className="text-base font-bold text-[#1F3463] mb-3 flex items-center">
+                      <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
+                      Executive Summary
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
                       {userRole === 'MIS Super Admin' ? (
                         <>
-                          <div className="bg-white p-4 rounded-lg shadow">
-                            <p className="text-sm text-gray-600">Total Visitors</p>
-                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.totalVisitors?.toLocaleString()}</p>
+                          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Visitors</p>
+                            <p className="text-2xl font-bold text-[#1F3463] mt-1">{reportData.totalVisitors?.toLocaleString()}</p>
                           </div>
-                          <div className="bg-white p-4 rounded-lg shadow">
-                            <p className="text-sm text-gray-600">Average Rating</p>
-                            <p className="text-3xl font-bold text-[#1F3463]">
+                          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Average Rating</p>
+                            <p className="text-2xl font-bold text-[#1F3463] mt-1">
                               {reportData.kioskRatings?.averageRating?.toFixed(2)} / 5.0
                             </p>
                           </div>
-                          <div className="bg-white p-4 rounded-lg shadow">
-                            <p className="text-sm text-gray-600">Total Ratings</p>
-                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.kioskRatings?.totalRatings?.toLocaleString()}</p>
+                          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Ratings</p>
+                            <p className="text-2xl font-bold text-[#1F3463] mt-1">{reportData.kioskRatings?.totalRatings?.toLocaleString()}</p>
                           </div>
-                          <div className="bg-white p-4 rounded-lg shadow">
-                            <p className="text-sm text-gray-600">Priority Visitors</p>
-                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.priorityVisitors?.toLocaleString()}</p>
+                          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Priority Visitors</p>
+                            <p className="text-2xl font-bold text-[#1F3463] mt-1">{reportData.priorityVisitors?.toLocaleString()}</p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="bg-white p-4 rounded-lg shadow">
-                            <p className="text-sm text-gray-600">Total Visits</p>
-                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.totalVisits?.toLocaleString()}</p>
+                          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Visits</p>
+                            <p className="text-2xl font-bold text-[#1F3463] mt-1">{reportData.totalVisits?.toLocaleString()}</p>
                           </div>
-                          <div className="bg-white p-4 rounded-lg shadow">
-                            <p className="text-sm text-gray-600">Avg Turnaround Time</p>
-                            <p className="text-3xl font-bold text-[#1F3463]">{reportData.avgTurnaroundMinutes} mins</p>
+                          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Avg Turnaround Time</p>
+                            <p className="text-2xl font-bold text-[#1F3463] mt-1">{reportData.avgTurnaroundMinutes} mins</p>
                           </div>
                         </>
                       )}
@@ -282,9 +298,12 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                     {userRole === 'MIS Super Admin' && (
                       <>
                         {/* Most Visited Office */}
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                          <h3 className="text-lg font-bold text-[#1F3463] mb-4">Most Visited Office</h3>
-                          <ResponsiveContainer width="100%" height={250}>
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                          <h3 className="text-base font-bold text-[#1F3463] mb-3 flex items-center">
+                            <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
+                            Most Visited Office
+                          </h3>
+                          <ResponsiveContainer width="100%" height={280}>
                             <PieChart>
                               <Pie
                                 data={reportData.mostVisitedOffice}
@@ -292,15 +311,20 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                                 nameKey="department"
                                 cx="50%"
                                 cy="50%"
-                                outerRadius={80}
-                                label={(entry) => `${entry.department}: ${entry.count}`}
+                                outerRadius={85}
+                                label={({ department, count }) => `${department}: ${count}`}
+                                labelLine={true}
                               >
                                 {reportData.mostVisitedOffice?.map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
                                 ))}
                               </Pie>
                               <Tooltip />
-                              <Legend />
+                              <Legend
+                                verticalAlign="bottom"
+                                height={40}
+                                wrapperStyle={{ paddingTop: '10px', fontSize: '11px' }}
+                              />
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
@@ -310,35 +334,100 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                     {/* Registrar/Admissions Admin - Executive Summary Only */}
                     {(userRole === 'Registrar Admin' || userRole === 'Admissions Admin') && (
                       <>
-                        {/* Monthly Summary Table - Compact */}
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-                          <h3 className="text-base font-bold text-[#1F3463] mb-3">Monthly Summary</h3>
-                          <div className="overflow-x-auto">
-                            <table className="w-full">
-                              <thead className="bg-gray-50">
-                                <tr>
-                                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Month</th>
-                                  <th className="px-3 py-2 text-right text-xs font-semibold text-gray-700">Total Visits</th>
-                                  <th className="px-3 py-2 text-right text-xs font-semibold text-gray-700">Avg Turnaround</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-200">
-                                {reportData.monthlyBreakdown?.map((month, index) => (
-                                  <tr key={index} className="hover:bg-gray-50">
-                                    <td className="px-3 py-2 text-xs text-gray-900">{month.monthName}</td>
-                                    <td className="px-3 py-2 text-xs text-right font-medium text-[#1F3463]">{month.totalVisits}</td>
-                                    <td className="px-3 py-2 text-xs text-right text-gray-700">{month.avgTurnaroundMinutes} mins</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                        {/* Top Performing Metrics - Fixed Size Summary */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-3 shadow-sm">
+                          <h3 className="text-base font-bold text-[#1F3463] mb-3 flex items-center">
+                            <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
+                            Top Performing Metrics
+                          </h3>
+                          <div className="grid grid-cols-4 gap-3">
+                            {/* Busiest Month */}
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl border-2 border-blue-200 shadow-sm">
+                              <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-1.5">Busiest Month</p>
+                              <p className="text-lg font-bold text-[#1F3463] leading-tight">
+                                {reportData.monthlyBreakdown?.reduce((max, month) =>
+                                  month.totalVisits > max.totalVisits ? month : max
+                                )?.monthName || 'N/A'}
+                              </p>
+                              <p className="text-xs font-semibold text-gray-700 mt-1.5">
+                                {reportData.monthlyBreakdown?.reduce((max, month) =>
+                                  month.totalVisits > max.totalVisits ? month : max
+                                )?.totalVisits?.toLocaleString() || '0'} visits
+                              </p>
+                            </div>
+
+                            {/* Peak Service */}
+                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 rounded-xl border-2 border-purple-200 shadow-sm">
+                              <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-1.5">Peak Service</p>
+                              <p className="text-lg font-bold text-[#1F3463] leading-tight">
+                                {reportData.serviceDistribution?.[0]?.service || 'N/A'}
+                              </p>
+                              <p className="text-xs font-semibold text-gray-700 mt-1.5">
+                                {reportData.serviceDistribution?.[0]?.count?.toLocaleString() || '0'} requests
+                              </p>
+                            </div>
+
+                            {/* Best Turnaround */}
+                            <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-xl border-2 border-green-200 shadow-sm">
+                              <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-1.5">Best Turnaround</p>
+                              <p className="text-lg font-bold text-[#1F3463] leading-tight">
+                                {reportData.monthlyBreakdown?.reduce((min, month) =>
+                                  month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min
+                                )?.monthName || 'N/A'}
+                              </p>
+                              <p className="text-xs font-semibold text-gray-700 mt-1.5">
+                                {reportData.monthlyBreakdown?.reduce((min, month) =>
+                                  month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min
+                                )?.avgTurnaroundMinutes || '0'} mins avg
+                              </p>
+                            </div>
+
+                            {/* Overall Peak Hour */}
+                            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-3 rounded-xl border-2 border-yellow-200 shadow-sm">
+                              <p className="text-xs font-bold text-yellow-700 uppercase tracking-wide mb-1.5">Overall Peak Hour</p>
+                              <p className="text-lg font-bold text-[#1F3463] leading-tight">
+                                {(() => {
+                                  // Aggregate peak hours from all months
+                                  const hourTotals = {};
+                                  reportData.monthlyBreakdown?.forEach(month => {
+                                    month.peakHours?.forEach(hourData => {
+                                      hourTotals[hourData.hour] = (hourTotals[hourData.hour] || 0) + hourData.count;
+                                    });
+                                  });
+
+                                  const peakHourEntry = Object.entries(hourTotals).sort((a, b) => b[1] - a[1])[0];
+                                  if (!peakHourEntry) return 'N/A';
+
+                                  const hour = parseInt(peakHourEntry[0]);
+                                  const period = hour >= 12 ? 'PM' : 'AM';
+                                  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+
+                                  return `${displayHour}:00 ${period}`;
+                                })()}
+                              </p>
+                              <p className="text-xs font-semibold text-gray-700 mt-1.5">
+                                {(() => {
+                                  const hourTotals = {};
+                                  reportData.monthlyBreakdown?.forEach(month => {
+                                    month.peakHours?.forEach(hourData => {
+                                      hourTotals[hourData.hour] = (hourTotals[hourData.hour] || 0) + hourData.count;
+                                    });
+                                  });
+                                  const peakHourEntry = Object.entries(hourTotals).sort((a, b) => b[1] - a[1])[0];
+                                  return peakHourEntry ? `${peakHourEntry[1].toLocaleString()} visits` : '0 visits';
+                                })()}
+                              </p>
+                            </div>
                           </div>
                         </div>
 
-                        {/* Overall Service Distribution - Larger Chart */}
-                        <div className="bg-white rounded-lg border border-gray-200 p-4">
-                          <h3 className="text-base font-bold text-[#1F3463] mb-2">Overall Service Distribution</h3>
-                          <ResponsiveContainer width="100%" height={320}>
+                        {/* Overall Service Distribution - With Labels */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                          <h3 className="text-base font-bold text-[#1F3463] mb-2 flex items-center">
+                            <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
+                            Overall Service Distribution
+                          </h3>
+                          <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                               <Pie
                                 data={reportData.serviceDistribution?.slice(0, 5)}
@@ -346,8 +435,9 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                                 nameKey="service"
                                 cx="50%"
                                 cy="50%"
-                                outerRadius={95}
-                                label={false}
+                                outerRadius={85}
+                                label={({ service, count }) => `${service}: ${count}`}
+                                labelLine={true}
                               >
                                 {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
@@ -356,9 +446,8 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                               <Tooltip formatter={(value, name) => [value, name]} />
                               <Legend
                                 verticalAlign="bottom"
-                                height={50}
-                                wrapperStyle={{ paddingTop: '15px' }}
-                                formatter={(value, entry) => `${value}: ${entry.payload.count}`}
+                                height={40}
+                                wrapperStyle={{ paddingTop: '10px', fontSize: '11px' }}
                               />
                             </PieChart>
                           </ResponsiveContainer>
@@ -372,7 +461,8 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                     <img
                       src="/analytics/report-footer.png"
                       alt="Report Footer"
-                      className="w-full h-auto"
+                      className="w-full"
+                      style={{ display: 'block', height: 'auto', maxHeight: '25mm', objectFit: 'contain' }}
                     />
                   </div>
                 </div>
@@ -389,16 +479,20 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                       <img
                         src="/analytics/report-header.png"
                         alt="Report Header"
-                        className="w-full h-auto"
+                        className="w-full"
+                        style={{ display: 'block', height: 'auto', maxHeight: '30mm', objectFit: 'contain' }}
                       />
                     </div>
 
                     {/* Content Area with Padding */}
-                    <div style={{ padding: '0 20mm 0 20mm' }}>
+                    <div style={{ padding: '0 20mm 30mm 20mm' }}>
                       {/* Service Distribution Overall */}
-                      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                      <h3 className="text-lg font-bold text-[#1F3463] mb-4">Service Distribution Overall</h3>
-                      <ResponsiveContainer width="100%" height={250}>
+                      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-3 shadow-sm">
+                      <h3 className="text-base font-bold text-[#1F3463] mb-3 flex items-center">
+                        <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
+                        Service Distribution Overall
+                      </h3>
+                      <ResponsiveContainer width="100%" height={240}>
                         <PieChart>
                           <Pie
                             data={reportData.serviceDistribution?.slice(0, 5)}
@@ -406,74 +500,88 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                             nameKey="service"
                             cx="50%"
                             cy="50%"
-                            outerRadius={80}
-                            label={(entry) => `${entry.service}: ${entry.count}`}
+                            outerRadius={75}
+                            label={({ service, count }) => `${service}: ${count}`}
+                            labelLine={true}
                           >
                             {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
                             ))}
                           </Pie>
                           <Tooltip />
-                          <Legend />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={35}
+                            wrapperStyle={{ paddingTop: '8px', fontSize: '10px' }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
 
                     {/* Kiosk Ratings Breakdown */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                      <h3 className="text-lg font-bold text-[#1F3463] mb-4">Kiosk Ratings Distribution</h3>
-                      <div className="grid grid-cols-5 gap-4">
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-3 shadow-sm">
+                      <h3 className="text-base font-bold text-[#1F3463] mb-3 flex items-center">
+                        <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
+                        Kiosk Ratings Distribution
+                      </h3>
+                      <div className="grid grid-cols-5 gap-3">
                         {[5, 4, 3, 2, 1].map((star) => (
-                          <div key={star} className="text-center">
+                          <div key={star} className="text-center bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200">
                             <p className="text-2xl font-bold text-[#1F3463]">
                               {reportData.kioskRatings?.[`rating${star}`] || 0}
                             </p>
-                            <p className="text-sm text-gray-600">{star} Star{star !== 1 ? 's' : ''}</p>
+                            <p className="text-xs font-semibold text-gray-600 mt-1">{star} Star{star !== 1 ? 's' : ''}</p>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* Visitor Breakdown by Role */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                      <h3 className="text-lg font-bold text-[#1F3463] mb-4">Visitor Breakdown by Role</h3>
-                      <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-3 shadow-sm">
+                      <h3 className="text-base font-bold text-[#1F3463] mb-3 flex items-center">
+                        <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
+                        Visitor Breakdown by Role
+                      </h3>
+                      <div className="grid grid-cols-4 gap-3">
                         {reportData.visitorsByRole?.map((item, index) => (
-                          <div key={index} className="text-center bg-gray-50 p-4 rounded-lg">
+                          <div key={index} className="text-center bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200">
                             <p className="text-2xl font-bold text-[#1F3463]">{item.count}</p>
-                            <p className="text-sm text-gray-600">{item.role}</p>
+                            <p className="text-xs font-semibold text-gray-600 mt-1">{item.role}</p>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* Department Comparison */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <h3 className="text-lg font-bold text-[#1F3463] mb-4">Department Comparison</h3>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="border border-gray-200 rounded-lg p-4">
-                          <h4 className="font-semibold text-[#1F3463] mb-3">Registrar's Office</h4>
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                      <h3 className="text-base font-bold text-[#1F3463] mb-3 flex items-center">
+                        <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
+                        Department Comparison
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-4 shadow-sm">
+                          <h4 className="font-bold text-[#1F3463] mb-3 text-sm uppercase tracking-wide">Registrar's Office</h4>
                           <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Total Completed:</span>
-                              <span className="font-bold">{reportData.departmentComparison?.registrar?.totalCompleted}</span>
+                            <div className="flex justify-between items-center bg-white/70 p-2 rounded">
+                              <span className="text-xs font-semibold text-gray-600">Total Completed:</span>
+                              <span className="text-lg font-bold text-[#1F3463]">{reportData.departmentComparison?.registrar?.totalCompleted}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Avg Turnaround:</span>
-                              <span className="font-bold">{reportData.departmentComparison?.registrar?.avgTurnaroundMinutes} mins</span>
+                            <div className="flex justify-between items-center bg-white/70 p-2 rounded">
+                              <span className="text-xs font-semibold text-gray-600">Avg Turnaround:</span>
+                              <span className="text-lg font-bold text-[#1F3463]">{reportData.departmentComparison?.registrar?.avgTurnaroundMinutes} mins</span>
                             </div>
                           </div>
                         </div>
-                        <div className="border border-gray-200 rounded-lg p-4">
-                          <h4 className="font-semibold text-[#1F3463] mb-3">Admissions Office</h4>
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-xl p-4 shadow-sm">
+                          <h4 className="font-bold text-[#1F3463] mb-3 text-sm uppercase tracking-wide">Admissions Office</h4>
                           <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Total Completed:</span>
-                              <span className="font-bold">{reportData.departmentComparison?.admissions?.totalCompleted}</span>
+                            <div className="flex justify-between items-center bg-white/70 p-2 rounded">
+                              <span className="text-xs font-semibold text-gray-600">Total Completed:</span>
+                              <span className="text-lg font-bold text-[#1F3463]">{reportData.departmentComparison?.admissions?.totalCompleted}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Avg Turnaround:</span>
-                              <span className="font-bold">{reportData.departmentComparison?.admissions?.avgTurnaroundMinutes} mins</span>
+                            <div className="flex justify-between items-center bg-white/70 p-2 rounded">
+                              <span className="text-xs font-semibold text-gray-600">Avg Turnaround:</span>
+                              <span className="text-lg font-bold text-[#1F3463]">{reportData.departmentComparison?.admissions?.avgTurnaroundMinutes} mins</span>
                             </div>
                           </div>
                         </div>
@@ -486,7 +594,8 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                     <img
                       src="/analytics/report-footer.png"
                       alt="Report Footer"
-                      className="w-full h-auto"
+                      className="w-full"
+                      style={{ display: 'block', height: 'auto', maxHeight: '25mm', objectFit: 'contain' }}
                     />
                   </div>
                 </div>
@@ -506,34 +615,38 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                         <img
                           src="/analytics/report-header.png"
                           alt="Report Header"
-                          className="w-full h-auto"
+                          className="w-full"
+                          style={{ display: 'block', height: 'auto', maxHeight: '30mm', objectFit: 'contain' }}
                         />
                       </div>
 
                       {/* Content Area with Padding */}
-                      <div style={{ padding: '0 20mm 0 20mm' }}>
+                      <div style={{ padding: '0 20mm 30mm 20mm' }}>
                         {/* Month Title - Compact */}
-                        <div className="text-center mb-3">
-                          <h2 className="text-xl font-bold text-[#1F3463]">{monthData.monthName}</h2>
-                          <p className="text-xs text-gray-600">Monthly Report</p>
+                        <div className="text-center mb-3 pb-2 border-b-2 border-gray-200">
+                          <h2 className="text-2xl font-bold text-[#1F3463]">{monthData.monthName}</h2>
+                          <p className="text-xs font-medium text-gray-600 mt-1">Monthly Detailed Report</p>
                         </div>
 
                         {/* Month Summary Stats - Inline */}
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                          <div className="bg-gray-50 p-2 rounded-lg text-center">
-                            <p className="text-xs text-gray-600">Total Visits</p>
-                            <p className="text-xl font-bold text-[#1F3463]">{monthData.totalVisits?.toLocaleString()}</p>
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl text-center border-2 border-blue-200 shadow-sm">
+                            <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Total Visits</p>
+                            <p className="text-2xl font-bold text-[#1F3463] mt-1">{monthData.totalVisits?.toLocaleString()}</p>
                           </div>
-                          <div className="bg-gray-50 p-2 rounded-lg text-center">
-                            <p className="text-xs text-gray-600">Avg Turnaround Time</p>
-                            <p className="text-xl font-bold text-[#1F3463]">{monthData.avgTurnaroundMinutes} mins</p>
+                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 rounded-xl text-center border-2 border-purple-200 shadow-sm">
+                            <p className="text-xs font-bold text-purple-700 uppercase tracking-wide">Avg Turnaround Time</p>
+                            <p className="text-2xl font-bold text-[#1F3463] mt-1">{monthData.avgTurnaroundMinutes} mins</p>
                           </div>
                         </div>
 
-                        {/* Service Distribution for this month - No labels on pie */}
-                        <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3">
-                          <h3 className="text-sm font-bold text-[#1F3463] mb-1">Service Distribution</h3>
-                          <ResponsiveContainer width="100%" height={240}>
+                        {/* Service Distribution for this month - With labels */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-3 mb-3 shadow-sm">
+                          <h3 className="text-sm font-bold text-[#1F3463] mb-2 flex items-center">
+                            <span className="w-1 h-4 bg-[#1F3463] mr-2 rounded"></span>
+                            Service Distribution
+                          </h3>
+                          <ResponsiveContainer width="100%" height={220}>
                             <PieChart>
                               <Pie
                                 data={monthData.serviceDistribution?.slice(0, 5)}
@@ -541,8 +654,9 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                                 nameKey="service"
                                 cx="50%"
                                 cy="50%"
-                                outerRadius={75}
-                                label={false}
+                                outerRadius={65}
+                                label={({ service, count }) => `${service}: ${count}`}
+                                labelLine={true}
                               >
                                 {monthData.serviceDistribution?.slice(0, 5).map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
@@ -551,52 +665,69 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                               <Tooltip formatter={(value, name) => [value, name]} />
                               <Legend
                                 verticalAlign="bottom"
-                                height={40}
-                                wrapperStyle={{ paddingTop: '8px', fontSize: '11px' }}
-                                formatter={(value, entry) => `${value}: ${entry.payload.count}`}
+                                height={35}
+                                wrapperStyle={{ paddingTop: '6px', fontSize: '10px' }}
                               />
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
 
                         {/* Visitor Breakdown by Role - Compact */}
-                        <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3">
-                          <h3 className="text-sm font-bold text-[#1F3463] mb-2">Visitor Breakdown by Role</h3>
+                        <div className="bg-white rounded-xl border border-gray-200 p-3 mb-3 shadow-sm">
+                          <h3 className="text-sm font-bold text-[#1F3463] mb-2 flex items-center">
+                            <span className="w-1 h-4 bg-[#1F3463] mr-2 rounded"></span>
+                            Visitor Breakdown by Role
+                          </h3>
                           <div className="grid grid-cols-4 gap-2">
                             {monthData.visitorsByRole?.map((item, index) => (
-                              <div key={index} className="text-center bg-gray-50 p-2 rounded">
-                                <p className="text-lg font-bold text-[#1F3463]">{item.count}</p>
-                                <p className="text-xs text-gray-600">{item.role}</p>
+                              <div key={index} className="text-center bg-gradient-to-br from-gray-50 to-gray-100 p-2 rounded-lg border border-gray-200">
+                                <p className="text-xl font-bold text-[#1F3463]">{item.count}</p>
+                                <p className="text-xs font-semibold text-gray-600 mt-1">{item.role}</p>
                               </div>
                             ))}
                           </div>
                         </div>
 
-                        {/* Peak Hours and Peak Days - Side by Side - Limited Items */}
+                        {/* Peak Hours and Peak Days - Side by Side - Top 5 Each */}
                         <div className="grid grid-cols-2 gap-3">
-                          {/* Peak Hours - Top 3 */}
-                          <div className="bg-white rounded-lg border border-gray-200 p-3">
-                            <h3 className="text-sm font-bold text-[#1F3463] mb-2">Peak Hours (Top 3)</h3>
+                          {/* Peak Hours - Top 5 with AM/PM */}
+                          <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                            <h3 className="text-sm font-bold text-[#1F3463] mb-2 flex items-center">
+                              <span className="w-1 h-4 bg-[#1F3463] mr-2 rounded"></span>
+                              Peak Hours (Top 5)
+                            </h3>
                             <div className="space-y-1.5">
-                              {monthData.peakHours?.slice(0, 3).map((item, index) => (
-                                <div key={index} className="flex items-center justify-between bg-gray-50 p-1.5 rounded text-xs">
-                                  <span className="font-medium text-gray-700">
-                                    {item.hour}:00 - {item.hour + 1}:00
-                                  </span>
-                                  <span className="text-[#1F3463] font-bold">{item.count}</span>
-                                </div>
-                              ))}
+                              {monthData.peakHours?.slice(0, 5).map((item, index) => {
+                                const hour = item.hour;
+                                const period = hour >= 12 ? 'PM' : 'AM';
+                                const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                                const nextHour = hour + 1;
+                                const nextPeriod = nextHour >= 12 ? 'PM' : 'AM';
+                                const displayNextHour = nextHour === 0 ? 12 : nextHour > 12 ? nextHour - 12 : nextHour;
+
+                                return (
+                                  <div key={index} className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100 p-2 rounded-lg border border-blue-200 text-xs">
+                                    <span className="font-semibold text-gray-700">
+                                      {displayHour}:00 {period} - {displayNextHour}:00 {nextPeriod}
+                                    </span>
+                                    <span className="text-[#1F3463] font-bold text-sm">{item.count}</span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
 
                           {/* Peak Days - Top 5 */}
-                          <div className="bg-white rounded-lg border border-gray-200 p-3">
-                            <h3 className="text-sm font-bold text-[#1F3463] mb-2">Peak Days (Top 5)</h3>
+                          <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                            <h3 className="text-sm font-bold text-[#1F3463] mb-2 flex items-center">
+                              <span className="w-1 h-4 bg-[#1F3463] mr-2 rounded"></span>
+                              Peak Days (Top 5)
+                            </h3>
                             <div className="space-y-1.5">
                               {monthData.peakDays?.slice(0, 5).map((item, index) => (
-                                <div key={index} className="flex items-center justify-between bg-gray-50 p-1.5 rounded text-xs">
-                                  <span className="font-medium text-gray-700">{item.day}</span>
-                                  <span className="text-[#1F3463] font-bold">{item.count}</span>
+                                <div key={index} className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-purple-100 p-2 rounded-lg border border-purple-200 text-xs">
+                                  <span className="font-semibold text-gray-700">{item.day}</span>
+                                  <span className="text-[#1F3463] font-bold text-sm">{item.count}</span>
                                 </div>
                               ))}
                             </div>
@@ -609,7 +740,8 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                         <img
                           src="/analytics/report-footer.png"
                           alt="Report Footer"
-                          className="w-full h-auto"
+                          className="w-full"
+                          style={{ display: 'block', height: 'auto', maxHeight: '25mm', objectFit: 'contain' }}
                         />
                       </div>
                     </div>

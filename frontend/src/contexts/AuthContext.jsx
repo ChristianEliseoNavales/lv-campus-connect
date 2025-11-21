@@ -81,33 +81,79 @@ export const AuthProvider = ({ children }) => {
       // Get backend URL - use getAdminUrl() for consistency
       const backendUrl = API_CONFIG.getAdminUrl();
 
-      // Send credential to backend for verification
-      const response = await fetch(`${backendUrl}/api/auth/google`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ credential })
-      });
+      // Create AbortController for timeout (30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const data = await response.json();
+      try {
+        // Send credential to backend for verification
+        const response = await fetch(`${backendUrl}/api/auth/google`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ credential }),
+          signal: controller.signal
+        });
 
-      if (response.ok && data.success) {
-        setUser(data.user);
-        setIsAuthenticated(true);
+        clearTimeout(timeoutId);
 
-        // Store token and user data
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('userData', JSON.stringify(data.user));
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({
+            message: 'Authentication failed. Please try again.'
+          }));
+          throw new Error(data.message || data.error || 'Authentication failed');
+        }
 
-        return { success: true, user: data.user };
-      } else {
-        throw new Error(data.message || data.error || 'Authentication failed');
+        const data = await response.json();
+
+        if (data.success) {
+          setUser(data.user);
+          setIsAuthenticated(true);
+
+          // Store token and user data
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('userData', JSON.stringify(data.user));
+
+          return { success: true, user: data.user };
+        } else {
+          throw new Error(data.message || data.error || 'Authentication failed');
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+
+        // Handle abort/timeout errors
+        if (fetchError.name === 'AbortError') {
+          throw new Error('The server is taking too long to respond. The database may be unavailable. Please try again later or contact the administrator.');
+        }
+        throw fetchError;
       }
     } catch (error) {
       console.error('Sign in error:', error);
-      setError(error.message);
-      return { success: false, error: error.message };
+
+      // Provide user-friendly error messages
+      let errorMessage = error.message;
+
+      // Network errors
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+      }
+      // Google sign-in errors
+      else if (error.message.includes('popup_closed_by_user')) {
+        errorMessage = 'Sign-in was cancelled. Please try again.';
+      }
+      else if (error.message.includes('access_denied')) {
+        errorMessage = 'Access was denied. Please grant the necessary permissions to sign in.';
+      }
+      // Timeout errors (database unavailable)
+      else if (error.message.includes('taking too long') || error.message.includes('database may be unavailable')) {
+        errorMessage = error.message; // Use the detailed timeout message
+      }
+
+      console.log('Setting error message:', errorMessage);
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
