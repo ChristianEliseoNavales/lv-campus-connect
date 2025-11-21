@@ -456,7 +456,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
 
   // Loading skeleton component
   const LoadingSkeleton = () => (
-    <div className="h-40 w-full bg-gray-200 rounded-lg animate-pulse mx-auto" />
+    <div className="h-full w-full bg-gray-200 rounded-lg animate-pulse mx-auto" />
   );
 
   // Error component
@@ -470,7 +470,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-3 sm:py-4 sm:flex-row flex-shrink-0">
         <div className="grid flex-1 gap-1">
           <CardTitle style={{ color: '#1F3463' }}>Queue Activity</CardTitle>
           <CardDescription>
@@ -503,7 +503,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex-1 px-1 pt-2 sm:px-3 sm:pt-3">
+      <CardContent className="flex-1 px-1 pt-2 pb-2 sm:px-3 sm:pt-3 sm:pb-3 min-h-0">
         {isLoading ? (
           <LoadingSkeleton />
         ) : error ? (

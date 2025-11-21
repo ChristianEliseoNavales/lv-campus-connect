@@ -732,12 +732,12 @@ const Queue = () => {
 
   if (loading) {
     return (
-      <div className="space-y-5">
-        <div className="flex items-center justify-center h-52">
+      <div className="space-y-3 sm:space-y-4 md:space-y-5">
+        <div className="flex items-center justify-center h-40 sm:h-48 md:h-52">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1F3463] mx-auto mb-3"></div>
-            <p className="text-base text-gray-600">Loading window data...</p>
-            <p className="text-xs text-gray-400">Window ID: {windowId}</p>
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 border-b-2 border-[#1F3463] mx-auto mb-2 sm:mb-2.5 md:mb-3"></div>
+            <p className="text-sm sm:text-base text-gray-600">Loading window data...</p>
+            <p className="text-[10px] sm:text-xs text-gray-400">Window ID: {windowId}</p>
           </div>
         </div>
       </div>
@@ -746,23 +746,23 @@ const Queue = () => {
 
   if (!windowData) {
     return (
-      <div className="space-y-5">
-        <div className="flex items-center justify-center h-52">
-          <div className="text-center">
-            <div className="text-5xl mb-3">🪟</div>
-            <p className="text-base text-red-600 mb-1.5">Window not found</p>
-            <p className="text-xs text-gray-500 mb-3">The requested window does not exist or may have been removed.</p>
-            <p className="text-[10px] text-gray-400 mb-5">Window ID: {windowId}</p>
-            <div className="space-x-3">
+      <div className="space-y-3 sm:space-y-4 md:space-y-5">
+        <div className="flex items-center justify-center h-40 sm:h-48 md:h-52">
+          <div className="text-center px-3">
+            <div className="text-4xl sm:text-5xl mb-2 sm:mb-2.5 md:mb-3">🪟</div>
+            <p className="text-sm sm:text-base text-red-600 mb-1 sm:mb-1.5">Window not found</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-2.5 md:mb-3">The requested window does not exist or may have been removed.</p>
+            <p className="text-[9px] sm:text-[10px] text-gray-400 mb-3 sm:mb-4 md:mb-5">Window ID: {windowId}</p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:space-x-3 justify-center">
               <button
                 onClick={() => window.location.href = '/admin/admissions/queue'}
-                className="px-3 py-1.5 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors"
+                className="px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors"
               >
                 Back to Queue
               </button>
               <button
                 onClick={() => window.location.href = '/admin/admissions/settings'}
-                className="px-3 py-1.5 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="px-3 py-1.5 text-xs sm:text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
               >
                 Manage Windows
               </button>
@@ -775,30 +775,30 @@ const Queue = () => {
 
   return (
     <>
-    <div className="space-y-5" data-testid="queue-management">
+    <div className="space-y-3 sm:space-y-4 md:space-y-5" data-testid="queue-management">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#1F3463] tracking-tight">Manage Queueing</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">Manage Queueing</h1>
       </div>
       <div>
-        <h1 className="text-xl font-bold text-[#1F3463] tracking-wide">
+        <h1 className="text-base sm:text-lg md:text-xl font-bold text-[#1F3463] tracking-wide">
           {windowData.name.toUpperCase()} QUEUE
         </h1>
       </div>
 
       {/* Main Control Area */}
-      <div className="grid grid-cols-3 gap-5 h-[29rem]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 min-h-[20rem] lg:h-[29rem]">
         {/* Current Serving */}
-        <div className="bg-white rounded-lg shadow-lg p-5">
-          <div className={`h-full flex flex-col justify-center ${windowData?.name === 'Priority' && currentServingPerson?.idNumber ? 'space-y-3' : 'space-y-6'}`}>
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-4 md:p-5">
+          <div className={`h-full flex flex-col justify-center ${windowData?.name === 'Priority' && currentServingPerson?.idNumber ? 'space-y-2 sm:space-y-2.5 md:space-y-3' : 'space-y-4 sm:space-y-5 md:space-y-6'}`}>
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#1F3463] tracking-wide">CURRENT SERVING</h2>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#1F3463] tracking-wide">CURRENT SERVING</h2>
             </div>
-            <div className="text-center space-y-2.5">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Queue Number</p>
+            <div className="text-center space-y-1.5 sm:space-y-2 md:space-y-2.5">
+              <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Queue Number</p>
               <div className="flex justify-center">
-                <div className="bg-[#3930A8] text-white rounded-3xl px-[72px] py-[32px] shadow-md">
-                  <span className="text-4xl font-bold tracking-wider">
+                <div className="bg-[#3930A8] text-white rounded-2xl sm:rounded-3xl px-12 sm:px-16 md:px-[72px] py-6 sm:py-8 md:py-[32px] shadow-md">
+                  <span className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider">
                     {String(currentServing).padStart(2, '0')}
                   </span>
                 </div>
@@ -807,46 +807,46 @@ const Queue = () => {
             {currentServingPerson ? (
               <>
                 <div className="text-center">
-                  <p className="text-lg font-extrabold text-[#1F3463] tracking-wide">{currentServingPerson.role}</p>
+                  <p className="text-base sm:text-lg font-extrabold text-[#1F3463] tracking-wide">{currentServingPerson.role}</p>
                 </div>
                 <div className="text-center space-y-0.5">
-                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">Name</p>
-                  <p className="text-lg font-bold text-[#1F3463]">{currentServingPerson.name}</p>
+                  <p className="text-[9px] sm:text-[10px] font-medium text-gray-500 uppercase tracking-widest">Name</p>
+                  <p className="text-base sm:text-lg font-bold text-[#1F3463]">{currentServingPerson.name}</p>
                 </div>
                 <div className="text-center space-y-0.5">
-                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">Purpose</p>
-                  <p className="text-lg font-semibold text-gray-800">{currentServingPerson.purpose}</p>
+                  <p className="text-[9px] sm:text-[10px] font-medium text-gray-500 uppercase tracking-widest">Purpose</p>
+                  <p className="text-base sm:text-lg font-semibold text-gray-800">{currentServingPerson.purpose}</p>
                 </div>
                 {/* Display ID Number for Priority windows */}
                 {windowData?.name === 'Priority' && currentServingPerson.idNumber && (
                   <div className="text-center space-y-0.5">
-                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">ID Number</p>
-                    <p className="text-lg font-bold text-[#1F3463] tracking-wide">{currentServingPerson.idNumber}</p>
+                    <p className="text-[9px] sm:text-[10px] font-medium text-gray-500 uppercase tracking-widest">ID Number</p>
+                    <p className="text-base sm:text-lg font-bold text-[#1F3463] tracking-wide">{currentServingPerson.idNumber}</p>
                   </div>
                 )}
               </>
             ) : (
               <div className="text-center">
-                <p className="text-sm text-gray-400 italic">No one currently being served</p>
+                <p className="text-xs sm:text-sm text-gray-400 italic">No one currently being served</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Incoming Queue */}
-        <div className="bg-white rounded-lg shadow-lg p-5">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-4 md:p-5">
           <div className="h-full flex flex-col">
-            <div className="grid grid-cols-2 gap-1.5 mb-3">
+            <div className="grid grid-cols-2 gap-1 sm:gap-1.5 mb-2 sm:mb-2.5 md:mb-3">
               {/* Row 1: Incoming heading spanning full width */}
               <div className="col-span-2 text-center">
-                <h3 className="text-2xl font-bold text-[#1F3463] tracking-wide">INCOMING</h3>
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[#1F3463] tracking-wide">INCOMING</h3>
               </div>
 
               {/* Row 2: Empty left column and timestamp/refresh button on right */}
               <div></div>
               <div className="flex items-center justify-end">
-                <div className="flex items-center space-x-1">
-                  <p className="text-[8px] text-gray-500 uppercase tracking-wide">
+                <div className="flex items-center space-x-0.5 sm:space-x-1">
+                  <p className="text-[7px] sm:text-[8px] text-gray-500 uppercase tracking-wide">
                     As of {formatRefreshTime(lastRefreshTime)}
                   </p>
                   <button
@@ -856,31 +856,31 @@ const Queue = () => {
                     title="Refresh queue data"
                   >
                     <IoMdRefresh
-                      className={`w-3 h-3 text-gray-500 ${isRefreshing ? 'animate-spin' : ''}`}
+                      className={`w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-500 ${isRefreshing ? 'animate-spin' : ''}`}
                     />
                   </button>
                 </div>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <div className="space-y-2.5 max-h-[22rem]">
+              <div className="space-y-1.5 sm:space-y-2 md:space-y-2.5 max-h-[22rem]">
                 {queueData.slice(0, 8).map((item) => (
-                  <div key={item.id} className="flex gap-2.5 p-2.5 bg-gray-50 rounded-lg shadow-sm">
+                  <div key={item.id} className="flex gap-2 sm:gap-2.5 p-2 sm:p-2.5 bg-gray-50 rounded-lg shadow-sm">
                     <div className="flex-shrink-0">
-                      <div className="bg-[#3930A8] text-white rounded-lg px-3 py-2.5 text-center min-w-[48px]">
-                        <span className="text-lg font-bold tracking-wide">
+                      <div className="bg-[#3930A8] text-white rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 text-center min-w-[40px] sm:min-w-[48px]">
+                        <span className="text-base sm:text-lg font-bold tracking-wide">
                           {String(item.number).padStart(2, '0')}
                         </span>
                       </div>
                     </div>
                     <div className="flex-1 flex flex-col justify-center space-y-0.5">
                       <div>
-                        <p className="text-lg font-bold text-[#1F3463] truncate">
+                        <p className="text-base sm:text-lg font-bold text-[#1F3463] truncate">
                           {item.name}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-600">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600">
                           {item.role}
                         </p>
                       </div>
@@ -888,7 +888,7 @@ const Queue = () => {
                   </div>
                 ))}
                 {queueData.length === 0 && (
-                  <div className="text-center text-gray-400 italic py-6 text-sm">
+                  <div className="text-center text-gray-400 italic py-4 sm:py-6 text-xs sm:text-sm">
                     No incoming queue entries
                   </div>
                 )}
@@ -898,11 +898,11 @@ const Queue = () => {
         </div>
 
         {/* Control Buttons */}
-        <div className="flex flex-col space-y-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-col gap-2 sm:gap-2.5 md:gap-3">
           <button
             onClick={handleStop}
             disabled={actionLoading.stop}
-            className={`flex-1 rounded-full border-2 font-bold text-lg tracking-wide transition-colors duration-200 min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full border-2 font-bold text-sm sm:text-base md:text-lg tracking-wide transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               isWindowServing
                 ? 'border-[#3930A8] text-[#3930A8] hover:bg-[#3930A8] hover:text-white'
                 : 'border-green-500 text-green-500 hover:bg-green-500 hover:text-white'
@@ -914,7 +914,7 @@ const Queue = () => {
           <button
             onClick={handleNext}
             disabled={actionLoading.next || !isWindowServing}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.next || !isWindowServing) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             data-testid="call-next-button"
@@ -924,7 +924,7 @@ const Queue = () => {
           <button
             onClick={handleRecall}
             disabled={actionLoading.recall || currentServing === 0}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.recall || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -933,7 +933,7 @@ const Queue = () => {
           <button
             onClick={handlePrevious}
             disabled={actionLoading.previous}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               actionLoading.previous ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -942,7 +942,7 @@ const Queue = () => {
           <button
             onClick={handleTransfer}
             disabled={actionLoading.transfer || transferLoading || currentServing === 0}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.transfer || transferLoading || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -951,7 +951,7 @@ const Queue = () => {
           <button
             onClick={handleSkip}
             disabled={actionLoading.skip || currentServing === 0}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.skip || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             data-testid="skip-button"
@@ -962,33 +962,33 @@ const Queue = () => {
       </div>
 
       {/* Skipped Queue Section */}
-      <div className="bg-white rounded-lg shadow-lg p-5">
-        <div className="flex flex-row items-center justify-between">
-          <div className="flex flex-row items-center gap-5">
+      <div className="bg-white rounded-lg shadow-lg p-3 sm:p-4 md:p-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 md:gap-5 w-full sm:w-auto">
             <div>
-              <h3 className="text-xl font-bold text-gray-700 tracking-wide">SKIPPED</h3>
+              <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-700 tracking-wide">SKIPPED</h3>
             </div>
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-2.5">
               {skippedQueue.map((number, index) => {
                 const isSelected = selectedSkippedQueues.includes(number);
                 return (
                   <button
                     key={index}
                     onClick={() => handleToggleSkippedQueue(number)}
-                    className={`rounded-lg px-4 py-2 shadow-md transition-all duration-200 ${
+                    className={`rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 shadow-md transition-all duration-200 ${
                       isSelected
                         ? 'bg-[#FFE251] text-[#1F3463] ring-2 ring-[#1F3463] ring-offset-2'
                         : 'bg-[#3930A8] text-white hover:bg-[#2F2580]'
                     }`}
                   >
-                    <span className="text-lg font-bold tracking-wide">
+                    <span className="text-base sm:text-lg font-bold tracking-wide">
                       {String(number).padStart(2, '0')}
                     </span>
                   </button>
                 );
               })}
               {skippedQueue.length === 0 && (
-                <div className="text-gray-400 italic text-sm">No skipped queue numbers</div>
+                <div className="text-gray-400 italic text-xs sm:text-sm">No skipped queue numbers</div>
               )}
             </div>
           </div>
@@ -998,7 +998,7 @@ const Queue = () => {
             <button
               onClick={handleRequeue}
               disabled={actionLoading.requeueAll}
-              className={`rounded-full bg-[#3930A8] text-white font-bold text-sm tracking-wide px-6 py-2.5 hover:bg-[#2F2580] transition-colors duration-200 flex items-center justify-center min-w-[140px] ${
+              className={`rounded-full bg-[#3930A8] text-white font-bold text-xs sm:text-sm tracking-wide px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 hover:bg-[#2F2580] transition-colors duration-200 flex items-center justify-center min-w-[120px] sm:min-w-[140px] ${
                 actionLoading.requeueAll ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -1015,48 +1015,48 @@ const Queue = () => {
 
     {/* Transfer Modal */}
     {showTransferModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-3">
-          <h3 className="text-xl font-bold text-[#1F3463] mb-1.5 tracking-wide">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-xl p-4 sm:p-5 md:p-6 max-w-md w-full">
+          <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#1F3463] mb-1 sm:mb-1.5 tracking-wide">
             Transfer Queue {String(currentServing).padStart(2, '0')}
           </h3>
-          <p className="text-sm text-gray-600 mb-5">
+          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 md:mb-5">
             Select the window to transfer this queue to:
           </p>
 
-          <div className="space-y-2.5 mb-5">
+          <div className="space-y-2 sm:space-y-2.5 mb-3 sm:mb-4 md:mb-5">
             {availableWindows.map((window) => (
               <button
                 key={window.id}
                 onClick={() => setSelectedWindow(window)}
                 disabled={actionLoading.transfer}
-                className={`w-full p-3 text-left border-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`w-full p-2.5 sm:p-3 text-left border-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                   selectedWindow?.id === window.id
                     ? 'border-[#3930A8] bg-[#3930A8]/10'
                     : 'border-gray-300 hover:bg-gray-50 hover:border-[#3930A8]'
                 }`}
               >
-                <div className="font-bold text-base text-gray-900">{window.name}</div>
-                <div className="text-sm text-gray-500">{window.serviceName}</div>
+                <div className="font-bold text-sm sm:text-base text-gray-900">{window.name}</div>
+                <div className="text-xs sm:text-sm text-gray-500">{window.serviceName}</div>
               </button>
             ))}
           </div>
 
-          <div className="flex space-x-2.5">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:space-x-2.5">
             <button
               onClick={() => {
                 setShowTransferModal(false);
                 setSelectedWindow(null);
               }}
               disabled={actionLoading.transfer}
-              className="flex-1 px-5 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:flex-1 px-4 sm:px-5 py-2 sm:py-2.5 border-2 border-gray-300 text-gray-700 font-semibold text-xs sm:text-sm rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed order-2 sm:order-1"
             >
               Cancel
             </button>
             <button
               onClick={handleTransferConfirm}
               disabled={actionLoading.transfer || !selectedWindow}
-              className="flex-1 px-5 py-2.5 bg-[#3930A8] text-white font-semibold text-sm rounded-lg hover:bg-[#2F2580] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:flex-1 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#3930A8] text-white font-semibold text-xs sm:text-sm rounded-lg hover:bg-[#2F2580] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
             >
               {actionLoading.transfer ? 'Transferring...' : 'Transfer'}
             </button>

@@ -1398,38 +1398,38 @@ const Settings = () => {
 
 
       {/* Settings Management Grid Container - with visible background, rounded corners, and padding */}
-      <div className="grid gap-3 h-[calc(100vh-10rem)] bg-white p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
+      <div className="flex flex-col lg:grid gap-2 sm:gap-2.5 md:gap-3 min-h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] bg-white p-3 sm:p-4 md:p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
         {/* First div: Row 1, spanning both columns */}
-        <div className="col-span-2 row-span-1 bg-white rounded-xl p-5">
-          <div className="grid grid-cols-3 gap-3 items-center">
+        <div className="lg:col-span-2 lg:row-span-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5">
+          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 items-start lg:items-center">
             {/* Column 1: Settings Management heading */}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Settings Management</h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Settings Management</h1>
             </div>
 
             {/* Column 2: Queue Monitor Button */}
-            <div className="flex justify-center">
+            <div className="flex justify-start lg:justify-center w-full lg:w-auto">
               <button
                 onClick={() => window.open('/admin/admissions/queue-monitor', '_blank')}
-                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 flex items-center space-x-1.5"
+                className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 flex items-center space-x-1 sm:space-x-1.5"
               >
-                <MdMonitor className="text-lg" />
+                <MdMonitor className="text-base sm:text-lg" />
                 <span>Open Queue Monitor</span>
               </button>
             </div>
 
             {/* Column 3: Warning banner when queueing is enabled */}
-            <div className="flex justify-end">
+            <div className="flex justify-start lg:justify-end w-full lg:w-auto">
               {isQueueingEnabled && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 flex items-center space-x-1.5 max-w-md">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 sm:p-2.5 flex items-center space-x-1 sm:space-x-1.5 max-w-md">
                   <div className="flex-shrink-0">
-                    <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-[10px] font-medium text-yellow-800">Settings Locked</h3>
-                    <p className="text-[10px] text-yellow-700">
+                    <h3 className="text-[9px] sm:text-[10px] font-medium text-yellow-800">Settings Locked</h3>
+                    <p className="text-[9px] sm:text-[10px] text-yellow-700">
                       Management disabled while queueing is active.
                     </p>
                   </div>
@@ -1440,11 +1440,11 @@ const Settings = () => {
         </div>
 
         {/* Second div: Row 2, Column 1 only - Toggle Section */}
-        <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-5 flex items-center justify-between">
+        <div className="lg:col-span-1 lg:row-span-1 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-base font-medium text-gray-900">Tap to Enable Queueing</span>
+            <span className="text-sm sm:text-base font-medium text-gray-900">Tap to Enable Queueing</span>
             {(isToggling || toggleCooldown > 0) && (
-              <span className="text-xs text-gray-500 mt-0.5">
+              <span className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
                 {isToggling ? 'Processing...' : `Wait ${toggleCooldown}s before next toggle`}
               </span>
             )}
@@ -1452,7 +1452,7 @@ const Settings = () => {
           <button
             onClick={handleToggleQueueing}
             disabled={isToggling || toggleCooldown > 0}
-            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none ${
+            className={`relative inline-flex h-6 w-12 sm:h-7 sm:w-14 items-center rounded-full transition-colors focus:outline-none ${
               isToggling || toggleCooldown > 0
                 ? 'opacity-50 cursor-not-allowed bg-gray-300'
                 : isQueueingEnabled
@@ -1461,54 +1461,54 @@ const Settings = () => {
             }`}
           >
             <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                isQueueingEnabled ? 'translate-x-8' : 'translate-x-1'
+              className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white transition-transform ${
+                isQueueingEnabled ? 'translate-x-7 sm:translate-x-8' : 'translate-x-1'
               }`}
             />
             {isToggling && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
           </button>
         </div>
 
         {/* Third div: Column 1, spanning rows 3-4 - Services Section */}
-        <div className="col-span-1 row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-5 flex flex-col">
+        <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex flex-col">
           {/* Row 1: Header */}
-          <div className="mb-3">
-            <h2 className="text-xl font-semibold text-gray-900">Services</h2>
+          <div className="mb-2 sm:mb-2.5 md:mb-3">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900">Services</h2>
           </div>
 
           {/* Row 2: Content Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto mb-3 space-y-1.5">
+          <div className="flex-1 overflow-y-auto mb-2 sm:mb-2.5 md:mb-3 space-y-1 sm:space-y-1.5">
             {loading ? (
-              <div className="flex items-center justify-center py-6">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1F3463]"></div>
+              <div className="flex items-center justify-center py-4 sm:py-5 md:py-6">
+                <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-[#1F3463]"></div>
               </div>
             ) : services.length === 0 ? (
-              <div className="text-center py-6 text-sm text-gray-500">
+              <div className="text-center py-4 sm:py-5 md:py-6 text-xs sm:text-sm text-gray-500">
                 No services available. Add a service to get started.
               </div>
             ) : (
               (services || []).map((service) => (
                 <div
                   key={service.id}
-                  className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                  className="p-2 sm:p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
                 >
-                  <div className="flex items-center space-x-2.5">
-                    <span className="text-sm text-gray-900 font-medium">{service.name}</span>
+                  <div className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-2.5">
+                    <span className="text-xs sm:text-sm text-gray-900 font-medium">{service.name}</span>
                     {!service.isActive && (
-                      <span className="px-1.5 py-0.5 text-[10px] bg-gray-200 text-gray-600 rounded-full">
+                      <span className="px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] bg-gray-200 text-gray-600 rounded-full">
                         Inactive
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center space-x-1.5">
+                  <div className="flex items-center space-x-1 sm:space-x-1.5">
                     <button
                       onClick={() => handleRemoveService(service.id)}
                       disabled={isQueueingEnabled}
-                      className={`p-1 rounded-lg transition-colors ${
+                      className={`p-0.5 sm:p-1 rounded-lg transition-colors ${
                         isQueueingEnabled
                           ? 'opacity-50 cursor-not-allowed text-gray-400'
                           : 'text-red-500 hover:text-red-600 hover:bg-red-50'
@@ -1519,7 +1519,7 @@ const Settings = () => {
                           : 'Remove Service'
                       }
                     >
-                      <AiOutlineMinusCircle className="text-base" />
+                      <AiOutlineMinusCircle className="text-sm sm:text-base" />
                     </button>
                   </div>
                 </div>
@@ -1531,7 +1531,7 @@ const Settings = () => {
           <button
             onClick={handleAddService}
             disabled={isQueueingEnabled}
-            className={`flex items-center justify-center space-x-1.5 p-2.5 text-sm text-white rounded-lg transition-colors ${
+            className={`flex items-center justify-center space-x-1 sm:space-x-1.5 p-2 sm:p-2.5 text-xs sm:text-sm text-white rounded-lg transition-colors ${
               isQueueingEnabled
                 ? 'opacity-50 cursor-not-allowed'
                 : 'hover:opacity-90'
@@ -1539,18 +1539,18 @@ const Settings = () => {
             style={{ backgroundColor: '#1F3463' }}
             title={isQueueingEnabled ? 'Cannot add services while queueing is active' : 'Add Service'}
           >
-            <MdAdd className="text-lg" />
+            <MdAdd className="text-base sm:text-lg" />
             <span className="font-medium">Add Service</span>
           </button>
         </div>
 
         {/* Fourth div: Column 2, spanning rows 2-4 - Windows Management Section */}
-        <div className="col-start-2 row-start-2 row-span-3 bg-white rounded-xl border border-gray-300 shadow-md p-5 flex flex-col">
+        <div className="lg:col-start-2 lg:row-start-2 lg:row-span-3 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex flex-col">
           {/* Row 1: Table Header */}
-          <div className="mb-3">
-            <div className="grid grid-cols-3 gap-3 items-center p-2.5">
-              <div className="font-bold text-sm text-gray-900">Window</div>
-              <div className="font-bold text-sm text-gray-900">Service & Admin</div>
+          <div className="mb-2 sm:mb-2.5 md:mb-3">
+            <div className="hidden md:grid md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 items-center p-2 sm:p-2.5">
+              <div className="font-bold text-xs sm:text-sm text-gray-900">Window</div>
+              <div className="font-bold text-xs sm:text-sm text-gray-900">Service & Admin</div>
               <div className="relative">
                 <LocationAutocomplete
                   value={locationText}
@@ -1564,41 +1564,50 @@ const Settings = () => {
                 />
               </div>
             </div>
+            {/* Mobile header with location */}
+            <div className="md:hidden space-y-2">
+              <h3 className="font-bold text-sm text-gray-900">Windows</h3>
+              <LocationAutocomplete
+                value={locationText}
+                onChange={setLocationText}
+                onSave={handleLocationUpdate}
+                disabled={isQueueingEnabled}
+                isUpdating={isUpdatingLocation}
+                placeholder="Enter office location..."
+                initialValue={initialState.locationText}
+                showWarning={showWarning}
+              />
+            </div>
           </div>
 
           {/* Rows 2-5: Container for displaying added windows - Fixed height for exactly 4 windows */}
-          <div className="flex-1 flex flex-col space-y-2.5" style={{ height: 'calc(100% - 3.5rem)' }}>
+          <div className="flex-1 flex flex-col space-y-1.5 sm:space-y-2 md:space-y-2.5 overflow-y-auto lg:h-[calc(100%-3.5rem)]">
             {(windows || []).slice(0, 4).map((window) => (
               <div
                 key={window.id}
-                className="grid grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0"
-                style={{ height: 'calc((100% - 0.625rem * 3) / 4)' }}
+                className="flex flex-col md:grid md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0"
               >
-                {/* Column 1: Window name */}
-                <div className="flex items-center">
-                  <span className="font-bold text-sm text-gray-900">{window.name}</span>
+                {/* Desktop view */}
+                <div className="hidden md:flex items-center">
+                  <span className="font-bold text-xs sm:text-sm text-gray-900">{window.name}</span>
                 </div>
 
-                {/* Column 2: Split into 2 rows */}
-                <div className="flex flex-col justify-center space-y-0.5">
-                  {/* Row 1: Services */}
+                <div className="hidden md:flex flex-col justify-center space-y-0.5">
                   <ServiceDisplay
                     services={window.serviceIds || []}
                     totalServices={services.length}
                     isPriority={window.name === 'Priority'}
                   />
-                  {/* Row 2: Admin user email */}
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs sm:text-sm text-gray-600">
                     {window.assignedAdmin?.email || 'No admin assigned'}
                   </div>
                 </div>
 
-                {/* Column 3: Two React Icons side-by-side */}
-                <div className="flex items-center justify-center space-x-2.5">
+                <div className="hidden md:flex items-center justify-center space-x-2 sm:space-x-2.5">
                   <button
                     onClick={() => !isQueueingEnabled && handleToggleWindow(window.id)}
                     disabled={isQueueingEnabled}
-                    className={`p-1.5 rounded-lg transition-colors ${
+                    className={`p-1 sm:p-1.5 rounded-lg transition-colors ${
                       isQueueingEnabled
                         ? 'opacity-50 cursor-not-allowed text-gray-400'
                         : window.isOpen
@@ -1612,15 +1621,15 @@ const Settings = () => {
                     }
                   >
                     {window.isOpen ? (
-                      <AiOutlineEye className="text-xl" />
+                      <AiOutlineEye className="text-lg sm:text-xl" />
                     ) : (
-                      <AiOutlineEyeInvisible className="text-xl" />
+                      <AiOutlineEyeInvisible className="text-lg sm:text-xl" />
                     )}
                   </button>
                   <button
                     onClick={() => handleConfigureWindow(window.id)}
                     disabled={isQueueingEnabled}
-                    className={`p-1.5 rounded-lg transition-colors ${
+                    className={`p-1 sm:p-1.5 rounded-lg transition-colors ${
                       isQueueingEnabled
                         ? 'opacity-50 cursor-not-allowed text-gray-400'
                         : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
@@ -1631,8 +1640,62 @@ const Settings = () => {
                         : 'Configure Window'
                     }
                   >
-                    <LuSettings2 className="text-2xl" />
+                    <LuSettings2 className="text-xl sm:text-2xl" />
                   </button>
+                </div>
+
+                {/* Mobile card view */}
+                <div className="md:hidden w-full space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Window</span>
+                      <span className="font-bold text-sm text-gray-900">{window.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-1.5">
+                      <button
+                        onClick={() => !isQueueingEnabled && handleToggleWindow(window.id)}
+                        disabled={isQueueingEnabled}
+                        className={`p-1 rounded-lg transition-colors ${
+                          isQueueingEnabled
+                            ? 'opacity-50 cursor-not-allowed text-gray-400'
+                            : window.isOpen
+                            ? 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {window.isOpen ? (
+                          <AiOutlineEye className="text-lg" />
+                        ) : (
+                          <AiOutlineEyeInvisible className="text-lg" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleConfigureWindow(window.id)}
+                        disabled={isQueueingEnabled}
+                        className={`p-1 rounded-lg transition-colors ${
+                          isQueueingEnabled
+                            ? 'opacity-50 cursor-not-allowed text-gray-400'
+                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                        }`}
+                      >
+                        <LuSettings2 className="text-xl" />
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Services</span>
+                    <ServiceDisplay
+                      services={window.serviceIds || []}
+                      totalServices={services.length}
+                      isPriority={window.name === 'Priority'}
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Admin</span>
+                    <div className="text-xs text-gray-600">
+                      {window.assignedAdmin?.email || 'No admin assigned'}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1643,19 +1706,18 @@ const Settings = () => {
                 key={`placeholder-${index}`}
                 onClick={openAddWindowModal}
                 disabled={isQueueingEnabled}
-                className={`border-2 border-dashed rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                className={`border-2 border-dashed rounded-lg flex items-center justify-center flex-shrink-0 transition-colors min-h-[80px] sm:min-h-[100px] ${
                   isQueueingEnabled
                     ? 'border-gray-200 text-gray-300 cursor-not-allowed'
                     : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500 hover:bg-gray-50'
                 }`}
-                style={{ height: 'calc((100% - 0.75rem * 3) / 4)' }}
                 title={
                   isQueueingEnabled
                     ? 'Cannot add windows while queueing is active'
                     : 'Add new window'
                 }
               >
-                <span className="text-base font-medium">
+                <span className="text-xs sm:text-sm md:text-base font-medium">
                   {isQueueingEnabled ? 'Locked' : 'Available Window Slot'}
                 </span>
               </button>

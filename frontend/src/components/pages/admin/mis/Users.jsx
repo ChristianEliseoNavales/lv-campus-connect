@@ -650,14 +650,14 @@ const Users = () => {
       )}
 
       {/* Main Content Container - White background similar to Settings.jsx */}
-      <div className="bg-white p-5 border border-gray-200 rounded-xl">
+      <div className="bg-white p-3 sm:p-4 md:p-5 border border-gray-200 rounded-xl sm:rounded-2xl">
 
         {/* Row 1 - Header */}
-        <div className="mb-5">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">User Management</h1>
+        <div className="mb-3 sm:mb-4 md:mb-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">User Management</h1>
             <div className="flex items-center space-x-1">
-              <p className="text-[8px] text-gray-500 uppercase tracking-wide">
+              <p className="text-[8px] sm:text-[9px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
@@ -667,7 +667,7 @@ const Users = () => {
                 title="Refresh users"
               >
                 <IoMdRefresh
-                  className={`w-4 h-4 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -675,16 +675,16 @@ const Users = () => {
         </div>
 
         {/* Row 2 - Controls */}
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 mb-3 sm:mb-4 md:mb-5">
           {/* Left side - Pagination Control */}
           <div className="flex items-center space-x-1.5">
-            <span className="text-sm text-gray-700 font-medium">Showing</span>
+            <span className="text-xs sm:text-sm text-gray-700 font-medium">Showing</span>
             <div className="flex items-center space-x-1">
               <input
                 type="number"
                 value={usersPerPage}
                 onChange={(e) => setUsersPerPage(Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-12 px-1.5 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
@@ -693,40 +693,40 @@ const Users = () => {
                   onClick={() => handleUsersPerPageChange(1)}
                   className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-sm" />
+                  <MdKeyboardArrowUp className="text-xs sm:text-sm" />
                 </button>
                 <button
                   onClick={() => handleUsersPerPageChange(-1)}
                   className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-sm" />
+                  <MdKeyboardArrowDown className="text-xs sm:text-sm" />
                 </button>
               </div>
             </div>
-            <span className="text-sm text-gray-700 font-medium">Users</span>
+            <span className="text-xs sm:text-sm text-gray-700 font-medium">Users</span>
           </div>
 
           {/* Right side - Search, Filter dropdown, Add button */}
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             {/* Search */}
-            <div className="relative">
-              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+            <div className="relative flex-1 sm:flex-initial">
+              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-base sm:text-lg" />
               <input
                 type="text"
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-full sm:w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
             <div className="flex items-center space-x-1.5">
-              <label className="text-sm text-gray-700 font-medium">Filter by:</label>
+              <label className="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Filter by:</label>
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
-                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-sm"
+                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-xs sm:text-sm"
               >
                 <option value="all">All</option>
                 <option value="active">Active</option>
@@ -740,7 +740,7 @@ const Users = () => {
             {/* Add Button */}
             <button
               onClick={openAddModal}
-              className="px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-sm font-semibold"
+              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-xs sm:text-sm font-semibold"
             >
               + Add User
             </button>
@@ -751,9 +751,9 @@ const Users = () => {
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           {loading ? (
             <>
-              {/* Table Header */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
-                <div className="grid grid-cols-5 gap-3 text-xs font-medium text-gray-700 w-full">
+              {/* Table Header - Hidden on mobile, shown on md+ */}
+              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs font-medium text-gray-700 w-full">
                   <div>Name</div>
                   <div>Email</div>
                   <div>Office</div>
@@ -765,19 +765,19 @@ const Users = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-5 py-3 h-12 flex items-center animate-pulse">
-                    <div className="grid grid-cols-5 gap-3 items-center w-full">
+                  <div key={index} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 flex items-center animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2 sm:gap-3 items-center w-full">
                       {/* Name Skeleton */}
                       <div className="h-3 bg-gray-200 rounded w-28"></div>
 
-                      {/* Email Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-32"></div>
+                      {/* Email Skeleton - Hidden on mobile */}
+                      <div className="hidden md:block h-3 bg-gray-200 rounded w-32"></div>
 
-                      {/* Office Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      {/* Office Skeleton - Hidden on mobile */}
+                      <div className="hidden md:block h-3 bg-gray-200 rounded w-20"></div>
 
-                      {/* Role Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-24"></div>
+                      {/* Role Skeleton - Hidden on mobile */}
+                      <div className="hidden md:block h-3 bg-gray-200 rounded w-24"></div>
 
                       {/* Action Skeleton */}
                       <div className="h-3 bg-gray-200 rounded w-5"></div>
@@ -787,16 +787,16 @@ const Users = () => {
               </div>
             </>
           ) : currentUsers.length === 0 ? (
-            <div className="text-center py-10">
-              <MdPerson className="text-5xl text-gray-300 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No users found</h3>
-              <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+            <div className="text-center py-8 sm:py-10">
+              <MdPerson className="text-4xl sm:text-5xl text-gray-300 mx-auto mb-2 sm:mb-3" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-1.5">No users found</h3>
+              <p className="text-xs sm:text-sm text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
-              {/* Table Header */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
-                <div className="grid grid-cols-5 gap-3 text-sm font-bold text-gray-700 w-full">
+              {/* Table Header - Hidden on mobile, shown on md+ */}
+              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
                   <div>Name</div>
                   <div>Email</div>
                   <div>Office</div>
@@ -808,36 +808,42 @@ const Users = () => {
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
                 {currentUsers.map((user) => (
-                  <div key={user._id} className="px-5 py-3 hover:bg-gray-50 transition-colors h-12 flex items-center">
-                    <div className="grid grid-cols-5 gap-3 items-center w-full">
+                  <div key={user._id} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 hover:bg-gray-50 transition-colors flex items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
+                      {/* Mobile: Stacked layout, Desktop: Grid layout */}
+
                       {/* Name */}
-                      <div className="text-sm font-bold text-gray-900 truncate" title={user.name}>
+                      <div className="text-xs sm:text-sm font-bold text-gray-900 truncate" title={user.name}>
+                        <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Name</span>
                         {user.name}
                       </div>
 
                       {/* Email */}
-                      <div className="text-sm font-medium text-gray-900 truncate" title={user.email}>
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={user.email}>
+                        <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Email</span>
                         {user.email}
                       </div>
 
                       {/* Office */}
-                      <div className="text-sm font-medium text-gray-900 truncate" title={user.office || 'N/A'}>
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={user.office || 'N/A'}>
+                        <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Office</span>
                         {user.office || 'N/A'}
                       </div>
 
                       {/* Role */}
-                      <div className="text-sm font-medium text-gray-900 truncate" title={user.role || 'N/A'}>
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={user.role || 'N/A'}>
+                        <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Role</span>
                         {user.role || 'N/A'}
                       </div>
 
                       {/* Action */}
-                      <div className="text-xs">
+                      <div className="text-xs mt-2 md:mt-0">
                         <button
                           onClick={() => openEditModal(user)}
                           className="text-[#1F3463] hover:text-[#1F3463]/80 p-0.5 rounded"
                           title="Edit user"
                         >
-                          <FiEdit3 className="h-4 w-4" />
+                          <FiEdit3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
                       </div>
                     </div>
@@ -850,22 +856,22 @@ const Users = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-5 flex items-center justify-between">
-            <div className="text-xs text-gray-700">
+          <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+            <div className="text-[10px] sm:text-xs text-gray-700 order-2 sm:order-1">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
             </div>
-            <div className="flex items-center space-x-1.5">
+            <div className="flex items-center space-x-1.5 order-1 sm:order-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
 
               {/* Current Page Number */}
               <button
-                className="px-2.5 py-1.5 text-xs font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
               >
                 {currentPage}
               </button>
@@ -873,7 +879,7 @@ const Users = () => {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -885,13 +891,13 @@ const Users = () => {
       {/* Add/Edit User Modal */}
       {showAddEditModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-          <div className="bg-white rounded-lg p-5 w-full max-w-2xl mx-3 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-3 sm:p-4">
+          <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">
               {editingUser ? 'Edit User' : 'Add New User'}
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
               {/* Name */}
               <div>
                 <label className="block text-xs font-medium text-gray-900 mb-1.5">
@@ -1062,11 +1068,11 @@ const Users = () => {
               )}
 
               {/* Form Actions */}
-              <div className="flex justify-end space-x-2.5 pt-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2.5 pt-3">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-3 py-1.5 text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors order-2 sm:order-1"
                   disabled={isSubmitting}
                 >
                   Cancel
@@ -1074,7 +1080,7 @@ const Users = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-3 py-1.5 text-sm text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
+                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 order-1 sm:order-2"
                   style={{ backgroundColor: '#1F3463' }}
                 >
                   {isSubmitting ? 'Saving...' : (editingUser ? 'Update User' : 'Create User')}

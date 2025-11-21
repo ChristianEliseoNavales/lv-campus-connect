@@ -212,16 +212,16 @@ const AuditTrail = () => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 sm:space-y-4 md:space-y-5">
       {/* Main Content Container - White background similar to Settings.jsx */}
-      <div className="bg-white p-5 border border-gray-200 rounded-xl">
+      <div className="bg-white p-3 sm:p-4 md:p-5 border border-gray-200 rounded-xl sm:rounded-2xl">
 
         {/* Row 1 - Header */}
-        <div className="mb-5">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Audit Trail</h1>
+        <div className="mb-3 sm:mb-4 md:mb-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Audit Trail</h1>
             <div className="flex items-center space-x-1">
-              <p className="text-[8px] text-gray-500 uppercase tracking-wide">
+              <p className="text-[8px] sm:text-[9px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
@@ -231,7 +231,7 @@ const AuditTrail = () => {
                 title="Refresh audit logs"
               >
                 <IoMdRefresh
-                  className={`w-5 h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -239,16 +239,16 @@ const AuditTrail = () => {
         </div>
 
         {/* Row 2 - Controls */}
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 mb-3 sm:mb-4 md:mb-5">
           {/* Left side - Pagination Control */}
           <div className="flex items-center space-x-1.5">
-            <span className="text-sm text-gray-700 font-medium">Showing</span>
+            <span className="text-xs sm:text-sm text-gray-700 font-medium">Showing</span>
             <div className="flex items-center space-x-1">
               <input
                 type="number"
                 value={logsPerPage}
                 onChange={(e) => updateState('logsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-12 px-1.5 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
@@ -257,24 +257,24 @@ const AuditTrail = () => {
                   onClick={() => handleLogsPerPageChange(1)}
                   className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-sm" />
+                  <MdKeyboardArrowUp className="text-xs sm:text-sm" />
                 </button>
                 <button
                   onClick={() => handleLogsPerPageChange(-1)}
                   className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-sm" />
+                  <MdKeyboardArrowDown className="text-xs sm:text-sm" />
                 </button>
               </div>
             </div>
-            <span className="text-sm text-gray-700 font-medium">Logs</span>
+            <span className="text-xs sm:text-sm text-gray-700 font-medium">Logs</span>
           </div>
 
           {/* Right side - Date Filter, Search, Filter dropdown */}
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             {/* Date Filter */}
             <div className="flex items-center space-x-1.5">
-              <label className="text-sm text-gray-700 font-medium">Date:</label>
+              <label className="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Date:</label>
               <DatePicker
                 value={selectedDate}
                 onChange={(date) => updateState('selectedDate', date)}
@@ -283,24 +283,24 @@ const AuditTrail = () => {
             </div>
 
             {/* Search */}
-            <div className="relative">
-              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+            <div className="relative flex-1 sm:flex-initial">
+              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-base sm:text-lg" />
               <input
                 type="text"
                 placeholder="Search logs..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-full sm:w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
             <div className="flex items-center space-x-1.5">
-              <label className="text-sm text-gray-700 font-medium">Filter by:</label>
+              <label className="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Filter by:</label>
               <select
                 value={filterBy}
                 onChange={(e) => updateState('filterBy', e.target.value)}
-                className="px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               >
                 <option value="all">All Actions</option>
                 <option value="user_actions">User Management</option>
@@ -330,11 +330,11 @@ const AuditTrail = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-5 py-3 h-12 flex items-center animate-pulse">
-                    <div className="grid grid-cols-5 gap-3 items-center w-full">
+                  <div key={index} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 flex items-center animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2 sm:gap-3 items-center w-full">
                       <div className="h-3 bg-gray-200 rounded w-12"></div>
-                      <div className="h-3 bg-gray-200 rounded w-16"></div>
-                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      <div className="hidden md:block h-3 bg-gray-200 rounded w-16"></div>
+                      <div className="hidden md:block h-3 bg-gray-200 rounded w-20"></div>
                       <div className="h-3 bg-gray-200 rounded w-32"></div>
                       <div className="h-5 bg-gray-200 rounded-full w-12"></div>
                     </div>
@@ -343,16 +343,16 @@ const AuditTrail = () => {
               </div>
             </>
           ) : currentLogs.length === 0 ? (
-            <div className="text-center py-10">
-              <MdHistory className="text-5xl text-gray-300 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No audit logs found</h3>
-              <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+            <div className="text-center py-8 sm:py-10">
+              <MdHistory className="text-4xl sm:text-5xl text-gray-300 mx-auto mb-2 sm:mb-3" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-1.5">No audit logs found</h3>
+              <p className="text-xs sm:text-sm text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
-              {/* Table Header */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
-                <div className="grid grid-cols-5 gap-3 text-sm font-bold text-gray-700 w-full">
+              {/* Table Header - Hidden on mobile, shown on md+ */}
+              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>User</div>
@@ -366,32 +366,37 @@ const AuditTrail = () => {
                 {currentLogs.map((log) => {
                   const { time, date } = formatDateTime(log.createdAt);
                   return (
-                    <div key={log._id} className="px-5 py-3 hover:bg-gray-50 transition-colors h-12 flex items-center">
-                      <div className="grid grid-cols-5 gap-3 items-center w-full">
+                    <div key={log._id} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 hover:bg-gray-50 transition-colors flex items-center">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
                         {/* Time */}
-                        <div className="text-sm font-bold text-gray-900 truncate">
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                          <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Time</span>
                           {time}
                         </div>
 
                         {/* Date */}
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                          <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Date</span>
                           {date}
                         </div>
 
                         {/* User */}
-                        <div className="text-sm font-medium text-gray-900 truncate" title={log.userName || 'Unknown User'}>
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={log.userName || 'Unknown User'}>
+                          <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">User</span>
                           {log.userName || 'Unknown User'}
                         </div>
 
                         {/* Activity */}
-                        <div className="text-sm font-medium text-gray-900 truncate" title={log.actionDescription}>
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={log.actionDescription}>
+                          <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Activity</span>
                           {log.actionDescription}
                         </div>
 
                         {/* Department */}
                         <div className="truncate">
+                          <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Department</span>
                           {log.department && (
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${getDepartmentColor(log.department)}`}>
+                            <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${getDepartmentColor(log.department)}`}>
                               {log.department}
                             </span>
                           )}
@@ -407,25 +412,25 @@ const AuditTrail = () => {
 
         {/* Pagination */}
         {!loading && filteredLogs.length > 0 && (
-          <div className="flex items-center justify-between mt-5">
-            <div className="text-sm text-gray-700 font-medium">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 mt-3 sm:mt-4 md:mt-5">
+            <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
               Showing {startIndex + 1} to {Math.min(startIndex + logsPerPage, filteredLogs.length)} of {filteredLogs.length} logs
             </div>
-            <div className="flex items-center space-x-1.5">
+            <div className="flex items-center space-x-1.5 order-1 sm:order-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
-              <span className="px-2.5 py-1.5 text-sm font-semibold text-gray-700">
+              <span className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-semibold text-gray-700">
                 Page {currentPage} of {totalPages}
               </span>
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1.5 text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

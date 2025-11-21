@@ -44,10 +44,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.indexOf(origin) !== -1) {
-      // Only log CORS in development or debug mode to prevent spam
-      if (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') {
-        console.log('✅ CORS allowed for origin:', origin);
-      }
+      // CORS logging disabled to prevent spam
+      // Only log blocked origins for security monitoring
       callback(null, true);
     } else {
       console.warn('⚠️ CORS blocked for origin:', origin);

@@ -156,33 +156,33 @@ const AdmissionsAdminDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-3 sm:space-y-4 md:space-y-5">
         {/* Welcome Section Skeleton */}
         <div>
-          <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
+          <div className="h-5 sm:h-6 bg-gray-200 rounded w-32 sm:w-40 animate-pulse"></div>
         </div>
 
         {/* Dashboard Grid Skeleton */}
-        <div className="grid grid-cols-3 gap-5 min-h-[480px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 min-h-[480px]">
           {/* Row 1 - Upper row (40% height) */}
           <div className="col-span-1">
             {/* Window & Incoming Queue Table Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
-              <div className="space-y-1.5">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full">
+              <div className="space-y-1 sm:space-y-1.5">
                 {/* Header Row Skeleton */}
                 <div className="bg-gray-300 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
-                  <div className="px-3 py-2.5 h-8"></div>
-                  <div className="px-3 py-2.5 h-8"></div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 h-7 sm:h-8"></div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 h-7 sm:h-8"></div>
                 </div>
 
                 {/* Data Rows Skeleton */}
                 {[...Array(4)].map((_, index) => (
                   <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
-                    <div className="px-3 py-2.5">
-                      <div className="h-3 bg-gray-200 rounded w-12 mx-auto"></div>
+                    <div className="px-2 sm:px-3 py-2 sm:py-2.5">
+                      <div className="h-3 bg-gray-200 rounded w-10 sm:w-12 mx-auto"></div>
                     </div>
-                    <div className="px-3 py-2.5">
-                      <div className="h-3 bg-gray-200 rounded w-6 mx-auto"></div>
+                    <div className="px-2 sm:px-3 py-2 sm:py-2.5">
+                      <div className="h-3 bg-gray-200 rounded w-5 sm:w-6 mx-auto"></div>
                     </div>
                   </div>
                 ))}
@@ -192,22 +192,22 @@ const AdmissionsAdminDashboard = () => {
 
           <div className="col-span-1">
             {/* Window & Now Serving Table Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
-              <div className="space-y-1.5">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full">
+              <div className="space-y-1 sm:space-y-1.5">
                 {/* Header Row Skeleton */}
                 <div className="bg-gray-300 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
-                  <div className="px-3 py-2.5 h-8"></div>
-                  <div className="px-3 py-2.5 h-8"></div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 h-7 sm:h-8"></div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 h-7 sm:h-8"></div>
                 </div>
 
                 {/* Data Rows Skeleton */}
                 {[...Array(4)].map((_, index) => (
                   <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
-                    <div className="px-3 py-2.5">
-                      <div className="h-3 bg-gray-200 rounded w-12 mx-auto"></div>
+                    <div className="px-2 sm:px-3 py-2 sm:py-2.5">
+                      <div className="h-3 bg-gray-200 rounded w-10 sm:w-12 mx-auto"></div>
                     </div>
-                    <div className="px-3 py-2.5">
-                      <div className="h-3 bg-gray-200 rounded w-6 mx-auto"></div>
+                    <div className="px-2 sm:px-3 py-2 sm:py-2.5">
+                      <div className="h-3 bg-gray-200 rounded w-5 sm:w-6 mx-auto"></div>
                     </div>
                   </div>
                 ))}
@@ -215,33 +215,33 @@ const AdmissionsAdminDashboard = () => {
             </div>
           </div>
 
-          <div className="col-span-1 grid grid-rows-2 gap-2.5">
+          <div className="col-span-1 grid grid-rows-2 gap-2 sm:gap-2.5">
             {/* Statistics Cards Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 flex flex-col justify-center items-center">
-              <div className="w-12 h-10 bg-gray-300 rounded mb-1.5 animate-pulse"></div>
-              <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col justify-center items-center">
+              <div className="w-10 h-8 sm:w-12 sm:h-10 bg-gray-300 rounded mb-1 sm:mb-1.5 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-14 sm:w-16 animate-pulse"></div>
             </div>
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 flex flex-col justify-center items-center">
-              <div className="w-16 h-10 bg-gray-300 rounded mb-1.5 animate-pulse"></div>
-              <div className="h-3 bg-gray-200 rounded w-28 animate-pulse"></div>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col justify-center items-center">
+              <div className="w-14 h-8 sm:w-16 sm:h-10 bg-gray-300 rounded mb-1 sm:mb-1.5 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-24 sm:w-28 animate-pulse"></div>
             </div>
           </div>
 
           {/* Row 2 - Lower row (60% height) */}
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             {/* Area Chart Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
-              <div className="h-5 bg-gray-200 rounded w-32 mb-3 animate-pulse"></div>
-              <div className="bg-gray-100 rounded-lg animate-pulse"></div>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full min-h-[300px]">
+              <div className="h-4 sm:h-5 bg-gray-200 rounded w-28 sm:w-32 mb-2 sm:mb-3 animate-pulse"></div>
+              <div className="bg-gray-100 rounded-lg animate-pulse h-full"></div>
             </div>
           </div>
 
           <div className="col-span-1">
             {/* Pie Chart Skeleton */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
-              <div className="h-5 bg-gray-200 rounded w-28 mb-3 animate-pulse"></div>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full min-h-[300px]">
+              <div className="h-4 sm:h-5 bg-gray-200 rounded w-24 sm:w-28 mb-2 sm:mb-3 animate-pulse"></div>
               <div className="flex items-center justify-center h-full">
-                <div className="w-40 h-40 bg-gray-100 rounded-full animate-pulse"></div>
+                <div className="w-32 h-32 sm:w-40 sm:h-40 bg-gray-100 rounded-full animate-pulse"></div>
               </div>
             </div>
           </div>
@@ -251,15 +251,15 @@ const AdmissionsAdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 sm:space-y-4 md:space-y-5">
       {/* Welcome Section */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-[#1F3463] tracking-tight">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">
           Queue Monitoring
         </h1>
         <button
           onClick={() => setIsDateRangeModalOpen(true)}
-          className="px-5 py-2.5 bg-[#1F3463] text-white rounded-lg text-sm font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
+          className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1F3463] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
         >
           View Analytic Report
         </button>
@@ -286,23 +286,23 @@ const AdmissionsAdminDashboard = () => {
       />
 
       {/* New Grid Layout - 2 rows (40%/60%), 3 columns */}
-      <div className="grid grid-cols-3 gap-5 min-h-[480px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5" style={{ gridTemplateRows: 'auto auto' }}>
         {/* Row 1 - Upper row (40% height) */}
         <div className="col-span-1">
           {/* Row 1, Column 1 - Window & Incoming Queue Table */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
-            <div className="space-y-1.5">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full">
+            <div className="space-y-1 sm:space-y-1.5">
               {/* Header Row */}
               <div className="bg-[#1F3463] text-white rounded-lg grid grid-cols-2 gap-0">
-                <div className="px-3 py-2.5 text-center text-sm font-bold">Window</div>
-                <div className="px-3 py-2.5 text-center text-sm font-bold">Incoming Number</div>
+                <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold">Window</div>
+                <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold">Incoming Number</div>
               </div>
 
               {/* Data Rows */}
               {tableData.windows.slice(0, 4).map((window, index) => (
                 <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-3 py-2.5 text-sm text-gray-900 font-medium text-center">{window.windowName}</div>
-                  <div className="px-3 py-2.5 text-sm text-gray-900 font-bold text-center">
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-900 font-medium text-center">{window.windowName}</div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-900 font-bold text-center">
                     {window.incomingNumber > 0 ? window.incomingNumber : '-'}
                   </div>
                 </div>
@@ -311,8 +311,8 @@ const AdmissionsAdminDashboard = () => {
               {/* Fill remaining rows if less than 4 windows */}
               {Array.from({ length: Math.max(0, 4 - tableData.windows.length) }).map((_, index) => (
                 <div key={`empty-${index}`} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-3 py-2.5 text-sm text-gray-400 text-center">-</div>
-                  <div className="px-3 py-2.5 text-sm text-gray-400 text-center">-</div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-400 text-center">-</div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-400 text-center">-</div>
                 </div>
               ))}
             </div>
@@ -321,19 +321,19 @@ const AdmissionsAdminDashboard = () => {
 
         <div className="col-span-1">
           {/* Row 1, Column 2 - Window & Now Serving Table */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 h-full">
-            <div className="space-y-1.5">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full">
+            <div className="space-y-1 sm:space-y-1.5">
               {/* Header Row */}
               <div className="bg-[#1F3463] text-white rounded-lg grid grid-cols-2 gap-0">
-                <div className="px-3 py-2.5 text-center text-sm font-bold">Window</div>
-                <div className="px-3 py-2.5 text-center text-sm font-bold">Now Serving</div>
+                <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold">Window</div>
+                <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold">Now Serving</div>
               </div>
 
               {/* Data Rows */}
               {tableData.windows.slice(0, 4).map((window, index) => (
                 <div key={index} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-3 py-2.5 text-sm text-gray-900 font-medium text-center">{window.windowName}</div>
-                  <div className="px-3 py-2.5 text-sm text-gray-900 font-bold text-center">
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-900 font-medium text-center">{window.windowName}</div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-900 font-bold text-center">
                     {window.currentServingNumber > 0 ? window.currentServingNumber : '-'}
                   </div>
                 </div>
@@ -342,35 +342,35 @@ const AdmissionsAdminDashboard = () => {
               {/* Fill remaining rows if less than 4 windows */}
               {Array.from({ length: Math.max(0, 4 - tableData.windows.length) }).map((_, index) => (
                 <div key={`empty-${index}`} className="bg-gray-100 rounded-lg grid grid-cols-2 gap-0">
-                  <div className="px-3 py-2.5 text-sm text-gray-400 text-center">-</div>
-                  <div className="px-3 py-2.5 text-sm text-gray-400 text-center">-</div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-400 text-center">-</div>
+                  <div className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-400 text-center">-</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="col-span-1 grid grid-rows-2 gap-2.5">
+        <div className="col-span-1 grid grid-rows-2 gap-2 sm:gap-2.5">
           {/* Row 1, Column 3 - Statistics Cards */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 flex flex-col justify-center items-center">
-            <div className="text-3xl font-bold text-[#1F3463] mb-1.5">{tableData.todayVisits}</div>
-            <div className="text-sm text-gray-600 text-center font-medium">Visits Today</div>
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col justify-center items-center">
+            <div className="text-2xl sm:text-3xl font-bold text-[#1F3463] mb-1 sm:mb-1.5">{tableData.todayVisits}</div>
+            <div className="text-xs sm:text-sm text-gray-600 text-center font-medium">Visits Today</div>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5 flex flex-col justify-center items-center">
-            <div className="text-3xl font-bold text-[#1F3463] mb-1.5">{tableData.averageTurnaroundTime}</div>
-            <div className="text-sm text-gray-600 text-center font-medium">Average Turnaround Time</div>
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col justify-center items-center">
+            <div className="text-2xl sm:text-3xl font-bold text-[#1F3463] mb-1 sm:mb-1.5">{tableData.averageTurnaroundTime}</div>
+            <div className="text-xs sm:text-sm text-gray-600 text-center font-medium">Average Turnaround Time</div>
           </div>
         </div>
 
         {/* Row 2 - Lower row (60% height) */}
-        <div className="col-span-2 ">
+        <div className="col-span-1 md:col-span-2">
           {/* Row 2, Columns 1-2 (spanning both columns) - Area Chart */}
           <div className="h-full">
             <RoleAwareAreaChart userRole={user?.role} />
           </div>
         </div>
 
-        <div className="col-span-1 ">
+        <div className="col-span-1">
           {/* Row 2, Column 3 - Pie Chart */}
           <div className="h-full">
             <ChartPieLegend userRole={user?.role} />

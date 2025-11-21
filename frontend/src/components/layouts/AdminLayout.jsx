@@ -36,6 +36,7 @@ const AdminLayout = ({ children }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isQueueExpanded, setIsQueueExpanded] = useState(false);
   const [profilePictureError, setProfilePictureError] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1920);
 
   // Use centralized Socket context
   const { joinRoom, leaveRoom, subscribe } = useSocket();
@@ -47,6 +48,12 @@ const AdminLayout = ({ children }) => {
 
   // Development mode detection - check if using URL-based role switching
   const isDevelopmentMode = user?.id === 'dev-bypass-user';
+
+  // Responsive breakpoint detection
+  // lg: 1024px, xl: 1280px
+  // Auto-collapse sidebar between 1024px and 1280px to prevent toggle button from being blocked
+  const isAutoCollapseBreakpoint = windowWidth >= 1024 && windowWidth < 1280;
+  const isMobileBreakpoint = windowWidth < 1024;
 
   // Reset profile picture error when user changes
   useEffect(() => {
@@ -201,6 +208,29 @@ const AdminLayout = ({ children }) => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  // Window resize listener for responsive breakpoint detection
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Auto-collapse sidebar at breakpoint (1024px - 1280px) to prevent toggle button from being blocked
+  useEffect(() => {
+    if (isAutoCollapseBreakpoint) {
+      setIsSidebarCollapsed(true);
+    } else if (windowWidth >= 1280) {
+      // Auto-expand when there's enough space
+      setIsSidebarCollapsed(false);
+    }
+  }, [isAutoCollapseBreakpoint, windowWidth]);
 
   const handleSignOut = async () => {
     const result = await signOut();
@@ -502,7 +532,7 @@ const AdminLayout = ({ children }) => {
         <img
           src={user.profilePicture}
           alt={user.name || 'User'}
-          className="w-8 h-8 rounded-full object-cover border-2 border-white"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white"
           onError={() => setProfilePictureError(true)}
         />
       );
@@ -510,7 +540,7 @@ const AdminLayout = ({ children }) => {
 
     // Fallback SVG icon
     return (
-      <svg className="w-8 h-8 p-1 rounded-full bg-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-7 h-7 sm:w-8 sm:h-8 p-1 rounded-full bg-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     );
@@ -530,9 +560,20 @@ const AdminLayout = ({ children }) => {
 
   return (
     <div className="min-h-screen admin-layout" style={{ backgroundColor: '#efefef' }}>
-      {/* Sidebar - fixed position, full height, no scrolling */}
+      {/* Overlay - only visible on tablet/mobile when sidebar is open */}
+      {!isSidebarCollapsed && (isMobileBreakpoint || isAutoCollapseBreakpoint) && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 transition-opacity duration-300"
+          onClick={() => setIsSidebarCollapsed(true)}
+        />
+      )}
+
+      {/* Sidebar - fixed position, full height, overlay behavior on tablet/mobile */}
       <div
-        className={`fixed left-0 top-0 h-screen shadow-xl transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-16' : 'w-60'} flex flex-col z-30 rounded-tr-3xl rounded-br-3xl`}
+        className={`fixed left-0 top-0 h-screen shadow-xl transition-all duration-300 ease-in-out flex flex-col rounded-tr-3xl rounded-br-3xl
+          ${isSidebarCollapsed ? '-translate-x-full xl:translate-x-0 xl:w-16' : 'translate-x-0 w-60'}
+          ${isMobileBreakpoint || isAutoCollapseBreakpoint ? 'z-30' : 'z-30'}
+        `}
         style={{
           background: 'linear-gradient(to bottom, #161F55 0%, #161F55 70%, #3044BB 100%)',
           // Ensure smooth transitions by preventing layout shifts
@@ -540,12 +581,12 @@ const AdminLayout = ({ children }) => {
         }}
       >
         {/* Logo Section - centered */}
-        <div className="p-5 flex flex-col items-center">
+        <div className="p-4 sm:p-5 flex flex-col items-center">
           {/* Logo - actual logo image */}
           <img
             src="/logo.png"
             alt="LV Logo"
-            className="w-12 h-12 flex-shrink-0 mb-2 object-contain"
+            className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 mb-1.5 sm:mb-2 object-contain"
           />
           {/* Title with fade animation - centered */}
           <div
@@ -555,23 +596,23 @@ const AdminLayout = ({ children }) => {
                 : 'opacity-100 h-auto transform scale-y-100'
             }`}
           >
-            <h1 className="text-base font-bold text-white whitespace-nowrap text-center font-days-one">LVCampusConnect</h1>
+            <h1 className="text-sm sm:text-base font-bold text-white whitespace-nowrap text-center font-days-one">LVCampusConnect</h1>
           </div>
         </div>
 
         {/* Menu Label - left-aligned */}
         <div
-          className={`px-5 mb-1.5 transition-all duration-300 ease-in-out overflow-hidden ${
+          className={`px-4 sm:px-5 mb-1 sm:mb-1.5 transition-all duration-300 ease-in-out overflow-hidden ${
             isSidebarCollapsed
               ? 'opacity-0 h-0 transform scale-y-0'
               : 'opacity-100 h-auto transform scale-y-100'
           }`}
         >
-          <h2 className="text-xs font-semibold text-white uppercase tracking-wider">Menu</h2>
+          <h2 className="text-[10px] sm:text-xs font-semibold text-white uppercase tracking-wider">Menu</h2>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 space-y-1.5">
+        <nav className="flex-1 px-2.5 sm:px-3 space-y-1 sm:space-y-1.5">
           {navigationItems.map((item) => {
             const IconComponent = item.icon;
 
@@ -584,18 +625,18 @@ const AdminLayout = ({ children }) => {
               const isQueueRoute = location.pathname.includes('/queue');
 
               return (
-                <div key={item.name} className="space-y-1">
+                <div key={item.name} className="space-y-0.5 sm:space-y-1">
                   {/* Parent item - expandable */}
                   <button
                     onClick={() => setIsQueueExpanded(!isQueueExpanded)}
-                    className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2.5'} px-2.5 py-2.5 rounded-2xl transition-all duration-300 ease-in-out ${
+                    className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2 sm:space-x-2.5'} px-2 sm:px-2.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 ease-in-out ${
                       isAnyChildActive || isExpanded || isQueueRoute
                         ? 'bg-white/40 text-white'
                         : 'text-white hover:bg-white/10'
                     }`}
                   >
                     {/* Icon - always visible with fixed width */}
-                    <IconComponent className="text-lg flex-shrink-0" />
+                    <IconComponent className="text-base sm:text-lg flex-shrink-0" />
 
                     {/* Text and chevron with fade and slide animation */}
                     <div
@@ -605,13 +646,13 @@ const AdminLayout = ({ children }) => {
                           : 'opacity-100 w-auto transform translate-x-0'
                       }`}
                     >
-                      <span className="font-medium text-sm whitespace-nowrap text-white">{item.name}</span>
+                      <span className="font-medium text-xs sm:text-sm whitespace-nowrap text-white">{item.name}</span>
                       {!isSidebarCollapsed && (
-                        <div className="ml-1.5">
+                        <div className="ml-1 sm:ml-1.5">
                           {isExpanded ? (
-                            <MdExpandLess className="text-base" />
+                            <MdExpandLess className="text-sm sm:text-base" />
                           ) : (
-                            <MdExpandMore className="text-base" />
+                            <MdExpandMore className="text-sm sm:text-base" />
                           )}
                         </div>
                       )}
@@ -620,20 +661,20 @@ const AdminLayout = ({ children }) => {
 
                   {/* Child items - windows */}
                   {isExpanded && !isSidebarCollapsed && (
-                    <div className="ml-5 space-y-1">
+                    <div className="ml-4 sm:ml-5 space-y-0.5 sm:space-y-1">
                       {item.children?.map((child) => (
                         <NavLink
                           key={child.path}
                           to={child.path}
                           className={({ isActive }) =>
-                            `flex items-center px-2.5 py-1.5 rounded-xl transition-all duration-300 ease-in-out ${
+                            `flex items-center px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-all duration-300 ease-in-out ${
                               isActive
                                 ? 'bg-white/50 text-white'
                                 : 'text-white/80 hover:bg-white/20 hover:text-white'
                             }`
                           }
                         >
-                          <span className="font-medium text-xs">{child.name}</span>
+                          <span className="font-medium text-[10px] sm:text-xs">{child.name}</span>
                         </NavLink>
                       ))}
                     </div>
@@ -649,7 +690,7 @@ const AdminLayout = ({ children }) => {
                 to={item.path}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2.5'} px-2.5 py-2.5 rounded-2xl transition-all duration-300 ease-in-out ${
+                  `flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2 sm:space-x-2.5'} px-2 sm:px-2.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 ease-in-out ${
                     isActive
                       ? 'bg-white/40 text-white'
                       : 'text-white hover:bg-white/10'
@@ -657,7 +698,7 @@ const AdminLayout = ({ children }) => {
                 }
               >
                 {/* Icon - always visible with fixed width */}
-                <IconComponent className="text-lg flex-shrink-0" />
+                <IconComponent className="text-base sm:text-lg flex-shrink-0" />
 
                 {/* Text with fade and slide animation */}
                 <div
@@ -667,7 +708,7 @@ const AdminLayout = ({ children }) => {
                       : 'opacity-100 w-auto transform translate-x-0'
                   }`}
                 >
-                  <span className="font-medium text-sm whitespace-nowrap text-white">{item.name}</span>
+                  <span className="font-medium text-xs sm:text-sm whitespace-nowrap text-white">{item.name}</span>
                 </div>
               </NavLink>
             );
@@ -675,29 +716,38 @@ const AdminLayout = ({ children }) => {
         </nav>
       </div>
 
-      {/* Main Content Area - with left margin to account for fixed sidebar */}
+      {/* Main Content Area - margin adjusts based on sidebar state and screen size */}
       <div
-        className="flex flex-col min-h-screen transition-all duration-300 ease-in-out"
-        style={{ marginLeft: isSidebarCollapsed ? '4rem' : '15rem' }}
+        className={`flex flex-col min-h-screen transition-all duration-300 ease-in-out
+          ${
+            // On xl screens (1280px+): sidebar pushes content
+            // On lg screens (1024px-1280px): sidebar overlays, no margin
+            // On mobile (<1024px): sidebar overlays, no margin
+            isSidebarCollapsed
+              ? 'ml-0 xl:ml-16'
+              : 'ml-0 xl:ml-60'
+          }
+        `}
       >
         {/* Header - sticky position with scroll-based shadow animation */}
         <header
-          className={`sticky top-0 z-20 px-5 py-3 flex items-center justify-between transition-shadow duration-300 ease-in-out ${isScrolled ? 'shadow-md' : ''}`}
+          className={`sticky top-0 z-20 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 flex items-center justify-between transition-shadow duration-300 ease-in-out ${isScrolled ? 'shadow-md' : ''}`}
           style={{
             backgroundColor: '#efefef'
           }}
         >
           {/* Left side: Sidebar Toggle Button and Dev Mode Indicator */}
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
+            {/* Sidebar Toggle Button - Always visible with chevron arrows */}
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="w-8 h-8 rounded-full hover:opacity-80 transition-opacity flex items-center justify-center text-white"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:opacity-80 transition-opacity flex items-center justify-center text-white shadow-md"
               style={{ backgroundColor: '#161F55' }}
             >
               {isSidebarCollapsed ? (
-                <MdChevronRight className="text-lg" />
+                <MdChevronRight className="text-base sm:text-lg" />
               ) : (
-                <MdChevronLeft className="text-lg" />
+                <MdChevronLeft className="text-base sm:text-lg" />
               )}
             </button>
 
@@ -719,31 +769,31 @@ const AdminLayout = ({ children }) => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl transition-colors text-white"
+                className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-2.5 px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-colors text-white"
                 style={{ backgroundColor: '#1F3463' }}
               >
                 <UserIcon />
-                <span className="font-medium text-sm">{getDisplayName()}</span>
+                <span className="hidden sm:inline font-medium text-xs sm:text-sm">{getDisplayName()}</span>
                 <ChevronDownIcon />
               </button>
 
               {/* User Dropdown */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-1.5 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="absolute right-0 mt-1 sm:mt-1.5 w-36 sm:w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                   {/* Office Switch Buttons - only visible for users with multi-office access */}
                   {canSwitchOffices() && getOfficeSwitchButtons().map((button) => (
                     <button
                       key={button.key}
                       onClick={button.onClick}
-                      className="w-full flex items-center space-x-1.5 px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="w-full flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 text-left text-xs sm:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     >
-                      <MdSwapHoriz className="w-4 h-4" />
-                      <span>{button.text}</span>
+                      <MdSwapHoriz className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="truncate">{button.text}</span>
                     </button>
                   ))}
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center space-x-1.5 px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="w-full flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 text-left text-xs sm:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                   >
                     <LogoutIcon />
                     <span>Sign Out</span>
@@ -757,7 +807,7 @@ const AdminLayout = ({ children }) => {
         {/* Page Content - natural flow, no internal scrolling */}
         <main
           ref={mainContentRef}
-          className="flex-1 p-5"
+          className="flex-1 p-3 sm:p-4 md:p-5"
           style={{ backgroundColor: '#efefef' }}
         >
           {children}
@@ -765,11 +815,11 @@ const AdminLayout = ({ children }) => {
 
         {/* Footer */}
         <footer
-          className="px-5 py-3"
+          className="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3"
           style={{ backgroundColor: '#efefef' }}
         >
           <div className="text-center">
-            <p className="text-xs text-gray-500">
+            <p className="text-[10px] sm:text-xs text-gray-500">
               © 2025 LVCampusConnect LVCC - Developed by BSIS4 Group 6
             </p>
           </div>

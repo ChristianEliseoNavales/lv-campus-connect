@@ -337,14 +337,14 @@ const FAQ = () => {
         <ToastContainer toasts={toasts} removeToast={removeToast} />
 
         {/* Main Content Container - White background similar to Ratings.jsx */}
-        <div className="bg-white p-5 border border-gray-200 rounded-xl">
+        <div className="bg-white p-3 sm:p-4 md:p-5 border border-gray-200 rounded-xl sm:rounded-2xl">
 
         {/* Row 1 - Header */}
-        <div className="mb-5">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">FAQs</h1>
+        <div className="mb-3 sm:mb-4 md:mb-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">FAQs</h1>
             <div className="flex items-center space-x-1">
-              <p className="text-[8px] text-gray-500 uppercase tracking-wide">
+              <p className="text-[8px] sm:text-[9px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
@@ -354,7 +354,7 @@ const FAQ = () => {
                 title="Refresh FAQs"
               >
                 <IoMdRefresh
-                  className={`w-5 h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -362,16 +362,16 @@ const FAQ = () => {
         </div>
 
         {/* Row 2 - Controls */}
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 mb-3 sm:mb-4 md:mb-5">
           {/* Left side - Pagination Control */}
           <div className="flex items-center space-x-1.5">
-            <span className="text-sm text-gray-700 font-medium">Showing</span>
+            <span className="text-xs sm:text-sm text-gray-700 font-medium">Showing</span>
             <div className="flex items-center space-x-1">
               <input
                 type="number"
                 value={faqsPerPage}
                 onChange={(e) => updateState('faqsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-12 px-1.5 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
@@ -380,40 +380,40 @@ const FAQ = () => {
                   onClick={() => handleFaqsPerPageChange(1)}
                   className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-sm" />
+                  <MdKeyboardArrowUp className="text-xs sm:text-sm" />
                 </button>
                 <button
                   onClick={() => handleFaqsPerPageChange(-1)}
                   className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-sm" />
+                  <MdKeyboardArrowDown className="text-xs sm:text-sm" />
                 </button>
               </div>
             </div>
-            <span className="text-sm text-gray-700 font-medium">FAQs</span>
+            <span className="text-xs sm:text-sm text-gray-700 font-medium">FAQs</span>
           </div>
 
           {/* Right side - Search, Filters, Add button */}
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             {/* Search */}
-            <div className="relative">
-              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+            <div className="relative flex-1 sm:flex-initial">
+              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-base sm:text-lg" />
               <input
                 type="text"
                 placeholder="Search FAQs..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-full sm:w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Category Filter */}
             <div className="flex items-center space-x-1.5">
-              <label className="text-sm text-gray-700 font-medium">Category:</label>
+              <label className="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Category:</label>
               <select
                 value={filterCategory}
                 onChange={(e) => updateState('filterCategory', e.target.value)}
-                className="px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               >
                 <option value="all">All Categories</option>
                 {categories.map(cat => (
@@ -424,11 +424,11 @@ const FAQ = () => {
 
             {/* Status Filter */}
             <div className="flex items-center space-x-1.5">
-              <label className="text-sm text-gray-700 font-medium">Status:</label>
+              <label className="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Status:</label>
               <select
                 value={filterStatus}
                 onChange={(e) => updateState('filterStatus', e.target.value)}
-                className="px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -439,9 +439,9 @@ const FAQ = () => {
             {/* Add FAQ Button */}
             <button
               onClick={openAddModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#2d4a7a] transition-colors font-medium"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#2d4a7a] transition-colors font-medium"
             >
-              <FaPlus className="text-xs" />
+              <FaPlus className="text-[10px] sm:text-xs" />
               Add FAQ
             </button>
           </div>
@@ -464,14 +464,14 @@ const FAQ = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-5 py-3 h-12 flex items-center animate-pulse">
-                    <div className="grid grid-cols-4 gap-3 items-center w-full">
+                  <div key={index} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 flex items-center animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 sm:gap-3 items-center w-full">
                       <div className="h-3 bg-gray-200 rounded w-20"></div>
                       <div className="h-3 bg-gray-200 rounded w-full"></div>
-                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                      <div className="hidden md:block h-3 bg-gray-200 rounded w-16"></div>
                       <div className="flex space-x-2">
-                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
-                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 rounded"></div>
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 rounded"></div>
                       </div>
                     </div>
                   </div>
@@ -479,16 +479,16 @@ const FAQ = () => {
               </div>
             </>
           ) : currentFAQs.length === 0 ? (
-            <div className="text-center py-10">
-              <MdQuestionAnswer className="text-5xl text-gray-300 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No FAQs found</h3>
-              <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+            <div className="text-center py-8 sm:py-10">
+              <MdQuestionAnswer className="text-4xl sm:text-5xl text-gray-300 mx-auto mb-2 sm:mb-3" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-1.5">No FAQs found</h3>
+              <p className="text-xs sm:text-sm text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
-              {/* Table Header */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
-                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-gray-700 w-full">
+              {/* Table Header - Hidden on mobile, shown on md+ */}
+              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
                   <div>Category</div>
                   <div>Question</div>
                   <div>Status</div>
@@ -499,23 +499,26 @@ const FAQ = () => {
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
                 {currentFAQs.map((faq) => (
-                  <div key={faq._id} className="px-5 py-3 hover:bg-gray-50 transition-colors h-12 flex items-center">
-                    <div className="grid grid-cols-4 gap-3 items-center w-full">
+                  <div key={faq._id} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 hover:bg-gray-50 transition-colors flex items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
                       {/* Category */}
-                      <div className="text-sm font-medium text-gray-900 truncate">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                        <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Category</span>
+                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-blue-100 text-blue-800">
                           {faq.category}
                         </span>
                       </div>
 
                       {/* Question */}
-                      <div className="text-sm font-medium text-gray-900 truncate" title={faq.question}>
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={faq.question}>
+                        <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Question</span>
                         {faq.question}
                       </div>
 
                       {/* Status */}
-                      <div className="text-sm truncate">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      <div className="text-xs sm:text-sm truncate">
+                        <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Status</span>
+                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
                           faq.status === 'active'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
@@ -525,20 +528,20 @@ const FAQ = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5 sm:gap-2 mt-2 md:mt-0">
                         <button
                           onClick={() => openEditModal(faq)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Edit FAQ"
                         >
-                          <FiEdit3 className="text-base" />
+                          <FiEdit3 className="text-sm sm:text-base" />
                         </button>
                         <button
                           onClick={() => openDeleteModal(faq)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Delete FAQ"
                         >
-                          <FaTrash className="text-sm" />
+                          <FaTrash className="text-xs sm:text-sm" />
                         </button>
                       </div>
                     </div>
@@ -551,16 +554,18 @@ const FAQ = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-5">
-            <div className="text-sm text-gray-700 font-medium">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 mt-3 sm:mt-4 md:mt-5">
+            <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
               Showing {indexOfFirstFAQ + 1} to {Math.min(indexOfLastFAQ, filteredFAQs.length)} of {filteredFAQs.length} FAQs
             </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              size="md"
-            />
+            <div className="order-1 sm:order-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                size="md"
+              />
+            </div>
           </div>
         )}
         </div>
@@ -569,29 +574,29 @@ const FAQ = () => {
       {/* Add/Edit Modal - Rendered outside space-y-5 container */}
       {showAddEditModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               {/* Modal Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-[#1F3463]">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4 flex items-center justify-between">
+                <h2 className="text-base sm:text-lg md:text-xl font-semibold text-[#1F3463]">
                   {editingFAQ ? 'Edit FAQ' : 'Add New FAQ'}
                 </h2>
                 <button
                   onClick={closeModal}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
               {/* Modal Body */}
-              <form onSubmit={handleSubmit} className="p-6">
-                <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="p-4 sm:p-5 md:p-6">
+                <div className="space-y-3 sm:space-y-4">
                   {/* Question */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       Question <span className="text-red-500">*</span>
                     </label>
                     <textarea
@@ -604,16 +609,16 @@ const FAQ = () => {
                       }}
                       rows={2}
                       maxLength={500}
-                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
+                      className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
                         formErrors.question ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Enter the question..."
                     />
                     <div className="flex justify-between mt-1">
                       {formErrors.question && (
-                        <p className="text-xs text-red-500">{formErrors.question}</p>
+                        <p className="text-[10px] sm:text-xs text-red-500">{formErrors.question}</p>
                       )}
-                      <p className="text-xs text-gray-500 ml-auto">
+                      <p className="text-[10px] sm:text-xs text-gray-500 ml-auto">
                         {formData.question.length}/500 characters
                       </p>
                     </div>
@@ -621,7 +626,7 @@ const FAQ = () => {
 
                   {/* Answer */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       Answer <span className="text-red-500">*</span>
                     </label>
                     <textarea
@@ -634,26 +639,26 @@ const FAQ = () => {
                       }}
                       rows={5}
                       maxLength={2000}
-                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
+                      className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
                         formErrors.answer ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Enter the answer..."
                     />
                     <div className="flex justify-between mt-1">
                       {formErrors.answer && (
-                        <p className="text-xs text-red-500">{formErrors.answer}</p>
+                        <p className="text-[10px] sm:text-xs text-red-500">{formErrors.answer}</p>
                       )}
-                      <p className="text-xs text-gray-500 ml-auto">
+                      <p className="text-[10px] sm:text-xs text-gray-500 ml-auto">
                         {formData.answer.length}/2000 characters
                       </p>
                     </div>
                   </div>
 
                   {/* Category and Status Row */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {/* Category */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                         Category <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -664,7 +669,7 @@ const FAQ = () => {
                             setFormErrors({ ...formErrors, category: '' });
                           }
                         }}
-                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
+                        className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
                           formErrors.category ? 'border-red-500' : 'border-gray-300'
                         }`}
                       >
@@ -673,41 +678,41 @@ const FAQ = () => {
                         ))}
                       </select>
                       {formErrors.category && (
-                        <p className="text-xs text-red-500 mt-1">{formErrors.category}</p>
+                        <p className="text-[10px] sm:text-xs text-red-500 mt-1">{formErrors.category}</p>
                       )}
                     </div>
 
                     {/* Status */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                         Status
                       </label>
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
+                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
                       >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                       </select>
-                      <p className="text-xs text-gray-500 mt-1">Only active FAQs are shown in the kiosk</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 mt-1">Only active FAQs are shown in the kiosk</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-5 md:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors order-2 sm:order-1"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-4 py-2 text-sm text-white bg-[#1F3463] rounded-lg hover:bg-[#2d4a7a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white bg-[#1F3463] rounded-lg hover:bg-[#2d4a7a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-1 sm:order-2"
                   >
                     {isSubmitting ? 'Saving...' : (editingFAQ ? 'Update FAQ' : 'Create FAQ')}
                   </button>

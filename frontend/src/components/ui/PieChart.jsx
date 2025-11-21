@@ -108,7 +108,7 @@ const CustomLegend = ({ data, total }) => {
 // Loading skeleton component
 const LoadingSkeleton = () => (
   <div className="flex flex-col h-full">
-    <div className="mx-auto aspect-square h-[200px] w-full flex-shrink-0 bg-gray-200 rounded-full animate-pulse" />
+    <div className="mx-auto aspect-square max-h-[200px] w-full flex-shrink-0 bg-gray-200 rounded-full animate-pulse" />
     <div className="flex flex-col space-y-2 mt-4">
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className="flex items-center justify-between">
@@ -284,7 +284,7 @@ export function ChartPieLegend({ userRole }) {
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-3 sm:py-4 sm:flex-row flex-shrink-0">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle style={{ color: '#1F3463' }}>Service Distribution</CardTitle>
           <CardDescription>
@@ -317,7 +317,7 @@ export function ChartPieLegend({ userRole }) {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex-1 px-2 pt-4 sm:px-6 sm:pt-6">
+      <CardContent className="flex-1 px-2 pt-3 pb-3 sm:px-4 sm:pt-4 sm:pb-4 min-h-0">
         {isLoading ? (
           <LoadingSkeleton />
         ) : error ? (
@@ -326,7 +326,7 @@ export function ChartPieLegend({ userRole }) {
           <div className="flex flex-col h-full">
             <ChartContainer
               config={chartConfig}
-              className="mx-auto aspect-square h-[200px] w-full flex-shrink-0"
+              className="mx-auto aspect-square max-h-[200px] w-full flex-shrink-0"
             >
               <PieChart>
                 <Pie

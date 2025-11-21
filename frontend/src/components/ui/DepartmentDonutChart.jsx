@@ -46,14 +46,14 @@ const DepartmentDonutChart = ({ data = [] }) => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full">
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={160}>
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={50}
-            outerRadius={80}
+            innerRadius={40}
+            outerRadius={65}
             paddingAngle={2}
             dataKey="value"
             onMouseEnter={(_, index) => handleMouseEnter(index)}

@@ -258,26 +258,26 @@ const TransactionLogs = () => {
 
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 sm:space-y-4 md:space-y-5">
       {/* Main Content Container - White background similar to Settings.jsx */}
-      <div className="bg-white p-5 border border-gray-200 rounded-xl">
+      <div className="bg-white p-3 sm:p-4 md:p-5 border border-gray-200 rounded-xl sm:rounded-2xl">
 
         {/* Row 1 - Header */}
-        <div className="mb-5">
+        <div className="mb-3 sm:mb-4 md:mb-5">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Transaction Logs</h1>
-            <div className="flex items-center space-x-1">
-              <p className="text-[8px] text-gray-500 uppercase tracking-wide">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Transaction Logs</h1>
+            <div className="flex items-center space-x-0.5 sm:space-x-1">
+              <p className="text-[7px] sm:text-[8px] text-gray-500 uppercase tracking-wide">
                 As of {formatRefreshTime(lastRefreshTime)}
               </p>
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1 sm:p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
                 title="Refresh transaction logs"
               >
                 <IoMdRefresh
-                  className={`w-4 h-4 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -285,16 +285,16 @@ const TransactionLogs = () => {
         </div>
 
         {/* Row 2 - Controls */}
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 mb-3 sm:mb-4 md:mb-5">
           {/* Left side - Pagination Control */}
-          <div className="flex items-center space-x-1.5">
-            <span className="text-sm text-gray-700 font-medium">Showing</span>
-            <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 sm:space-x-1.5 order-2 lg:order-1">
+            <span className="text-xs sm:text-sm text-gray-700 font-medium">Showing</span>
+            <div className="flex items-center space-x-0.5 sm:space-x-1">
               <input
                 type="number"
                 value={logsPerPage}
                 onChange={(e) => updateState('logsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-12 px-1.5 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
               />
@@ -303,24 +303,24 @@ const TransactionLogs = () => {
                   onClick={() => handleLogsPerPageChange(1)}
                   className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowUp className="text-sm" />
+                  <MdKeyboardArrowUp className="text-xs sm:text-sm" />
                 </button>
                 <button
                   onClick={() => handleLogsPerPageChange(-1)}
                   className="p-0.5 text-gray-500 hover:text-[#1F3463] transition-colors"
                 >
-                  <MdKeyboardArrowDown className="text-sm" />
+                  <MdKeyboardArrowDown className="text-xs sm:text-sm" />
                 </button>
               </div>
             </div>
-            <span className="text-sm text-gray-700 font-medium">Logs</span>
+            <span className="text-xs sm:text-sm text-gray-700 font-medium">Logs</span>
           </div>
 
           {/* Right side - Date Filter, Search, Filter dropdown, Add button */}
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-2.5 lg:gap-3 w-full lg:w-auto order-1 lg:order-2">
             {/* Date Filter */}
-            <div className="flex items-center space-x-1.5">
-              <label className="text-sm text-gray-700 font-medium">Date:</label>
+            <div className="flex items-center space-x-1 sm:space-x-1.5">
+              <label className="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Date:</label>
               <DatePicker
                 value={selectedDate}
                 onChange={(date) => updateState('selectedDate', date)}
@@ -329,24 +329,24 @@ const TransactionLogs = () => {
             </div>
 
             {/* Search */}
-            <div className="relative">
-              <MdSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+            <div className="relative flex-1 md:flex-initial">
+              <MdSearch className="absolute left-2 sm:left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-base sm:text-lg" />
               <input
                 type="text"
                 placeholder="Search logs..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-full md:w-44 lg:w-52 pl-7 sm:pl-8 pr-2 sm:pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
-            <div className="flex items-center space-x-1.5">
-              <label className="text-sm text-gray-700 font-medium">Filter by:</label>
+            <div className="flex items-center space-x-1 sm:space-x-1.5">
+              <label className="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Filter by:</label>
               <select
                 value={filterBy}
                 onChange={(e) => updateState('filterBy', e.target.value)}
-                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-sm"
+                className="flex-1 md:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-xs sm:text-sm"
               >
                 <option value="all">All</option>
                 <option value="complete">Complete</option>
@@ -361,7 +361,7 @@ const TransactionLogs = () => {
             {/* Add Button */}
             <button
               onClick={handleAddTransaction}
-              className="px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-sm font-semibold"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-xs sm:text-sm font-semibold whitespace-nowrap"
             >
               + Add Transaction
             </button>
@@ -423,16 +423,16 @@ const TransactionLogs = () => {
               </div>
             </>
           ) : currentLogs.length === 0 ? (
-            <div className="text-center py-10">
-              <BiSolidNotepad className="text-5xl text-gray-300 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-1.5">No transaction logs found</h3>
-              <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+            <div className="text-center py-8 sm:py-10">
+              <BiSolidNotepad className="text-4xl sm:text-5xl text-gray-300 mx-auto mb-2 sm:mb-3" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-1.5">No transaction logs found</h3>
+              <p className="text-xs sm:text-sm text-gray-500">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <>
-              {/* Table Header */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
-                <div className="grid grid-cols-8 gap-3 text-sm font-bold text-gray-700 w-full">
+              {/* Table Header - Desktop only */}
+              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
+                <div className="grid grid-cols-8 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
                   <div>Queue No.</div>
                   <div>Name</div>
                   <div>Purpose of Visit</div>
@@ -447,26 +447,27 @@ const TransactionLogs = () => {
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
                 {currentLogs.map((log) => (
-                  <div key={log.id} className="px-5 py-3 hover:bg-gray-50 transition-colors h-12 flex items-center">
-                    <div className="grid grid-cols-8 gap-3 items-center w-full">
+                  <div key={log.id} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 hover:bg-gray-50 transition-colors md:h-12 flex items-center">
+                    {/* Desktop view */}
+                    <div className="hidden md:grid md:grid-cols-8 gap-2 sm:gap-3 items-center w-full">
                       {/* Queue No. */}
-                      <div className="text-sm font-bold text-gray-900 truncate">
+                      <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
                         #{log.queueNumber.toString().padStart(2, '0')}
                       </div>
 
                       {/* Name */}
-                      <div className="text-sm font-medium text-gray-900 truncate" title={log.customerName}>
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={log.customerName}>
                         {log.customerName}
                       </div>
 
                       {/* Purpose of Visit */}
-                      <div className="text-sm font-medium text-gray-900 truncate" title={log.purposeOfVisit}>
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={log.purposeOfVisit}>
                         {log.purposeOfVisit}
                       </div>
 
                       {/* Priority */}
                       <div className="text-xs truncate">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
                           log.priority === 'Yes' ? 'text-red-600 bg-red-50' : 'text-gray-600 bg-gray-50'
                         }`}>
                           {log.priority}
@@ -474,19 +475,81 @@ const TransactionLogs = () => {
                       </div>
 
                       {/* Role */}
-                      <div className="text-sm font-medium text-gray-900 truncate" title={log.role}>
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={log.role}>
                         {log.role}
                       </div>
 
                       {/* Turnaround Time */}
-                      <div className="text-sm text-gray-900 font-mono font-semibold truncate">
+                      <div className="text-xs sm:text-sm text-gray-900 font-mono font-semibold truncate">
                         {log.turnaroundTime}
                       </div>
 
                       {/* Remarks */}
                       <div className="text-xs">
+                        <div className="flex items-center space-x-1 sm:space-x-1.5">
+                          <span className="text-gray-900 flex-1 truncate text-xs sm:text-sm">
+                            {log.remarks || 'No remarks'}
+                          </span>
+                          <button
+                            onClick={() => handleEditRemarks(log)}
+                            className="text-gray-400 hover:text-[#1F3463] transition-colors"
+                            title="Edit remarks"
+                          >
+                            <PiNotePencilDuotone className="text-base sm:text-lg" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Status */}
+                      <div className="text-xs">
+                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${getStatusColor(log.status)}`}>
+                          {log.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Mobile card view */}
+                    <div className="md:hidden w-full space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Queue No.</span>
+                          <div className="text-sm font-bold text-gray-900">
+                            #{log.queueNumber.toString().padStart(2, '0')}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            log.priority === 'Yes' ? 'text-red-600 bg-red-50' : 'text-gray-600 bg-gray-50'
+                          }`}>
+                            {log.priority}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${getStatusColor(log.status)}`}>
+                            {log.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Name</span>
+                        <div className="text-sm font-medium text-gray-900">{log.customerName}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Purpose</span>
+                        <div className="text-sm font-medium text-gray-900">{log.purposeOfVisit}</div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Role</span>
+                          <div className="text-sm font-medium text-gray-900">{log.role}</div>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Time</span>
+                          <div className="text-sm text-gray-900 font-mono font-semibold">{log.turnaroundTime}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Remarks</span>
                         <div className="flex items-center space-x-1.5">
-                          <span className="text-gray-900 flex-1 truncate text-sm">
+                          <span className="text-sm text-gray-900 flex-1">
                             {log.remarks || 'No remarks'}
                           </span>
                           <button
@@ -498,13 +561,6 @@ const TransactionLogs = () => {
                           </button>
                         </div>
                       </div>
-
-                      {/* Status */}
-                      <div className="text-xs">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(log.status)}`}>
-                          {log.status}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 ))}
@@ -515,16 +571,18 @@ const TransactionLogs = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-5 flex items-center justify-between">
-            <div className="text-xs text-gray-700">
+          <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+            <div className="text-[10px] sm:text-xs text-gray-700 font-medium order-2 sm:order-1">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredLogs.length)} of {filteredLogs.length} logs
             </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              size="sm"
-            />
+            <div className="order-1 sm:order-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                size="sm"
+              />
+            </div>
           </div>
         )}
 
@@ -540,65 +598,65 @@ const TransactionLogs = () => {
           />
 
           {/* Modal */}
-          <div className="flex min-h-full items-center justify-center p-3">
+          <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
             <div
-              className="relative bg-white rounded-lg shadow-xl w-full max-w-md"
+              className="relative bg-white rounded-lg sm:rounded-xl shadow-xl w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-5 border-b border-gray-200">
-                <h3 className="text-base font-semibold text-gray-900">
+              <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 border-b border-gray-200">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900">
                   Edit Remarks - Queue #{selectedLog?.queueNumber?.toString().padStart(2, '0')}
                 </h3>
                 <button
                   onClick={handleCancelEdit}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
               {/* Content */}
-              <div className="p-5">
-                <div className="mb-3">
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              <div className="p-3 sm:p-4 md:p-5">
+                <div className="mb-2 sm:mb-3">
+                  <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1 sm:mb-1.5">
                     Customer: {selectedLog?.customerName}
                   </label>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1 sm:mb-1.5">
                     Service: {selectedLog?.purposeOfVisit}
                   </label>
                 </div>
 
-                <div className="mb-5">
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <div className="mb-3 sm:mb-4 md:mb-5">
+                  <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1 sm:mb-1.5">
                     Remarks
                   </label>
                   <textarea
                     value={remarksValue}
                     onChange={(e) => setRemarksValue(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                    className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                     rows={4}
                     maxLength={500}
                     placeholder="Add remarks about this transaction..."
                   />
-                  <div className="text-[10px] text-gray-500 mt-1">
+                  <div className="text-[9px] sm:text-[10px] text-gray-500 mt-0.5 sm:mt-1">
                     {remarksValue.length}/500 characters
                   </div>
                 </div>
 
-                <div className="flex space-x-2.5 justify-end">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:space-x-2.5 justify-end">
                   <button
                     onClick={handleCancelEdit}
-                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full sm:w-auto px-3 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors order-2 sm:order-1"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveRemarks}
                     disabled={savingRemarks}
-                    className="px-3 py-1.5 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
                   >
                     {savingRemarks ? 'Saving...' : 'Save'}
                   </button>
