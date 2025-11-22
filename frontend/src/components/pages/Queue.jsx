@@ -576,7 +576,7 @@ const Queue = () => {
   // Fetch department location
   const fetchDepartmentLocation = useCallback(async (department) => {
     try {
-      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/settings/location/${department}`);
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/location/${department}`);
       const data = await response.json();
 
       setDepartmentLocations(prev => ({

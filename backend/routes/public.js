@@ -255,6 +255,37 @@ router.get('/office-status/:department', async (req, res) => {
   }
 });
 
+// GET /api/public/location/:department - Get department location
+router.get('/location/:department', publicLimiter, cacheMiddleware('settings', 'location', (req) => {
+  return CacheKeys.settings.location(req.params.department);
+}), async (req, res) => {
+  try {
+    const { department } = req.params;
+
+    // Validate department
+    if (!['registrar', 'admissions'].includes(department)) {
+      return res.status(400).json({ error: 'Invalid department' });
+    }
+
+    // Get current settings
+    const settings = await Settings.getCurrentSettings();
+
+    // Ensure office settings exist
+    if (!settings.officeSettings || !settings.officeSettings[department]) {
+      return res.json({ location: '' });
+    }
+
+    res.json({
+      location: settings.officeSettings[department].location || '',
+      department,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching location:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/public/windows/:department - Get active windows for department
 router.get('/windows/:department', publicLimiter, cacheMiddleware('windows', 'publicWindows', (req) => {
   return CacheKeys.public.windows(req.params.department);
