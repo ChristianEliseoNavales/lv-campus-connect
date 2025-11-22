@@ -147,7 +147,6 @@ const Queue = () => {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    console.log('🔌 Admissions Queue: Joining admin-admissions room');
     joinRoom('admin-admissions');
 
     // Subscribe to queue updates

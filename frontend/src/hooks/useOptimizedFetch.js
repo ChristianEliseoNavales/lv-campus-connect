@@ -3,7 +3,47 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // Cache for storing API responses
 const apiCache = new Map();
 const cacheTimestamps = new Map();
-const CACHE_DURATION = 30000; // 30 seconds
+const cacheDurations = new Map(); // Store cache duration per key
+
+// Tiered cache durations
+const CACHE_DURATIONS = {
+  static: 300000,    // 5 minutes for services, windows, settings (matches backend cache)
+  dynamic: 30000,    // 30 seconds for queue data
+  realtime: 5000     // 5 seconds for currently serving
+};
+
+// Detect cache type based on URL patterns
+const getCacheType = (url) => {
+  if (!url) return 'dynamic'; // Default to dynamic
+  
+  const urlLower = url.toLowerCase();
+  
+  // Static data endpoints (services, windows, settings)
+  if (urlLower.includes('/services') || 
+      urlLower.includes('/windows') || 
+      urlLower.includes('/settings') ||
+      urlLower.includes('/office') ||
+      urlLower.includes('/faq') ||
+      urlLower.includes('/bulletin')) {
+    return 'static';
+  }
+  
+  // Realtime data (currently serving)
+  if (urlLower.includes('currently-serving') || 
+      urlLower.includes('current-serving') ||
+      urlLower.includes('realtime')) {
+    return 'realtime';
+  }
+  
+  // Default to dynamic (queue data, etc.)
+  return 'dynamic';
+};
+
+// Get cache duration for a given URL
+const getCacheDuration = (url) => {
+  const cacheType = getCacheType(url);
+  return CACHE_DURATIONS[cacheType] || CACHE_DURATIONS.dynamic;
+};
 
 // Get JWT token from localStorage
 const getAuthToken = () => {
@@ -36,34 +76,38 @@ export const useOptimizedFetch = (url, options = {}) => {
   const isMountedRef = useRef(true);
 
   // Check if cached data is still valid
-  const getCachedData = useCallback((key) => {
+  const getCachedData = useCallback((key, url) => {
     if (!enableCache) return null;
     
     const cached = apiCache.get(key);
     const timestamp = cacheTimestamps.get(key);
+    const cacheDuration = cacheDurations.get(key) || getCacheDuration(url);
     
-    if (cached && timestamp && (Date.now() - timestamp < CACHE_DURATION)) {
+    if (cached && timestamp && (Date.now() - timestamp < cacheDuration)) {
       return cached;
     }
     
     // Clean up expired cache
     apiCache.delete(key);
     cacheTimestamps.delete(key);
+    cacheDurations.delete(key);
     return null;
   }, [enableCache]);
 
   // Set cache data
-  const setCachedData = useCallback((key, data) => {
+  const setCachedData = useCallback((key, data, url) => {
     if (enableCache) {
+      const cacheDuration = getCacheDuration(url);
       apiCache.set(key, data);
       cacheTimestamps.set(key, Date.now());
+      cacheDurations.set(key, cacheDuration);
     }
   }, [enableCache]);
 
   // Fetch function
   const fetchData = useCallback(async () => {
     // Check cache first
-    const cachedData = getCachedData(cacheKey);
+    const cachedData = getCachedData(cacheKey, url);
     if (cachedData) {
       setData(cachedData);
       setError(null);
@@ -110,7 +154,7 @@ export const useOptimizedFetch = (url, options = {}) => {
       // Only update state if component is still mounted
       if (isMountedRef.current) {
         setData(result);
-        setCachedData(cacheKey, result);
+        setCachedData(cacheKey, result, url);
         if (onSuccess) onSuccess(result);
       }
 
@@ -144,6 +188,7 @@ export const useOptimizedFetch = (url, options = {}) => {
     // Clear cache for this key to force fresh data
     apiCache.delete(cacheKey);
     cacheTimestamps.delete(cacheKey);
+    cacheDurations.delete(cacheKey);
     return fetchData();
   }, [cacheKey, fetchData]);
 
@@ -179,6 +224,7 @@ export const useOptimizedFetch = (url, options = {}) => {
     clearCache: () => {
       apiCache.delete(cacheKey);
       cacheTimestamps.delete(cacheKey);
+      cacheDurations.delete(cacheKey);
     }
   };
 };
@@ -187,6 +233,7 @@ export const useOptimizedFetch = (url, options = {}) => {
 export const clearAllCache = () => {
   apiCache.clear();
   cacheTimestamps.clear();
+  cacheDurations.clear();
 };
 
 // Utility to clear cache by pattern
@@ -196,6 +243,7 @@ export const clearCacheByPattern = (pattern) => {
     if (regex.test(key)) {
       apiCache.delete(key);
       cacheTimestamps.delete(key);
+      cacheDurations.delete(key);
     }
   }
 };

@@ -5,7 +5,9 @@ const connectDB = async () => {
     // Use the working connection configuration from successful tests
     const options = {
       serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10, // Maximum connections in pool
+      minPoolSize: 2   // Minimum connections to maintain
     };
 
     await mongoose.connect(process.env.MONGODB_URI, options);

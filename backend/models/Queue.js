@@ -110,6 +110,7 @@ queueSchema.index({ queueNumber: 1, office: 1 });
 queueSchema.index({ status: 1, queuedAt: 1 });
 queueSchema.index({ windowId: 1, status: 1 });
 queueSchema.index({ isCurrentlyServing: 1 });
+queueSchema.index({ visitationFormId: 1 }); // Index for visitation form lookups
 
 // Static method to get next queue number for an office
 queueSchema.statics.getNextQueueNumber = async function(office) {

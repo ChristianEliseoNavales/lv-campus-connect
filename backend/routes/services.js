@@ -6,18 +6,50 @@ const { cacheMiddleware, invalidateCache } = require('../middleware/cacheMiddlew
 const { CacheHelper, CacheKeys } = require('../utils/cache');
 const router = express.Router();
 
-// GET /api/services - Get all services
+// GET /api/services - Get all services (with optional pagination)
 router.get('/', verifyToken, checkApiAccess, cacheMiddleware('services', 'all'), async (req, res) => {
   try {
-    const services = await Service.find().sort({ office: 1, name: 1 });
-    res.json(services.map(service => ({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    // Check if pagination is requested
+    const usePagination = req.query.page !== undefined || req.query.limit !== undefined;
+
+    let query = Service.find().sort({ office: 1, name: 1 });
+    
+    if (usePagination) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const services = await query.lean();
+    const servicesData = services.map(service => ({
       id: service._id,
       name: service.name,
       office: service.office,
       isActive: service.isActive,
       createdAt: service.createdAt,
       updatedAt: service.updatedAt
-    })));
+    }));
+
+    if (usePagination) {
+      const total = await Service.countDocuments();
+      res.json({
+        data: servicesData,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } else {
+      // Backward compatibility: return all services if no pagination params
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️  GET /api/services called without pagination. Consider using ?page=1&limit=50 for better performance.');
+      }
+      res.json(servicesData);
+    }
   } catch (error) {
     console.error('Error fetching services:', error);
     res.status(500).json({ error: error.message });

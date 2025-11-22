@@ -5,6 +5,18 @@ const FAQ = require('../models/FAQ');
 const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 const { AuditService } = require('../middleware/auditMiddleware');
 
+// Helper function to emit FAQ updates to both admin and kiosk rooms
+const emitFAQUpdate = (io, eventData) => {
+  if (!io) return;
+  try {
+    // Emit to both rooms with the same data
+    io.to('admin-shared-faq').emit('faq-updated', eventData);
+    io.to('kiosk').emit('faq-updated', eventData);
+  } catch (socketError) {
+    console.error('Socket.io emit error:', socketError);
+  }
+};
+
 // Validation rules for FAQ
 const faqValidation = [
   body('question')
@@ -149,22 +161,11 @@ router.post('/', verifyToken, checkApiAccess, faqValidation, async (req, res) =>
     });
 
     // Emit Socket.io event for real-time updates
-    try {
-      const io = req.app.get('io');
-      if (io) {
-        // Emit to shared admin room (accessible by all admin users with FAQ access)
-        io.to('admin-shared-faq').emit('faq-updated', {
-          type: 'faq-created',
-          data: faq
-        });
-        io.to('kiosk').emit('faq-updated', {
-          type: 'faq-created',
-          data: faq
-        });
-      }
-    } catch (socketError) {
-      console.error('Socket.io emit error:', socketError);
-    }
+    const io = req.app.get('io');
+    emitFAQUpdate(io, {
+      type: 'faq-created',
+      data: faq
+    });
 
     res.status(201).json({
       success: true,
@@ -261,22 +262,11 @@ router.put('/:id', verifyToken, checkApiAccess, faqValidation, async (req, res) 
     });
 
     // Emit Socket.io event for real-time updates
-    try {
-      const io = req.app.get('io');
-      if (io) {
-        // Emit to shared admin room (accessible by all admin users with FAQ access)
-        io.to('admin-shared-faq').emit('faq-updated', {
-          type: 'faq-updated',
-          data: faq
-        });
-        io.to('kiosk').emit('faq-updated', {
-          type: 'faq-updated',
-          data: faq
-        });
-      }
-    } catch (socketError) {
-      console.error('Socket.io emit error:', socketError);
-    }
+    const io = req.app.get('io');
+    emitFAQUpdate(io, {
+      type: 'faq-updated',
+      data: faq
+    });
 
     res.json({
       success: true,
@@ -342,22 +332,11 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
     });
 
     // Emit Socket.io event for real-time updates
-    try {
-      const io = req.app.get('io');
-      if (io) {
-        // Emit to shared admin room (accessible by all admin users with FAQ access)
-        io.to('admin-shared-faq').emit('faq-updated', {
-          type: 'faq-deleted',
-          data: { id: req.params.id }
-        });
-        io.to('kiosk').emit('faq-updated', {
-          type: 'faq-deleted',
-          data: { id: req.params.id }
-        });
-      }
-    } catch (socketError) {
-      console.error('Socket.io emit error:', socketError);
-    }
+    const io = req.app.get('io');
+    emitFAQUpdate(io, {
+      type: 'faq-deleted',
+      data: { id: req.params.id }
+    });
 
     res.json({
       success: true,

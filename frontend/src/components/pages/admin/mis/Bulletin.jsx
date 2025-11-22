@@ -8,6 +8,7 @@ import { useNotification } from '../../../../hooks/useNotification';
 import { useSocket } from '../../../../contexts/SocketContext';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
+import { getOptimizedCloudinaryUrl } from '../../../../utils/cloudinary';
 
 const Bulletin = () => {
   const { socket, isConnected, joinRoom, leaveRoom } = useSocket();
@@ -227,9 +228,14 @@ const Bulletin = () => {
     }
   };
 
-  // Helper function to get media URL
+  // Helper function to get media URL with Cloudinary optimization
   const getMediaUrl = (bulletin) => {
-    return bulletin.image?.secure_url || bulletin.image?.url || `${API_CONFIG.getAdminUrl()}/${bulletin.image?.path}`;
+    const optimizedUrl = getOptimizedCloudinaryUrl(bulletin.image);
+    if (optimizedUrl) {
+      return optimizedUrl;
+    }
+    // Fallback to local image path
+    return `${API_CONFIG.getAdminUrl()}/${bulletin.image?.path}`;
   };
 
   // Helper function to check if media is video

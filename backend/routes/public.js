@@ -1,11 +1,25 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
 const { Queue, VisitationForm, Service, Window, Settings, Rating, Bulletin, Office, Chart } = require('../models');
 const { AuditService } = require('../middleware/auditMiddleware');
 const { verifyToken } = require('../middleware/authMiddleware');
 const { cacheMiddleware } = require('../middleware/cacheMiddleware');
 const { CacheKeys } = require('../utils/cache');
+const { log: logger } = require('../utils/logger');
 const router = express.Router();
+
+// Rate limiting for public endpoints
+const publicLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: process.env.NODE_ENV === 'production' ? 100 : 200, // 100 requests per minute in production, 200 in development
+  message: {
+    error: 'Too many requests',
+    message: 'Too many requests from this IP, please try again after a minute'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * Helper function to get display customer name for queue entries
@@ -39,7 +53,7 @@ async function getDisplayCustomerName(queueEntry, serviceObj = null) {
 }
 
 // GET /api/public/queue/:department - Get queue data for department
-router.get('/queue/:department', async (req, res) => {
+router.get('/queue/:department', publicLimiter, async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -178,7 +192,7 @@ router.get('/queue/:department', async (req, res) => {
 });
 
 // GET /api/public/services/:department - Get visible services for department
-router.get('/services/:department', cacheMiddleware('services', 'publicServices', (req) => {
+router.get('/services/:department', publicLimiter, cacheMiddleware('services', 'publicServices', (req) => {
   return CacheKeys.public.services(req.params.department);
 }), async (req, res) => {
   try {
@@ -242,7 +256,7 @@ router.get('/office-status/:department', async (req, res) => {
 });
 
 // GET /api/public/windows/:department - Get active windows for department
-router.get('/windows/:department', cacheMiddleware('windows', 'publicWindows', (req) => {
+router.get('/windows/:department', publicLimiter, cacheMiddleware('windows', 'publicWindows', (req) => {
   return CacheKeys.public.windows(req.params.department);
 }), async (req, res) => {
   try {
@@ -287,23 +301,23 @@ router.post('/queue', async (req, res) => {
       address
     } = req.body;
 
-    console.log('🚀 [BACKEND] Queue submission received for service:', service);
-    console.log('📋 [BACKEND] Full request body:', JSON.stringify(req.body, null, 2));
-    console.log('📋 [BACKEND] Request headers:', JSON.stringify(req.headers, null, 2));
+    logger('🚀 [BACKEND] Queue submission received for service:', service);
+    logger('📋 [BACKEND] Full request body:', JSON.stringify(req.body, null, 2));
+    logger('📋 [BACKEND] Request headers:', JSON.stringify(req.headers, null, 2));
 
     // Special logging for Enroll service
     if (service === 'Enroll') {
-      console.log('🎓 [BACKEND] ENROLL SERVICE DETECTED!');
-      console.log('🎓 [BACKEND] Student Status:', studentStatus);
-      console.log('🎓 [BACKEND] Customer Name:', customerName);
-      console.log('🎓 [BACKEND] Contact Number:', contactNumber);
-      console.log('🎓 [BACKEND] Email:', email);
-      console.log('🎓 [BACKEND] Address:', address);
+      logger('🎓 [BACKEND] ENROLL SERVICE DETECTED!');
+      logger('🎓 [BACKEND] Student Status:', studentStatus);
+      logger('🎓 [BACKEND] Customer Name:', customerName);
+      logger('🎓 [BACKEND] Contact Number:', contactNumber);
+      logger('🎓 [BACKEND] Email:', email);
+      logger('🎓 [BACKEND] Address:', address);
     }
 
     // Validate required fields - special handling for Enroll service
-    console.log('🔍 [BACKEND] Validating required fields...');
-    console.log('🔍 [BACKEND] Field check:', {
+    logger('🔍 [BACKEND] Validating required fields...');
+    logger('🔍 [BACKEND] Field check:', {
       office: !!office,
       service: !!service,
       role: !!role,
@@ -314,10 +328,10 @@ router.post('/queue', async (req, res) => {
 
     // For Enroll service, only validate core fields (not visitation form fields)
     if (service === 'Enroll') {
-      console.log('🎓 [BACKEND] ENROLL SERVICE - Using relaxed validation (no form fields required)');
+      logger('🎓 [BACKEND] ENROLL SERVICE - Using relaxed validation (no form fields required)');
       if (!office || !service || !role) {
-        console.log('❌ [BACKEND] ENROLL VALIDATION FAILED - Missing core fields!');
-        console.log('❌ [BACKEND] Missing fields:', {
+        logger('❌ [BACKEND] ENROLL VALIDATION FAILED - Missing core fields!');
+        logger('❌ [BACKEND] Missing fields:', {
           office: !office ? 'MISSING' : 'OK',
           service: !service ? 'MISSING' : 'OK',
           role: !role ? 'MISSING' : 'OK'
@@ -327,13 +341,13 @@ router.post('/queue', async (req, res) => {
           required: ['office', 'service', 'role']
         });
       }
-      console.log('✅ [BACKEND] Enroll service core fields validated');
+      logger('✅ [BACKEND] Enroll service core fields validated');
     } else {
       // For all other services, require full visitation form fields
-      console.log('📋 [BACKEND] REGULAR SERVICE - Using full validation (form fields required)');
+      logger('📋 [BACKEND] REGULAR SERVICE - Using full validation (form fields required)');
       if (!office || !service || !role || !customerName || !contactNumber || !email) {
-        console.log('❌ [BACKEND] VALIDATION FAILED - Missing required fields!');
-        console.log('❌ [BACKEND] Missing fields:', {
+        logger('❌ [BACKEND] VALIDATION FAILED - Missing required fields!');
+        logger('❌ [BACKEND] Missing fields:', {
           office: !office ? 'MISSING' : 'OK',
           service: !service ? 'MISSING' : 'OK',
           role: !role ? 'MISSING' : 'OK',
@@ -346,7 +360,7 @@ router.post('/queue', async (req, res) => {
           required: ['office', 'service', 'role', 'customerName', 'contactNumber', 'email']
         });
       }
-      console.log('✅ [BACKEND] All required fields present for regular service');
+      logger('✅ [BACKEND] All required fields present for regular service');
     }
 
     // Validate office
@@ -391,14 +405,14 @@ router.post('/queue', async (req, res) => {
       });
     }
 
-    console.log('🔍 Found service:', serviceObj.name, serviceObj._id);
+    logger('🔍 Found service:', serviceObj.name, serviceObj._id);
 
     // Find window assigned to this queue
     let assignedWindow;
 
     // Priority queues ALWAYS go to the Priority Window
     if (isPriority) {
-      console.log('⭐ Priority queue detected - assigning to Priority Window');
+      logger('⭐ Priority queue detected - assigning to Priority Window');
       assignedWindow = await Window.findOne({
         office: office,
         isOpen: true,
@@ -411,7 +425,7 @@ router.post('/queue', async (req, res) => {
           error: 'Priority Window is currently unavailable'
         });
       }
-      console.log('✅ Assigned to Priority Window:', assignedWindow.name);
+      logger('✅ Assigned to Priority Window:', assignedWindow.name);
     } else {
       // Non-priority queues use service-based window assignment
       // IMPORTANT: Exclude Priority Window from non-priority queue assignment
@@ -429,17 +443,17 @@ router.post('/queue', async (req, res) => {
           error: 'Service is currently unavailable - no window assigned'
         });
       }
-      console.log('🪟 Assigned to window:', assignedWindow.name);
+      logger('🪟 Assigned to window:', assignedWindow.name);
     }
 
     // Create visitation form - skip for Enroll service
     let visitationForm = null;
 
     if (service === 'Enroll') {
-      console.log('🎓 [BACKEND] ENROLL SERVICE - Skipping VisitationForm creation');
-      console.log('🎓 [BACKEND] Enroll service does not require visitation form data');
+      logger('🎓 [BACKEND] ENROLL SERVICE - Skipping VisitationForm creation');
+      logger('🎓 [BACKEND] Enroll service does not require visitation form data');
     } else {
-      console.log('📝 [BACKEND] Creating VisitationForm with data:', {
+      logger('📝 [BACKEND] Creating VisitationForm with data:', {
         customerName,
         contactNumber,
         email,
@@ -455,14 +469,14 @@ router.post('/queue', async (req, res) => {
         idNumber: isPriority ? (idNumber || '') : ''
       });
 
-      console.log('✅ [BACKEND] VisitationForm created successfully:', visitationForm._id);
-      console.log('✅ [BACKEND] VisitationForm data:', JSON.stringify(visitationForm, null, 2));
+      logger('✅ [BACKEND] VisitationForm created successfully:', visitationForm._id);
+      logger('✅ [BACKEND] VisitationForm data:', JSON.stringify(visitationForm, null, 2));
     }
 
     // Get next queue number
     const nextQueueNumber = await Queue.getNextQueueNumber(office);
 
-    console.log('🔢 Next queue number:', nextQueueNumber);
+    logger('🔢 Next queue number:', nextQueueNumber);
 
     // Create queue entry with proper data types
     const queueData = {
@@ -478,30 +492,30 @@ router.post('/queue', async (req, res) => {
     // Only add visitationFormId if visitationForm was created (not for Enroll service)
     if (visitationForm) {
       queueData.visitationFormId = visitationForm._id;
-      console.log('📋 [BACKEND] Including visitationFormId in queue entry:', visitationForm._id);
+      logger('📋 [BACKEND] Including visitationFormId in queue entry:', visitationForm._id);
     } else {
-      console.log('🎓 [BACKEND] No visitationFormId for Enroll service - creating queue without form reference');
+      logger('🎓 [BACKEND] No visitationFormId for Enroll service - creating queue without form reference');
     }
 
     const queueEntry = new Queue(queueData);
 
     // Save to MongoDB
-    console.log('💾 [BACKEND] Saving Queue entry to MongoDB...');
-    console.log('💾 [BACKEND] Queue entry data before save:', JSON.stringify(queueEntry, null, 2));
+    logger('💾 [BACKEND] Saving Queue entry to MongoDB...');
+    logger('💾 [BACKEND] Queue entry data before save:', JSON.stringify(queueEntry, null, 2));
 
     await queueEntry.save();
 
-    console.log('✅ [BACKEND] Queue entry saved successfully to MongoDB!');
-    console.log('✅ [BACKEND] Saved Queue ID:', queueEntry._id);
-    console.log('✅ [BACKEND] Saved Queue Number:', queueEntry.queueNumber);
-    console.log('✅ [BACKEND] Final saved Queue data:', JSON.stringify(queueEntry, null, 2));
+    logger('✅ [BACKEND] Queue entry saved successfully to MongoDB!');
+    logger('✅ [BACKEND] Saved Queue ID:', queueEntry._id);
+    logger('✅ [BACKEND] Saved Queue Number:', queueEntry.queueNumber);
+    logger('✅ [BACKEND] Final saved Queue data:', JSON.stringify(queueEntry, null, 2));
 
     // Populate the queue entry for response
     await queueEntry.populate('visitationFormId');
 
     // Determine customer name for display using helper function
     const displayCustomerName = await getDisplayCustomerName(queueEntry, serviceObj);
-    console.log('👤 [BACKEND] Display customer name:', displayCustomerName);
+    logger('👤 [BACKEND] Display customer name:', displayCustomerName);
 
     // Emit real-time update to admin dashboards
     const io = req.app.get('io');
@@ -543,7 +557,7 @@ router.post('/queue', async (req, res) => {
       }
     });
 
-    console.log('📡 Real-time updates sent');
+    logger('📡 Real-time updates sent');
 
     res.status(201).json({
       success: true,
@@ -594,7 +608,7 @@ router.get('/queue-data/:department', async (req, res) => {
       waitingQuery.serviceId = serviceId;
     }
 
-    console.log('🔍 Queue data query:', waitingQuery);
+    logger('🔍 Queue data query:', waitingQuery);
 
     // Get waiting queues with populated visitation forms
     const waitingQueues = await Queue.find(waitingQuery)
@@ -667,7 +681,7 @@ router.get('/queue-data/:department', async (req, res) => {
       const displayCustomerName = await getDisplayCustomerName(currentlyServing, currentService);
 
       // Debug logging for idNumber
-      console.log('🔍 [BACKEND] currentlyServing object:', {
+      logger('🔍 [BACKEND] currentlyServing object:', {
         queueNumber: currentlyServing.queueNumber,
         hasVisitationFormId: !!currentlyServing.visitationFormId,
         visitationFormId: currentlyServing.visitationFormId?._id,
@@ -687,10 +701,10 @@ router.get('/queue-data/:department', async (req, res) => {
         idNumber: currentlyServing.visitationFormId?.idNumber || currentlyServing.idNumber || ''
       };
 
-      console.log('🔍 [BACKEND] currentServingData being sent:', currentServingData);
+      logger('🔍 [BACKEND] currentServingData being sent:', currentServingData);
     }
 
-    console.log('📊 Filtered queue results:', {
+    logger('📊 Filtered queue results:', {
       waitingCount: formattedQueues.length,
       currentlyServing: currentServingData?.number || 'None',
       skippedCount: skippedQueues.length,
@@ -723,7 +737,7 @@ router.get('/queue-lookup/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log('🔍 Queue lookup request for ID:', id);
+    logger('🔍 Queue lookup request for ID:', id);
 
     // Validate ObjectId format
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -808,7 +822,7 @@ router.post('/queue/:id/rating', async (req, res) => {
     const { id } = req.params;
     const { rating } = req.body;
 
-    console.log('📝 Rating submission received:', { queueId: id, rating });
+    logger('📝 Rating submission received:', { queueId: id, rating });
 
     // Validate rating
     if (!rating || rating < 1 || rating > 5) {
@@ -853,13 +867,13 @@ router.post('/queue/:id/rating', async (req, res) => {
       const ratingDocument = new Rating(ratingData);
       await ratingDocument.save();
 
-      console.log('📊 Rating document created for Ratings page:', ratingDocument._id);
+      logger('📊 Rating document created for Ratings page:', ratingDocument._id);
     } catch (ratingDocError) {
       // Log error but don't fail the main rating submission
       console.error('⚠️ Failed to create Rating document (queue rating still saved):', ratingDocError);
     }
 
-    console.log('⭐ Rating updated successfully:', { queueId: id, rating });
+    logger('⭐ Rating updated successfully:', { queueId: id, rating });
 
     res.json({
       success: true,
@@ -891,7 +905,7 @@ router.post('/queue/next', async (req, res) => {
     const { windowId, adminId } = req.body;
     const io = req.app.get('io');
 
-    console.log('🔄 NEXT queue request:', { windowId, adminId });
+    logger('🔄 NEXT queue request:', { windowId, adminId });
 
     // Validate required fields
     if (!windowId) {
@@ -958,7 +972,7 @@ router.post('/queue/next', async (req, res) => {
     // Regular windows should ONLY serve non-priority queues (isPriority=false)
     const isPriorityWindow = window.name === 'Priority';
 
-    console.log('🔍 [NEXT QUEUE] Window details:', {
+    logger('🔍 [NEXT QUEUE] Window details:', {
       windowId,
       windowName: window.name,
       isPriorityWindow,
@@ -975,7 +989,7 @@ router.post('/queue/next', async (req, res) => {
       isPriority: isPriorityWindow // Priority Window gets isPriority=true, others get isPriority=false
     };
 
-    console.log('🔍 [NEXT QUEUE] Query filter (with service):', JSON.stringify(queryFilterWithService, null, 2));
+    logger('🔍 [NEXT QUEUE] Query filter (with service):', JSON.stringify(queryFilterWithService, null, 2));
 
     let nextQueue = await Queue.findOne(queryFilterWithService).sort({ queuedAt: 1 }).populate('visitationFormId'); // Cannot use .lean() - needs markAsServing() instance method
 
@@ -989,13 +1003,13 @@ router.post('/queue/next', async (req, res) => {
         isPriority: isPriorityWindow
       };
 
-      console.log('🔍 [NEXT QUEUE] No queue with matching service, checking for transferred queues...');
-      console.log('🔍 [NEXT QUEUE] Query filter (without service):', JSON.stringify(queryFilterWithoutService, null, 2));
+      logger('🔍 [NEXT QUEUE] No queue with matching service, checking for transferred queues...');
+      logger('🔍 [NEXT QUEUE] Query filter (without service):', JSON.stringify(queryFilterWithoutService, null, 2));
 
       nextQueue = await Queue.findOne(queryFilterWithoutService).sort({ queuedAt: 1 }).populate('visitationFormId'); // Cannot use .lean() - needs markAsServing() instance method
     }
 
-    console.log('🔍 [NEXT QUEUE] Found queue:', nextQueue ? {
+    logger('🔍 [NEXT QUEUE] Found queue:', nextQueue ? {
       queueNumber: nextQueue.queueNumber,
       windowId: nextQueue.windowId,
       isPriority: nextQueue.isPriority,
@@ -1061,7 +1075,7 @@ router.post('/queue/next', async (req, res) => {
     // Get display customer name using helper function
     const displayCustomerName = await getDisplayCustomerName(nextQueue);
 
-    console.log('✅ Queue marked as serving:', {
+    logger('✅ Queue marked as serving:', {
       queueNumber: nextQueue.queueNumber,
       windowId,
       customerName: displayCustomerName
@@ -1146,7 +1160,7 @@ router.post('/queue/recall', async (req, res) => {
     const { windowId } = req.body;
     const io = req.app.get('io');
 
-    console.log('🔄 RECALL queue request:', { windowId });
+    logger('🔄 RECALL queue request:', { windowId });
 
     if (!windowId) {
       return res.status(400).json({
@@ -1187,7 +1201,7 @@ router.post('/queue/recall', async (req, res) => {
       });
     }
 
-    console.log('🔊 Recalling queue:', {
+    logger('🔊 Recalling queue:', {
       queueNumber: currentQueue.queueNumber,
       windowName: window.name
     });
@@ -1268,7 +1282,7 @@ router.post('/queue/stop', async (req, res) => {
     const { windowId, action } = req.body; // action: 'pause' or 'resume'
     const io = req.app.get('io');
 
-    console.log('🛑 STOP/RESUME queue request:', { windowId, action });
+    logger('🛑 STOP/RESUME queue request:', { windowId, action });
 
     if (!windowId || !action) {
       return res.status(400).json({
@@ -1327,7 +1341,7 @@ router.post('/queue/previous', async (req, res) => {
     const { windowId, adminId } = req.body;
     const io = req.app.get('io');
 
-    console.log('⏮️ PREVIOUS queue request:', { windowId, adminId });
+    logger('⏮️ PREVIOUS queue request:', { windowId, adminId });
 
     if (!windowId) {
       return res.status(400).json({
@@ -1384,7 +1398,7 @@ router.post('/queue/previous', async (req, res) => {
     // Mark the previous queue as serving again
     await previousQueue.markAsServing(windowId, adminId);
 
-    console.log('✅ Previous queue recalled:', {
+    logger('✅ Previous queue recalled:', {
       queueNumber: previousQueue.queueNumber,
       windowName: window.name
     });
@@ -1455,7 +1469,7 @@ router.post('/queue/transfer', async (req, res) => {
     const { fromWindowId, toWindowId, adminId } = req.body;
     const io = req.app.get('io');
 
-    console.log('🔄 TRANSFER queue request:', { fromWindowId, toWindowId, adminId });
+    logger('🔄 TRANSFER queue request:', { fromWindowId, toWindowId, adminId });
 
     if (!fromWindowId || !toWindowId) {
       return res.status(400).json({
@@ -1541,7 +1555,7 @@ router.post('/queue/transfer', async (req, res) => {
 
     await currentQueue.save();
 
-    console.log('✅ Queue transferred:', {
+    logger('✅ Queue transferred:', {
       queueNumber: currentQueue.queueNumber,
       from: fromWindow.name,
       to: toWindow.name,
@@ -1635,7 +1649,7 @@ router.post('/queue/skip', async (req, res) => {
     const { windowId, adminId } = req.body;
     const io = req.app.get('io');
 
-    console.log('⏭️ SKIP queue request:', { windowId, adminId });
+    logger('⏭️ SKIP queue request:', { windowId, adminId });
 
     if (!windowId) {
       return res.status(400).json({
@@ -1710,7 +1724,7 @@ router.post('/queue/skip', async (req, res) => {
       };
     }
 
-    console.log('✅ Queue skipped and next called:', {
+    logger('✅ Queue skipped and next called:', {
       skippedQueue: currentQueue.queueNumber,
       nextQueue: nextQueueData?.queueNumber || 'None'
     });
@@ -1785,7 +1799,7 @@ router.post('/queue/requeue-all', verifyToken, async (req, res) => {
     const { windowId, adminId } = req.body;
     const io = req.app.get('io');
 
-    console.log('🔄 RE-QUEUE ALL request:', { windowId, adminId });
+    logger('🔄 RE-QUEUE ALL request:', { windowId, adminId });
 
     if (!windowId) {
       return res.status(400).json({
@@ -1866,7 +1880,7 @@ router.post('/queue/requeue-all', verifyToken, async (req, res) => {
       }
     );
 
-    console.log('✅ Re-queued all skipped queues:', {
+    logger('✅ Re-queued all skipped queues:', {
       count: requeuedCount,
       department: window.office, // Keep 'department' key for backward compatibility
       services: window.serviceIds.map(s => s.name || s).join(', ')
@@ -1951,7 +1965,7 @@ router.post('/queue/requeue-selected', verifyToken, async (req, res) => {
     const { windowId, adminId, queueNumbers } = req.body;
     const io = req.app.get('io');
 
-    console.log('🔄 RE-QUEUE SELECTED request:', { windowId, adminId, queueNumbers });
+    logger('🔄 RE-QUEUE SELECTED request:', { windowId, adminId, queueNumbers });
 
     if (!windowId) {
       return res.status(400).json({
@@ -2037,7 +2051,7 @@ router.post('/queue/requeue-selected', verifyToken, async (req, res) => {
       }
     );
 
-    console.log('✅ Re-queued selected skipped queues:', {
+    logger('✅ Re-queued selected skipped queues:', {
       count: requeuedCount,
       queueNumbers,
       department: window.office,
@@ -2126,7 +2140,7 @@ router.get('/queue/windows/:department', async (req, res) => {
   try {
     const { department } = req.params;
 
-    console.log('🪟 Fetching windows for transfer:', { department });
+    logger('🪟 Fetching windows for transfer:', { department });
 
     const windows = await Window.find({
       office: department, // Use 'office' field to match Window model schema
@@ -2178,24 +2192,58 @@ router.get('/bulletin', async (req, res) => {
   }
 });
 
-// GET /api/public/faq - Get all active FAQs for kiosk display
-router.get('/faq', async (req, res) => {
+// GET /api/public/faq - Get all active FAQs for kiosk display (with optional pagination)
+router.get('/faq', publicLimiter, async (req, res) => {
   try {
     const FAQ = require('../models/FAQ');
 
-    const faqs = await FAQ.find({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    // Check if pagination is requested
+    const usePagination = req.query.page !== undefined || req.query.limit !== undefined;
+
+    let query = FAQ.find({
       status: 'active',
       isActive: true
     })
       .select('question answer category order')
-      .sort({ category: 1, order: 1, createdAt: 1 })
-      .lean();
+      .sort({ category: 1, order: 1, createdAt: 1 });
 
-    res.json({
-      success: true,
-      data: faqs,
-      count: faqs.length
-    });
+    if (usePagination) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const faqs = await query.lean();
+
+    if (usePagination) {
+      const total = await FAQ.countDocuments({
+        status: 'active',
+        isActive: true
+      });
+      res.json({
+        success: true,
+        data: faqs,
+        count: faqs.length,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } else {
+      // Backward compatibility: return all FAQs if no pagination params
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️  GET /api/public/faq called without pagination. Consider using ?page=1&limit=50 for better performance.');
+      }
+      res.json({
+        success: true,
+        data: faqs,
+        count: faqs.length
+      });
+    }
   } catch (error) {
     console.error('Error fetching FAQs:', error);
     res.status(500).json({
@@ -2207,7 +2255,7 @@ router.get('/faq', async (req, res) => {
 });
 
 // GET /api/public/office - Get all offices for directory display
-router.get('/office', async (req, res) => {
+router.get('/office', publicLimiter, async (req, res) => {
   try {
     const offices = await Office.find()
       .sort({ name: 1 })

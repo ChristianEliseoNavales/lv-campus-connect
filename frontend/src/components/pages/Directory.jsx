@@ -7,6 +7,7 @@ import { FaLocationDot } from 'react-icons/fa6';
 import { useSocket } from '../../contexts/SocketContext';
 import API_CONFIG from '../../config/api';
 import NavigationLoadingOverlay from '../ui/NavigationLoadingOverlay';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const Directory = () => {
   const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
@@ -654,7 +655,7 @@ const Directory = () => {
                 {/* Display Chart Image or Placeholder */}
                 {currentChart ? (
                   <img
-                    src={currentChart.image?.secure_url || currentChart.image?.url}
+                    src={getOptimizedCloudinaryUrl(currentChart.image) || currentChart.image?.secure_url || currentChart.image?.url}
                     alt={`${currentChart.officeName} Directory`}
                     className="w-full h-auto object-contain rounded-lg shadow-lg"
                     onError={(e) => {

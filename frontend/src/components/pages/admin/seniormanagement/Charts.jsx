@@ -7,6 +7,7 @@ import { useToast, ToastContainer } from '../../../ui/Toast';
 import { useSocket } from '../../../../contexts/SocketContext';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
+import { getOptimizedCloudinaryUrl } from '../../../../utils/cloudinary';
 
 const Charts = () => {
   const { socket, isConnected, joinRoom, leaveRoom } = useSocket();
@@ -353,9 +354,14 @@ const Charts = () => {
     }
   };
 
-  // Helper function to get media URL
+  // Helper function to get media URL with Cloudinary optimization
   const getMediaUrl = (chart) => {
-    return chart.image?.secure_url || chart.image?.url || `${API_CONFIG.getAdminUrl()}/${chart.image?.path}`;
+    const optimizedUrl = getOptimizedCloudinaryUrl(chart.image);
+    if (optimizedUrl) {
+      return optimizedUrl;
+    }
+    // Fallback to local image path
+    return `${API_CONFIG.getAdminUrl()}/${chart.image?.path}`;
   };
 
   const openFullscreen = (chart) => {
