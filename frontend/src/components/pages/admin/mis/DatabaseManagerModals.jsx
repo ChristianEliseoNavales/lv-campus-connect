@@ -280,71 +280,6 @@ export const EditRecordModal = ({
   );
 };
 
-// Delete Single Record Modal
-export const DeleteRecordModal = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  record,
-  selectedModel
-}) => {
-  if (!isOpen || !record) return null;
-
-  const getRecordIdentifier = () => {
-    if (record.name) return record.name;
-    if (record.title) return record.title;
-    if (record.customerName) return record.customerName;
-    if (record.email) return record.email;
-    if (record._id) return record._id;
-    return 'this record';
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
-      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
-        {/* Header */}
-        <div className="p-5 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-            <MdWarning className="w-5 h-5 text-red-500 mr-1.5" />
-            Confirm Delete
-          </h2>
-        </div>
-
-        {/* Content */}
-        <div className="p-5">
-          <p className="text-sm text-gray-700 mb-3">
-            Are you sure you want to delete this {selectedModel} record?
-          </p>
-          <div className="bg-gray-50 rounded-lg p-2.5 mb-3">
-            <p className="text-xs text-gray-600">
-              <strong>Record:</strong> {getRecordIdentifier()}
-            </p>
-          </div>
-          <p className="text-xs text-red-600">
-            <strong>Warning:</strong> This action cannot be undone.
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex justify-end space-x-2.5 p-5 border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            <MdDelete className="w-3 h-3" />
-            <span>Delete Record</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Delete All Records Modal
 export const DeleteAllRecordsModal = ({
@@ -388,20 +323,14 @@ export const DeleteAllRecordsModal = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
       <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
-        {/* Header */}
-        <div className="p-5 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-            <MdWarning className="w-5 h-5 text-red-500 mr-1.5" />
-            Confirm Delete All
-          </h2>
-        </div>
-
-        {/* Content */}
-        <div className="p-5">
-          <p className="text-sm text-gray-700 mb-3">
+        {/* Content - Centered like ConfirmModal */}
+        <div className="p-5 text-center">
+          <div className="text-3xl mb-3">🗑️</div>
+          <h3 className="text-base font-semibold text-gray-900 mb-1.5">Delete All Records</h3>
+          <p className="text-sm text-gray-600 mb-3">
             Are you sure you want to delete <strong>ALL {recordCount}</strong> {selectedModel} records?
           </p>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3 text-left">
             <div className="flex items-start">
               <MdWarning className="w-4 h-4 text-red-500 mt-0.5 mr-1.5 flex-shrink-0" />
               <div>
@@ -414,30 +343,30 @@ export const DeleteAllRecordsModal = ({
               </div>
             </div>
           </div>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-gray-600 mb-1.5">
             Type <strong>DELETE ALL</strong> below to confirm:
           </p>
           <input
             type="text"
             value={confirmText}
             placeholder="Type DELETE ALL to confirm"
-            className="w-full mt-1.5 px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
             onChange={handleConfirmTextChange}
           />
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-end space-x-2.5 p-5 border-t border-gray-200">
+        {/* Actions - Centered like ConfirmModal */}
+        <div className="flex space-x-2.5 justify-center pb-5 px-5">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 active:bg-gray-50 active:scale-95 transition-all duration-150"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={!isConfirmEnabled}
-            className="delete-all-button flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MdDeleteSweep className="w-3 h-3" />
             <span>Delete All Records</span>

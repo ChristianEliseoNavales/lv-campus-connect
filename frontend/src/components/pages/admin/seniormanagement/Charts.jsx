@@ -3,7 +3,7 @@ import { FaPlus, FaUpload } from 'react-icons/fa';
 import { FiEdit3 } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
 import { MdClose } from 'react-icons/md';
-import { useToast, ToastContainer } from '../../../ui/Toast';
+import { useToast, ToastContainer, ConfirmModal } from '../../../ui';
 import { useSocket } from '../../../../contexts/SocketContext';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
@@ -374,13 +374,13 @@ const Charts = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1F3463]">Office Charts</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">Office Charts</h1>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {[...Array(6)].map((_, index) => (
-            <div key={index} className="bg-white rounded-xl border border-gray-200 shadow-sm h-64 animate-pulse"></div>
+            <div key={index} className="bg-white rounded-lg sm:rounded-xl border border-gray-200 shadow-sm h-40 sm:h-48 md:h-52 animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -389,21 +389,21 @@ const Charts = () => {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-5">
         <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
 
         {/* Grid Container */}
-        <div className="bg-white rounded-xl p-6">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5">
           {/* Header */}
-        <h1 className="text-2xl font-bold text-[#1F3463] mb-6">Office Charts</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-max">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] mb-3 sm:mb-4 md:mb-5 tracking-tight">Office Charts</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 auto-rows-max">
           {/* Add Content Button - Always First */}
           <div
             onClick={() => setShowUploadModal(true)}
-            className="rounded-xl border-2 border-dashed border-[#1F3463] hover:border-[#1F3463] cursor-pointer transition-colors flex flex-col items-center justify-center h-64 bg-white hover:bg-gray-50"
+            className="rounded-lg sm:rounded-xl border-2 border-dashed border-[#1F3463] hover:border-[#1F3463] cursor-pointer transition-colors flex flex-col items-center justify-center h-40 sm:h-48 md:h-52 bg-white hover:bg-gray-50"
           >
-            <FaPlus className="text-4xl text-[#1F3463] mb-3" />
-            <p className="text-center font-medium text-[#1F3463]">Add Chart</p>
+            <FaPlus className="text-3xl sm:text-4xl text-[#1F3463] mb-2 sm:mb-2.5" />
+            <p className="text-center font-semibold text-xs sm:text-sm text-[#1F3463]">Add Chart</p>
           </div>
 
           {/* Chart Items */}
@@ -412,7 +412,7 @@ const Charts = () => {
               const mediaUrl = getMediaUrl(chart);
 
               return (
-                <div key={chart._id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden h-64 bg-white hover:shadow-lg transition-shadow relative group">
+                <div key={chart._id} className="rounded-lg sm:rounded-xl border border-gray-200 shadow-sm overflow-hidden h-40 sm:h-48 md:h-52 bg-white hover:shadow-lg transition-shadow relative group">
                   {/* Media Preview - Clickable for fullscreen */}
                   <div onClick={() => openFullscreen(chart)} className="cursor-pointer w-full h-full">
                     {(chart.image?.secure_url || chart.image?.url || chart.image?.path) ? (
@@ -427,13 +427,13 @@ const Charts = () => {
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <span className="text-gray-400 text-sm">No media</span>
+                        <span className="text-gray-400 text-xs">No media</span>
                       </div>
                     )}
                   </div>
 
                   {/* Action Buttons - Bottom Right */}
-                  <div className="absolute bottom-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute bottom-2 sm:bottom-2.5 right-2 sm:right-2.5 flex space-x-1 sm:space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => {
                         setSelectedChartId(chart._id);
@@ -443,20 +443,20 @@ const Charts = () => {
                         setUploadFile(null);
                         setShowEditModal(true);
                       }}
-                      className="bg-white rounded-full p-2 shadow-md hover:shadow-lg hover:bg-gray-50 transition-all"
+                      className="bg-white rounded-full p-1 sm:p-1.5 shadow-md hover:shadow-lg hover:bg-gray-50 transition-all"
                       title="Edit"
                     >
-                      <FiEdit3 className="text-lg text-[#1F3463]" />
+                      <FiEdit3 className="text-base sm:text-lg text-[#1F3463]" />
                     </button>
                     <button
                       onClick={() => {
                         setSelectedChartId(chart._id);
                         setShowDeleteModal(true);
                       }}
-                      className="bg-white rounded-full p-2 shadow-md hover:shadow-lg hover:bg-red-50 transition-all"
+                      className="bg-white rounded-full p-1 sm:p-1.5 shadow-md hover:shadow-lg hover:bg-red-50 transition-all"
                       title="Delete"
                     >
-                      <AiOutlineMinusCircle className="text-lg text-red-500" />
+                      <AiOutlineMinusCircle className="text-base sm:text-lg text-red-500" />
                     </button>
                   </div>
                 </div>
@@ -464,7 +464,7 @@ const Charts = () => {
             })
           ) : (
             <div className="col-span-full text-center py-12">
-              <p className="text-gray-500">No charts yet. Click "Add Chart" to create one.</p>
+              <p className="text-base text-gray-500">No charts yet. Click "Add Chart" to create one.</p>
             </div>
           )}
         </div>
@@ -473,7 +473,7 @@ const Charts = () => {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
             {/* Close Button */}
             <button
@@ -484,21 +484,21 @@ const Charts = () => {
                 setOfficeEmail('');
                 setIsDragging(false);
               }}
-              className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+              className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
             >
-              <MdClose className="w-4 h-4" />
+              <MdClose className="w-3 h-3" />
             </button>
 
             {/* Modal Header */}
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-xl font-bold text-[#1F3463]">Upload Office Chart</h2>
+            <div className="border-b border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-wide">Upload Office Chart</h2>
             </div>
 
             {/* Modal Body */}
-            <div className="px-6 py-6 space-y-4">
+            <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-4">
               {/* Office Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Department/Office
                 </label>
                 <select
@@ -517,7 +517,7 @@ const Charts = () => {
 
               {/* Office Email Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Contact Email of Department/Office
                 </label>
                 <input
@@ -531,7 +531,7 @@ const Charts = () => {
 
               {/* File Upload Area with Drag & Drop */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Chart Image (JPG/PNG only)
                 </label>
                 <div
@@ -540,17 +540,17 @@ const Charts = () => {
                   onDragLeave={handleDragLeave}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
-                  className={`border-2 rounded-xl p-8 text-center cursor-pointer transition-all ${
+                  className={`border-2 rounded-lg sm:rounded-xl p-4 sm:p-5 text-center cursor-pointer transition-all ${
                     isDragging
                       ? 'border-[#1F3463] bg-blue-50 border-solid'
                       : 'border-black border-dashed hover:bg-gray-50'
                   }`}
                 >
-                  <FaUpload className={`text-4xl mx-auto mb-4 ${isDragging ? 'text-[#1F3463]' : 'text-black'}`} />
-                  <p className="text-sm font-medium text-gray-900 mb-2">
+                  <FaUpload className={`text-2xl sm:text-3xl mx-auto mb-2 sm:mb-2.5 ${isDragging ? 'text-[#1F3463]' : 'text-black'}`} />
+                  <p className="text-[10px] sm:text-xs font-semibold text-gray-900 mb-1">
                     {isDragging ? 'Drop file here' : 'Choose a file or drag & drop it here'}
                   </p>
-                  <p className="text-xs text-gray-600 mb-3">JPG or PNG, maximum 10MB</p>
+                  <p className="text-[9px] sm:text-[10px] text-gray-600 mb-1 sm:mb-2">JPG or PNG, maximum 10MB</p>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -563,11 +563,11 @@ const Charts = () => {
 
               {/* Selected File Display */}
               {uploadFile && (
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-900">
+                <div className="mt-2 sm:mt-2.5 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-[10px] sm:text-xs text-blue-900">
                     <strong>Selected:</strong> {uploadFile.name}
                   </p>
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p className="text-[9px] sm:text-[10px] text-blue-700 mt-0.5">
                     Size: {(uploadFile.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
@@ -575,11 +575,11 @@ const Charts = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t border-gray-200 px-6 py-4">
+            <div className="border-t border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5">
               <button
                 onClick={handleUploadChart}
                 disabled={uploading || !uploadFile || !selectedOfficeId}
-                className="w-full px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploading ? 'Uploading...' : 'Upload Chart'}
               </button>
@@ -590,7 +590,7 @@ const Charts = () => {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
             {/* Close Button */}
             <button
@@ -602,21 +602,21 @@ const Charts = () => {
                 setSelectedChartId(null);
                 setIsDragging(false);
               }}
-              className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+              className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
             >
-              <MdClose className="w-4 h-4" />
+              <MdClose className="w-3 h-3" />
             </button>
 
             {/* Modal Header */}
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-xl font-bold text-[#1F3463]">Edit Office Chart</h2>
+            <div className="border-b border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-wide">Edit Office Chart</h2>
             </div>
 
             {/* Modal Body */}
-            <div className="px-6 py-6 space-y-4">
+            <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-4">
               {/* Office Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Department/Office
                 </label>
                 <select
@@ -635,7 +635,7 @@ const Charts = () => {
 
               {/* Office Email Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Contact Email of Department/Office
                 </label>
                 <input
@@ -649,7 +649,7 @@ const Charts = () => {
 
               {/* File Upload Area with Drag & Drop */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Chart Image (JPG/PNG only) - Optional
                 </label>
                 <div
@@ -658,18 +658,18 @@ const Charts = () => {
                   onDragLeave={handleDragLeave}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
-                  className={`border-2 rounded-xl p-8 text-center cursor-pointer transition-all ${
+                  className={`border-2 rounded-lg sm:rounded-xl p-4 sm:p-5 text-center cursor-pointer transition-all ${
                     isDragging
                       ? 'border-[#1F3463] bg-blue-50 border-solid'
                       : 'border-black border-dashed hover:bg-gray-50'
                   }`}
                 >
-                  <FaUpload className={`text-4xl mx-auto mb-4 ${isDragging ? 'text-[#1F3463]' : 'text-black'}`} />
-                  <p className="text-sm font-medium text-gray-900 mb-2">
+                  <FaUpload className={`text-2xl sm:text-3xl mx-auto mb-2 sm:mb-2.5 ${isDragging ? 'text-[#1F3463]' : 'text-black'}`} />
+                  <p className="text-[10px] sm:text-xs font-semibold text-gray-900 mb-1">
                     {isDragging ? 'Drop file here' : 'Choose a new file or drag & drop it here'}
                   </p>
-                  <p className="text-xs text-gray-600 mb-3">JPG or PNG, maximum 10MB</p>
-                  <p className="text-xs text-gray-500">Leave empty to keep current image</p>
+                  <p className="text-[9px] sm:text-[10px] text-gray-600 mb-1 sm:mb-2">JPG or PNG, maximum 10MB</p>
+                  <p className="text-[9px] sm:text-[10px] text-gray-500">Leave empty to keep current image</p>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -682,11 +682,11 @@ const Charts = () => {
 
               {/* Selected File Display */}
               {uploadFile && (
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-900">
+                <div className="mt-2 sm:mt-2.5 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-[10px] sm:text-xs text-blue-900">
                     <strong>New File Selected:</strong> {uploadFile.name}
                   </p>
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p className="text-[9px] sm:text-[10px] text-blue-700 mt-0.5">
                     Size: {(uploadFile.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
@@ -694,11 +694,11 @@ const Charts = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t border-gray-200 px-6 py-4">
+            <div className="border-t border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5">
               <button
                 onClick={handleEditChart}
                 disabled={updating || !selectedOfficeId}
-                className="w-full px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {updating ? 'Updating...' : 'Update Chart'}
               </button>
@@ -709,33 +709,18 @@ const Charts = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
-            <div className="px-6 py-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Delete Chart</h2>
-              <p className="text-gray-600 mb-6">Are you sure you want to delete this chart? This action cannot be undone. The file will be removed from both Cloudinary and the database.</p>
-            </div>
-            <div className="border-t border-gray-200 px-6 py-4 flex space-x-3">
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setSelectedChartId(null);
-                }}
-                disabled={deleting}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteChart}
-                disabled={deleting}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedChartId(null);
+          }}
+          onConfirm={handleDeleteChart}
+          title="Delete Chart"
+          message="Are you sure you want to delete this chart? This action cannot be undone. The file will be removed from both Cloudinary and the database."
+          confirmText={deleting ? 'Deleting...' : 'Delete'}
+          type="danger"
+        />
       )}
 
       {/* Fullscreen Modal */}
@@ -744,10 +729,10 @@ const Charts = () => {
           {/* Close Button - Top Right */}
           <button
             onClick={closeFullscreen}
-            className="absolute top-6 right-6 z-[60] w-12 h-12 rounded-full border-2 border-white bg-transparent hover:bg-white hover:bg-opacity-20 flex items-center justify-center text-white transition-all duration-200"
+            className="absolute top-5 right-5 z-[60] w-10 h-10 rounded-full border-2 border-white bg-transparent hover:bg-white hover:bg-opacity-20 flex items-center justify-center text-white transition-all duration-200"
             aria-label="Close fullscreen"
           >
-            <MdClose className="w-8 h-8" />
+            <MdClose className="w-6 h-6" />
           </button>
 
           {/* Media Container */}

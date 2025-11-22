@@ -741,7 +741,7 @@ const FAQ = () => {
           title="Delete FAQ"
           message={`Are you sure you want to delete this FAQ? This action cannot be undone.`}
           confirmText="Delete"
-          confirmButtonClass="bg-red-600 hover:bg-red-700"
+          type="danger"
         />
       )}
     </>

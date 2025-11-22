@@ -3,7 +3,7 @@ import { FaPlus, FaUpload } from 'react-icons/fa';
 import { FiEdit3 } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
 import { MdClose } from 'react-icons/md';
-import { ToastContainer } from '../../../ui/Toast';
+import { ToastContainer, ConfirmModal } from '../../../ui';
 import { useNotification } from '../../../../hooks/useNotification';
 import { useSocket } from '../../../../contexts/SocketContext';
 import API_CONFIG from '../../../../config/api';
@@ -456,33 +456,18 @@ const Bulletin = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full mx-3">
-            <div className="px-5 py-5">
-              <h2 className="text-xl font-bold text-gray-900 mb-1.5 tracking-wide">Delete Bulletin</h2>
-              <p className="text-sm text-gray-600 mb-5">Are you sure you want to delete this bulletin? This action cannot be undone. The file will be removed from both Cloudinary and the database.</p>
-            </div>
-            <div className="border-t border-gray-200 px-5 py-3 flex space-x-2.5">
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setSelectedBulletinId(null);
-                }}
-                disabled={deleting}
-                className="flex-1 px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg font-semibold text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteBulletin}
-                disabled={deleting}
-                className="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedBulletinId(null);
+          }}
+          onConfirm={handleDeleteBulletin}
+          title="Delete Bulletin"
+          message="Are you sure you want to delete this bulletin? This action cannot be undone. The file will be removed from both Cloudinary and the database."
+          confirmText={deleting ? 'Deleting...' : 'Delete'}
+          type="danger"
+        />
       )}
 
       {/* Fullscreen Modal */}

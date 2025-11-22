@@ -694,7 +694,8 @@ const Settings = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      await Promise.all([
+      // Fetch all data and capture responses directly
+      const [queueData, servicesData, windowsData, , locationData] = await Promise.all([
         fetchQueueSettings(),
         fetchServices(),
         fetchWindows(),
@@ -702,16 +703,14 @@ const Settings = () => {
         fetchLocationSettings()
       ]);
 
-      // Capture initial state after all data is loaded
-      setTimeout(() => {
-        setInitialState(prev => ({
-          ...prev,
-          isQueueingEnabled,
-          locationText,
-          services: [...services],
-          windows: [...windows]
-        }));
-      }, 100); // Small delay to ensure state updates are complete
+      // Capture initial state directly from API responses to avoid stale state issues
+      setInitialState(prev => ({
+        ...prev,
+        isQueueingEnabled: queueData?.isEnabled ?? false,
+        locationText: locationData?.location ?? '',
+        services: servicesData ? [...servicesData] : [],
+        windows: windowsData ? [...windowsData] : []
+      }));
     } catch (error) {
       showError('Error', 'Failed to load settings data');
     } finally {
@@ -725,10 +724,12 @@ const Settings = () => {
       if (response.ok) {
         const data = await response.json();
         setIsQueueingEnabled(data.isEnabled);
+        return data; // Return data for initial state capture
       }
     } catch (error) {
       console.error('Error fetching queue settings:', error);
     }
+    return null;
   };
 
   const fetchServices = async () => {
@@ -737,10 +738,12 @@ const Settings = () => {
       if (response.ok) {
         const data = await response.json();
         setServices(data);
+        return data; // Return data for initial state capture
       }
     } catch (error) {
       console.error('Error fetching services:', error);
     }
+    return null;
   };
 
   const fetchWindows = async () => {
@@ -749,10 +752,12 @@ const Settings = () => {
       if (response.ok) {
         const data = await response.json();
         setWindows(data);
+        return data; // Return data for initial state capture
       }
     } catch (error) {
       console.error('Error fetching windows:', error);
     }
+    return null;
   };
 
   // Modal states
@@ -814,10 +819,12 @@ const Settings = () => {
       if (response.ok) {
         const data = await response.json();
         setLocationText(data.location || '');
+        return data; // Return data for initial state capture
       }
     } catch (error) {
       console.error('Error fetching location settings:', error);
     }
+    return null;
   };
 
   const handleToggleQueueing = async () => {

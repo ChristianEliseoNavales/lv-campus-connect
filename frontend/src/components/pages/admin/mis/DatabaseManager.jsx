@@ -10,13 +10,12 @@ import {
   MdStorage,
   MdTableChart
 } from 'react-icons/md';
-import { ToastContainer } from '../../../ui/Toast';
+import { ToastContainer, ConfirmModal } from '../../../ui';
 import { useNotification } from '../../../../hooks/useNotification';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
 import {
   EditRecordModal,
-  DeleteRecordModal,
   DeleteAllRecordsModal
 } from './DatabaseManagerModals';
 
@@ -38,6 +37,17 @@ const DatabaseManager = () => {
   const [formErrors, setFormErrors] = useState({});
 
   const { toasts, removeToast, showSuccess, showError, showWarning } = useNotification();
+
+  // Helper function to get record identifier for delete confirmation
+  const getRecordIdentifier = (record) => {
+    if (!record) return 'this record';
+    if (record.name) return record.name;
+    if (record.title) return record.title;
+    if (record.customerName) return record.customerName;
+    if (record.email) return record.email;
+    if (record._id) return record._id;
+    return 'this record';
+  };
 
   // Available models for database management
   const availableModels = [
@@ -607,13 +617,17 @@ const DatabaseManager = () => {
         editingRecord={editingRecord}
       />
 
-      <DeleteRecordModal
-        isOpen={showDeleteModal}
-        onClose={closeDeleteModal}
-        onConfirm={handleDeleteRecord}
-        record={deletingRecord}
-        selectedModel={selectedModel}
-      />
+      {showDeleteModal && deletingRecord && (
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          onClose={closeDeleteModal}
+          onConfirm={handleDeleteRecord}
+          title="Delete Record"
+          message={`Are you sure you want to delete this ${selectedModel} record? Record: ${getRecordIdentifier(deletingRecord)}. This action cannot be undone.`}
+          confirmText="Delete Record"
+          type="danger"
+        />
+      )}
 
       <DeleteAllRecordsModal
         isOpen={showDeleteAllModal}

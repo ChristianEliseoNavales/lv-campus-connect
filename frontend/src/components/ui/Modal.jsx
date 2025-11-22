@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MdClose } from 'react-icons/md';
+import { MdClose, MdWarning, MdInfo } from 'react-icons/md';
 
 const Modal = ({
   isOpen,
@@ -117,15 +117,15 @@ export const ConfirmModal = ({
 }) => {
   const typeStyles = {
     warning: {
-      icon: '⚠️',
+      icon: <MdWarning className="w-12 h-12 text-yellow-600 mx-auto" />,
       confirmButton: 'bg-yellow-600 hover:bg-yellow-700 text-white'
     },
     danger: {
-      icon: '🗑️',
+      icon: <MdWarning className="w-12 h-12 text-red-600 mx-auto" />,
       confirmButton: 'bg-red-600 hover:bg-red-700 text-white'
     },
     info: {
-      icon: 'ℹ️',
+      icon: <MdInfo className="w-12 h-12 text-blue-600 mx-auto" />,
       confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white'
     }
   };
@@ -134,8 +134,21 @@ export const ConfirmModal = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="sm" showCloseButton={false}>
-      <div className="text-center">
-        <div className="text-3xl mb-3">{style.icon}</div>
+      <div className="relative text-center pt-8">
+        {/* Icon positioned to overflow top of modal */}
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10 flex items-center justify-center">
+          {/* White triangular background */}
+          <div 
+            className="absolute w-16 h-16 bg-white"
+            style={{
+              clipPath: 'polygon(50% 5%, 0% 90%, 100% 90%)'
+            }}
+          />
+          {/* Icon on top of triangle */}
+          <div className="relative z-10">
+            {style.icon}
+          </div>
+        </div>
         <h3 className="text-base font-semibold text-gray-900 mb-1.5">{title}</h3>
         <p className="text-sm text-gray-600 mb-5">{message}</p>
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { authFetch } from '../../../../utils/apiClient';
+import { ConfirmModal } from '../../../ui';
 
 /**
  * Temporary Component: Fix User PageAccess
@@ -12,6 +13,7 @@ const FixUsers = () => {
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState(null);
   const [usersToFix, setUsersToFix] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const checkUsers = async () => {
     setChecking(true);
@@ -42,11 +44,7 @@ const FixUsers = () => {
     }
   };
 
-  const fixUsers = async () => {
-    if (!confirm('Are you sure you want to fix all users with empty pageAccess? This will automatically assign default pageAccess based on their roles.')) {
-      return;
-    }
-
+  const performFixUsers = async () => {
     setLoading(true);
     setResult(null);
     try {
@@ -66,7 +64,12 @@ const FixUsers = () => {
       });
     } finally {
       setLoading(false);
+      setShowConfirmModal(false);
     }
+  };
+
+  const handleFixUsersClick = () => {
+    setShowConfirmModal(true);
   };
 
   return (
@@ -124,7 +127,7 @@ const FixUsers = () => {
         {usersToFix && usersToFix.count > 0 && (
           <div className="mb-5">
             <button
-              onClick={fixUsers}
+              onClick={handleFixUsersClick}
               disabled={loading}
               className="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium text-sm"
             >
@@ -197,6 +200,17 @@ const FixUsers = () => {
           </p>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={performFixUsers}
+        title="Fix User PageAccess"
+        message="Are you sure you want to fix all users with empty pageAccess? This will automatically assign default pageAccess based on their roles."
+        confirmText="Fix Users"
+        type="warning"
+      />
     </div>
   );
 };

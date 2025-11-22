@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown } from 'react-icons/md';
+import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown, MdClose } from 'react-icons/md';
 import { IoMdRefresh } from 'react-icons/io';
 import { BiSolidNotepad } from 'react-icons/bi';
 import { PiNotePencilDuotone } from 'react-icons/pi';
@@ -603,19 +603,19 @@ const TransactionLogs = () => {
               className="relative bg-white rounded-lg sm:rounded-xl shadow-xl w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close Button */}
+              <button
+                onClick={handleCancelEdit}
+                className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+              >
+                <MdClose className="w-3 h-3" />
+              </button>
+
               {/* Header */}
-              <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 border-b border-gray-200">
+              <div className="p-3 sm:p-4 md:p-5 border-b border-gray-200">
                 <h3 className="text-sm sm:text-base font-semibold text-gray-900">
                   Edit Remarks - Queue #{selectedLog?.queueNumber?.toString().padStart(2, '0')}
                 </h3>
-                <button
-                  onClick={handleCancelEdit}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
 
               {/* Content */}
