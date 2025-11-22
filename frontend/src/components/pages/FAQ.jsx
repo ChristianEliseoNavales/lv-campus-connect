@@ -235,54 +235,67 @@ const FAQ = () => {
                   </div>
                 </div>
               ) : (
-                filteredFAQs.map((faq, index) => (
-                <motion.div
-                  key={faq.id}
-                  className="bg-gray-50 rounded-lg shadow-lg drop-shadow-sm border border-gray-200 overflow-hidden"
-                  variants={faqItemVariants}
-                  custom={index}
-                >
-                  <button
-                    onClick={() => toggleFAQ(faq.id)}
-                    className="w-full px-5 py-3 text-left active:bg-gray-100 focus:outline-none focus:bg-gray-100 active:scale-95 transition-all duration-150"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-800 pr-3">
-                        {faq.question}
-                      </h3>
-                      <div className="flex-shrink-0">
-                        {openFAQ === faq.id ? (
-                          <svg
-                            className="w-5 h-5 transition-transform duration-200"
-                            style={{ color: '#1F3463' }}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg
-                            className="w-5 h-5 transition-transform duration-200"
-                            style={{ color: '#1F3463' }}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  </button>
+                filteredFAQs.map((faq, index) => {
+                  // Only animate first 10 items for performance
+                  const shouldAnimate = index < 10;
+                  const Component = shouldAnimate ? motion.div : 'div';
+                  const animationProps = shouldAnimate 
+                    ? { 
+                        variants: faqItemVariants, 
+                        custom: index,
+                        className: "bg-gray-50 rounded-lg shadow-lg drop-shadow-sm border border-gray-200 overflow-hidden"
+                      }
+                    : { 
+                        className: "bg-gray-50 rounded-lg shadow-lg drop-shadow-sm border border-gray-200 overflow-hidden fade-in"
+                      };
+                  
+                  return (
+                    <Component
+                      key={faq.id}
+                      {...animationProps}
+                    >
+                      <button
+                        onClick={() => toggleFAQ(faq.id)}
+                        className="w-full px-5 py-3 text-left active:bg-gray-100 focus:outline-none focus:bg-gray-100 active:scale-95 transition-all duration-150"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-800 pr-3">
+                            {faq.question}
+                          </h3>
+                          <div className="flex-shrink-0">
+                            {openFAQ === faq.id ? (
+                              <svg
+                                className="w-5 h-5 transition-transform duration-200"
+                                style={{ color: '#1F3463' }}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-5 h-5 transition-transform duration-200"
+                                style={{ color: '#1F3463' }}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      </button>
 
-                  {openFAQ === faq.id && (
-                    <div className="px-5 pb-3 border-t border-gray-100 animate-fadeIn bg-white">
-                      <p className="text-base text-gray-700 leading-relaxed pt-3">
-                        {faq.answer}
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-                ))
+                      {openFAQ === faq.id && (
+                        <div className="px-5 pb-3 border-t border-gray-100 animate-fadeIn bg-white">
+                          <p className="text-base text-gray-700 leading-relaxed pt-3">
+                            {faq.answer}
+                          </p>
+                        </div>
+                      )}
+                    </Component>
+                  );
+                })
               )}
             </motion.div>
           </div>

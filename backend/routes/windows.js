@@ -2,10 +2,12 @@ const express = require('express');
 const { Window, Service, User } = require('../models');
 const { verifyToken, requireRole, checkApiAccess } = require('../middleware/authMiddleware');
 const { AuditService } = require('../middleware/auditMiddleware');
+const { cacheMiddleware, invalidateCache } = require('../middleware/cacheMiddleware');
+const { CacheHelper } = require('../utils/cache');
 const router = express.Router();
 
 // GET /api/windows - Get all windows
-router.get('/', verifyToken, checkApiAccess, async (req, res) => {
+router.get('/', verifyToken, checkApiAccess, cacheMiddleware('windows', 'all'), async (req, res) => {
   try {
     const windows = await Window.find()
       .populate('serviceIds', 'name')
@@ -30,7 +32,7 @@ router.get('/', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // GET /api/windows/:department - Get windows by office (department param for backward compatibility)
-router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
+router.get('/:department', verifyToken, checkApiAccess, cacheMiddleware('windows', 'byDepartment'), async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -62,7 +64,14 @@ router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // POST /api/windows - Create new window
-router.post('/', verifyToken, checkApiAccess, async (req, res) => {
+router.post('/', verifyToken, checkApiAccess, invalidateCache((req, data) => {
+  const office = req.body.office || (data && data.office);
+  if (office) {
+    CacheHelper.invalidateWindows(office);
+  } else {
+    CacheHelper.invalidateWindows(); // Invalidate all if office not available
+  }
+}), async (req, res) => {
   try {
     const { name, office, serviceIds, assignedAdmin } = req.body;
 
@@ -238,7 +247,16 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // PUT /api/windows/:id - Update window
-router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
+router.put('/:id', verifyToken, checkApiAccess, invalidateCache((req, data) => {
+  const office = (data && data.office) || (req.body && req.body.office);
+  if (office) {
+    CacheHelper.invalidateWindows(office);
+  } else {
+    // Get office from window before update
+    // This will be handled in the route handler
+    CacheHelper.invalidateWindows();
+  }
+}), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, serviceIds, assignedAdmin } = req.body;
@@ -287,6 +305,9 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
       assignedAdmin: window.assignedAdmin
     };
     const oldAssignedAdmin = window.assignedAdmin;
+    
+    // Invalidate cache for this window's office before updating
+    CacheHelper.invalidateWindows(window.office);
 
     // Validate assigned admin if provided
     if (assignedAdmin) {
@@ -456,7 +477,14 @@ router.put('/:id', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // PATCH /api/windows/:id/toggle - Toggle window open status
-router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
+router.patch('/:id/toggle', verifyToken, checkApiAccess, invalidateCache((req, data) => {
+  const office = (data && data.office);
+  if (office) {
+    CacheHelper.invalidateWindows(office);
+  } else {
+    CacheHelper.invalidateWindows(); // Invalidate all if office not available
+  }
+}), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -467,6 +495,9 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
 
     // Track old value for audit logging
     const oldIsOpen = window.isOpen;
+
+    // Invalidate cache for this window's office before toggling
+    CacheHelper.invalidateWindows(window.office);
 
     // Toggle the isOpen status
     window.isOpen = !window.isOpen;
@@ -531,7 +562,14 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // DELETE /api/windows/:id - Delete window
-router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
+router.delete('/:id', verifyToken, checkApiAccess, invalidateCache((req, data) => {
+  const office = (data && data.window && data.window.office);
+  if (office) {
+    CacheHelper.invalidateWindows(office);
+  } else {
+    CacheHelper.invalidateWindows(); // Invalidate all if office not available
+  }
+}), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -546,6 +584,9 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
       office: window.office,
       assignedAdmin: window.assignedAdmin
     };
+
+    // Invalidate cache for this window's office before deleting
+    CacheHelper.invalidateWindows(window.office);
 
     // Remove window from assignedWindows and queue route from user if window had an assigned admin
     if (window.assignedAdmin) {

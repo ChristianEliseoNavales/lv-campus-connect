@@ -439,7 +439,7 @@ const TransactionLogs = () => {
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
                 {currentLogs.map((log) => (
-                  <div key={log.id} className="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 hover:bg-gray-50 transition-colors min-h-[80px] md:h-12 flex items-center">
+                  <div key={log.id} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors md:h-12 flex items-center">
                     {/* Desktop view */}
                     <div className="hidden md:grid md:grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 items-center w-full">
                       <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
@@ -545,7 +545,7 @@ const TransactionLogs = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-            <div className="text-[10px] sm:text-xs text-gray-700 font-medium order-2 sm:order-1">
+            <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredLogs.length)} of {filteredLogs.length} logs
             </div>
             <div className="order-1 sm:order-2">
@@ -553,7 +553,7 @@ const TransactionLogs = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                size="sm"
+                size="md"
               />
             </div>
           </div>

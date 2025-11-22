@@ -13,10 +13,12 @@ const queueSchema = new mongoose.Schema({
     required: true
   },
   windowId: {
-    type: String // Changed to String for hybrid system compatibility
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Window'
   },
   serviceId: {
-    type: String, // Changed to String for hybrid system compatibility
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Service',
     required: true
   },
   // Visitation Form Reference (optional for Enroll service)

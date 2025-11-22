@@ -93,7 +93,7 @@ router.get('/pie-chart/combined', verifyToken, checkApiAccess, async (req, res) 
     const services = await Service.find({
       _id: { $in: serviceIds },
       isActive: true
-    }).select('name office');
+    }).select('name office').lean();
 
     // Create service lookup map
     const serviceMap = {};
@@ -176,7 +176,7 @@ router.get('/pie-chart/:department', verifyToken, checkApiAccess, validateDepart
     const services = await Service.find({
       _id: { $in: serviceIds },
       office: department // Use 'office' field in database, value comes from route parameter
-    }).select('name');
+    }).select('name').lean();
     
     // Create service lookup map
     const serviceMap = {};
@@ -401,21 +401,21 @@ router.get('/dashboard-table-data/:department', verifyToken, checkApiAccess, val
     const windows = await Window.find({
       office: department, // Use 'office' field in database, value comes from route parameter
       isOpen: true
-    }).sort({ name: 1 });
+    }).sort({ name: 1 }).lean();
 
     // Get window data with current serving and incoming queue numbers
     const windowData = await Promise.all(
       windows.map(async (window) => {
         // Get current serving queue for this window
         const currentServing = await Queue.findOne({
-          windowId: window._id.toString(),
+          windowId: window._id,
           status: 'serving',
           isCurrentlyServing: true
         });
 
         // Get next waiting queue for this window
         const nextWaiting = await Queue.findOne({
-          windowId: window._id.toString(),
+          windowId: window._id,
           status: 'waiting'
         }).sort({ queuedAt: 1 });
 
@@ -439,7 +439,7 @@ router.get('/dashboard-table-data/:department', verifyToken, checkApiAccess, val
       status: 'completed',
       queuedAt: { $exists: true },
       completedAt: { $exists: true }
-    }).select('queuedAt completedAt');
+    }).select('queuedAt completedAt').lean();
 
     let averageTurnaroundTime = '0 mins';
     if (completedQueues.length > 0) {
@@ -510,26 +510,26 @@ router.get('/queue-monitor/:department', verifyToken, checkApiAccess, validateDe
     // Get all windows for the department (including closed ones for status display)
     const windows = await Window.find({
       office: department // Use 'office' field in database, value comes from route parameter
-    }).sort({ name: 1 });
+    }).sort({ name: 1 }).lean();
 
     // Get window data with current serving, incoming queue numbers, and serving status
     const windowData = await Promise.all(
       windows.map(async (window) => {
         // Get current serving queue for this window
         const currentServing = await Queue.findOne({
-          windowId: window._id.toString(),
+          windowId: window._id,
           status: 'serving',
           isCurrentlyServing: true
         });
 
         // Get next waiting queue for this window
         const nextWaiting = await Queue.findOne({
-          windowId: window._id.toString(),
+          windowId: window._id,
           status: 'waiting'
         }).sort({ queuedAt: 1 });
 
         return {
-          windowId: window._id.toString(),
+          windowId: window._id.toString(), // Keep as string for API response compatibility
           windowName: window.name,
           currentServingNumber: currentServing ? currentServing.queueNumber : 0,
           incomingNumber: nextWaiting ? nextWaiting.queueNumber : 0,
@@ -546,13 +546,14 @@ router.get('/queue-monitor/:department', verifyToken, checkApiAccess, validateDe
     })
     .sort({ skippedAt: -1 })
     .limit(10)
-    .select('queueNumber skippedAt');
+    .select('queueNumber skippedAt')
+    .lean();
 
     // Get next overall queue number (earliest waiting queue across all windows)
     const nextOverallQueue = await Queue.findOne({
       office: department, // Use 'office' field in database, value comes from route parameter
       status: 'waiting'
-    }).sort({ queuedAt: 1 });
+    }).sort({ queuedAt: 1 }).lean();
 
     res.json({
       success: true,
@@ -659,7 +660,7 @@ router.get('/active-sessions', verifyToken, checkApiAccess, async (req, res) => 
     // Enrich with user department information
     const enrichedSessions = await Promise.all(
       activeSessions.map(async (session) => {
-        const user = await User.findById(session._id).select('department');
+        const user = await User.findById(session._id).select('department').lean();
         return {
           userId: session._id,
           name: session.userName,
@@ -1130,7 +1131,7 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       console.log('📋 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
 
       const serviceIds = serviceDistribution.map(s => s._id);
-      const services = await Service.find({ _id: { $in: serviceIds } });
+      const services = await Service.find({ _id: { $in: serviceIds } }).lean();
       const serviceMap = services.reduce((map, s) => {
         map[s._id.toString()] = s.name;
         return map;
@@ -1256,7 +1257,7 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
       console.log('🪟 Window Performance Result:', JSON.stringify(windowPerformance, null, 2));
 
       const windowIds = windowPerformance.map(w => w._id);
-      const windows = await Window.find({ _id: { $in: windowIds } });
+      const windows = await Window.find({ _id: { $in: windowIds } }).lean();
       const windowMap = windows.reduce((map, w) => {
         map[w._id.toString()] = w.name;
         return map;
@@ -1338,7 +1339,7 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         ]);
 
         const monthServiceIds = monthServiceDistribution.map(s => s._id);
-        const monthServices = await Service.find({ _id: { $in: monthServiceIds } });
+        const monthServices = await Service.find({ _id: { $in: monthServiceIds } }).lean();
         const monthServiceMap = monthServices.reduce((map, s) => {
           map[s._id.toString()] = s.name;
           return map;
@@ -1424,7 +1425,7 @@ router.get('/analytical-report/:role', verifyToken, checkApiAccess, async (req, 
         ]);
 
         const monthWindowIds = monthWindowPerformance.map(w => w._id);
-        const monthWindows = await Window.find({ _id: { $in: monthWindowIds } });
+        const monthWindows = await Window.find({ _id: { $in: monthWindowIds } }).lean();
         const monthWindowMap = monthWindows.reduce((map, w) => {
           map[w._id.toString()] = w.name;
           return map;

@@ -341,7 +341,7 @@ const Ratings = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 flex items-center animate-pulse">
+                  <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2 sm:gap-3 items-center w-full">
                       <div className="h-3 bg-gray-200 rounded w-12"></div>
                       <div className="h-3 bg-gray-200 rounded w-16"></div>
@@ -382,7 +382,7 @@ const Ratings = () => {
                   const { time, date } = formatDateTime(dateToFormat);
 
                   return (
-                    <div key={rating._id} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 hover:bg-gray-50 transition-colors flex items-center">
+                    <div key={rating._id} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors md:h-12 flex items-center">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
                         {/* Time */}
                         <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">

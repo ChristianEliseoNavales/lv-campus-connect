@@ -2,10 +2,12 @@ const express = require('express');
 const { Service } = require('../models');
 const { verifyToken, requireRole, checkApiAccess } = require('../middleware/authMiddleware');
 const { AuditService } = require('../middleware/auditMiddleware');
+const { cacheMiddleware, invalidateCache } = require('../middleware/cacheMiddleware');
+const { CacheHelper, CacheKeys } = require('../utils/cache');
 const router = express.Router();
 
 // GET /api/services - Get all services
-router.get('/', verifyToken, checkApiAccess, async (req, res) => {
+router.get('/', verifyToken, checkApiAccess, cacheMiddleware('services', 'all'), async (req, res) => {
   try {
     const services = await Service.find().sort({ office: 1, name: 1 });
     res.json(services.map(service => ({
@@ -23,7 +25,7 @@ router.get('/', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // GET /api/services/:department - Get services by office (department param for backward compatibility)
-router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
+router.get('/:department', verifyToken, checkApiAccess, cacheMiddleware('services', 'byDepartment'), async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -48,7 +50,7 @@ router.get('/:department', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // GET /api/services/:department/active - Get active services by office (department param for backward compatibility)
-router.get('/:department/active', verifyToken, checkApiAccess, async (req, res) => {
+router.get('/:department/active', verifyToken, checkApiAccess, cacheMiddleware('services', 'activeByDepartment'), async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -75,7 +77,14 @@ router.get('/:department/active', verifyToken, checkApiAccess, async (req, res) 
 });
 
 // POST /api/services - Create new service
-router.post('/', verifyToken, checkApiAccess, async (req, res) => {
+router.post('/', verifyToken, checkApiAccess, invalidateCache((req, data) => {
+  const office = req.body.office || (data && data.office);
+  if (office) {
+    CacheHelper.invalidateServices(office);
+  } else {
+    CacheHelper.invalidateServices(); // Invalidate all if office not available
+  }
+}), async (req, res) => {
   try {
     const { name, office } = req.body;
 
@@ -164,7 +173,16 @@ router.post('/', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // PATCH /api/services/:id/toggle - Toggle service active status
-router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
+router.patch('/:id/toggle', verifyToken, checkApiAccess, invalidateCache((req, data) => {
+  const office = data && data.office;
+  if (office) {
+    CacheHelper.invalidateServices(office);
+  } else {
+    // If office not in response, get it from service before toggling
+    // This will be handled in the route handler, but we invalidate all to be safe
+    CacheHelper.invalidateServices();
+  }
+}), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -175,6 +193,9 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
 
     // Track old value for audit logging
     const oldIsActive = service.isActive;
+
+    // Invalidate cache for this service's office before toggling
+    CacheHelper.invalidateServices(service.office);
 
     // Toggle the isActive status
     service.isActive = !service.isActive;
@@ -233,7 +254,14 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, async (req, res) => {
 });
 
 // DELETE /api/services/:id - Delete service
-router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
+router.delete('/:id', verifyToken, checkApiAccess, invalidateCache((req, data) => {
+  const office = data && data.service && data.service.office;
+  if (office) {
+    CacheHelper.invalidateServices(office);
+  } else {
+    CacheHelper.invalidateServices(); // Invalidate all if office not available
+  }
+}), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -247,6 +275,9 @@ router.delete('/:id', verifyToken, checkApiAccess, async (req, res) => {
       name: service.name,
       office: service.office
     };
+
+    // Invalidate cache for this service's office before deleting
+    CacheHelper.invalidateServices(service.office);
 
     await Service.findByIdAndDelete(id);
 

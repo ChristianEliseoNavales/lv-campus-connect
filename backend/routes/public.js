@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const { Queue, VisitationForm, Service, Window, Settings, Rating, Bulletin, Office, Chart } = require('../models');
 const { AuditService } = require('../middleware/auditMiddleware');
 const { verifyToken } = require('../middleware/authMiddleware');
+const { cacheMiddleware } = require('../middleware/cacheMiddleware');
+const { CacheKeys } = require('../utils/cache');
 const router = express.Router();
 
 /**
@@ -59,7 +61,7 @@ router.get('/queue/:department', async (req, res) => {
     const departmentQueues = await Queue.find({
       office: department,
       status: 'waiting'
-    }).sort({ queuedAt: 1 });
+    }).sort({ queuedAt: 1 }).lean();
 
     // Use aggregation pipeline to fetch windows with current serving queues in a single query
     const windowsWithCurrentNumbers = await Window.aggregate([
@@ -74,7 +76,7 @@ router.get('/queue/:department', async (req, res) => {
       {
         $lookup: {
           from: 'queues',
-          let: { windowId: { $toString: '$_id' } },
+          let: { windowId: '$_id' },
           pipeline: [
             {
               $match: {
@@ -130,7 +132,18 @@ router.get('/queue/:department', async (req, res) => {
     // Transform aggregation result to match exact response format
     const transformedWindows = windowsWithCurrentNumbers.map((window) => {
       // Find next queue number from departmentQueues
-      const nextQueue = departmentQueues.find(q => q.windowId === window.id.toString());
+      // window.id is already an ObjectId from aggregation, compare directly
+      const windowIdForComparison = window.id instanceof mongoose.Types.ObjectId 
+        ? window.id 
+        : new mongoose.Types.ObjectId(window.id);
+      const nextQueue = departmentQueues.find(q => {
+        if (!q.windowId) return false;
+        // Both should be ObjectIds now, compare using equals() or string comparison
+        if (q.windowId instanceof mongoose.Types.ObjectId && windowIdForComparison instanceof mongoose.Types.ObjectId) {
+          return q.windowId.equals(windowIdForComparison);
+        }
+        return q.windowId.toString() === windowIdForComparison.toString();
+      });
       
       return {
         id: window.id,
@@ -165,7 +178,9 @@ router.get('/queue/:department', async (req, res) => {
 });
 
 // GET /api/public/services/:department - Get visible services for department
-router.get('/services/:department', async (req, res) => {
+router.get('/services/:department', cacheMiddleware('services', 'publicServices', (req) => {
+  return CacheKeys.public.services(req.params.department);
+}), async (req, res) => {
   try {
     const { department } = req.params;
 
@@ -227,14 +242,16 @@ router.get('/office-status/:department', async (req, res) => {
 });
 
 // GET /api/public/windows/:department - Get active windows for department
-router.get('/windows/:department', async (req, res) => {
+router.get('/windows/:department', cacheMiddleware('windows', 'publicWindows', (req) => {
+  return CacheKeys.public.windows(req.params.department);
+}), async (req, res) => {
   try {
     const { department } = req.params;
 
     const windows = await Window.find({
       office: department,
       isOpen: true // Changed from isActive to isOpen to match Window model
-    }).populate('serviceIds', 'name category');
+    }).populate('serviceIds', 'name category').lean();
 
     res.json({
       windows: windows.map(window => ({
@@ -366,7 +383,7 @@ router.post('/queue', async (req, res) => {
       name: service,
       office: office,
       isActive: true
-    });
+    }).lean();
 
     if (!serviceObj) {
       return res.status(404).json({
@@ -386,7 +403,7 @@ router.post('/queue', async (req, res) => {
         office: office,
         isOpen: true,
         name: 'Priority'
-      }).populate('serviceIds', 'name');
+      }).populate('serviceIds', 'name').lean();
 
       if (!assignedWindow) {
         console.error('❌ Priority Window not found or not open');
@@ -404,7 +421,7 @@ router.post('/queue', async (req, res) => {
         isOpen: true,
         serviceIds: serviceObj._id,
         name: { $ne: 'Priority' } // Exclude Priority Window
-      }).populate('serviceIds', 'name');
+      }).populate('serviceIds', 'name').lean();
 
       if (!assignedWindow) {
         console.error('❌ No window assigned to service:', serviceObj.name);
@@ -451,8 +468,8 @@ router.post('/queue', async (req, res) => {
     const queueData = {
       queueNumber: nextQueueNumber,
       office: office,
-      serviceId: serviceObj._id.toString(), // Store service ObjectId as string for compatibility
-      windowId: assignedWindow._id.toString(), // Store window ObjectId as string for compatibility
+      serviceId: serviceObj._id, // Store as ObjectId
+      windowId: assignedWindow._id, // Store as ObjectId
       role,
       studentStatus: service === 'Enroll' ? studentStatus : undefined,
       isPriority: Boolean(isPriority)
@@ -583,7 +600,8 @@ router.get('/queue-data/:department', async (req, res) => {
     const waitingQueues = await Queue.find(waitingQuery)
     .populate('visitationFormId')
     .sort({ queuedAt: 1 })
-    .limit(20);
+    .limit(20)
+    .lean();
 
     // Build query for currently serving
     const servingQuery = {
@@ -601,7 +619,7 @@ router.get('/queue-data/:department', async (req, res) => {
     }
 
     // Get currently serving queue
-    const currentlyServing = await Queue.findOne(servingQuery).populate('visitationFormId');
+    const currentlyServing = await Queue.findOne(servingQuery).populate('visitationFormId').lean();
 
     // Get skipped queues (apply same filtering)
     const skippedQuery = {
@@ -615,13 +633,13 @@ router.get('/queue-data/:department', async (req, res) => {
       skippedQuery.serviceId = serviceId;
     }
 
-    const skippedQueues = await Queue.find(skippedQuery).sort({ queuedAt: 1 });
+    const skippedQueues = await Queue.find(skippedQuery).sort({ queuedAt: 1 }).lean();
 
     // Format queue data for frontend with service lookup
     const formattedQueues = await Promise.all(
       waitingQueues.map(async (queue) => {
         // Find service by serviceId
-        const service = await Service.findById(queue.serviceId);
+        const service = await Service.findById(queue.serviceId).lean();
 
         // Get display customer name using helper function
         const displayCustomerName = await getDisplayCustomerName(queue, service);
@@ -643,7 +661,7 @@ router.get('/queue-data/:department', async (req, res) => {
 
     let currentServingData = null;
     if (currentlyServing) {
-      const currentService = await Service.findById(currentlyServing.serviceId);
+      const currentService = await Service.findById(currentlyServing.serviceId).lean();
 
       // Get display customer name using helper function
       const displayCustomerName = await getDisplayCustomerName(currentlyServing, currentService);
@@ -717,18 +735,9 @@ router.get('/queue-lookup/:id', async (req, res) => {
     // Find the queue entry with populated data
     const queueEntry = await Queue.findById(id)
       .populate('visitationFormId')
-      .populate('serviceId');
-
-    // Manually populate windowId since it's stored as String but we need ObjectId for population
-    let windowData = null;
-    if (queueEntry && queueEntry.windowId) {
-      try {
-        const Window = require('../models/Window');
-        windowData = await Window.findById(queueEntry.windowId);
-      } catch (err) {
-        console.warn('⚠️ Could not populate window data:', err.message);
-      }
-    }
+      .populate('serviceId')
+      .populate('windowId')
+      .lean();
 
     if (!queueEntry) {
       return res.status(404).json({
@@ -756,7 +765,8 @@ router.get('/queue-lookup/:id', async (req, res) => {
     })
     .sort({ queueNumber: 1 })
     .limit(2)
-    .select('queueNumber');
+    .select('queueNumber')
+    .lean();
 
     const upcomingNumbers = upcomingQueues.map(q => q.queueNumber);
 
@@ -772,7 +782,7 @@ router.get('/queue-lookup/:id', async (req, res) => {
         queueNumber: queueEntry.queueNumber,
         department: queueEntry.office, // Keep 'department' key for backward compatibility with frontend
         service: queueEntry.serviceId?.name || 'Unknown Service',
-        windowName: windowData?.name || 'Unknown Window',
+        windowName: queueEntry.windowId?.name || 'Unknown Window',
         location: location,
         status: queueEntry.status,
         isPriority: queueEntry.isPriority,
@@ -808,7 +818,7 @@ router.post('/queue/:id/rating', async (req, res) => {
     }
 
     // Find and update the queue entry with population
-    const queueEntry = await Queue.findById(id).populate('visitationFormId');
+    const queueEntry = await Queue.findById(id).populate('visitationFormId'); // Cannot use .lean() - needs instance methods
 
     if (!queueEntry) {
       return res.status(404).json({
@@ -902,7 +912,7 @@ router.post('/queue/next', async (req, res) => {
     }
 
     // Get window information to determine department
-    const window = await Window.findById(windowId);
+    const window = await Window.findById(windowId).lean();
 
     if (!window) {
       await AuditService.logQueue({
@@ -942,7 +952,7 @@ router.post('/queue/next', async (req, res) => {
     }
 
     // Find the next waiting queue for this specific window
-    const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
+    const serviceIds = window.serviceIds.map(s => s._id ? s._id : s);
 
     // Priority Window should ONLY serve priority queues (isPriority=true)
     // Regular windows should ONLY serve non-priority queues (isPriority=false)
@@ -967,7 +977,7 @@ router.post('/queue/next', async (req, res) => {
 
     console.log('🔍 [NEXT QUEUE] Query filter (with service):', JSON.stringify(queryFilterWithService, null, 2));
 
-    let nextQueue = await Queue.findOne(queryFilterWithService).sort({ queuedAt: 1 }).populate('visitationFormId');
+    let nextQueue = await Queue.findOne(queryFilterWithService).sort({ queuedAt: 1 }).populate('visitationFormId'); // Cannot use .lean() - needs markAsServing() instance method
 
     // If no queue found with matching service, check for transferred queues (without service filter)
     // This allows windows to serve transferred queues even if the service doesn't match
@@ -982,7 +992,7 @@ router.post('/queue/next', async (req, res) => {
       console.log('🔍 [NEXT QUEUE] No queue with matching service, checking for transferred queues...');
       console.log('🔍 [NEXT QUEUE] Query filter (without service):', JSON.stringify(queryFilterWithoutService, null, 2));
 
-      nextQueue = await Queue.findOne(queryFilterWithoutService).sort({ queuedAt: 1 }).populate('visitationFormId');
+      nextQueue = await Queue.findOne(queryFilterWithoutService).sort({ queuedAt: 1 }).populate('visitationFormId'); // Cannot use .lean() - needs markAsServing() instance method
     }
 
     console.log('🔍 [NEXT QUEUE] Found queue:', nextQueue ? {
@@ -990,7 +1000,10 @@ router.post('/queue/next', async (req, res) => {
       windowId: nextQueue.windowId,
       isPriority: nextQueue.isPriority,
       serviceId: nextQueue.serviceId,
-      isTransferred: nextQueue.serviceId && !serviceIds.includes(nextQueue.serviceId.toString())
+      isTransferred: nextQueue.serviceId && !serviceIds.some(sid => 
+        (sid instanceof mongoose.Types.ObjectId && nextQueue.serviceId instanceof mongoose.Types.ObjectId && sid.equals(nextQueue.serviceId)) ||
+        (sid.toString() === nextQueue.serviceId.toString())
+      )
     } : 'No queue found');
 
     // Mark current serving queue as completed (if any) - do this BEFORE checking for next queue
@@ -1142,7 +1155,7 @@ router.post('/queue/recall', async (req, res) => {
     }
 
     // Get window information
-    const window = await Window.findById(windowId);
+    const window = await Window.findById(windowId).lean();
 
     if (!window) {
       return res.status(404).json({
@@ -1155,7 +1168,7 @@ router.post('/queue/recall', async (req, res) => {
       windowId: windowId,
       isCurrentlyServing: true,
       status: 'serving'
-    }).populate('visitationFormId');
+    }).populate('visitationFormId').lean();
 
     if (!currentQueue) {
       await AuditService.logQueue({
@@ -1264,7 +1277,7 @@ router.post('/queue/stop', async (req, res) => {
     }
 
     // Get window information
-    const window = await Window.findById(windowId);
+    const window = await Window.findById(windowId); // Cannot use .lean() - needs save() instance method
 
     if (!window) {
       return res.status(404).json({
@@ -1323,7 +1336,7 @@ router.post('/queue/previous', async (req, res) => {
     }
 
     // Get window information
-    const window = await Window.findById(windowId);
+    const window = await Window.findById(windowId).lean();
 
     if (!window) {
       return res.status(404).json({
@@ -1335,7 +1348,7 @@ router.post('/queue/previous', async (req, res) => {
     const previousQueue = await Queue.findOne({
       windowId: windowId,
       status: 'completed'
-    }).sort({ completedAt: -1 }).populate('visitationFormId');
+    }).sort({ completedAt: -1 }).populate('visitationFormId'); // Cannot use .lean() - needs markAsServing() instance method
 
     if (!previousQueue) {
       await AuditService.logQueue({
@@ -1487,7 +1500,7 @@ router.post('/queue/transfer', async (req, res) => {
       windowId: fromWindowId,
       isCurrentlyServing: true,
       status: 'serving'
-    }).populate('visitationFormId');
+    }).populate('visitationFormId'); // Cannot use .lean() - needs save() instance method
 
     if (!currentQueue) {
       await AuditService.logQueue({
@@ -1631,7 +1644,7 @@ router.post('/queue/skip', async (req, res) => {
     }
 
     // Get window information
-    const window = await Window.findById(windowId);
+    const window = await Window.findById(windowId).lean();
 
     if (!window) {
       return res.status(404).json({
@@ -1644,7 +1657,7 @@ router.post('/queue/skip', async (req, res) => {
       windowId: windowId,
       isCurrentlyServing: true,
       status: 'serving'
-    }).populate('visitationFormId');
+    }).populate('visitationFormId'); // Cannot use .lean() - needs save() instance method
 
     if (!currentQueue) {
       await AuditService.logQueue({
@@ -1670,7 +1683,7 @@ router.post('/queue/skip', async (req, res) => {
     await currentQueue.save();
 
     // Find and call next queue for this specific window
-    const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
+    const serviceIds = window.serviceIds.map(s => s._id ? s._id : s);
 
     // Priority Window should ONLY serve priority queues (isPriority=true)
     // Regular windows should ONLY serve non-priority queues (isPriority=false)
@@ -1683,7 +1696,7 @@ router.post('/queue/skip', async (req, res) => {
       serviceId: { $in: serviceIds },
       status: 'waiting',
       isPriority: isPriorityWindow // Priority Window gets isPriority=true, others get isPriority=false
-    }).sort({ queuedAt: 1 }).populate('visitationFormId');
+    }).sort({ queuedAt: 1 }).populate('visitationFormId'); // Cannot use .lean() - needs markAsServing() instance method
 
     let nextQueueData = null;
     if (nextQueue) {
@@ -1781,7 +1794,7 @@ router.post('/queue/requeue-all', verifyToken, async (req, res) => {
     }
 
     // Get window information
-    const window = await Window.findById(windowId).populate('serviceIds', 'name');
+    const window = await Window.findById(windowId).populate('serviceIds', 'name').lean();
 
     if (!window) {
       return res.status(404).json({
@@ -1800,7 +1813,7 @@ router.post('/queue/requeue-all', verifyToken, async (req, res) => {
     const serviceIds = (window.serviceIds && Array.isArray(window.serviceIds) && window.serviceIds.length > 0)
       ? window.serviceIds.map(s => {
           // If populated, s will have _id, otherwise s is the ObjectId itself
-          return s._id ? s._id.toString() : s.toString();
+          return s._id ? s._id : s;
         })
       : [];
     
@@ -1814,7 +1827,7 @@ router.post('/queue/requeue-all', verifyToken, async (req, res) => {
       serviceId: { $in: serviceIds },
       status: 'skipped',
       skippedAt: { $gte: startOfDay } // Only queues skipped today
-    }).sort({ skippedAt: 1 }); // Order by when they were skipped (earliest first)
+    }).sort({ skippedAt: 1 }).lean(); // Order by when they were skipped (earliest first)
 
     if (skippedQueues.length === 0) {
       await AuditService.logQueue({
@@ -1953,7 +1966,7 @@ router.post('/queue/requeue-selected', verifyToken, async (req, res) => {
     }
 
     // Get window information
-    const window = await Window.findById(windowId).populate('serviceIds', 'name');
+    const window = await Window.findById(windowId).populate('serviceIds', 'name').lean();
 
     if (!window) {
       return res.status(404).json({
@@ -1971,7 +1984,7 @@ router.post('/queue/requeue-selected', verifyToken, async (req, res) => {
     const serviceIds = (window.serviceIds && Array.isArray(window.serviceIds) && window.serviceIds.length > 0)
       ? window.serviceIds.map(s => {
           // If populated, s will have _id, otherwise s is the ObjectId itself
-          return s._id ? s._id.toString() : s.toString();
+          return s._id ? s._id : s;
         })
       : [];
     
@@ -1986,7 +1999,7 @@ router.post('/queue/requeue-selected', verifyToken, async (req, res) => {
       status: 'skipped',
       queueNumber: { $in: queueNumbers },
       skippedAt: { $gte: startOfDay } // Only queues skipped today
-    }).sort({ skippedAt: 1 }); // Order by when they were skipped (earliest first)
+    }).sort({ skippedAt: 1 }).lean(); // Order by when they were skipped (earliest first)
 
     if (skippedQueues.length === 0) {
       await AuditService.logQueue({
@@ -2118,7 +2131,7 @@ router.get('/queue/windows/:department', async (req, res) => {
     const windows = await Window.find({
       office: department, // Use 'office' field to match Window model schema
       isOpen: true
-    }).select('_id name serviceIds').populate('serviceIds', 'name');
+    }).select('_id name serviceIds').populate('serviceIds', 'name').lean();
 
     res.json({
       success: true,
@@ -2148,7 +2161,8 @@ router.get('/queue/windows/:department', async (req, res) => {
 router.get('/bulletin', async (req, res) => {
   try {
     const bulletins = await Bulletin.find()
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json({
       success: true,
@@ -2174,7 +2188,8 @@ router.get('/faq', async (req, res) => {
       isActive: true
     })
       .select('question answer category order')
-      .sort({ category: 1, order: 1, createdAt: 1 });
+      .sort({ category: 1, order: 1, createdAt: 1 })
+      .lean();
 
     res.json({
       success: true,
@@ -2195,7 +2210,8 @@ router.get('/faq', async (req, res) => {
 router.get('/office', async (req, res) => {
   try {
     const offices = await Office.find()
-      .sort({ name: 1 });
+      .sort({ name: 1 })
+      .lean();
 
     res.json({
       success: true,
@@ -2215,7 +2231,8 @@ router.get('/office', async (req, res) => {
 router.get('/chart', async (req, res) => {
   try {
     const charts = await Chart.find()
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json({
       success: true,

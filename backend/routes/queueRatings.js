@@ -86,14 +86,8 @@ router.get('/', verifyToken, checkApiAccess, [
       {
         $lookup: {
           from: 'services',
-          let: { serviceIdStr: { $toString: '$serviceId' } },
-          pipeline: [
-            {
-              $match: {
-                $expr: { $eq: [{ $toString: '$_id' }, '$$serviceIdStr'] }
-              }
-            }
-          ],
+          localField: 'serviceId',
+          foreignField: '_id',
           as: 'service'
         }
       },

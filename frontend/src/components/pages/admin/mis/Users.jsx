@@ -765,7 +765,7 @@ const Users = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 flex items-center animate-pulse">
+                  <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-2 sm:gap-3 items-center w-full">
                       {/* Name Skeleton */}
                       <div className="h-3 bg-gray-200 rounded w-28"></div>
@@ -808,7 +808,7 @@ const Users = () => {
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
                 {currentUsers.map((user) => (
-                  <div key={user._id} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 hover:bg-gray-50 transition-colors flex items-center">
+                  <div key={user._id} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors md:h-12 flex items-center">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
                       {/* Mobile: Stacked layout, Desktop: Grid layout */}
 
@@ -857,7 +857,7 @@ const Users = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-            <div className="text-[10px] sm:text-xs text-gray-700 order-2 sm:order-1">
+            <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
             </div>
             <div className="flex items-center space-x-1.5 order-1 sm:order-2">

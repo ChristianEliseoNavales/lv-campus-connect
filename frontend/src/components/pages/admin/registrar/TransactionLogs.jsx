@@ -389,7 +389,7 @@ const TransactionLogs = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-5 py-3 h-12 flex items-center animate-pulse">
+                  <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
                     <div className="grid grid-cols-8 gap-3 items-center w-full">
                       {/* Queue No. Skeleton */}
                       <div className="h-3 bg-gray-200 rounded w-6"></div>
@@ -572,7 +572,7 @@ const TransactionLogs = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-            <div className="text-[10px] sm:text-xs text-gray-700 font-medium order-2 sm:order-1">
+            <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredLogs.length)} of {filteredLogs.length} logs
             </div>
             <div className="order-1 sm:order-2">
@@ -580,7 +580,7 @@ const TransactionLogs = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                size="sm"
+                size="md"
               />
             </div>
           </div>
