@@ -60,7 +60,10 @@ function App() {
         <Router future={{ v7_relativeSplatPath: true }}>
           <Routes>
           {/* Public Kiosk Routes - No Authentication Required */}
-          <Route path="/" element={
+          {/* Idle Page - Default Landing Page - No Layout Wrapper */}
+          <Route path="/" element={<IdlePage />} />
+          
+          <Route path="/home" element={
             <KioskLayout>
               <Home />
             </KioskLayout>
@@ -81,7 +84,7 @@ function App() {
             </KioskLayout>
           } />
 
-          {/* Idle Page - No Layout Wrapper */}
+          {/* Idle Page - Also accessible at /idle */}
           <Route path="/idle" element={<IdlePage />} />
 
           {/* Queue Monitor - Public Display, No Layout Wrapper */}

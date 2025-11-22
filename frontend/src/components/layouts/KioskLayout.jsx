@@ -92,7 +92,7 @@ const KioskLayout = ({ children, customFooter = null }) => {
             <div className="flex justify-center">
               <nav className="flex justify-center items-center space-x-4 pt-4 pb-2.5 px-8 w-full max-w-4xl rounded-t-full" style={{ backgroundColor: '#1F3463', borderRight: '5px solid #FFE251', borderLeft: '5px solid #FFE251' }}>
                 <NavLink
-                  to="/"
+                  to="/home"
                   className={({ isActive }) =>
                     `w-28 h-20 flex flex-col items-center justify-center px-5 py-3 rounded-full transition-all duration-150 ${
                       isActive

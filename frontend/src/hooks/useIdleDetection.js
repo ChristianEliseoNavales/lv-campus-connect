@@ -18,8 +18,8 @@ const useIdleDetection = (idleTimeout = 60000) => { // 60 seconds (1 minute) for
       clearTimeout(idleTimerRef.current);
     }
 
-    // Don't start idle timer if we're on idle page
-    if (location.pathname === '/idle') {
+    // Don't start idle timer if we're on idle page (both / and /idle)
+    if (location.pathname === '/idle' || location.pathname === '/') {
       return;
     }
 
@@ -31,7 +31,7 @@ const useIdleDetection = (idleTimeout = 60000) => { // 60 seconds (1 minute) for
 
   // Handle user activity - Fixed to remove circular dependency
   const handleActivity = useCallback(() => {
-    if (location.pathname !== '/idle') {
+    if (location.pathname !== '/idle' && location.pathname !== '/') {
       resetIdleTimer();
     }
   }, [resetIdleTimer, location.pathname]);
@@ -43,10 +43,10 @@ const useIdleDetection = (idleTimeout = 60000) => { // 60 seconds (1 minute) for
         setCountdown(prev => prev - 1);
       }, 1000);
     } else if (showIdleModal && countdown === 0) {
-      // Redirect to idle page
+      // Redirect to idle page (landing page)
       setShowIdleModal(false);
       setIsIdle(true);
-      navigate('/idle');
+      navigate('/');
     }
 
     return () => {
@@ -67,7 +67,7 @@ const useIdleDetection = (idleTimeout = 60000) => { // 60 seconds (1 minute) for
   // Handle returning from idle page
   const handleReturnFromIdle = useCallback(() => {
     setIsIdle(false);
-    navigate('/');
+    navigate('/home');
     // Start idle detection again after a short delay
     setTimeout(() => {
       resetIdleTimer();
@@ -100,8 +100,8 @@ const useIdleDetection = (idleTimeout = 60000) => { // 60 seconds (1 minute) for
 
   // Separate effect for timer management
   useEffect(() => {
-    // Start initial timer if not on idle page
-    if (location.pathname !== '/idle') {
+    // Start initial timer if not on idle page (both / and /idle)
+    if (location.pathname !== '/idle' && location.pathname !== '/') {
       resetIdleTimer();
     }
 
@@ -121,7 +121,7 @@ const useIdleDetection = (idleTimeout = 60000) => { // 60 seconds (1 minute) for
 
   // Reset when location changes (except to idle page)
   useEffect(() => {
-    if (location.pathname !== '/idle') {
+    if (location.pathname !== '/idle' && location.pathname !== '/') {
       setIsIdle(false);
       setShowIdleModal(false);
       setCountdown(20);

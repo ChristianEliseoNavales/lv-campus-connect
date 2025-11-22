@@ -49,7 +49,7 @@ const IdleModal = ({ isOpen, countdown, onStayActive }) => {
 
         {/* HOME Button */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           className="w-20 h-20 text-white font-bold text-lg border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-lg active:drop-shadow-sm active:scale-95 transition-all duration-150 focus:outline-none focus:ring-3 focus:ring-blue-200 touch-target-lg"
           style={{ backgroundColor: '#1F3463' }}
           onTouchStart={(e) => e.target.style.backgroundColor = '#1A2E56'}

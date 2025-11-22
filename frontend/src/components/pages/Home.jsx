@@ -321,7 +321,7 @@ const Home = () => {
               <div className="h-full">
                 <EnhancedQueueDisplay
                   department="registrar"
-                  title="Registrar's Office"
+                  title="REGISTRAR'S OFFICE"
                 />
               </div>
 
@@ -329,7 +329,7 @@ const Home = () => {
               <div className="h-full">
                 <EnhancedQueueDisplay
                   department="admissions"
-                  title="Admissions Office"
+                  title="ADMISSIONS OFFICE"
                 />
               </div>
             </div>
