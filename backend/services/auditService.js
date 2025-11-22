@@ -202,14 +202,25 @@ class AuditService {
   /**
    * Log queue operations
    */
-  static async logQueue({ user, action, queueId, queueNumber, department, req, success, metadata = {}, errorMessage = null }) {
+  static async logQueue({ user, action, queueId, queueNumber, department, req, success, metadata = {}, errorMessage = null, resourceType = 'Queue' }) {
+    // For bulk operations (requeue-all, requeue-selected), use Window as resourceType if queueId is actually a windowId
+    const isBulkOperation = action === 'QUEUE_REQUEUE_ALL' || action === 'QUEUE_REQUEUE_SELECTED';
+    const finalResourceType = (isBulkOperation && queueId && !queueNumber) ? 'Window' : resourceType;
+    const resourceName = queueNumber 
+      ? `Queue #${queueNumber} (${department})`
+      : isBulkOperation 
+        ? `Window ${metadata.windowName || queueId} (${department})`
+        : `Queue Operation (${department})`;
+    
     return this.logAction({
       user,
       action,
-      actionDescription: `Queue ${action.toLowerCase()} - #${queueNumber}`,
-      resourceType: 'Queue',
+      actionDescription: queueNumber 
+        ? `Queue ${action.toLowerCase()} - #${queueNumber}`
+        : `Queue ${action.toLowerCase()} - ${metadata.requeuedCount || 'bulk'} queue(s)`,
+      resourceType: finalResourceType,
       resourceId: queueId,
-      resourceName: `Queue #${queueNumber} (${department})`,
+      resourceName,
       req,
       statusCode: success ? 200 : 500,
       success,

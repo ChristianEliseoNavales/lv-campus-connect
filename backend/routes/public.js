@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { Queue, VisitationForm, Service, Window, Settings, Rating, Bulletin, Office, Chart } = require('../models');
 const { AuditService } = require('../middleware/auditMiddleware');
+const { verifyToken } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 /**
@@ -54,48 +55,106 @@ router.get('/queue/:department', async (req, res) => {
       });
     }
 
-    // Get department windows that are open
-    const departmentWindows = await Window.find({
-      office: department,
-      isOpen: true
-    }).populate('serviceIds', 'name');
-
-    // Get department queues
+    // Get department queues (still needed for nextQueueNumber calculation)
     const departmentQueues = await Queue.find({
       office: department,
       status: 'waiting'
     }).sort({ queuedAt: 1 });
 
-    // Calculate current serving numbers for each window
-    const windowsWithCurrentNumbers = await Promise.all(
-      departmentWindows.map(async (window) => {
-        // Get current serving queue for this window
-        const currentServing = await Queue.findOne({
-          windowId: window._id.toString(),
-          status: 'serving',
-          isCurrentlyServing: true
-        });
+    // Use aggregation pipeline to fetch windows with current serving queues in a single query
+    const windowsWithCurrentNumbers = await Window.aggregate([
+      // Match open windows for the department
+      {
+        $match: {
+          office: department,
+          isOpen: true
+        }
+      },
+      // Lookup current serving queue for each window
+      {
+        $lookup: {
+          from: 'queues',
+          let: { windowId: { $toString: '$_id' } },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$windowId', '$$windowId'] },
+                    { $eq: ['$status', 'serving'] },
+                    { $eq: ['$isCurrentlyServing', true] }
+                  ]
+                }
+              }
+            },
+            {
+              $limit: 1 // Only need the first (and only) current serving queue
+            }
+          ],
+          as: 'currentServing'
+        }
+      },
+      // Lookup services for serviceIds array
+      {
+        $lookup: {
+          from: 'services',
+          localField: 'serviceIds',
+          foreignField: '_id',
+          as: 'services'
+        }
+      },
+      // Transform to match the expected response format
+      {
+        $project: {
+          id: '$_id',
+          name: 1,
+          department: '$office', // Keep 'department' key for backward compatibility with frontend
+          isOpen: 1,
+          currentQueueNumber: {
+            $ifNull: [
+              { $arrayElemAt: ['$currentServing.queueNumber', 0] },
+              0
+            ]
+          },
+          services: {
+            $map: {
+              input: '$services',
+              as: 'service',
+              in: '$$service.name'
+            }
+          }
+        }
+      }
+    ]);
 
-        return {
-          id: window._id,
-          name: window.name,
-          department: window.office, // Keep 'department' key for backward compatibility with frontend
-          serviceName: window.serviceIds && window.serviceIds.length > 0
-            ? window.serviceIds.map(s => s.name).join(', ')
-            : 'No services assigned',
-          isOpen: window.isOpen,
-          currentQueueNumber: currentServing ? currentServing.queueNumber : 0,
-          nextQueueNumber: departmentQueues.find(q => q.windowId === window._id.toString())?.queueNumber || 0
-        };
-      })
-    );
+    // Transform aggregation result to match exact response format
+    const transformedWindows = windowsWithCurrentNumbers.map((window) => {
+      // Find next queue number from departmentQueues
+      const nextQueue = departmentQueues.find(q => q.windowId === window.id.toString());
+      
+      return {
+        id: window.id,
+        name: window.name,
+        department: window.department,
+        serviceName: window.services && window.services.length > 0
+          ? window.services.join(', ')
+          : 'No services assigned',
+        isOpen: window.isOpen,
+        currentQueueNumber: window.currentQueueNumber,
+        nextQueueNumber: nextQueue ? nextQueue.queueNumber : 0
+      };
+    });
 
     res.json({
       isEnabled: true,
-      currentNumber: Math.max(...windowsWithCurrentNumbers.map(w => w.currentNumber), 0),
-      nextNumber: Math.min(...departmentQueues.map(q => q.queueNumber), 999),
+      currentNumber: transformedWindows.length > 0 
+        ? Math.max(...transformedWindows.map(w => w.currentQueueNumber), 0)
+        : 0,
+      nextNumber: departmentQueues.length > 0
+        ? Math.min(...departmentQueues.map(q => q.queueNumber), 999)
+        : 999,
       queue: departmentQueues.slice(0, 5), // Return first 5 in queue
-      windows: windowsWithCurrentNumbers,
+      windows: transformedWindows,
       department,
       timestamp: new Date().toISOString()
     });
@@ -1708,7 +1767,7 @@ router.post('/queue/skip', async (req, res) => {
 });
 
 // POST /api/public/queue/requeue-all - Re-queue all skipped queues for a window/service
-router.post('/queue/requeue-all', async (req, res) => {
+router.post('/queue/requeue-all', verifyToken, async (req, res) => {
   try {
     const { windowId, adminId } = req.body;
     const io = req.app.get('io');
@@ -1722,7 +1781,7 @@ router.post('/queue/requeue-all', async (req, res) => {
     }
 
     // Get window information
-    const window = await Window.findById(windowId);
+    const window = await Window.findById(windowId).populate('serviceIds', 'name');
 
     if (!window) {
       return res.status(404).json({
@@ -1731,13 +1790,25 @@ router.post('/queue/requeue-all', async (req, res) => {
     }
 
     // Get today's date boundaries to filter only today's skipped queues
-    const { getPhilippineDayBoundaries } = require('../utils/philippineTimezone');
-    const today = new Date();
-    const { startOfDay } = getPhilippineDayBoundaries(today);
+    const { getPhilippineDayBoundaries, getPhilippineDateString } = require('../utils/philippineTimezone');
+    const todayString = getPhilippineDateString();
+    const { startOfDay } = getPhilippineDayBoundaries(todayString);
 
     // Find all skipped queues for any of this window's services from TODAY only
     // Exclude queues that have been marked as 'no-show' (old skipped queues)
-    const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
+    // Handle serviceIds - it could be populated objects or ObjectIds
+    const serviceIds = (window.serviceIds && Array.isArray(window.serviceIds) && window.serviceIds.length > 0)
+      ? window.serviceIds.map(s => {
+          // If populated, s will have _id, otherwise s is the ObjectId itself
+          return s._id ? s._id.toString() : s.toString();
+        })
+      : [];
+    
+    if (serviceIds.length === 0) {
+      return res.status(400).json({
+        error: 'Window has no services assigned'
+      });
+    }
     const skippedQueues = await Queue.find({
       office: window.office,
       serviceId: { $in: serviceIds },
@@ -1749,7 +1820,7 @@ router.post('/queue/requeue-all', async (req, res) => {
       await AuditService.logQueue({
         user: req.user,
         action: 'QUEUE_REQUEUE_ALL',
-        queueId: null,
+        queueId: window._id, // Use windowId as resourceId for bulk operations
         queueNumber: null,
         department: window.office,
         req,
@@ -1792,7 +1863,7 @@ router.post('/queue/requeue-all', async (req, res) => {
     await AuditService.logQueue({
       user: req.user,
       action: 'QUEUE_REQUEUE_ALL',
-      queueId: null,
+      queueId: window._id, // Use windowId as resourceId for bulk operations
       queueNumber: null,
       department: window.office,
       req,
@@ -1846,7 +1917,7 @@ router.post('/queue/requeue-all', async (req, res) => {
     await AuditService.logQueue({
       user: req.user,
       action: 'QUEUE_REQUEUE_ALL',
-      queueId: null,
+      queueId: req.body.windowId || null, // Use windowId from request body
       queueNumber: null,
       department: 'unknown',
       req,
@@ -1862,7 +1933,7 @@ router.post('/queue/requeue-all', async (req, res) => {
 });
 
 // POST /api/public/queue/requeue-selected - Re-queue selected skipped queue numbers
-router.post('/queue/requeue-selected', async (req, res) => {
+router.post('/queue/requeue-selected', verifyToken, async (req, res) => {
   try {
     const { windowId, adminId, queueNumbers } = req.body;
     const io = req.app.get('io');
@@ -1882,7 +1953,7 @@ router.post('/queue/requeue-selected', async (req, res) => {
     }
 
     // Get window information
-    const window = await Window.findById(windowId);
+    const window = await Window.findById(windowId).populate('serviceIds', 'name');
 
     if (!window) {
       return res.status(404).json({
@@ -1891,12 +1962,24 @@ router.post('/queue/requeue-selected', async (req, res) => {
     }
 
     // Get today's date boundaries to filter only today's skipped queues
-    const { getPhilippineDayBoundaries } = require('../utils/philippineTimezone');
-    const today = new Date();
-    const { startOfDay } = getPhilippineDayBoundaries(today);
+    const { getPhilippineDayBoundaries, getPhilippineDateString } = require('../utils/philippineTimezone');
+    const todayString = getPhilippineDateString();
+    const { startOfDay } = getPhilippineDayBoundaries(todayString);
 
     // Find selected skipped queues for this window's services from TODAY only
-    const serviceIds = window.serviceIds.map(s => s._id ? s._id.toString() : s.toString());
+    // Handle serviceIds - it could be populated objects or ObjectIds
+    const serviceIds = (window.serviceIds && Array.isArray(window.serviceIds) && window.serviceIds.length > 0)
+      ? window.serviceIds.map(s => {
+          // If populated, s will have _id, otherwise s is the ObjectId itself
+          return s._id ? s._id.toString() : s.toString();
+        })
+      : [];
+    
+    if (serviceIds.length === 0) {
+      return res.status(400).json({
+        error: 'Window has no services assigned'
+      });
+    }
     const skippedQueues = await Queue.find({
       office: window.office,
       serviceId: { $in: serviceIds },
@@ -1909,7 +1992,7 @@ router.post('/queue/requeue-selected', async (req, res) => {
       await AuditService.logQueue({
         user: req.user,
         action: 'QUEUE_REQUEUE_SELECTED',
-        queueId: null,
+        queueId: window._id, // Use windowId as resourceId for bulk operations
         queueNumber: null,
         department: window.office,
         req,
@@ -1952,7 +2035,7 @@ router.post('/queue/requeue-selected', async (req, res) => {
     await AuditService.logQueue({
       user: req.user,
       action: 'QUEUE_REQUEUE_SELECTED',
-      queueId: null,
+      queueId: window._id, // Use windowId as resourceId for bulk operations
       queueNumber: null,
       department: window.office,
       req,
@@ -2010,7 +2093,7 @@ router.post('/queue/requeue-selected', async (req, res) => {
     await AuditService.logQueue({
       user: req.user,
       action: 'QUEUE_REQUEUE_SELECTED',
-      queueId: null,
+      queueId: req.body.windowId || null, // Use windowId from request body
       queueNumber: null,
       department: 'unknown',
       req,
