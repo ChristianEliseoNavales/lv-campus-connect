@@ -218,23 +218,28 @@ export const EditRecordModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {editingRecord ? `Edit ${selectedModel} Record` : `Add New ${selectedModel} Record`}
-          </h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] overflow-y-auto">
+      <div className="flex min-h-full items-center justify-center p-3">
+        <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full">
+          {/* Close Button */}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
           >
-            <MdClose className="w-5 h-5" />
+            <MdClose className="w-3 h-3" />
           </button>
-        </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* Modal Content with max height and scroll */}
+          <div className="max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="p-5 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {editingRecord ? `Edit ${selectedModel} Record` : `Add New ${selectedModel} Record`}
+              </h2>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="p-5">
           <div className="space-y-3">
             {getFormFields().map((field) => (
               <div key={field.name}>
@@ -268,6 +273,8 @@ export const EditRecordModal = ({
             </button>
           </div>
         </form>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -294,19 +301,13 @@ export const DeleteRecordModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-200">
+        <div className="p-5 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center">
             <MdWarning className="w-5 h-5 text-red-500 mr-1.5" />
             Confirm Delete
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <MdClose className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Content */}
@@ -386,19 +387,13 @@ export const DeleteAllRecordsModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-200">
+        <div className="p-5 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center">
             <MdWarning className="w-5 h-5 text-red-500 mr-1.5" />
             Confirm Delete All
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <MdClose className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Content */}

@@ -5,11 +5,12 @@ import { AiOutlineMinusCircle } from 'react-icons/ai';
 import { MdClose } from 'react-icons/md';
 import { ToastContainer } from '../../../ui/Toast';
 import { useNotification } from '../../../../hooks/useNotification';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../../../contexts/SocketContext';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
 
 const Bulletin = () => {
+  const { socket, isConnected, joinRoom, leaveRoom } = useSocket();
   const [loading, setLoading] = useState(true);
   const [bulletins, setBulletins] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -18,24 +19,22 @@ const Bulletin = () => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [socket, setSocket] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
   const fileInputRef = useRef(null);
   const { toasts, removeToast, showSuccess, showError } = useNotification();
 
-  // Initialize Socket.io connection
+  // Join Socket.io room
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getAdminUrl());
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join admin room for real-time updates
-    newSocket.emit('join-room', 'admin-mis');
+    console.log('🔌 MIS Bulletin: Joining admin-mis room');
+    joinRoom('admin-mis');
 
     return () => {
-      newSocket.disconnect();
+      leaveRoom('admin-mis');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   // Fetch bulletins on component mount
   useEffect(() => {
@@ -361,7 +360,7 @@ const Bulletin = () => {
       {/* Upload Modal - Rendered outside space-y-5 container to prevent gap */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
-          <div className="relative bg-white rounded-lg sm:rounded-xl shadow-xl max-w-md w-full">
+          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
             {/* Close Button */}
             <button
               onClick={() => {
@@ -369,9 +368,9 @@ const Bulletin = () => {
                 setUploadFile(null);
                 setIsDragging(false);
               }}
-              className="absolute -top-1.5 -right-1.5 z-10 w-5 h-5 sm:w-6 sm:h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+              className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
             >
-              <MdClose className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <MdClose className="w-3 h-3" />
             </button>
 
             {/* Modal Header */}
@@ -452,7 +451,7 @@ const Bulletin = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-3">
+          <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full mx-3">
             <div className="px-5 py-5">
               <h2 className="text-xl font-bold text-gray-900 mb-1.5 tracking-wide">Delete Bulletin</h2>
               <p className="text-sm text-gray-600 mb-5">Are you sure you want to delete this bulletin? This action cannot be undone. The file will be removed from both Cloudinary and the database.</p>

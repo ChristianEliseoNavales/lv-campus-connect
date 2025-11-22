@@ -95,14 +95,14 @@ export function ChartAreaInteractive() {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex-1 px-1 pt-2 sm:px-3 sm:pt-3">
+      <CardContent className="flex-1 px-1 pt-6 pb-1 sm:px-3 sm:pt-8 sm:pb-2">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-full w-full"
         >
           <AreaChart
             data={filteredData}
-            margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
+            margin={{ top: 20, right: 10, left: 0, bottom: 10 }}
           >
             <defs>
               <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
@@ -140,7 +140,7 @@ export function ChartAreaInteractive() {
               interval={0}
               angle={0}
               textAnchor="middle"
-              height={60}
+              height={40}
               tick={{ fontSize: 12 }}
             />
             <YAxis
@@ -178,7 +178,7 @@ export function ChartAreaInteractive() {
             <ChartLegend
               content={<ChartLegendContent />}
               verticalAlign="bottom"
-              height={30}
+              height={20}
             />
           </AreaChart>
         </ChartContainer>
@@ -503,7 +503,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex-1 px-1 pt-2 pb-2 sm:px-3 sm:pt-3 sm:pb-3 min-h-0">
+      <CardContent className="flex-1 px-1 pt-6 pb-1 sm:px-3 sm:pt-8 sm:pb-2 min-h-0">
         {isLoading ? (
           <LoadingSkeleton />
         ) : error ? (
@@ -516,10 +516,10 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
           <AreaChart
             data={filteredData}
             margin={{
-              top: 10,
+              top: 20,
               right: 10,
               left: 0,
-              bottom: shouldShowLegend ? 40 : 20
+              bottom: shouldShowLegend ? 10 : 5
             }}
           >
             <defs>
@@ -562,7 +562,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
               interval={isDailyView ? "preserveStartEnd" : "preserveStartEnd"}
               angle={0}
               textAnchor="middle"
-              height={60}
+              height={40}
               tick={{ fontSize: 12 }}
               tickFormatter={formatXAxisLabel}
             />
@@ -601,7 +601,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
               <ChartLegend
                 content={<ChartLegendContent />}
                 verticalAlign="bottom"
-                height={30}
+                height={20}
               />
             )}
           </AreaChart>

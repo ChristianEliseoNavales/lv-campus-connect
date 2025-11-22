@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { io } from 'socket.io-client';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useSocket } from '../../../contexts/SocketContext';
 import { RoleAwareAreaChart } from '../../ui/AreaChart';
 import { ChartPieLegend } from '../../ui/PieChart';
 import AnalyticalReportModal from '../../ui/AnalyticalReportModal';
@@ -10,6 +10,7 @@ import { authFetch } from '../../../utils/apiClient';
 
 const RegistrarAdminDashboard = () => {
   const { user } = useAuth();
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
   const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedDateRange, setSelectedDateRange] = useState(null);
@@ -26,7 +27,6 @@ const RegistrarAdminDashboard = () => {
   });
   const [recentActivity, setRecentActivity] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
 
   // Extract fetchDashboardData function to be reusable
   const fetchDashboardData = useCallback(async () => {
@@ -118,17 +118,15 @@ const RegistrarAdminDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Initialize Socket.io connection for real-time updates
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    const socketUrl = API_CONFIG.getAdminUrl();
-    const newSocket = io(socketUrl);
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join admin room for real-time updates
-    newSocket.emit('join-room', 'admin-registrar');
+    console.log('🔌 Registrar Dashboard: Joining admin-registrar room');
+    joinRoom('admin-registrar');
 
-    // Listen for windows updates
-    newSocket.on('windows-updated', (data) => {
+    // Subscribe to windows updates
+    const unsubscribe = subscribe('windows-updated', (data) => {
       if (data.department === 'registrar') {
         console.log('📡 Windows updated for registrar dashboard:', data);
         // Refetch dashboard data when windows change
@@ -137,9 +135,10 @@ const RegistrarAdminDashboard = () => {
     });
 
     return () => {
-      newSocket.disconnect();
+      unsubscribe();
+      leaveRoom('admin-registrar');
     };
-  }, []); // Empty dependency array - Socket.io connection should only be created once
+  }, [socket, isConnected, fetchDashboardData]);
 
   const formatTimeAgo = (timestamp) => {
     const now = new Date();
@@ -350,7 +349,7 @@ const RegistrarAdminDashboard = () => {
           </div>
         </div>
 
-        <div className="col-span-1 grid grid-rows-2 gap-2 sm:gap-2.5">
+        <div className="col-span-1 lg:col-span-1 grid grid-rows-2 gap-2 sm:gap-2.5">
           {/* Row 1, Column 3 - Statistics Cards */}
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col justify-center items-center">
             <div className="text-2xl sm:text-3xl font-bold text-[#1F3463] mb-1 sm:mb-1.5">{tableData.todayVisits}</div>
@@ -362,18 +361,19 @@ const RegistrarAdminDashboard = () => {
           </div>
         </div>
 
-        {/* Row 2 - Lower row (60% height) */}
-        <div className="col-span-1 md:col-span-2">
-          {/* Row 2, Columns 1-2 (spanning both columns) - Area Chart */}
-          <div className="h-full">
-            <RoleAwareAreaChart userRole={user?.role} />
-          </div>
-        </div>
-
-        <div className="col-span-1">
+        {/* Pie Chart - Positioned after Statistics Cards on md, stays in row 2 on lg */}
+        <div className="col-span-1 lg:col-span-1 lg:row-start-2 lg:col-start-3">
           {/* Row 2, Column 3 - Pie Chart */}
           <div className="h-full">
             <ChartPieLegend userRole={user?.role} />
+          </div>
+        </div>
+
+        {/* Row 2 - Lower row (60% height) - Area Chart */}
+        <div className="col-span-1 md:col-span-2 lg:row-start-2 lg:col-start-1">
+          {/* Row 2, Columns 1-2 (spanning both columns) - Area Chart */}
+          <div className="h-full">
+            <RoleAwareAreaChart userRole={user?.role} />
           </div>
         </div>
       </div>

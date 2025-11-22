@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MdAdd, MdLocationOn, MdClose, MdKeyboardArrowDown, MdMonitor } from 'react-icons/md';
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMinusCircle } from 'react-icons/ai';
 import { LuSettings2 } from 'react-icons/lu';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../../../contexts/SocketContext';
 import { ToastContainer, ConfirmModal } from '../../../ui';
 import { useNotification } from '../../../../hooks/useNotification';
 import API_CONFIG from '../../../../config/api';
@@ -603,6 +603,8 @@ const AddServiceModal = ({
 };
 
 const Settings = () => {
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
+
   // State management
   const [isQueueingEnabled, setIsQueueingEnabled] = useState(false);
   const [locationText, setLocationText] = useState('');
@@ -612,7 +614,6 @@ const Settings = () => {
   const [adminUsers, setAdminUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
-  const [socket, setSocket] = useState(null);
 
   // Toggle queueing state management
   const [isToggling, setIsToggling] = useState(false);
@@ -634,16 +635,15 @@ const Settings = () => {
   // Notifications (saves to database)
   const { toasts, removeToast, showSuccess, showError, showWarning } = useNotification();
 
-  // Initialize Socket.io connection
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getAdminUrl());
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join admin room for real-time updates
-    newSocket.emit('join-room', 'admin-admissions');
+    console.log('🔌 Admissions Settings: Joining admin-admissions room');
+    joinRoom('admin-admissions');
 
-    // Listen for real-time updates
-    newSocket.on('settings-updated', (data) => {
+    // Subscribe to settings updates
+    const unsubscribeSettings = subscribe('settings-updated', (data) => {
       if (data.department === 'admissions' && data.type === 'queue-toggle') {
         setIsQueueingEnabled(data.data.isEnabled);
         showSuccess(
@@ -653,7 +653,8 @@ const Settings = () => {
       }
     });
 
-    newSocket.on('services-updated', (data) => {
+    // Subscribe to services updates
+    const unsubscribeServices = subscribe('services-updated', (data) => {
       if (data.department === 'admissions') {
         fetchServices();
         if (data.type === 'service-added') {
@@ -664,7 +665,8 @@ const Settings = () => {
       }
     });
 
-    newSocket.on('windows-updated', (data) => {
+    // Subscribe to windows updates
+    const unsubscribeWindows = subscribe('windows-updated', (data) => {
       if (data.department === 'admissions') {
         fetchWindows();
         if (data.type === 'window-added') {
@@ -676,9 +678,12 @@ const Settings = () => {
     });
 
     return () => {
-      newSocket.disconnect();
+      unsubscribeSettings();
+      unsubscribeServices();
+      unsubscribeWindows();
+      leaveRoom('admin-admissions');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   // Fetch initial data
   useEffect(() => {

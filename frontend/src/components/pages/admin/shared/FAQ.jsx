@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown, MdQuestionAnswer } from 'react-icons/md';
+import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown, MdQuestionAnswer, MdClose } from 'react-icons/md';
 import { IoMdRefresh } from 'react-icons/io';
 import { FiEdit3 } from 'react-icons/fi';
 import { FaPlus, FaTrash } from 'react-icons/fa';
@@ -8,7 +8,7 @@ import Pagination from '../../../ui/Pagination';
 import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import Portal from '../../../ui/Portal';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../../../contexts/SocketContext';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -24,6 +24,7 @@ const INITIAL_URL_STATE = {
 const FAQ = () => {
   // Get user context for office information
   const { user } = useAuth();
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
 
   // URL-persisted state management
   const { state: urlState, updateState } = useURLState(INITIAL_URL_STATE);
@@ -39,7 +40,6 @@ const FAQ = () => {
   const [editingFAQ, setEditingFAQ] = useState(null);
   const [deletingFAQ, setDeleteingFAQ] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [socket, setSocket] = useState(null);
   const [fetchError, setFetchError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
@@ -59,24 +59,24 @@ const FAQ = () => {
 
   const [formErrors, setFormErrors] = useState({});
 
-  // Initialize Socket.io connection
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getAdminUrl());
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join shared admin room for real-time updates (accessible by all admin users)
-    newSocket.emit('join-room', 'admin-shared-faq');
+    console.log('🔌 Shared FAQ: Joining admin-shared-faq room');
+    joinRoom('admin-shared-faq');
 
-    // Listen for FAQ updates
-    newSocket.on('faq-updated', (data) => {
+    // Subscribe to FAQ updates
+    const unsubscribe = subscribe('faq-updated', (data) => {
       console.log('📡 FAQ update received:', data);
       fetchFAQs();
     });
 
     return () => {
-      newSocket.disconnect();
+      unsubscribe();
+      leaveRoom('admin-shared-faq');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   // Fetch FAQs on component mount
   useEffect(() => {
@@ -607,25 +607,28 @@ const FAQ = () => {
       {/* Add/Edit Modal - Rendered outside space-y-5 container */}
       {showAddEditModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
-            <div className="bg-white rounded-lg sm:rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              {/* Modal Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4 flex items-center justify-between">
-                <h2 className="text-base sm:text-lg md:text-xl font-semibold text-[#1F3463]">
-                  {editingFAQ ? 'Edit FAQ' : 'Add New FAQ'}
-                </h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+              <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full">
+                {/* Close Button */}
                 <button
                   onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
                 >
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <MdClose className="w-3 h-3" />
                 </button>
-              </div>
 
-              {/* Modal Body */}
-              <form onSubmit={handleSubmit} className="p-4 sm:p-5 md:p-6">
+                {/* Modal Content with max height and scroll */}
+                <div className="max-h-[90vh] overflow-y-auto">
+                  {/* Modal Header */}
+                  <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4">
+                    <h2 className="text-base sm:text-lg md:text-xl font-semibold text-[#1F3463]">
+                      {editingFAQ ? 'Edit FAQ' : 'Add New FAQ'}
+                    </h2>
+                  </div>
+
+                  {/* Modal Body */}
+                  <form onSubmit={handleSubmit} className="p-4 sm:p-5 md:p-6">
                 <div className="space-y-3 sm:space-y-4">
                   {/* Question */}
                   <div>
@@ -722,6 +725,8 @@ const FAQ = () => {
                   </button>
                 </div>
               </form>
+                </div>
+              </div>
             </div>
           </div>
         </Portal>

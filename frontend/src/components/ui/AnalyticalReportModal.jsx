@@ -170,10 +170,10 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
           {/* Close Button - Circular Navy Blue with White Border (Outside Corner) */}
           <button
             onClick={onClose}
-            className="absolute -top-2 -right-2 z-20 w-8 h-8 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            className="absolute -top-1.5 -right-1.5 z-20 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
             aria-label="Close"
           >
-            <MdClose className="w-4 h-4" />
+            <MdClose className="w-3 h-3" />
           </button>
 
           {/* Scrollable Container */}

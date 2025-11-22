@@ -4,16 +4,16 @@ import { ResponsiveGrid } from '../ui';
 import DirectoryLayout from '../layouts/DirectoryLayout';
 import { KioskLayout } from '../layouts';
 import { FaLocationDot } from 'react-icons/fa6';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../contexts/SocketContext';
 import API_CONFIG from '../../config/api';
 import NavigationLoadingOverlay from '../ui/NavigationLoadingOverlay';
 
 const Directory = () => {
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [offices, setOffices] = useState([]);
   const [charts, setCharts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
   // Fixed layout structure
 
   // Animation variants for staggered effects
@@ -71,23 +71,23 @@ const Directory = () => {
     }
   };
 
-  // Initialize Socket.io connection for real-time updates
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getKioskUrl());
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join kiosk room for real-time updates
-    newSocket.emit('join-room', 'kiosk-directory');
+    console.log('🔌 Directory page: Joining kiosk-directory room');
+    joinRoom('kiosk-directory');
 
-    // Listen for chart updates
-    newSocket.on('chart-updated', () => {
+    // Subscribe to chart updates
+    const unsubscribe = subscribe('chart-updated', () => {
       fetchCharts();
     });
 
     return () => {
-      newSocket.disconnect();
+      unsubscribe();
+      leaveRoom('kiosk-directory');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   // Fetch offices and charts on component mount
   useEffect(() => {

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../contexts/SocketContext';
 import { FaSearch } from 'react-icons/fa';
 import API_CONFIG from '../../config/api';
 import HolographicKeyboard from '../ui/HolographicKeyboard';
 
 const FAQ = () => {
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
   const [openFAQ, setOpenFAQ] = useState(null);
   const [faqData, setFaqData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -54,24 +54,24 @@ const FAQ = () => {
     }
   };
 
-  // Initialize Socket.io connection
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getKioskUrl());
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join kiosk room for real-time updates
-    newSocket.emit('join-room', 'kiosk');
+    console.log('🔌 FAQ page: Joining kiosk room');
+    joinRoom('kiosk');
 
-    // Listen for FAQ updates
-    newSocket.on('faq-updated', (data) => {
+    // Subscribe to FAQ updates
+    const unsubscribe = subscribe('faq-updated', (data) => {
       console.log('📡 FAQ update received in kiosk:', data);
       fetchFAQs();
     });
 
     return () => {
-      newSocket.disconnect();
+      unsubscribe();
+      leaveRoom('kiosk');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   // Fetch FAQs on component mount
   useEffect(() => {

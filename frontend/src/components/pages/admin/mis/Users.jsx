@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown } from 'react-icons/md';
+import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown, MdClose } from 'react-icons/md';
 import { IoMdRefresh } from 'react-icons/io';
 import { MdPerson } from 'react-icons/md';
 import { FiEdit3 } from 'react-icons/fi';
@@ -891,11 +891,22 @@ const Users = () => {
       {/* Add/Edit User Modal */}
       {showAddEditModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-3 sm:p-4">
-          <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">
-              {editingUser ? 'Edit User' : 'Add New User'}
-            </h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-[100] overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+              <div className="relative bg-white rounded-xl w-full max-w-2xl shadow-xl">
+                {/* Close Button */}
+                <button
+                  onClick={closeModal}
+                  className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+                >
+                  <MdClose className="w-3 h-3" />
+                </button>
+
+                {/* Modal Content with max height and scroll */}
+                <div className="max-h-[90vh] overflow-y-auto p-4 sm:p-5">
+                  <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">
+                    {editingUser ? 'Edit User' : 'Add New User'}
+                  </h2>
 
             <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
               {/* Name */}
@@ -1087,8 +1098,10 @@ const Users = () => {
                 </button>
               </div>
             </form>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
         </Portal>
       )}
 

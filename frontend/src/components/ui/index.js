@@ -47,3 +47,4 @@ export { default as Modal, ModalHeader, ModalBody, ModalFooter, ConfirmModal } f
 export { default as Badge, StatusBadge, RoleBadge, PriorityBadge, CountBadge } from './Badge';
 export { default as Toast, ToastContainer, useToast } from './Toast';
 export { default as Portal } from './Portal';
+export { default as Pagination } from './Pagination';

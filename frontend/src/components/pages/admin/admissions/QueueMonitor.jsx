@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../../../contexts/SocketContext';
 import { getPhilippineDate } from '../../../../utils/philippineTimezone';
 import API_CONFIG from '../../../../config/api';
 
 const AdmissionsQueueMonitor = () => {
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
+
   // State for real-time date/time display
   const [currentDateTime, setCurrentDateTime] = useState('');
 
@@ -89,18 +91,18 @@ const AdmissionsQueueMonitor = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Initialize Socket.io connection and fetch initial data
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    const socket = io(API_CONFIG.getAdminUrl());
+    if (!socket || !isConnected) return;
 
-    // Join admissions admin room for real-time updates
-    socket.emit('join-room', 'admin-admissions');
+    console.log('🔌 Admissions Queue Monitor: Joining admin-admissions room');
+    joinRoom('admin-admissions');
 
-    // Listen for queue updates with specific event type handling
-    socket.on('queue-updated', (data) => {
+    // Subscribe to queue updates
+    const unsubscribeQueue = subscribe('queue-updated', (data) => {
       if (data.department === 'admissions') {
         console.log('📡 Admissions Queue Monitor - Real-time update received:', data);
-        
+
         // Handle specific queue update types
         switch (data.type) {
           case 'next-called':
@@ -168,8 +170,8 @@ const AdmissionsQueueMonitor = () => {
       }
     });
 
-    // Listen for window status updates (STOP button functionality)
-    socket.on('window-status-updated', (data) => {
+    // Subscribe to window status updates
+    const unsubscribeWindow = subscribe('window-status-updated', (data) => {
       if (data.department === 'admissions') {
         console.log('📡 Admissions Queue Monitor - Window status update received:', data);
 
@@ -193,9 +195,11 @@ const AdmissionsQueueMonitor = () => {
 
     return () => {
       clearInterval(refreshInterval);
-      socket.disconnect();
+      unsubscribeQueue();
+      unsubscribeWindow();
+      leaveRoom('admin-admissions');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   return (
     <div className="bg-gray-50 min-h-screen flex items-center justify-center p-6">

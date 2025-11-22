@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { MdClose } from 'react-icons/md';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../contexts/SocketContext';
 import API_CONFIG from '../../config/api';
 import NavigationLoadingOverlay from '../ui/NavigationLoadingOverlay';
 
@@ -10,8 +10,8 @@ const Bulletin = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [bulletins, setBulletins] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
 
   // Animation variants for staggered effects
   const containerVariants = {
@@ -73,16 +73,20 @@ const Bulletin = () => {
     }
   };
 
-  // Initialize Socket.io connection and fetch bulletins
+  // Fetch initial bulletins on mount
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getKioskUrl());
-    setSocket(newSocket);
+    fetchBulletins();
+  }, []);
 
-    // Join kiosk room for real-time updates
-    newSocket.emit('join-room', 'kiosk');
+  // Join Socket.io room and listen for real-time updates
+  useEffect(() => {
+    if (!socket || !isConnected) return;
 
-    // Listen for bulletin updates
-    newSocket.on('bulletin-updated', (data) => {
+    console.log('🔌 Bulletin page: Joining kiosk room');
+    joinRoom('kiosk');
+
+    // Subscribe to bulletin updates
+    const unsubscribe = subscribe('bulletin-updated', (data) => {
       console.log('📡 Bulletin update received:', data);
 
       if (data.type === 'bulletin-created') {
@@ -97,13 +101,11 @@ const Bulletin = () => {
       }
     });
 
-    // Fetch initial bulletins
-    fetchBulletins();
-
     return () => {
-      newSocket.disconnect();
+      unsubscribe();
+      leaveRoom('kiosk');
     };
-  }, []);
+  }, [socket, isConnected, joinRoom, leaveRoom, subscribe]);
 
   // Paginate bulletins into groups of 3
   const itemsPerPage = 3;

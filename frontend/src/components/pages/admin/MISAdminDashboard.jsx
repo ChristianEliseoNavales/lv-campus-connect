@@ -225,11 +225,13 @@ const MISAdminDashboard = () => {
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col h-full">
             <div className="grid grid-cols-2 gap-0 h-full">
               {/* Left Column - Total Users */}
-              <div className="border-r border-[#1F3463] pr-2 sm:pr-3 flex flex-col justify-between items-center text-center">
+              <div className="border-r border-[#1F3463] pr-2 sm:pr-3 flex flex-col items-center text-center h-full">
                 <div className="flex flex-col items-center">
                   <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Total Users</p>
-                  <FaUsers className="text-2xl sm:text-3xl text-[#1F3463] mb-1.5 sm:mb-2" />
-                  <p className="text-2xl sm:text-3xl font-bold text-[#1F3463] mb-2 sm:mb-3">{stats.totalUsers}</p>
+                  <FaUsers className="text-2xl sm:text-3xl text-[#1F3463]" />
+                </div>
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-2xl sm:text-5xl font-bold text-[#1F3463]">{stats.totalUsers}</p>
                 </div>
                 <button
                   onClick={() => navigate('/admin/mis/users')}
@@ -240,7 +242,7 @@ const MISAdminDashboard = () => {
               </div>
 
               {/* Right Column - Active Sessions */}
-              <div className="pl-2 sm:pl-3 flex flex-col items-center text-center">
+              <div className="pl-2 sm:pl-3 flex flex-col items-center ">
                 <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Now Active</p>
                 <div className="flex-1 overflow-y-auto space-y-1 sm:space-y-1.5 w-full">
                   {activeSessions.length > 0 ? (
@@ -294,7 +296,7 @@ const MISAdminDashboard = () => {
         </div>
 
         {/* Row 1, Column 3 - Most Visited Office */}
-        <div className="col-span-1">
+        <div className="col-span-1 lg:col-span-1">
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col h-full">
             <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Most Visited Office</p>
             <div className="flex-1 flex items-center justify-center">
@@ -303,18 +305,19 @@ const MISAdminDashboard = () => {
           </div>
         </div>
 
-        {/* Row 2 - Lower row (60% height) */}
-        <div className="col-span-1 md:col-span-2">
-          {/* Row 2, Columns 1-2 (spanning both columns) - Area Chart */}
-          <div className="h-full">
-            <RoleAwareAreaChart userRole={user?.role} />
-          </div>
-        </div>
-
-        <div className="col-span-1">
+        {/* Pie Chart - Positioned after Most Visited Office on md, stays in row 2 on lg */}
+        <div className="col-span-1 lg:col-span-1 lg:row-start-2 lg:col-start-3">
           {/* Row 2, Column 3 - Pie Chart */}
           <div className="h-full">
             <ChartPieLegend userRole={user?.role} />
+          </div>
+        </div>
+
+        {/* Row 2 - Lower row (60% height) - Area Chart */}
+        <div className="col-span-1 md:col-span-2 lg:row-start-2 lg:col-start-1">
+          {/* Row 2, Columns 1-2 (spanning both columns) - Area Chart */}
+          <div className="h-full">
+            <RoleAwareAreaChart userRole={user?.role} />
           </div>
         </div>
       </div>

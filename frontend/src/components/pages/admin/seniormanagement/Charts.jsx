@@ -4,11 +4,12 @@ import { FiEdit3 } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
 import { MdClose } from 'react-icons/md';
 import { useToast, ToastContainer } from '../../../ui/Toast';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../../../contexts/SocketContext';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
 
 const Charts = () => {
+  const { socket, isConnected, joinRoom, leaveRoom } = useSocket();
   const [loading, setLoading] = useState(true);
   const [charts, setCharts] = useState([]);
   const [offices, setOffices] = useState([]);
@@ -22,24 +23,22 @@ const Charts = () => {
   const [uploading, setUploading] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [socket, setSocket] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
   const fileInputRef = useRef(null);
   const { toasts, removeToast, showSuccess, showError } = useToast();
 
-  // Initialize Socket.io connection
+  // Join Socket.io room
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getAdminUrl());
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join admin room for real-time updates
-    newSocket.emit('join-room', 'admin-seniormanagement');
+    console.log('🔌 Senior Management Charts: Joining admin-seniormanagement room');
+    joinRoom('admin-seniormanagement');
 
     return () => {
-      newSocket.disconnect();
+      leaveRoom('admin-seniormanagement');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   // Fetch offices and charts on component mount
   useEffect(() => {

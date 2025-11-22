@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { MdSearch, MdKeyboardArrowUp, MdKeyboardArrowDown, MdHistory } from 'react-icons/md';
 import { IoMdRefresh } from 'react-icons/io';
-import { ToastContainer, DatePicker } from '../../../ui';
+import { ToastContainer, DatePicker, Pagination } from '../../../ui';
 import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import { formatDateForAPI } from '../../../../utils/philippineTimezone';
@@ -150,11 +150,15 @@ const AuditTrail = () => {
     }
 
     setFilteredLogs(filtered);
-    // Reset to first page when filters change
+  }, [auditLogs, searchTerm, filterBy]);
+
+  // Reset to first page when filters change (separate effect to avoid circular dependency)
+  useEffect(() => {
     if (currentPage > 1) {
       updateState('currentPage', 1);
     }
-  }, [auditLogs, searchTerm, filterBy, currentPage, updateState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, filterBy]); // Only reset when filters change, not when currentPage changes
 
   // Pagination logic
   const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
@@ -411,29 +415,18 @@ const AuditTrail = () => {
         </div>
 
         {/* Pagination */}
-        {!loading && filteredLogs.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 mt-3 sm:mt-4 md:mt-5">
-            <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
+        {totalPages > 1 && (
+          <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+            <div className="text-[10px] sm:text-xs text-gray-700 font-medium order-2 sm:order-1">
               Showing {startIndex + 1} to {Math.min(startIndex + logsPerPage, filteredLogs.length)} of {filteredLogs.length} logs
             </div>
-            <div className="flex items-center space-x-1.5 order-1 sm:order-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <span className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-semibold text-gray-700">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+            <div className="order-1 sm:order-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                size="sm"
+              />
             </div>
           </div>
         )}

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../contexts/SocketContext';
 import API_CONFIG from '../../config/api';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
   const [queueData, setQueueData] = useState({
     registrar: { currentNumber: 0, nextNumber: 0, queue: [], windows: [] },
     admissions: { currentNumber: 0, nextNumber: 0, queue: [], windows: [] }
@@ -15,7 +16,6 @@ const Home = () => {
     registrar: false,
     admissions: false
   });
-  const [socket, setSocket] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Animation variants for staggered effects
@@ -74,41 +74,41 @@ const Home = () => {
     }
   };
 
-  // Initialize Socket.io connection
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    // Use local backend for kiosk pages
-    const socketUrl = API_CONFIG.getKioskUrl();
-    console.log('🔌 Home page connecting to Socket.io:', socketUrl);
+    if (!socket || !isConnected) return;
 
-    const newSocket = io(socketUrl);
-    setSocket(newSocket);
+    console.log('🔌 Home page: Joining kiosk room');
+    joinRoom('kiosk');
 
-    // Join kiosk room for real-time updates
-    newSocket.emit('join-room', 'kiosk');
-
-    // Listen for real-time updates
-    newSocket.on('windows-updated', (data) => {
+    // Subscribe to windows updates
+    const unsubscribeWindows = subscribe('windows-updated', (data) => {
       if (data.department === 'registrar' || data.department === 'admissions') {
         fetchQueueData(data.department);
       }
     });
 
-    newSocket.on('queue-updated', (data) => {
+    // Subscribe to queue updates
+    const unsubscribeQueue = subscribe('queue-updated', (data) => {
       if (data.department === 'registrar' || data.department === 'admissions') {
         fetchQueueData(data.department);
       }
     });
 
-    newSocket.on('settings-updated', (data) => {
+    // Subscribe to settings updates
+    const unsubscribeSettings = subscribe('settings-updated', (data) => {
       if (data.department === 'registrar' || data.department === 'admissions') {
         fetchQueueData(data.department);
       }
     });
 
     return () => {
-      newSocket.disconnect();
+      unsubscribeWindows();
+      unsubscribeQueue();
+      unsubscribeSettings();
+      leaveRoom('kiosk');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   // Fetch queue data from API
   const fetchQueueData = async (specificDepartment = null) => {

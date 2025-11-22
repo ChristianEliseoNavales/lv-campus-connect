@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { IoMdRefresh } from 'react-icons/io';
+import { MdClose } from 'react-icons/md';
 import { useAuth } from '../../../../contexts/AuthContext';
+import { useSocket } from '../../../../contexts/SocketContext';
 import { ToastContainer } from '../../../ui/Toast';
 import { useNotification } from '../../../../hooks/useNotification';
 import textToSpeechService from '../../../../utils/textToSpeech';
@@ -12,10 +13,10 @@ import { authFetch } from '../../../../utils/apiClient';
 const Queue = () => {
   const { windowId } = useParams();
   const { user } = useAuth();
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
   const { toasts, removeToast, showSuccess, showError, showInfo, showWarning } = useNotification();
   const [windowData, setWindowData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
 
   // Real queue data from backend
   const [currentServing, setCurrentServing] = useState(0);
@@ -173,16 +174,15 @@ const Queue = () => {
     });
   };
 
-  // Initialize Socket.io connection and fetch initial data
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getAdminUrl());
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join admin room for real-time updates
-    newSocket.emit('join-room', 'admin-registrar');
+    console.log('🔌 Registrar Queue: Joining admin-registrar room');
+    joinRoom('admin-registrar');
 
-    // Listen for queue updates
-    newSocket.on('queue-updated', (data) => {
+    // Subscribe to queue updates
+    const unsubscribeQueue = subscribe('queue-updated', (data) => {
       if (data.department === 'registrar') {
         // console.log('📡 Real-time queue update received:', data);
 
@@ -262,8 +262,8 @@ const Queue = () => {
       }
     });
 
-    // Listen for window status updates
-    newSocket.on('window-status-updated', (data) => {
+    // Subscribe to window status updates
+    const unsubscribeWindow = subscribe('window-status-updated', (data) => {
       if (data.department === 'registrar' && data.windowId === windowData?.id) {
         // console.log('📡 Window status update received:', data);
         setIsWindowServing(data.data.isServing);
@@ -276,9 +276,11 @@ const Queue = () => {
     }
 
     return () => {
-      newSocket.disconnect();
+      unsubscribeQueue();
+      unsubscribeWindow();
+      leaveRoom('admin-registrar');
     };
-  }, [windowData]); // Add windowData as dependency
+  }, [socket, isConnected, windowData]); // Add windowData as dependency
 
   // Refresh queue data every 30 seconds (only when window data is available)
   useEffect(() => {
@@ -1047,7 +1049,18 @@ const Queue = () => {
     {/* Transfer Modal */}
     {showTransferModal && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
-        <div className="bg-white rounded-lg sm:rounded-xl shadow-xl p-4 sm:p-5 md:p-6 max-w-md w-full">
+        <div className="relative bg-white rounded-xl shadow-xl p-4 sm:p-5 md:p-6 max-w-md w-full">
+          {/* Close Button */}
+          <button
+            onClick={() => {
+              setShowTransferModal(false);
+              setSelectedWindow(null);
+            }}
+            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+          >
+            <MdClose className="w-3 h-3" />
+          </button>
+
           <h3 className="text-lg sm:text-xl font-bold text-[#1F3463] mb-1 sm:mb-1.5 tracking-wide">
             Transfer Queue {String(currentServing).padStart(2, '0')}
           </h3>

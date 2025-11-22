@@ -490,7 +490,7 @@ const TransactionLogs = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Queue No.</span>
-                          <div className="text-sm font-bold text-gray-900">#{log.queueNumber.toString().padStart(2, '0')}}</div>
+                          <div className="text-sm font-bold text-gray-900">#{log.queueNumber.toString().padStart(2, '0')}</div>
                         </div>
                         <div className="flex items-center space-x-1.5">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${

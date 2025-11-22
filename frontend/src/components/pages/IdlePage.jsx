@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../contexts/SocketContext';
 import useIdleDetection from '../../hooks/useIdleDetection';
 import API_CONFIG from '../../config/api';
 
 const IdlePage = () => {
+  const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [bulletins, setBulletins] = useState([]);
-  const [socket, setSocket] = useState(null);
   const { handleReturnFromIdle } = useIdleDetection();
 
   // Fetch bulletins from API
@@ -33,16 +33,15 @@ const IdlePage = () => {
     }
   };
 
-  // Initialize Socket.io connection and fetch bulletins
+  // Join Socket.io room and listen for real-time updates
   useEffect(() => {
-    const newSocket = io(API_CONFIG.getKioskUrl());
-    setSocket(newSocket);
+    if (!socket || !isConnected) return;
 
-    // Join kiosk room for real-time updates
-    newSocket.emit('join-room', 'kiosk');
+    console.log('🔌 IdlePage: Joining kiosk room');
+    joinRoom('kiosk');
 
-    // Listen for bulletin updates
-    newSocket.on('bulletin-updated', (data) => {
+    // Subscribe to bulletin updates
+    const unsubscribe = subscribe('bulletin-updated', (data) => {
       console.log('📡 Bulletin update received in idle page:', data);
 
       if (data.type === 'bulletin-created') {
@@ -74,9 +73,10 @@ const IdlePage = () => {
     fetchBulletins();
 
     return () => {
-      newSocket.disconnect();
+      unsubscribe();
+      leaveRoom('kiosk');
     };
-  }, []);
+  }, [socket, isConnected]);
 
   // Transform bulletins to carousel images format
   const carouselImages = bulletins.length > 0
