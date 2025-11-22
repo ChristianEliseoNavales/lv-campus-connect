@@ -83,7 +83,7 @@ const InstructionModeOverlay = ({ isVisible, onClose }) => {
   // Get page-specific instructions
   const getPageInstructions = () => {
     switch (location.pathname) {
-      case '/':
+      case '/home':
         return [
           {
             id: 'registrar-office',
