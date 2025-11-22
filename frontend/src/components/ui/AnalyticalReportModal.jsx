@@ -3,7 +3,8 @@ import { MdClose, MdDownload } from 'react-icons/md';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as AreaTooltip } from 'recharts';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { pdf } from '@react-pdf/renderer';
+import AnalyticalReportPDF from './AnalyticalReportPDF';
 import API_CONFIG from '../../config/api';
 import { authFetch } from '../../utils/apiClient';
 import { getPhilippineStartOfDayISO, getPhilippineEndOfDayISO } from '../../utils/philippineTimezone';
@@ -12,11 +13,23 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [progress, setProgress] = useState(0);
   const reportRef = useRef(null);
+  const chartContainerRef = useRef(null);
 
   useEffect(() => {
     if (isOpen && userRole && dateRange) {
       fetchReportData();
+    } else if (!isOpen) {
+      // Clean up when modal closes
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+        setPdfPreviewUrl(null);
+      }
+      setReportData(null);
+      setIsLoading(true);
+      setProgress(0);
     }
   }, [isOpen, userRole, dateRange]);
 
@@ -24,6 +37,12 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
     try {
       setIsLoading(true);
       setError(null);
+      setProgress(10); // Starting report generation
+      // Clear old PDF preview URL to prevent showing stale preview
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+        setPdfPreviewUrl(null);
+      }
 
       const baseUrl = API_CONFIG.getAdminUrl();
 
@@ -61,17 +80,215 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       }
 
       const result = await response.json();
-      setReportData(result.data);
+      const data = result.data;
+      setReportData(data);
+      setProgress(30); // Report data fetched from API
+      
+      // Wait for React to render the chart container with data
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Generate PDF preview as part of data loading
+      // Pass data directly since state update is async
+      // This ensures single loading state covers entire process
+      await generatePDFPreview(data);
+      
+      // Only set loading to false after PDF preview is ready
+      setIsLoading(false);
     } catch (err) {
       console.error('Error fetching analytical report:', err);
       setError(err.message);
-    } finally {
       setIsLoading(false);
+      setProgress(0);
     }
   };
 
+  // Generate PDF for preview
+  const generatePDFPreview = async (data = null) => {
+    // Use passed data or fallback to reportData state
+    const dataToUse = data || reportData;
+    if (!dataToUse) {
+      console.warn('No report data available for PDF generation');
+      return;
+    }
+
+    try {
+      setProgress(50); // Charts container rendered
+      // Wait for chart container to be in DOM and charts to have dimensions
+      let attempts = 0;
+      const maxAttempts = 15; // Increased attempts for slower rendering
+      let chartsReady = false;
+      
+      while (attempts < maxAttempts && !chartsReady) {
+        if (chartContainerRef.current) {
+          const chartElements = chartContainerRef.current.querySelectorAll('[data-chart]');
+          if (chartElements.length > 0) {
+            // Check if charts have dimensions (indicating they're rendered)
+            let allChartsHaveDimensions = true;
+            chartElements.forEach((chart) => {
+              if (chart.offsetWidth === 0 || chart.offsetHeight === 0) {
+                allChartsHaveDimensions = false;
+              }
+            });
+            
+            if (allChartsHaveDimensions) {
+              chartsReady = true;
+              setProgress(70); // Charts ready and validated
+              // Wait a bit more for Recharts to fully render SVG elements
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              break;
+            }
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, 200));
+        attempts++;
+      }
+
+      if (!chartsReady) {
+        console.warn('Charts may not be fully ready, proceeding anyway...');
+        setProgress(70); // Charts ready and validated (even if not perfect)
+        // Still wait a bit before proceeding
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Collect chart images from hidden chart container
+      const chartImages = await collectChartImages(dataToUse);
+      setProgress(85); // Chart images collected
+      
+      console.log('Chart images collected:', Object.keys(chartImages));
+
+      // Generate PDF using @react-pdf/renderer
+      const blob = await pdf(
+        <AnalyticalReportPDF
+          reportData={dataToUse}
+          userRole={userRole}
+          chartImages={chartImages}
+        />
+      ).toBlob();
+
+      // Create object URL for preview
+      const url = URL.createObjectURL(blob);
+      setPdfPreviewUrl(url);
+      setProgress(100); // PDF preview generated
+    } catch (error) {
+      console.error('Error generating PDF preview:', error);
+      throw error; // Re-throw to be handled by fetchReportData
+    }
+  };
+
+  // Note: PDF generation is now integrated into fetchReportData
+  // No separate useEffect needed
+
+  // Cleanup: revoke object URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+      }
+    };
+  }, [pdfPreviewUrl]);
+
+  // Convert chart to image using html2canvas
+  const convertChartToImage = async (chartElement, chartId) => {
+    if (!chartElement) {
+      console.warn(`Chart element not found for ${chartId}`);
+      return null;
+    }
+
+    try {
+      // Wait a bit to ensure the chart is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Check if element has dimensions
+      if (chartElement.offsetWidth === 0 || chartElement.offsetHeight === 0) {
+        console.warn(`Chart ${chartId} has zero dimensions:`, {
+          width: chartElement.offsetWidth,
+          height: chartElement.offsetHeight
+        });
+      }
+
+      const canvas = await html2canvas(chartElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: chartElement.offsetWidth || 800,
+        height: chartElement.offsetHeight || 600,
+        allowTaint: true,
+      });
+
+      const dataUrl = canvas.toDataURL('image/png');
+      console.log(`Chart ${chartId} converted successfully, size:`, canvas.width, 'x', canvas.height);
+      return dataUrl;
+    } catch (error) {
+      console.error(`Error converting chart ${chartId} to image:`, error);
+      return null;
+    }
+  };
+
+  // Collect all chart images
+  const collectChartImages = async (data = null) => {
+    const chartImages = {};
+    
+    // Use chartContainerRef if available, otherwise fallback to reportRef
+    const container = chartContainerRef.current || reportRef.current;
+    if (!container) {
+      console.warn('Chart container not found');
+      return chartImages;
+    }
+
+    // Use passed data or fallback to reportData state
+    const dataToUse = data || reportData;
+
+    console.log('Collecting charts from container:', container);
+
+    // MIS Super Admin charts
+    if (userRole === 'MIS Super Admin') {
+      const mostVisitedOfficeChart = container.querySelector('[data-chart="mostVisitedOffice"]');
+      if (mostVisitedOfficeChart) {
+        console.log('Found mostVisitedOffice chart, dimensions:', mostVisitedOfficeChart.offsetWidth, 'x', mostVisitedOfficeChart.offsetHeight);
+        chartImages.mostVisitedOffice = await convertChartToImage(mostVisitedOfficeChart, 'mostVisitedOffice');
+      } else {
+        console.warn('mostVisitedOffice chart not found');
+      }
+
+      const serviceDistributionOverallChart = container.querySelector('[data-chart="serviceDistributionOverall"]');
+      if (serviceDistributionOverallChart) {
+        console.log('Found serviceDistributionOverall chart, dimensions:', serviceDistributionOverallChart.offsetWidth, 'x', serviceDistributionOverallChart.offsetHeight);
+        chartImages.serviceDistributionOverall = await convertChartToImage(serviceDistributionOverallChart, 'serviceDistributionOverall');
+      } else {
+        console.warn('serviceDistributionOverall chart not found');
+      }
+    }
+
+    // Registrar/Admissions Admin charts
+    if (userRole === 'Registrar Admin' || userRole === 'Admissions Admin') {
+      const serviceDistributionChart = container.querySelector('[data-chart="serviceDistribution"]');
+      if (serviceDistributionChart) {
+        console.log('Found serviceDistribution chart, dimensions:', serviceDistributionChart.offsetWidth, 'x', serviceDistributionChart.offsetHeight);
+        chartImages.serviceDistribution = await convertChartToImage(serviceDistributionChart, 'serviceDistribution');
+      } else {
+        console.warn('serviceDistribution chart not found');
+      }
+
+      // Monthly service distribution charts
+      if (dataToUse?.monthlyBreakdown) {
+        for (let i = 0; i < dataToUse.monthlyBreakdown.length; i++) {
+          const monthlyChart = container.querySelector(`[data-chart="monthlyServiceDistribution_${i}"]`);
+          if (monthlyChart) {
+            console.log(`Found monthlyServiceDistribution_${i} chart, dimensions:`, monthlyChart.offsetWidth, 'x', monthlyChart.offsetHeight);
+            chartImages[`monthlyServiceDistribution_${i}`] = await convertChartToImage(monthlyChart, `monthlyServiceDistribution_${i}`);
+          } else {
+            console.warn(`monthlyServiceDistribution_${i} chart not found`);
+          }
+        }
+      }
+    }
+
+    return chartImages;
+  };
+
   const handleDownloadPDF = async () => {
-    if (!reportRef.current || !reportData) return;
+    if (!reportData) return;
 
     try {
       // Show loading state
@@ -81,59 +298,42 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
         downloadButton.disabled = true;
       }
 
-      // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      // Wait a bit for charts to render
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Get all page elements
-      const pages = reportRef.current.querySelectorAll('[data-pdf-page]');
+      // Collect chart images
+      const chartImages = await collectChartImages();
 
-      // Capture and add each page
-      for (let i = 0; i < pages.length; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
+      // Generate PDF using @react-pdf/renderer
+      const blob = await pdf(
+        <AnalyticalReportPDF
+          reportData={reportData}
+          userRole={userRole}
+          chartImages={chartImages}
+        />
+      ).toBlob();
 
-        // Capture the page as canvas with exact dimensions
-        const canvas = await html2canvas(pages[i], {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          width: pages[i].offsetWidth,
-          height: pages[i].offsetHeight,
-          x: 0,
-          y: 0,
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: pages[i].offsetWidth,
-          windowHeight: pages[i].offsetHeight
-        });
-
-        // Add to PDF (full page, no margins since content already has margins)
-        const imgWidth = 210; // A4 width in mm
-        const imgHeight = 297; // A4 height in mm
-
-        pdf.addImage(
-          canvas.toDataURL('image/png'),
-          'PNG',
-          0,
-          0,
-          imgWidth,
-          imgHeight
-        );
-      }
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
 
       // Generate filename with current date
       const date = new Date().toISOString().split('T')[0];
       const roleSlug = userRole.replace(/\s+/g, '_');
-      const filename = `LVCampusConnect_${roleSlug}_Analytics_Report_${date}.pdf`;
+      link.download = `LVCampusConnect_${roleSlug}_Analytics_Report_${date}.pdf`;
 
-      // Save PDF
-      pdf.save(filename);
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      URL.revokeObjectURL(url);
 
       // Reset button state
       if (downloadButton) {
-        downloadButton.textContent = 'Download Report';
+        downloadButton.textContent = 'Download PDF';
         downloadButton.disabled = false;
       }
     } catch (error) {
@@ -143,7 +343,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       // Reset button state
       const downloadButton = document.querySelector('[data-download-button]');
       if (downloadButton) {
-        downloadButton.textContent = 'Download Report';
+        downloadButton.textContent = 'Download PDF';
         downloadButton.disabled = false;
       }
     }
@@ -196,11 +396,31 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
               </div>
             </div>
 
-            {/* Content - A4 Pages Container */}
-            <div ref={reportRef} className="p-6 space-y-6 rounded-b-lg">
+            {/* Content - PDF Preview */}
+            <div className="p-6 rounded-b-lg">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3463]"></div>
+                <div className="w-full max-w-md">
+                  {/* Percentage Counter */}
+                  <div className="text-center mb-4">
+                    <p className="text-3xl font-bold text-[#1F3463]">
+                      {progress}%
+                    </p>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+                    <div
+                      className="bg-[#1F3463] h-full rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  
+                  {/* Status Text */}
+                  <p className="text-[#1F3463] font-medium text-center">
+                    Generating Report...
+                  </p>
+                </div>
               </div>
             ) : error ? (
               <div className="text-center py-20">
@@ -212,8 +432,33 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                   Retry
                 </button>
               </div>
-            ) : reportData ? (
-              <>
+            ) : pdfPreviewUrl && !isLoading ? (
+              <div className="w-full h-[calc(90vh-120px)]">
+                <iframe
+                  src={pdfPreviewUrl}
+                  className="w-full h-full border-0 rounded-lg"
+                  title="PDF Preview"
+                />
+              </div>
+            ) : null}
+
+            {/* Hidden chart container for PDF generation - positioned off-screen but visible for Recharts to render */}
+            {reportData && (
+              <div 
+                ref={chartContainerRef} 
+                className="fixed pointer-events-none" 
+                style={{ 
+                  left: '-9999px', 
+                  top: '0px', 
+                  width: '210mm', 
+                  minHeight: '297mm',
+                  zIndex: -1,
+                  opacity: 0.01, // Very low opacity but not 0, so browser still renders it
+                  visibility: 'visible' // Must be visible for Recharts to render
+                }}
+              >
+                <div ref={reportRef}>
+                  <>
                 {/* Page 1 - A4 Size */}
                 <div
                   data-pdf-page="1"
@@ -303,30 +548,35 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                             <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
                             Most Visited Office
                           </h3>
-                          <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                              <Pie
-                                data={reportData.mostVisitedOffice}
-                                dataKey="count"
-                                nameKey="department"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={85}
-                                label={({ department, count }) => `${department}: ${count}`}
-                                labelLine={true}
-                              >
-                                {reportData.mostVisitedOffice?.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
-                                ))}
-                              </Pie>
-                              <Tooltip />
-                              <Legend
-                                verticalAlign="bottom"
-                                height={40}
-                                wrapperStyle={{ paddingTop: '10px', fontSize: '11px' }}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
+                          <div data-chart="mostVisitedOffice">
+                            <ResponsiveContainer width="100%" height={280}>
+                              <PieChart>
+                                <Pie
+                                  data={reportData.mostVisitedOffice?.filter(item => item && item.count > 0)}
+                                  dataKey="count"
+                                  nameKey="department"
+                                  cx="50%"
+                                  cy="50%"
+                                  outerRadius={85}
+                                  startAngle={90}
+                                  endAngle={-270}
+                                  isAnimationActive={false}
+                                  label={({ department, count }) => `${department}: ${count}`}
+                                  labelLine={true}
+                                >
+                                  {reportData.mostVisitedOffice?.filter(item => item && item.count > 0).map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend
+                                  verticalAlign="bottom"
+                                  height={40}
+                                  wrapperStyle={{ paddingTop: '10px', fontSize: '11px' }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
                       </>
                     )}
@@ -427,30 +677,35 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                             <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
                             Overall Service Distribution
                           </h3>
-                          <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                              <Pie
-                                data={reportData.serviceDistribution?.slice(0, 5)}
-                                dataKey="count"
-                                nameKey="service"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={85}
-                                label={({ service, count }) => `${service}: ${count}`}
-                                labelLine={true}
-                              >
-                                {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
-                                ))}
-                              </Pie>
-                              <Tooltip formatter={(value, name) => [value, name]} />
-                              <Legend
-                                verticalAlign="bottom"
-                                height={40}
-                                wrapperStyle={{ paddingTop: '10px', fontSize: '11px' }}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
+                          <div data-chart="serviceDistribution">
+                            <ResponsiveContainer width="100%" height={300}>
+                              <PieChart>
+                                <Pie
+                                  data={reportData.serviceDistribution?.filter(item => item && item.count > 0).slice(0, 5)}
+                                  dataKey="count"
+                                  nameKey="service"
+                                  cx="50%"
+                                  cy="50%"
+                                  outerRadius={85}
+                                  startAngle={90}
+                                  endAngle={-270}
+                                  isAnimationActive={false}
+                                  label={({ service, count }) => `${service}: ${count}`}
+                                  labelLine={true}
+                                >
+                                  {reportData.serviceDistribution?.filter(item => item && item.count > 0).slice(0, 5).map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip formatter={(value, name) => [value, name]} />
+                                <Legend
+                                  verticalAlign="bottom"
+                                  height={40}
+                                  wrapperStyle={{ paddingTop: '10px', fontSize: '11px' }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
                       </>
                     )}
@@ -492,30 +747,34 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                         <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
                         Service Distribution Overall
                       </h3>
-                      <ResponsiveContainer width="100%" height={240}>
-                        <PieChart>
-                          <Pie
-                            data={reportData.serviceDistribution?.slice(0, 5)}
-                            dataKey="count"
-                            nameKey="service"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={75}
-                            label={({ service, count }) => `${service}: ${count}`}
-                            labelLine={true}
-                          >
-                            {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend
-                            verticalAlign="bottom"
-                            height={35}
-                            wrapperStyle={{ paddingTop: '8px', fontSize: '10px' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
+                      <div data-chart="serviceDistributionOverall">
+                        <ResponsiveContainer width="100%" height={240}>
+                          <PieChart>
+                            <Pie
+                              data={reportData.serviceDistribution?.slice(0, 5)}
+                              dataKey="count"
+                              nameKey="service"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={75}
+                              startAngle={0}
+                              endAngle={360}
+                              label={({ service, count }) => `${service}: ${count}`}
+                              labelLine={true}
+                            >
+                              {reportData.serviceDistribution?.slice(0, 5).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend
+                              verticalAlign="bottom"
+                              height={35}
+                              wrapperStyle={{ paddingTop: '8px', fontSize: '10px' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
 
                     {/* Kiosk Ratings Breakdown */}
@@ -524,13 +783,13 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                         <span className="w-1 h-5 bg-[#1F3463] mr-2 rounded"></span>
                         Kiosk Ratings Distribution
                       </h3>
-                      <div className="grid grid-cols-5 gap-3">
+                      <div className="flex gap-1.5" style={{ width: '100%' }}>
                         {[5, 4, 3, 2, 1].map((star) => (
-                          <div key={star} className="text-center bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200">
-                            <p className="text-2xl font-bold text-[#1F3463]">
+                          <div key={star} className="flex-1 text-center bg-gradient-to-br from-gray-50 to-gray-100 p-2 rounded-lg border border-gray-200" style={{ minWidth: 0, flexBasis: 0 }}>
+                            <p className="text-base font-bold text-[#1F3463] leading-tight">
                               {reportData.kioskRatings?.[`rating${star}`] || 0}
                             </p>
-                            <p className="text-xs font-semibold text-gray-600 mt-1">{star} Star{star !== 1 ? 's' : ''}</p>
+                            <p className="text-[9px] font-semibold text-gray-600 mt-0.5 leading-tight">{star} Star{star !== 1 ? 's' : ''}</p>
                           </div>
                         ))}
                       </div>
@@ -646,30 +905,34 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                             <span className="w-1 h-4 bg-[#1F3463] mr-2 rounded"></span>
                             Service Distribution
                           </h3>
-                          <ResponsiveContainer width="100%" height={220}>
-                            <PieChart>
-                              <Pie
-                                data={monthData.serviceDistribution?.slice(0, 5)}
-                                dataKey="count"
-                                nameKey="service"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={65}
-                                label={({ service, count }) => `${service}: ${count}`}
-                                labelLine={true}
-                              >
-                                {monthData.serviceDistribution?.slice(0, 5).map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
-                                ))}
-                              </Pie>
-                              <Tooltip formatter={(value, name) => [value, name]} />
-                              <Legend
-                                verticalAlign="bottom"
-                                height={35}
-                                wrapperStyle={{ paddingTop: '6px', fontSize: '10px' }}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
+                          <div data-chart={`monthlyServiceDistribution_${monthIndex}`}>
+                            <ResponsiveContainer width="100%" height={220}>
+                              <PieChart>
+                                <Pie
+                                  data={monthData.serviceDistribution?.slice(0, 5)}
+                                  dataKey="count"
+                                  nameKey="service"
+                                  cx="50%"
+                                  cy="50%"
+                                  outerRadius={65}
+                                  startAngle={0}
+                                  endAngle={360}
+                                  label={({ service, count }) => `${service}: ${count}`}
+                                  labelLine={true}
+                                >
+                                  {monthData.serviceDistribution?.slice(0, 5).map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={LVCampusConnectColors[index % LVCampusConnectColors.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip formatter={(value, name) => [value, name]} />
+                                <Legend
+                                  verticalAlign="bottom"
+                                  height={35}
+                                  wrapperStyle={{ paddingTop: '6px', fontSize: '10px' }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
 
                         {/* Visitor Breakdown by Role - Compact */}
@@ -747,8 +1010,10 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                     </div>
                   ))
                 }
-              </>
-            ) : null}
+                  </>
+                </div>
+              </div>
+            )}
             </div>
           </div>
         </div>
