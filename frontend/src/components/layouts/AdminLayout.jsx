@@ -378,9 +378,6 @@ const AdminLayout = ({ children }) => {
 
     // Helper function to check if user has access to a specific path
     const hasAccessToPath = (path) => {
-      // MIS Super Admin has access to everything
-      if (user?.role === 'MIS Super Admin') return true;
-
       // Check if path is in pageAccess array - exact match only
       // No parent path access - each page must be explicitly granted
       return pageAccess.some(accessPath => {

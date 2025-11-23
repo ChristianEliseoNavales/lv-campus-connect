@@ -43,6 +43,7 @@ const Users = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [isOnlySuperAdmin, setIsOnlySuperAdmin] = useState(false);
 
   const { toasts, showSuccess, showError, removeToast } = useToast();
 
@@ -252,6 +253,32 @@ const Users = () => {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Check if editing user is the only Super Admin
+  useEffect(() => {
+    const checkSuperAdminCount = async () => {
+      if (!editingUser || editingUser.role !== 'MIS Super Admin') {
+        setIsOnlySuperAdmin(false);
+        return;
+      }
+
+      try {
+        const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/users?role=MIS Super Admin&isActive=true`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            const activeSuperAdmins = result.data.filter(user => user.isActive === true);
+            setIsOnlySuperAdmin(activeSuperAdmins.length === 1 && activeSuperAdmins[0]._id === editingUser._id);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking Super Admin count:', error);
+        setIsOnlySuperAdmin(false);
+      }
+    };
+
+    checkSuperAdminCount();
+  }, [editingUser]);
+
   // Filter and search logic
   const filteredUsers = useMemo(() => {
     let filtered = users;
@@ -450,6 +477,12 @@ const Users = () => {
   // Handle page access checkbox changes
   // Note: pagePath is the route path (e.g., '/admin/mis'), not the old ID format
   const handlePageAccessChange = (pagePath, checked) => {
+    // Prevent unchecking Users Management page if user is the only Super Admin
+    if (pagePath === '/admin/mis/users' && !checked && isOnlySuperAdmin) {
+      showError('Cannot Remove Access', 'You are the only active Super Admin. Users Management access cannot be removed to ensure system administration capabilities.');
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       pageAccess: checked
@@ -1025,6 +1058,11 @@ const Users = () => {
                     As MIS Super Admin, you can select pages from all offices
                   </p>
                 )}
+                {isOnlySuperAdmin && (
+                  <p className="text-xs text-amber-600 mb-1.5">
+                    Cannot remove Users Management access. You are the only active Super Admin in the system.
+                  </p>
+                )}
                 <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
                   {/* Group pages by category */}
                   {['MIS', 'Registrar', 'Admissions', 'Senior Management'].map(category => {
@@ -1037,16 +1075,20 @@ const Users = () => {
                         <div className="space-y-1.5">
                           {categoryPages.map(page => {
                             const isDisabled = isPageCheckboxDisabled(page);
+                            // Disable Users Management checkbox if user is the only Super Admin
+                            const isUsersManagementPage = page.path === '/admin/mis/users';
+                            const shouldDisableUsersPage = isUsersManagementPage && isOnlySuperAdmin && formData.pageAccess.includes(page.path);
+                            const finalDisabled = isDisabled || shouldDisableUsersPage;
                             return (
                               <label
                                 key={page.path}
-                                className={`flex items-center space-x-1.5 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                className={`flex items-center space-x-1.5 ${finalDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                               >
                                 <input
                                   type="checkbox"
                                   checked={formData.pageAccess.includes(page.path)}
                                   onChange={(e) => handlePageAccessChange(page.path, e.target.checked)}
-                                  disabled={isDisabled}
+                                  disabled={finalDisabled}
                                   className="rounded border-gray-300 text-[#1F3463] focus:ring-[#1F3463] disabled:opacity-50 disabled:cursor-not-allowed w-3 h-3"
                                 />
                                 <span className="text-xs text-gray-700">{page.label}</span>

@@ -112,13 +112,22 @@ class AuditService {
       };
       
       // Remove null/undefined values to keep the document clean
-      // BUT preserve required fields (userId, userEmail, userName, userRole, action, actionDescription, resourceType, ipAddress, requestMethod, requestUrl, statusCode, success)
-      const requiredFields = ['userId', 'userEmail', 'userName', 'userRole', 'action', 'actionDescription', 'resourceType', 'ipAddress', 'requestMethod', 'requestUrl', 'statusCode', 'success'];
+      // BUT preserve required fields (userId is conditionally required - optional for LOGIN_FAILED)
+      // For LOGIN_FAILED actions, userId can be undefined/null
+      const conditionallyRequiredFields = action === 'LOGIN_FAILED' 
+        ? ['userEmail', 'userName', 'userRole', 'action', 'actionDescription', 'resourceType', 'ipAddress', 'requestMethod', 'requestUrl', 'statusCode', 'success']
+        : ['userId', 'userEmail', 'userName', 'userRole', 'action', 'actionDescription', 'resourceType', 'ipAddress', 'requestMethod', 'requestUrl', 'statusCode', 'success'];
+      
       Object.keys(auditData).forEach(key => {
-        if ((auditData[key] === null || auditData[key] === undefined) && !requiredFields.includes(key)) {
+        if ((auditData[key] === null || auditData[key] === undefined) && !conditionallyRequiredFields.includes(key)) {
           delete auditData[key];
         }
       });
+      
+      // For LOGIN_FAILED actions without userId, explicitly set it to null/undefined
+      if (action === 'LOGIN_FAILED' && !userId) {
+        delete auditData.userId;
+      }
       
       const auditEntry = new AuditTrail(auditData);
       await auditEntry.save();

@@ -87,9 +87,6 @@ export const getFirstAccessiblePage = (pageAccess) => {
 export const canAccessRoute = (user, route) => {
   if (!user || !route) return false;
 
-  // MIS Super Admin has access to everything
-  if (user.role === 'MIS Super Admin') return true;
-
   // Check pageAccess array
   const pageAccess = user.pageAccess || [];
 

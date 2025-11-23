@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import API_CONFIG from '../config/api';
+import { useAuth } from './AuthContext';
 
 const SocketContext = createContext();
 
@@ -16,6 +17,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [joinedRooms, setJoinedRooms] = useState(new Set());
+  const { user, isAuthenticated } = useAuth();
 
   // Initialize single Socket.io connection
   useEffect(() => {
@@ -49,6 +51,8 @@ export const SocketProvider = ({ children }) => {
       joinedRooms.forEach(room => {
         newSocket.emit('join-room', room);
       });
+      // Note: User session re-registration is handled by the separate useEffect
+      // that watches socket, isConnected, and user state
     });
 
     setSocket(newSocket);
@@ -57,6 +61,17 @@ export const SocketProvider = ({ children }) => {
       newSocket.disconnect();
     };
   }, []);
+
+  // Register user session when authenticated and connected
+  useEffect(() => {
+    if (socket && isConnected && isAuthenticated && user) {
+      const userId = user._id || user.id;
+      if (userId) {
+        socket.emit('register-user-session', { userId });
+        console.log(`👤 Registered user session for ${userId}`);
+      }
+    }
+  }, [socket, isConnected, isAuthenticated, user]);
 
   // Join room function with tracking
   const joinRoom = useCallback((room) => {

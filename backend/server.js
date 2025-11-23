@@ -61,9 +61,26 @@ app.use(express.urlencoded({ extended: true }));
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
 
+// User session tracking: Map userId to Set of socket IDs
+// This allows multiple tabs/devices per user
+const userSessions = new Map(); // Map<userId, Set<socketId>>
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('🔌 Client connected:', socket.id);
+
+  // Register user session
+  socket.on('register-user-session', (data) => {
+    const { userId } = data;
+    if (userId) {
+      if (!userSessions.has(userId)) {
+        userSessions.set(userId, new Set());
+      }
+      userSessions.get(userId).add(socket.id);
+      console.log(`👤 User ${userId} registered session: ${socket.id}`);
+      console.log(`📊 Total sessions for user ${userId}: ${userSessions.get(userId).size}`);
+    }
+  });
 
   // Join room based on user type (admin or kiosk)
   socket.on('join-room', (room) => {
@@ -73,8 +90,45 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('🔌 Client disconnected:', socket.id);
+    
+    // Clean up user session tracking
+    for (const [userId, socketIds] of userSessions.entries()) {
+      if (socketIds.has(socket.id)) {
+        socketIds.delete(socket.id);
+        if (socketIds.size === 0) {
+          userSessions.delete(userId);
+          console.log(`👤 Removed all sessions for user ${userId}`);
+        } else {
+          console.log(`👤 User ${userId} now has ${socketIds.size} active session(s)`);
+        }
+        break;
+      }
+    }
   });
 });
+
+// Helper function to emit force-logout to a specific user
+const emitForceLogout = (userId, reason) => {
+  const socketIds = userSessions.get(userId);
+  if (socketIds && socketIds.size > 0) {
+    const eventData = {
+      reason,
+      timestamp: new Date().toISOString()
+    };
+    
+    socketIds.forEach(socketId => {
+      io.to(socketId).emit('force-logout', eventData);
+      console.log(`🚪 Emitted force-logout to socket ${socketId} for user ${userId}: ${reason}`);
+    });
+    
+    return true;
+  }
+  console.log(`⚠️ No active sessions found for user ${userId}`);
+  return false;
+};
+
+// Make emitForceLogout available to routes via app
+app.set('emitForceLogout', emitForceLogout);
 
 // Make io available to routes
 app.set('io', io);

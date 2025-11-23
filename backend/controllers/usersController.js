@@ -3,6 +3,15 @@ const User = require('../models/User');
 const { AuditService } = require('../middleware/auditMiddleware');
 const { validatePageAccessForOffice, getDefaultPageAccess } = require('../utils/rolePermissions');
 
+// Helper function to compare arrays (order-independent) - extracted for reuse
+const arraysEqual = (arr1, arr2) => {
+  if (!arr1 || !arr2) return false;
+  if (arr1.length !== arr2.length) return false;
+  const set1 = new Set(arr1);
+  const set2 = new Set(arr2);
+  return set1.size === set2.size && [...set1].every(item => set2.has(item));
+};
+
 // GET /api/users - Fetch all users
 async function getAllUsers(req, res, next) {
   try {
@@ -369,6 +378,32 @@ async function updateUser(req, res, next) {
       const targetOffice = updateData.office || oldUser.office;
       const targetAccessLevel = updateData.accessLevel || oldUser.accessLevel;
 
+      // Safeguard: Prevent last Super Admin from removing Users Management access
+      if (oldUser.role === 'MIS Super Admin' && !updateData.pageAccess.includes('/admin/mis/users')) {
+        const superAdminCount = await User.countDocuments({ 
+          role: 'MIS Super Admin', 
+          isActive: true 
+        });
+        
+        if (superAdminCount === 1) {
+          await AuditService.logCRUD({
+            user: req.user,
+            action: 'UPDATE',
+            resourceType: 'User',
+            resourceId: id,
+            resourceName: `${oldUser.name} (${oldUser.email})`,
+            req,
+            success: false,
+            errorMessage: 'Cannot remove Users Management access. User is the only active Super Admin.'
+          });
+
+          return res.status(400).json({
+            error: 'Cannot remove Users Management access',
+            message: 'Cannot remove Users Management access. You are the only active Super Admin in the system.'
+          });
+        }
+      }
+
       const pageAccessValidation = validatePageAccessForOffice(
         updateData.pageAccess,
         targetOffice,
@@ -400,6 +435,40 @@ async function updateUser(req, res, next) {
       updateData,
       { new: true, runValidators: true }
     ).select('-password -googleId');
+
+    // Detect changes that require force logout
+    let shouldForceLogout = false;
+    let logoutReason = '';
+
+    // Check if pageAccess changed
+    if ('pageAccess' in updateData) {
+      const oldPageAccess = oldUser.pageAccess || [];
+      const newPageAccess = user.pageAccess || [];
+      if (!arraysEqual(oldPageAccess, newPageAccess)) {
+        shouldForceLogout = true;
+        logoutReason = 'Your page access permissions have been modified. Please log in again to refresh your access.';
+      }
+    }
+
+    // Check if isActive changed from true to false
+    if ('isActive' in updateData) {
+      const oldIsActive = oldUser.isActive !== false; // Treat undefined/null as true
+      const newIsActive = user.isActive === true;
+      if (oldIsActive && !newIsActive) {
+        shouldForceLogout = true;
+        logoutReason = 'Your account has been deactivated. Please contact your administrator.';
+      }
+    }
+
+    // Emit force-logout event if changes detected
+    if (shouldForceLogout) {
+      const emitForceLogout = req.app.get('emitForceLogout');
+      if (emitForceLogout) {
+        // Convert user ID to string to match session tracking
+        const userId = user._id.toString();
+        emitForceLogout(userId, logoutReason);
+      }
+    }
 
     // Log successful update
     await AuditService.logCRUD({
@@ -484,6 +553,14 @@ async function deleteUser(req, res, next) {
       { isActive: false },
       { new: true }
     ).select('-password -googleId');
+
+    // Emit force-logout event to deactivated user
+    const emitForceLogout = req.app.get('emitForceLogout');
+    if (emitForceLogout) {
+      // Convert user ID to string to match session tracking
+      const userId = user._id.toString();
+      emitForceLogout(userId, 'Your account has been deactivated. Please contact your administrator.');
+    }
 
     // Log successful deletion (deactivation)
     await AuditService.logCRUD({

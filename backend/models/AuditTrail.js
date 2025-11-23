@@ -2,10 +2,14 @@ const mongoose = require('mongoose');
 
 const auditTrailSchema = new mongoose.Schema({
   // User who performed the action
+  // Required for most actions, but optional for LOGIN_FAILED when user doesn't exist
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: function() {
+      // userId is optional only for LOGIN_FAILED actions (when user doesn't exist in system)
+      return this.action !== 'LOGIN_FAILED';
+    }
   },
   userEmail: {
     type: String,

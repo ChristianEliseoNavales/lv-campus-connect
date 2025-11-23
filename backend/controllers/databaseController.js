@@ -296,8 +296,26 @@ async function deleteAllModelRecords(req, res, next) {
   try {
     console.log(`🗑️ DELETE ALL request for ${req.modelName}`);
 
+    // If deleting all users, get user IDs before deletion to emit force-logout
+    let userIdsToLogout = [];
+    if (req.modelName === 'user') {
+      const users = await req.Model.find({}).select('_id');
+      userIdsToLogout = users.map(u => u._id.toString());
+    }
+
     const result = await req.Model.deleteMany({});
     console.log(`✅ Successfully deleted ${result.deletedCount} ${req.modelName} records`);
+
+    // Emit force-logout events for all deleted users
+    if (req.modelName === 'user' && userIdsToLogout.length > 0) {
+      const emitForceLogout = req.app.get('emitForceLogout');
+      if (emitForceLogout) {
+        userIdsToLogout.forEach(userId => {
+          emitForceLogout(userId, 'Your account has been deleted. Please contact your administrator.');
+        });
+        console.log(`🚪 Force logout emitted for ${userIdsToLogout.length} deleted user(s)`);
+      }
+    }
 
     // Log bulk deletion
     await AuditService.logCRUD({
@@ -377,6 +395,17 @@ async function deleteModelRecord(req, res, next) {
       return res.status(404).json({
         error: `${req.modelName} record not found`
       });
+    }
+
+    // Emit force-logout event if user is being deleted
+    if (req.modelName === 'user') {
+      const emitForceLogout = req.app.get('emitForceLogout');
+      if (emitForceLogout) {
+        // Convert user ID to string to match session tracking
+        const userId = record._id.toString();
+        emitForceLogout(userId, 'Your account has been deleted. Please contact your administrator.');
+        console.log(`🚪 Force logout emitted for deleted user: ${userId}`);
+      }
     }
 
     // Log successful deletion

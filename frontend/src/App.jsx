@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import SocketProvider from './contexts/SocketContext';
 import { KioskLayout, AdminLayout } from './components/layouts';
 import { ProtectedRoute, Login, Unauthorized } from './components/auth';
+import SessionManager from './components/auth/SessionManager';
 import {
   MISAdminDashboard,
   RegistrarAdminDashboard,
@@ -57,6 +58,7 @@ function App() {
   return (
     <AuthProvider>
       <SocketProvider>
+        <SessionManager />
         <Router future={{ v7_relativeSplatPath: true }}>
           <Routes>
           {/* Public Kiosk Routes - No Authentication Required */}

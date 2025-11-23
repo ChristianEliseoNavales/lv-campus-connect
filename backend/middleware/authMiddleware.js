@@ -128,11 +128,6 @@ const checkPageAccess = (requiredPage) => {
       });
     }
 
-    // MIS Super Admin has access to everything
-    if (req.user.role === 'MIS Super Admin') {
-      return next();
-    }
-
     // Check if user has access to the specific page
     const pageAccess = req.user.pageAccess || [];
 
@@ -217,11 +212,6 @@ const requireRole = (allowedRoles) => {
         error: 'Authentication required',
         message: 'Please sign in to access this resource.'
       });
-    }
-
-    // MIS Super Admin always has access
-    if (req.user.role === 'MIS Super Admin') {
-      return next();
     }
 
     // Check if user has the required role
@@ -390,8 +380,10 @@ const API_PAGE_MAPPING = {
 
   // Ratings API - used by MIS Ratings page
   '/api/ratings': ['/admin/mis/ratings'],
+  '/api/queue-ratings': ['/admin/mis/ratings'],
 
   // Audit Trail API - used by MIS Audit Trail page
+  '/api/audit': ['/admin/mis/audit-trail'],
   '/api/audit-trail': ['/admin/mis/audit-trail'],
 
   // Database API - used by MIS Database Manager page and Senior Management Charts page
@@ -456,11 +448,6 @@ const checkApiAccess = (req, res, next) => {
       error: 'Authentication required',
       message: 'Please sign in to access this resource.'
     });
-  }
-
-  // MIS Super Admin has access to everything
-  if (req.user.role === 'MIS Super Admin') {
-    return next();
   }
 
   // Get the full API path from the request (baseUrl + path)
