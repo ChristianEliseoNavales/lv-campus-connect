@@ -470,10 +470,10 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-3 sm:py-4 sm:flex-row flex-shrink-0">
-        <div className="grid flex-1 gap-1">
-          <CardTitle style={{ color: '#1F3463' }}>Queue Activity</CardTitle>
-          <CardDescription>
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-2 sm:py-2.5 sm:flex-row flex-shrink-0">
+        <div className="grid flex-1 gap-0.5">
+          <CardTitle style={{ color: '#1F3463' }} className="text-sm sm:text-base">Queue Activity</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             {getTimeRangeDescription()} • {isDailyView ? 'Daily' : 'Monthly'} queue volume
           </CardDescription>
         </div>
@@ -503,7 +503,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex-1 px-1 pt-6 pb-1 sm:px-3 sm:pt-8 sm:pb-2 min-h-0">
+      <CardContent className="flex-1 px-1 pt-2 pb-2 sm:px-3 sm:pt-3 sm:pb-3 min-h-0">
         {isLoading ? (
           <LoadingSkeleton />
         ) : error ? (
@@ -516,10 +516,10 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
           <AreaChart
             data={filteredData}
             margin={{
-              top: 20,
+              top: 10,
               right: 10,
               left: 0,
-              bottom: shouldShowLegend ? 10 : 5
+              bottom: shouldShowLegend ? 8 : 2
             }}
           >
             <defs>
@@ -557,23 +557,24 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
               dataKey="month"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={4}
               minTickGap={isDailyView ? 20 : 32}
               interval={isDailyView ? "preserveStartEnd" : "preserveStartEnd"}
               angle={0}
               textAnchor="middle"
-              height={40}
-              tick={{ fontSize: 12 }}
+              height={30}
+              tick={{ fontSize: 11 }}
               tickFormatter={formatXAxisLabel}
             />
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickMargin={10}
+              tickMargin={6}
               tickFormatter={(value) => value.toString()}
-              width={50}
+              width={40}
               tickCount={5}
               interval="preserveStartEnd"
+              tick={{ fontSize: 11 }}
             />
             <ChartTooltip
               cursor={false}
@@ -601,7 +602,7 @@ export function RoleAwareAreaChart({ userRole, effectiveRole }) {
               <ChartLegend
                 content={<ChartLegendContent />}
                 verticalAlign="bottom"
-                height={20}
+                height={18}
               />
             )}
           </AreaChart>

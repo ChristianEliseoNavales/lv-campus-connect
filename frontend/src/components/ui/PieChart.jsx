@@ -85,19 +85,19 @@ const CustomLegend = ({ data, total }) => {
   }
 
   return (
-    <div className="flex flex-col space-y-2 mt-4">
+    <div className="flex flex-col space-y-1.5 mt-2">
       {data.map((item, index) => (
         <div key={index} className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5">
             <div
-              className="w-3 h-3 rounded-sm"
+              className="w-2.5 h-2.5 rounded-sm"
               style={{ backgroundColor: serviceColors[index] || '#ccc' }}
             />
-            <span className="text-sm font-medium">{item.service}</span>
+            <span className="text-xs sm:text-sm font-medium">{item.service}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">{item.count}</span>
-            <span className="text-sm text-gray-500">({item.percentage}%)</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-xs sm:text-sm text-gray-600">{item.count}</span>
+            <span className="text-xs sm:text-sm text-gray-500">({item.percentage}%)</span>
           </div>
         </div>
       ))}
@@ -108,15 +108,15 @@ const CustomLegend = ({ data, total }) => {
 // Loading skeleton component
 const LoadingSkeleton = () => (
   <div className="flex flex-col h-full">
-    <div className="mx-auto aspect-square max-h-[200px] w-full flex-shrink-0 bg-gray-200 rounded-full animate-pulse" />
-    <div className="flex flex-col space-y-2 mt-4">
+    <div className="mx-auto aspect-square max-h-[140px] w-full flex-shrink-0 bg-gray-200 rounded-full animate-pulse" />
+    <div className="flex flex-col space-y-1.5 mt-2">
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-sm bg-gray-200 animate-pulse" />
-            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+          <div className="flex items-center space-x-1.5">
+            <div className="w-2.5 h-2.5 rounded-sm bg-gray-200 animate-pulse" />
+            <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
           </div>
-          <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+          <div className="h-3 w-12 bg-gray-200 rounded animate-pulse" />
         </div>
       ))}
     </div>
@@ -284,10 +284,10 @@ export function ChartPieLegend({ userRole }) {
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-3 sm:py-4 sm:flex-row flex-shrink-0">
-        <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <CardTitle style={{ color: '#1F3463' }}>Service Distribution</CardTitle>
-          <CardDescription>
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-2 sm:py-2.5 sm:flex-row flex-shrink-0">
+        <div className="grid flex-1 gap-0.5 text-center sm:text-left">
+          <CardTitle style={{ color: '#1F3463' }} className="text-sm sm:text-base">Service Distribution</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             {getDateRangeDescription(timeRange)} • {getOfficeLabel()}
           </CardDescription>
         </div>
@@ -317,7 +317,7 @@ export function ChartPieLegend({ userRole }) {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex-1 px-2 pt-3 pb-3 sm:px-4 sm:pt-4 sm:pb-4 min-h-0">
+      <CardContent className="flex-1 px-2 pt-2 pb-2 sm:px-4 sm:pt-3 sm:pb-3 min-h-0">
         {isLoading ? (
           <LoadingSkeleton />
         ) : error ? (
@@ -326,7 +326,7 @@ export function ChartPieLegend({ userRole }) {
           <div className="flex flex-col h-full">
             <ChartContainer
               config={chartConfig}
-              className="mx-auto aspect-square max-h-[200px] w-full flex-shrink-0"
+              className="mx-auto aspect-square max-h-[140px] w-full flex-shrink-0"
             >
               <PieChart>
                 <Pie

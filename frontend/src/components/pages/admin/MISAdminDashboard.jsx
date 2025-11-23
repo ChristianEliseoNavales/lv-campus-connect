@@ -96,18 +96,18 @@ const MISAdminDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-3 sm:space-y-4 md:space-y-5">
+      <div className="space-y-2 sm:space-y-3 md:space-y-4">
         {/* Welcome Section Skeleton */}
         <div>
           <div className="h-5 sm:h-6 bg-gray-200 rounded w-48 sm:w-64 animate-pulse"></div>
         </div>
 
         {/* Dashboard Grid Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 min-h-[480px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 min-h-[480px]">
           {/* Row 1 - Upper row (40% height) */}
           <div className="col-span-1">
             {/* System Overview Card Skeleton */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 h-full">
               <div className="h-4 sm:h-5 bg-gray-200 rounded w-24 sm:w-28 mb-2 sm:mb-3 animate-pulse"></div>
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between">
@@ -128,7 +128,7 @@ const MISAdminDashboard = () => {
 
           <div className="col-span-1">
             {/* System Status Card Skeleton */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 h-full">
               <div className="h-4 sm:h-5 bg-gray-200 rounded w-20 sm:w-24 mb-2 sm:mb-3 animate-pulse"></div>
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between">
@@ -145,7 +145,7 @@ const MISAdminDashboard = () => {
 
           <div className="col-span-1">
             {/* System Control Card Skeleton */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 h-full">
               <div className="h-4 sm:h-5 bg-gray-200 rounded w-24 sm:w-28 mb-2 sm:mb-3 animate-pulse"></div>
               <div className="text-center">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-300 rounded-full mx-auto mb-1.5 animate-pulse"></div>
@@ -161,7 +161,7 @@ const MISAdminDashboard = () => {
           {/* Row 2 - Lower row (60% height) */}
           <div className="col-span-1 md:col-span-2">
             {/* Area Chart Skeleton */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full min-h-[300px]">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 h-full min-h-[240px]">
               <div className="h-4 sm:h-5 bg-gray-200 rounded w-28 sm:w-32 mb-2 sm:mb-3 animate-pulse"></div>
               <div className="bg-gray-100 rounded-lg animate-pulse h-full"></div>
             </div>
@@ -169,7 +169,7 @@ const MISAdminDashboard = () => {
 
           <div className="col-span-1">
             {/* Pie Chart Skeleton */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 h-full min-h-[300px]">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 h-full min-h-[240px]">
               <div className="h-4 sm:h-5 bg-gray-200 rounded w-24 sm:w-28 mb-2 sm:mb-3 animate-pulse"></div>
               <div className="flex items-center justify-center h-full">
                 <div className="w-32 h-32 sm:w-40 sm:h-40 bg-gray-100 rounded-full animate-pulse"></div>
@@ -182,7 +182,7 @@ const MISAdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4 md:space-y-5">
+    <div className="space-y-2 sm:space-y-3 md:space-y-4">
       {/* Welcome Section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">
@@ -217,12 +217,12 @@ const MISAdminDashboard = () => {
       />
 
       {/* New Grid Layout - 2 rows (40%/60%), 3 columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5" style={{ gridTemplateRows: 'auto auto' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4" style={{ gridTemplateRows: 'auto auto' }}>
         {/* Row 1 - Upper row (40% height) */}
 
         {/* Row 1, Column 1 - User Management & Active Sessions */}
         <div className="col-span-1">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col h-full">
             <div className="grid grid-cols-2 gap-0 h-full">
               {/* Left Column - Total Users */}
               <div className="border-r border-[#1F3463] pr-2 sm:pr-3 flex flex-col items-center text-center h-full">
@@ -231,7 +231,7 @@ const MISAdminDashboard = () => {
                   <FaUsers className="text-2xl sm:text-3xl text-[#1F3463]" />
                 </div>
                 <div className="flex-1 flex items-center justify-center">
-                  <p className="text-2xl sm:text-5xl font-bold text-[#1F3463]">{stats.totalUsers}</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-[#1F3463]">{stats.totalUsers}</p>
                 </div>
                 <button
                   onClick={() => navigate('/admin/mis/users')}
@@ -266,10 +266,10 @@ const MISAdminDashboard = () => {
 
         {/* Row 1, Column 2 - Kiosk Ratings Summary */}
         <div className="col-span-1">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col justify-center items-center text-center h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center text-center h-full">
             <div className="w-full">
               <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Kiosk Total Ratings</p>
-              <p className="text-3xl sm:text-4xl font-bold text-[#1F3463] mb-2 sm:mb-3">{kioskRatings.totalRatings}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-[#1F3463] mb-2 sm:mb-3">{kioskRatings.totalRatings}</p>
 
               <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Average Rating</p>
               <div className="flex items-center justify-center space-x-0.5">
@@ -297,7 +297,7 @@ const MISAdminDashboard = () => {
 
         {/* Row 1, Column 3 - Most Visited Office */}
         <div className="col-span-1 lg:col-span-1">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 flex flex-col h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col h-full">
             <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Most Visited Office</p>
             <div className="flex-1 flex items-center justify-center">
               <DepartmentDonutChart data={departmentQueues} />

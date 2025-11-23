@@ -46,14 +46,14 @@ const DepartmentDonutChart = ({ data = [] }) => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full">
-      <ResponsiveContainer width="100%" height={160}>
+      <ResponsiveContainer width="100%" height={120}>
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={40}
-            outerRadius={65}
+            innerRadius={30}
+            outerRadius={50}
             paddingAngle={2}
             dataKey="value"
             onMouseEnter={(_, index) => handleMouseEnter(index)}
@@ -75,22 +75,22 @@ const DepartmentDonutChart = ({ data = [] }) => {
       </ResponsiveContainer>
 
       {/* Legend */}
-      <div className="mt-4 w-full space-y-2">
+      <div className="mt-2 w-full space-y-1.5">
         {chartData.map((item, index) => (
           <div
             key={index}
-            className="flex items-center justify-between text-sm"
+            className="flex items-center justify-between text-xs sm:text-sm"
             onMouseEnter={() => handleMouseEnter(index)}
             onMouseLeave={handleMouseLeave}
           >
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <div
-                className="w-3 h-3 rounded-sm"
+                className="w-2.5 h-2.5 rounded-sm"
                 style={{ backgroundColor: getColor(item.departmentKey) }}
               />
               <span className="font-medium text-gray-800">{item.name}</span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <span className="text-gray-600">{item.value}</span>
               <span className="text-gray-500">({((item.value / total) * 100).toFixed(1)}%)</span>
             </div>
