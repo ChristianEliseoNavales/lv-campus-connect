@@ -1,4 +1,5 @@
 const { Queue, Service, Window, User, AuditTrail, Rating } = require('../models');
+const sessionService = require('../services/sessionService');
 
 // Helper function to get date range based on time filter
 const getDateRange = (timeRange) => {
@@ -608,47 +609,53 @@ async function getCombinedAnalytics(req, res, next) {
 // GET /api/analytics/active-sessions - Get currently active users
 async function getActiveSessions(req, res, next) {
   try {
-    // Get users who have logged in within the last 30 minutes
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    // Get active sessions from Socket.io session tracking
+    const activeSessions = sessionService.getActiveSessions();
 
-    const activeSessions = await AuditTrail.aggregate([
-      {
-        $match: {
-          action: 'LOGIN',
-          createdAt: { $gte: thirtyMinutesAgo }
-        }
-      },
-      {
-        $group: {
-          _id: '$userId',
-          userName: { $first: '$userName' },
-          userRole: { $first: '$userRole' },
-          lastActivity: { $max: '$createdAt' }
-        }
-      },
-      {
-        $sort: { lastActivity: -1 }
-      }
-    ]);
+    if (activeSessions.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        count: 0,
+        timestamp: new Date().toISOString()
+      });
+    }
 
-    // Enrich with user department information
+    // Enrich with user information from database
     const enrichedSessions = await Promise.all(
       activeSessions.map(async (session) => {
-        const user = await User.findById(session._id).select('department').lean();
-        return {
-          userId: session._id,
-          name: session.userName,
-          role: session.userRole,
-          department: user?.department || 'Unknown',
-          lastActivity: session.lastActivity
-        };
+        try {
+          const user = await User.findById(session.userId).select('name email role office lastLogin').lean();
+          if (!user) {
+            // User not found in database, skip this session
+            return null;
+          }
+          return {
+            userId: session.userId,
+            name: user.name || 'Unknown',
+            email: user.email || 'Unknown',
+            role: user.role || 'Unknown',
+            office: user.office || 'Unknown',
+            sessionCount: session.sessionCount,
+            lastActivity: user.lastLogin || new Date()
+          };
+        } catch (error) {
+          console.error(`Error fetching user ${session.userId}:`, error);
+          return null;
+        }
       })
     );
 
+    // Filter out null values (users not found in database)
+    const validSessions = enrichedSessions.filter(session => session !== null);
+
+    // Sort by lastActivity (most recent first)
+    validSessions.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+
     res.json({
       success: true,
-      data: enrichedSessions,
-      count: enrichedSessions.length,
+      data: validSessions,
+      count: validSessions.length,
       timestamp: new Date().toISOString()
     });
   } catch (error) {

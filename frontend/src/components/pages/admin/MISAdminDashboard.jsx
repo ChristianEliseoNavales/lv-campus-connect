@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUsers } from 'react-icons/fa';
 import { MdStar, MdStarBorder } from 'react-icons/md';
@@ -30,6 +30,19 @@ const MISAdminDashboard = () => {
   });
   const [departmentQueues, setDepartmentQueues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const activeSessionsIntervalRef = useRef(null);
+
+  // Fetch active sessions function (separate for polling)
+  const fetchActiveSessions = async () => {
+    try {
+      const baseUrl = API_CONFIG.getAdminUrl();
+      const sessionsResponse = await authFetch(`${baseUrl}/api/analytics/active-sessions`);
+      const sessionsData = sessionsResponse.ok ? await sessionsResponse.json() : { data: [] };
+      setActiveSessions(sessionsData.data || []);
+    } catch (error) {
+      console.error('Error fetching active sessions:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -47,9 +60,8 @@ const MISAdminDashboard = () => {
         const registrarWindows = registrarResponse.ok ? await registrarResponse.json() : [];
         const admissionsWindows = admissionsResponse.ok ? await admissionsResponse.json() : [];
 
-        // Fetch active sessions
-        const sessionsResponse = await authFetch(`${baseUrl}/api/analytics/active-sessions`);
-        const sessionsData = sessionsResponse.ok ? await sessionsResponse.json() : { data: [] };
+        // Fetch active sessions (initial load)
+        await fetchActiveSessions();
 
         // Fetch kiosk ratings summary
         const ratingsResponse = await authFetch(`${baseUrl}/api/analytics/queue-ratings-summary`);
@@ -68,7 +80,6 @@ const MISAdminDashboard = () => {
         };
 
         setStats(mockStats);
-        setActiveSessions(sessionsData.data || []);
         setKioskRatings(ratingsData.data || { totalRatings: 0, averageRating: 0 });
         setDepartmentQueues(departmentData.data || []);
       } catch (error) {
@@ -79,6 +90,21 @@ const MISAdminDashboard = () => {
     };
 
     fetchDashboardData();
+  }, []);
+
+  // Polling for active sessions (every 15 seconds)
+  useEffect(() => {
+    // Set up polling interval
+    activeSessionsIntervalRef.current = setInterval(() => {
+      fetchActiveSessions();
+    }, 15000); // 15 seconds
+
+    // Cleanup interval on unmount
+    return () => {
+      if (activeSessionsIntervalRef.current) {
+        clearInterval(activeSessionsIntervalRef.current);
+      }
+    };
   }, []);
 
   const formatTimeAgo = (timestamp) => {
@@ -242,16 +268,16 @@ const MISAdminDashboard = () => {
               </div>
 
               {/* Right Column - Active Sessions */}
-              <div className="pl-2 sm:pl-3 flex flex-col items-center ">
-                <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Now Active</p>
-                <div className="flex-1 overflow-y-auto space-y-1 sm:space-y-1.5 w-full">
+              <div className="pl-2 sm:pl-3 flex flex-col items-center h-full">
+                <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex-shrink-0">Now Active</p>
+                <div className="flex-1 overflow-y-auto space-y-1 sm:space-y-1.5 w-full min-h-0 max-h-full">
                   {activeSessions.length > 0 ? (
-                    activeSessions.map((session, index) => (
-                      <div key={index} className="flex items-center justify-center space-x-1 sm:space-x-1.5 text-xs">
+                    activeSessions.map((session) => (
+                      <div key={session.userId} className="flex items-center justify-center space-x-1 sm:space-x-1.5 text-xs flex-shrink-0">
                         <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full flex-shrink-0"></div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 truncate text-[10px] sm:text-xs">{session.name}</p>
-                          <p className="text-[8px] sm:text-[10px] text-gray-500">({session.role.replace('_', ' ')})</p>
+                          <p className="font-semibold text-gray-800 truncate text-[10px] sm:text-xs">{session.email}</p>
+                          <p className="text-[8px] sm:text-[10px] text-gray-500">({session.name})</p>
                         </div>
                       </div>
                     ))

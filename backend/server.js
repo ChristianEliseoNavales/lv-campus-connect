@@ -6,6 +6,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const { initializeQueueCleanup } = require('./services/queueCleanupService');
+const sessionService = require('./services/sessionService');
 
 // Load environment variables
 dotenv.config();
@@ -61,10 +62,6 @@ app.use(express.urlencoded({ extended: true }));
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
 
-// User session tracking: Map userId to Set of socket IDs
-// This allows multiple tabs/devices per user
-const userSessions = new Map(); // Map<userId, Set<socketId>>
-
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('🔌 Client connected:', socket.id);
@@ -73,12 +70,7 @@ io.on('connection', (socket) => {
   socket.on('register-user-session', (data) => {
     const { userId } = data;
     if (userId) {
-      if (!userSessions.has(userId)) {
-        userSessions.set(userId, new Set());
-      }
-      userSessions.get(userId).add(socket.id);
-      console.log(`👤 User ${userId} registered session: ${socket.id}`);
-      console.log(`📊 Total sessions for user ${userId}: ${userSessions.get(userId).size}`);
+      sessionService.registerSession(userId, socket.id);
     }
   });
 
@@ -92,24 +84,13 @@ io.on('connection', (socket) => {
     console.log('🔌 Client disconnected:', socket.id);
     
     // Clean up user session tracking
-    for (const [userId, socketIds] of userSessions.entries()) {
-      if (socketIds.has(socket.id)) {
-        socketIds.delete(socket.id);
-        if (socketIds.size === 0) {
-          userSessions.delete(userId);
-          console.log(`👤 Removed all sessions for user ${userId}`);
-        } else {
-          console.log(`👤 User ${userId} now has ${socketIds.size} active session(s)`);
-        }
-        break;
-      }
-    }
+    sessionService.removeSession(socket.id);
   });
 });
 
 // Helper function to emit force-logout to a specific user
 const emitForceLogout = (userId, reason) => {
-  const socketIds = userSessions.get(userId);
+  const socketIds = sessionService.getUserSockets(userId);
   if (socketIds && socketIds.size > 0) {
     const eventData = {
       reason,
