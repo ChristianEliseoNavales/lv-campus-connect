@@ -114,7 +114,6 @@ const Ratings = () => {
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(rating =>
-        rating.customerName?.toLowerCase().includes(searchLower) ||
         rating.serviceName?.toLowerCase().includes(searchLower) ||
         rating.department?.toLowerCase().includes(searchLower)
       );
@@ -333,7 +332,7 @@ const Ratings = () => {
                 <div className="grid grid-cols-4 gap-3 text-sm font-bold text-gray-700 w-full">
                   <div>Time</div>
                   <div>Date</div>
-                  <div>Name</div>
+                  <div>Role</div>
                   <div>Rate</div>
                 </div>
               </div>
@@ -369,7 +368,7 @@ const Ratings = () => {
                 <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
                   <div>Time</div>
                   <div>Date</div>
-                  <div>Name</div>
+                  <div>Role</div>
                   <div>Rate</div>
                 </div>
               </div>
@@ -396,10 +395,10 @@ const Ratings = () => {
                           {date}
                         </div>
 
-                        {/* Name */}
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={rating.customerName || 'Unknown Customer'}>
-                          <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Name</span>
-                          {rating.customerName || 'Unknown Customer'}
+                        {/* Role */}
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={rating.role || 'Unknown Role'}>
+                          <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Role</span>
+                          {rating.role || 'Unknown Role'}
                         </div>
 
                         {/* Rate (5-star system) */}

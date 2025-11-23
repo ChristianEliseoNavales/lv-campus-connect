@@ -385,9 +385,9 @@ const AuditTrail = () => {
                         </div>
 
                         {/* User */}
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={log.userName || 'Unknown User'}>
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={log.userEmail || 'Unknown Email'}>
                           <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">User</span>
-                          {log.userName || 'Unknown User'}
+                          {log.userEmail || 'Unknown Email'}
                         </div>
 
                         {/* Activity */}
@@ -417,7 +417,7 @@ const AuditTrail = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-            <div className="text-[10px] sm:text-xs text-gray-700 font-medium order-2 sm:order-1">
+            <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
               Showing {startIndex + 1} to {Math.min(startIndex + logsPerPage, filteredLogs.length)} of {filteredLogs.length} logs
             </div>
             <div className="order-1 sm:order-2">
@@ -425,7 +425,7 @@ const AuditTrail = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                size="sm"
+                size="md"
               />
             </div>
           </div>
