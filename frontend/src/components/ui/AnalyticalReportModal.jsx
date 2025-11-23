@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MdClose, MdDownload } from 'react-icons/md';
+import { MdClose, MdDownload, MdCheckCircle } from 'react-icons/md';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as AreaTooltip } from 'recharts';
+import { motion } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import { pdf } from '@react-pdf/renderer';
 import AnalyticalReportPDF from './AnalyticalReportPDF';
@@ -12,6 +13,7 @@ import { getPhilippineStartOfDayISO, getPhilippineEndOfDayISO } from '../../util
 const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -29,6 +31,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       }
       setReportData(null);
       setIsLoading(true);
+      setIsComplete(false);
       setProgress(0);
     }
   }, [isOpen, userRole, dateRange]);
@@ -36,13 +39,20 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   const fetchReportData = async () => {
     try {
       setIsLoading(true);
+      setIsComplete(false);
       setError(null);
-      setProgress(10); // Starting report generation
+      setProgress(0);
       // Clear old PDF preview URL to prevent showing stale preview
       if (pdfPreviewUrl) {
         URL.revokeObjectURL(pdfPreviewUrl);
         setPdfPreviewUrl(null);
       }
+      
+      // Starting report generation with intermediate steps
+      setProgress(10);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setProgress(15);
+      await new Promise(resolve => setTimeout(resolve, 150));
 
       const baseUrl = API_CONFIG.getAdminUrl();
 
@@ -82,7 +92,12 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       const result = await response.json();
       const data = result.data;
       setReportData(data);
-      setProgress(30); // Report data fetched from API
+      
+      // Report data fetched from API with intermediate steps
+      setProgress(25);
+      await new Promise(resolve => setTimeout(resolve, 150));
+      setProgress(30);
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       // Wait for React to render the chart container with data
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -91,13 +106,11 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       // Pass data directly since state update is async
       // This ensures single loading state covers entire process
       await generatePDFPreview(data);
-      
-      // Only set loading to false after PDF preview is ready
-      setIsLoading(false);
     } catch (err) {
       console.error('Error fetching analytical report:', err);
       setError(err.message);
       setIsLoading(false);
+      setIsComplete(false);
       setProgress(0);
     }
   };
@@ -112,7 +125,12 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
     }
 
     try {
-      setProgress(50); // Charts container rendered
+      // Charts container rendered with intermediate steps
+      setProgress(45);
+      await new Promise(resolve => setTimeout(resolve, 150));
+      setProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       // Wait for chart container to be in DOM and charts to have dimensions
       let attempts = 0;
       const maxAttempts = 15; // Increased attempts for slower rendering
@@ -132,7 +150,10 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
             
             if (allChartsHaveDimensions) {
               chartsReady = true;
-              setProgress(70); // Charts ready and validated
+              // Charts ready and validated with intermediate steps
+              setProgress(65);
+              await new Promise(resolve => setTimeout(resolve, 150));
+              setProgress(70);
               // Wait a bit more for Recharts to fully render SVG elements
               await new Promise(resolve => setTimeout(resolve, 1000));
               break;
@@ -145,18 +166,28 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
 
       if (!chartsReady) {
         console.warn('Charts may not be fully ready, proceeding anyway...');
-        setProgress(70); // Charts ready and validated (even if not perfect)
+        // Charts ready and validated (even if not perfect) with intermediate steps
+        setProgress(65);
+        await new Promise(resolve => setTimeout(resolve, 150));
+        setProgress(70);
         // Still wait a bit before proceeding
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       // Collect chart images from hidden chart container
+      setProgress(75);
+      await new Promise(resolve => setTimeout(resolve, 200));
       const chartImages = await collectChartImages(dataToUse);
-      setProgress(85); // Chart images collected
+      setProgress(80);
+      await new Promise(resolve => setTimeout(resolve, 150));
+      setProgress(85);
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       console.log('Chart images collected:', Object.keys(chartImages));
 
       // Generate PDF using @react-pdf/renderer
+      setProgress(90);
+      await new Promise(resolve => setTimeout(resolve, 200));
       const blob = await pdf(
         <AnalyticalReportPDF
           reportData={dataToUse}
@@ -168,7 +199,19 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       // Create object URL for preview
       const url = URL.createObjectURL(blob);
       setPdfPreviewUrl(url);
-      setProgress(100); // PDF preview generated
+      
+      // Set progress to 100% and show completion state
+      setProgress(95);
+      await new Promise(resolve => setTimeout(resolve, 150));
+      setProgress(100);
+      
+      // Show completion state for 1.5-2 seconds before showing preview
+      setIsComplete(true);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Transition to preview
+      setIsComplete(false);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error generating PDF preview:', error);
       throw error; // Re-throw to be handled by fetchReportData
@@ -398,7 +441,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
 
             {/* Content - PDF Preview */}
             <div className="p-6 rounded-b-lg">
-            {isLoading ? (
+            {isLoading && !isComplete ? (
               <div className="flex items-center justify-center py-20">
                 <div className="w-full max-w-md">
                   {/* Percentage Counter */}
@@ -411,7 +454,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                   {/* Progress Bar */}
                   <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
                     <div
-                      className="bg-[#1F3463] h-full rounded-full transition-all duration-300 ease-out"
+                      className="bg-[#1F3463] h-full rounded-full transition-all duration-700 ease-out"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -421,6 +464,65 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                     Generating Report...
                   </p>
                 </div>
+              </div>
+            ) : isComplete ? (
+              <div className="flex items-center justify-center py-20">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="w-full max-w-md"
+                >
+                  {/* Percentage Counter */}
+                  <div className="text-center mb-4">
+                    <p className="text-3xl font-bold text-[#1F3463]">
+                      {progress}%
+                    </p>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-6 overflow-hidden">
+                    <motion.div
+                      initial={{ width: `${progress < 100 ? progress : 95}%` }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="bg-[#1F3463] h-full rounded-full"
+                    />
+                  </div>
+                  
+                  {/* Success Icon and Text */}
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ 
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 15,
+                        delay: 0.2
+                      }}
+                      className="inline-block mb-4"
+                    >
+                      <MdCheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+                    </motion.div>
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.3 }}
+                      className="text-2xl font-bold text-[#1F3463] mb-2"
+                    >
+                      Report Generated Successfully!
+                    </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.5 }}
+                      className="text-gray-600 font-medium"
+                    >
+                      Preparing preview...
+                    </motion.p>
+                  </div>
+                </motion.div>
               </div>
             ) : error ? (
               <div className="text-center py-20">
