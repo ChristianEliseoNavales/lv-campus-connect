@@ -686,3 +686,4 @@ module.exports = {
   deleteWindow
 };
 
+
