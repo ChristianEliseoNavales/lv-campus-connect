@@ -205,10 +205,10 @@ const NotificationBell = () => {
       {/* Notification Bell Button */}
       <button
         onClick={toggleDropdown}
-        className="relative flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 hover:bg-white/10"
+        className="relative flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 hover:bg-white/10"
         style={{ backgroundColor: '#1F3463' }}
       >
-        <BsBellFill className="h-3 w-3 text-white" />
+        <BsBellFill className="h-4 w-4 text-white" />
 
         {/* Unread Badge */}
         {unreadCount > 0 && (
