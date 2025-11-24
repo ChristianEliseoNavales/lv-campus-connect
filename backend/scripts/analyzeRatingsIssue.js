@@ -10,9 +10,9 @@ async function analyzeRatingsIssue() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ Connected to MongoDB\n');
 
-    console.log('='.repeat(80));
+    console.log('=' .repeat(80));
     console.log('ANALYZING RATINGS DATA ISSUE');
-    console.log('='.repeat(80));
+    console.log('=' .repeat(80));
 
     // 1. Check Queue collection for ratings
     console.log('\n📊 PART 1: Queue Collection Analysis');
