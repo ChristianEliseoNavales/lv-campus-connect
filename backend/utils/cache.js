@@ -7,19 +7,19 @@ const CACHE_TTL = {
 };
 
 // Create cache instances for different data types
-const settingsCache = new NodeCache({ 
+const settingsCache = new NodeCache({
   stdTTL: CACHE_TTL.STATIC,
   checkperiod: 60, // Check for expired keys every 60 seconds
   useClones: false // Better performance, but be careful with object mutations
 });
 
-const servicesCache = new NodeCache({ 
+const servicesCache = new NodeCache({
   stdTTL: CACHE_TTL.STATIC,
   checkperiod: 60,
   useClones: false
 });
 
-const windowsCache = new NodeCache({ 
+const windowsCache = new NodeCache({
   stdTTL: CACHE_TTL.STATIC,
   checkperiod: 60,
   useClones: false
@@ -33,20 +33,20 @@ const CacheKeys = {
     queue: (department) => `settings:queue:${department}`,
     location: (department) => `settings:location:${department}`
   },
-  
+
   // Services keys
   services: {
     all: () => 'services:all',
     byDepartment: (department) => `services:${department}`,
     activeByDepartment: (department) => `services:${department}:active`
   },
-  
+
   // Windows keys
   windows: {
     all: () => 'windows:all',
     byDepartment: (department) => `windows:${department}`
   },
-  
+
   // Public endpoints keys
   public: {
     services: (department) => `public:services:${department}`,
@@ -69,13 +69,13 @@ const CacheHelper = {
         return settingsCache; // Default to settings cache
     }
   },
-  
+
   // Get cached value
   get: (type, key) => {
     const cache = CacheHelper.getCache(type);
     return cache.get(key);
   },
-  
+
   // Set cached value
   set: (type, key, value, ttl = null) => {
     const cache = CacheHelper.getCache(type);
@@ -85,13 +85,13 @@ const CacheHelper = {
       cache.set(key, value);
     }
   },
-  
+
   // Delete cached value
   del: (type, key) => {
     const cache = CacheHelper.getCache(type);
     cache.del(key);
   },
-  
+
   // Delete multiple keys (supports pattern matching)
   delMultiple: (type, keys) => {
     const cache = CacheHelper.getCache(type);
@@ -108,20 +108,20 @@ const CacheHelper = {
       });
     }
   },
-  
+
   // Flush all cache for a type
   flush: (type) => {
     const cache = CacheHelper.getCache(type);
     cache.flushAll();
   },
-  
+
   // Flush all caches
   flushAll: () => {
     settingsCache.flushAll();
     servicesCache.flushAll();
     windowsCache.flushAll();
   },
-  
+
   // Invalidate settings-related caches
   invalidateSettings: (department = null) => {
     CacheHelper.del('settings', CacheKeys.settings.all());
@@ -139,7 +139,7 @@ const CacheHelper = {
       });
     }
   },
-  
+
   // Invalidate services-related caches
   invalidateServices: (department = null) => {
     CacheHelper.del('services', CacheKeys.services.all());
@@ -156,7 +156,7 @@ const CacheHelper = {
       });
     }
   },
-  
+
   // Invalidate windows-related caches
   invalidateWindows: (department = null) => {
     CacheHelper.del('windows', CacheKeys.windows.all());
@@ -181,9 +181,4 @@ module.exports = {
   CacheHelper,
   CACHE_TTL
 };
-
-
-
-
-
 

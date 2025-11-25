@@ -51,8 +51,3 @@ module.exports = {
   isDevelopment
 };
 
-
-
-
-
-
