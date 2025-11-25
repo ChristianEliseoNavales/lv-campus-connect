@@ -66,14 +66,14 @@ async function getFAQById(req, res, next) {
     const faq = await FAQ.findById(req.params.id)
       .populate('createdBy', 'name email')
       .populate('updatedBy', 'name email');
-    
+
     if (!faq) {
       return res.status(404).json({
         success: false,
         error: 'FAQ not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: faq
@@ -148,7 +148,7 @@ async function createFAQ(req, res, next) {
     });
   } catch (error) {
     console.error('Error creating FAQ:', error);
-    
+
     await AuditService.logCRUD({
       user: req.user,
       action: 'CREATE',

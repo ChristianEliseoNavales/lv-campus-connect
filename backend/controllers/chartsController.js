@@ -48,14 +48,14 @@ const handleMulterError = (err, req, res, next) => {
       message: err.message
     });
   }
-  
+
   if (err) {
     return res.status(400).json({
       error: 'Upload error',
       message: err.message
     });
   }
-  
+
   next();
 };
 

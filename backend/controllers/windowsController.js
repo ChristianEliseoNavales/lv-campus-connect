@@ -316,7 +316,7 @@ async function updateWindow(req, res, next) {
       assignedAdmin: window.assignedAdmin
     };
     const oldAssignedAdmin = window.assignedAdmin;
-    
+
     // Invalidate cache for this window's office before updating
     CacheHelper.invalidateWindows(window.office);
 
@@ -685,6 +685,5 @@ module.exports = {
   toggleWindow,
   deleteWindow
 };
-
 
 

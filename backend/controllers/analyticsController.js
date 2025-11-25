@@ -120,10 +120,10 @@ async function getPieChartByDepartment(req, res, next) {
   try {
     const { department } = req.params;
     const { timeRange = 'all' } = req.query;
-    
+
     // Get date range
     const { startDate } = getDateRange(timeRange);
-    
+
     // Build match stage for aggregation
     const matchStage = {
       office: department, // Use 'office' field in database, value comes from route parameter
@@ -153,21 +153,21 @@ async function getPieChartByDepartment(req, res, next) {
       _id: { $in: serviceIds },
       office: department // Use 'office' field in database, value comes from route parameter
     }).select('name').lean();
-    
+
     // Create service lookup map
     const serviceMap = {};
     services.forEach(service => {
       serviceMap[service._id.toString()] = service.name;
     });
-    
+
     // Calculate total for percentages
     const total = serviceStats.reduce((sum, stat) => sum + stat.count, 0);
-    
+
     // Format data for pie chart
     const chartData = serviceStats.map((stat, index) => {
       const serviceName = serviceMap[stat._id] || 'Unknown Service';
       const percentage = ((stat.count / total) * 100).toFixed(1);
-      
+
       return {
         service: serviceName,
         count: stat.count,
@@ -175,7 +175,7 @@ async function getPieChartByDepartment(req, res, next) {
         fill: `var(--color-service-${index + 1})`
       };
     });
-    
+
     res.json({
       success: true,
       data: chartData,
@@ -184,12 +184,12 @@ async function getPieChartByDepartment(req, res, next) {
       timeRange,
       timestamp: new Date().toISOString()
     });
-    
+
   } catch (error) {
     console.error('Error fetching pie chart data:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch pie chart data',
-      message: error.message 
+      message: error.message
     });
   }
 }
@@ -199,10 +199,10 @@ async function getAreaChartByDepartment(req, res, next) {
   try {
     const { department } = req.params;
     const { timeRange = '3months' } = req.query;
-    
+
     // Get date range
     const { startDate } = getDateRange(timeRange);
-    
+
     // Build match stage for aggregation
     const matchStage = {
       office: department, // Use 'office' field in database, value comes from route parameter
@@ -212,7 +212,7 @@ async function getAreaChartByDepartment(req, res, next) {
     if (startDate) {
       matchStage.queuedAt = { $gte: startDate };
     }
-    
+
     // Choose aggregation based on time range
     let chartData;
     let aggregationStats;
@@ -274,7 +274,7 @@ async function getAreaChartByDepartment(req, res, next) {
         };
       });
     }
-    
+
     res.json({
       success: true,
       data: chartData,
@@ -285,12 +285,12 @@ async function getAreaChartByDepartment(req, res, next) {
       totalQueues: aggregationStats.reduce((sum, stat) => sum + stat.count, 0),
       timestamp: new Date().toISOString()
     });
-    
+
   } catch (error) {
     console.error('Error fetching area chart data:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch area chart data',
-      message: error.message 
+      message: error.message
     });
   }
 }
@@ -556,7 +556,7 @@ async function getCombinedAnalytics(req, res, next) {
   try {
     const { department } = req.params;
     const { timeRange = '3months' } = req.query;
-    
+
     // Create mock request objects for internal controller calls
     const pieChartReq = { params: { department }, query: { timeRange } };
     const areaChartReq = { params: { department }, query: { timeRange } };
@@ -586,7 +586,7 @@ async function getCombinedAnalytics(req, res, next) {
       };
       getDashboardStats(dashboardStatsReq, mockRes, () => {});
     });
-    
+
     res.json({
       success: true,
       department,
@@ -596,7 +596,7 @@ async function getCombinedAnalytics(req, res, next) {
       dashboardStats: dashboardStatsResponse,
       timestamp: new Date().toISOString()
     });
-    
+
   } catch (error) {
     console.error('Error fetching combined analytics data:', error);
     res.status(500).json({
@@ -1475,5 +1475,4 @@ module.exports = {
   getQueueByDepartment,
   getAnalyticalReport
 };
-
 

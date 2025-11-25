@@ -13,7 +13,7 @@ async function getAllServices(req, res, next) {
     const usePagination = req.query.page !== undefined || req.query.limit !== undefined;
 
     let query = Service.find().sort({ office: 1, name: 1 });
-    
+
     if (usePagination) {
       query = query.skip(skip).limit(limit);
     }
@@ -341,6 +341,5 @@ module.exports = {
   toggleService,
   deleteService
 };
-
 
 

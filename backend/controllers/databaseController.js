@@ -48,9 +48,9 @@ async function getModelRecords(req, res, next) {
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: errors.array() 
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
@@ -92,9 +92,9 @@ async function getModelRecords(req, res, next) {
 
   } catch (error) {
     console.error(`Error fetching ${req.modelName} records:`, error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: `Failed to fetch ${req.modelName} records`,
-      details: error.message 
+      details: error.message
     });
   }
 }
@@ -103,10 +103,10 @@ async function getModelRecords(req, res, next) {
 async function getModelRecordById(req, res, next) {
   try {
     const record = await req.Model.findById(req.params.id);
-    
+
     if (!record) {
-      return res.status(404).json({ 
-        error: `${req.modelName} record not found` 
+      return res.status(404).json({
+        error: `${req.modelName} record not found`
       });
     }
 
@@ -114,9 +114,9 @@ async function getModelRecordById(req, res, next) {
 
   } catch (error) {
     console.error(`Error fetching ${req.modelName} record:`, error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: `Failed to fetch ${req.modelName} record`,
-      details: error.message 
+      details: error.message
     });
   }
 }
@@ -467,5 +467,4 @@ module.exports = {
   deleteAllModelRecords,
   deleteModelRecord
 };
-
 

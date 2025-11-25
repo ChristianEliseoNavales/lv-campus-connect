@@ -79,9 +79,9 @@ async function printReceipt(req, res, next) {
 async function testPrinter(req, res, next) {
   try {
     console.log('🧪 Printer test request received');
-    
+
     const result = await printerService.testPrinter();
-    
+
     if (result.success) {
       console.log('✅ Printer test successful');
       res.json({

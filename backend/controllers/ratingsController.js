@@ -64,7 +64,7 @@ async function getRatings(req, res, next) {
     const pipeline = [
       // Match ratings based on basic filters
       { $match: query },
-      
+
       // Join with Queue to get queuedAt
       {
         $lookup: {
@@ -74,10 +74,10 @@ async function getRatings(req, res, next) {
           as: 'queue'
         }
       },
-      
+
       // Unwind queue array (should be single item)
       { $unwind: { path: '$queue', preserveNullAndEmptyArrays: true } },
-      
+
       // Add queuedAt field for easier access
       {
         $addFields: {

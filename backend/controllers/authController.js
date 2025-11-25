@@ -39,7 +39,7 @@ async function googleAuth(req, res, next) {
       });
     } catch (verifyError) {
       console.error('Google token verification failed:', verifyError);
-      
+
       await AuditService.logAuth({
         action: 'LOGIN_FAILED',
         email: 'unknown',
@@ -69,7 +69,7 @@ async function googleAuth(req, res, next) {
 
     if (!user) {
       console.log('❌ User not found in database:', email);
-      
+
       await AuditService.logAuth({
         action: 'LOGIN_FAILED',
         email,
@@ -229,7 +229,7 @@ async function verifyToken(req, res, next) {
   try {
     // Extract token from Authorization header
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
@@ -339,13 +339,13 @@ async function logout(req, res, next) {
   try {
     // Extract token to get user info for audit trail
     const authHeader = req.headers.authorization;
-    
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      
+
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         // Log logout event
         await AuditService.logAuth({
           action: 'LOGOUT',

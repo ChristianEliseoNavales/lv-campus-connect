@@ -215,18 +215,18 @@ async function updateSettings(req, res, next) {
   try {
     const updates = req.body;
     const settings = await readSettings();
-    
+
     // Merge updates with existing settings
     const updatedSettings = { ...settings, ...updates };
     const result = await writeSettings(updatedSettings);
-    
+
     // Emit real-time update
     const io = req.app.get('io');
     io.emit('settings-updated', {
       type: 'general',
       data: result
     });
-    
+
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

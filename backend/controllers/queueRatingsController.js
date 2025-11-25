@@ -60,7 +60,7 @@ async function getQueueRatings(req, res, next) {
     const pipeline = [
       // Match queues with ratings
       { $match: matchStage },
-      
+
       // Join with VisitationForm to get customer details
       {
         $lookup: {
@@ -70,7 +70,7 @@ async function getQueueRatings(req, res, next) {
           as: 'visitationForm'
         }
       },
-      
+
       // Join with Service to get service name
       {
         $lookup: {
@@ -80,11 +80,11 @@ async function getQueueRatings(req, res, next) {
           as: 'service'
         }
       },
-      
+
       // Unwind arrays
       { $unwind: { path: '$visitationForm', preserveNullAndEmptyArrays: true } },
       { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
-      
+
       // Add computed fields with conditional logic for customerName
       {
         $addFields: {
@@ -117,7 +117,7 @@ async function getQueueRatings(req, res, next) {
           department: '$office'
         }
       },
-      
+
       // Search filter (after joining to access customerName)
       ...(search ? [{
         $match: {
@@ -127,10 +127,10 @@ async function getQueueRatings(req, res, next) {
           ]
         }
       }] : []),
-      
+
       // Sort by queuedAt descending (most recent first)
       { $sort: { queuedAt: -1 } },
-      
+
       // Facet for pagination
       {
         $facet: {
