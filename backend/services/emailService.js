@@ -45,6 +45,18 @@ class EmailService {
 
       this.isConfigured = true;
       console.log('✅ Email service configured successfully');
+
+      // [EMAIL_DEBUG] Log configuration details (sanitized)
+      const timestamp = new Date().toISOString();
+      console.log(`[EMAIL_DEBUG] ${timestamp} - Email Service Configuration:`);
+      console.log(`[EMAIL_DEBUG]   - Host: ${emailHost}`);
+      console.log(`[EMAIL_DEBUG]   - Port: ${emailPort}`);
+      console.log(`[EMAIL_DEBUG]   - Secure: ${emailSecure}`);
+      console.log(`[EMAIL_DEBUG]   - From Email: ${emailUser}`);
+      console.log(`[EMAIL_DEBUG]   - From Name: ${process.env.EMAIL_FROM_NAME || 'LVCampusConnect System'}`);
+      console.log(`[EMAIL_DEBUG]   - Connection Timeout: 5000ms`);
+      console.log(`[EMAIL_DEBUG]   - Socket Timeout: 10000ms`);
+      console.log(`[EMAIL_DEBUG]   - Password: ${emailPass ? '***SET***' : '***NOT SET***'}`);
     } catch (error) {
       console.error('❌ Error initializing email service:', error.message);
       this.isConfigured = false;
@@ -299,22 +311,49 @@ class EmailService {
    * @returns {Promise<Object>} Email sending result
    */
   async sendWelcomeEmail(userData) {
+    const startTime = Date.now();
+    const timestamp = new Date().toISOString();
+
+    // [EMAIL_DEBUG] Log email sending attempt start
+    console.log(`[EMAIL_DEBUG] ${timestamp} - Starting welcome email send`);
+
     // Check if email service is configured
     if (!this.isConfigured || !this.transporter) {
       console.warn('⚠️  Email service not configured. Skipping welcome email.');
+      console.log(`[EMAIL_DEBUG] ${timestamp} - Email service not configured. isConfigured: ${this.isConfigured}, transporter: ${this.transporter ? 'exists' : 'null'}`);
       return { success: false, error: 'Email service not configured' };
     }
 
     try {
       const { name, email, office, accessLevel } = userData;
 
+      // [EMAIL_DEBUG] Log user data
+      console.log(`[EMAIL_DEBUG] ${timestamp} - User data:`, {
+        name,
+        email,
+        office,
+        accessLevel
+      });
+
       // Validate required user data
       if (!name || !email || !office || !accessLevel) {
-        throw new Error('Missing required user data for welcome email');
+        const missingFields = [];
+        if (!name) missingFields.push('name');
+        if (!email) missingFields.push('email');
+        if (!office) missingFields.push('office');
+        if (!accessLevel) missingFields.push('accessLevel');
+        throw new Error(`Missing required user data for welcome email: ${missingFields.join(', ')}`);
       }
 
       const fromName = process.env.EMAIL_FROM_NAME || 'LVCampusConnect System';
       const fromEmail = process.env.EMAIL_USER;
+
+      // [EMAIL_DEBUG] Log email configuration
+      console.log(`[EMAIL_DEBUG] ${timestamp} - Email configuration:`, {
+        from: `"${fromName}" <${fromEmail}>`,
+        to: email,
+        subject: 'Welcome to LVCampusConnect System'
+      });
 
       // Generate HTML email template
       const htmlContent = this.generateWelcomeEmailTemplate(userData);
@@ -328,14 +367,53 @@ class EmailService {
         text: `Welcome to LVCampusConnect System\n\nDear ${name},\n\nYour account has been successfully created.\n\nAccount Details:\n- Full Name: ${name}\n- Email: ${email}\n- Office: ${office}\n- Access Level: ${this.formatAccessLevel(accessLevel)}\n\nPlease visit https://lv-campus-connect.pages.dev/login to access the admin portal.\n\nUse your Google account (${email}) to sign in.\n\nThis is an automated message. Please do not reply.`
       };
 
+      // [EMAIL_DEBUG] Log SMTP connection attempt
+      const connectionStartTime = Date.now();
+      console.log(`[EMAIL_DEBUG] ${timestamp} - Attempting SMTP connection to ${this.transporter.options.host}:${this.transporter.options.port}`);
+
       // Send email
       const info = await this.transporter.sendMail(mailOptions);
+      const connectionEndTime = Date.now();
+      const connectionDuration = connectionEndTime - connectionStartTime;
+
+      const totalDuration = Date.now() - startTime;
       console.log('✅ Welcome email sent successfully to:', email);
       console.log('   Message ID:', info.messageId);
+      console.log(`[EMAIL_DEBUG] ${new Date().toISOString()} - Email sent successfully`);
+      console.log(`[EMAIL_DEBUG]   - Connection duration: ${connectionDuration}ms`);
+      console.log(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
+      console.log(`[EMAIL_DEBUG]   - Message ID: ${info.messageId}`);
+      console.log(`[EMAIL_DEBUG]   - Response: ${JSON.stringify(info.response || 'N/A')}`);
 
       return { success: true, messageId: info.messageId };
     } catch (error) {
+      const totalDuration = Date.now() - startTime;
       console.error('❌ Error sending welcome email:', error.message);
+
+      // [EMAIL_DEBUG] Log detailed error information
+      console.error(`[EMAIL_DEBUG] ${new Date().toISOString()} - Email sending failed`);
+      console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
+      console.error(`[EMAIL_DEBUG]   - Error code: ${error.code || 'N/A'}`);
+      console.error(`[EMAIL_DEBUG]   - Error responseCode: ${error.responseCode || 'N/A'}`);
+      console.error(`[EMAIL_DEBUG]   - Error command: ${error.command || 'N/A'}`);
+      console.error(`[EMAIL_DEBUG]   - Error response: ${error.response || 'N/A'}`);
+      console.error(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
+      if (error.stack) {
+        console.error(`[EMAIL_DEBUG]   - Stack trace:`, error.stack);
+      }
+      if (error.errno) {
+        console.error(`[EMAIL_DEBUG]   - System errno: ${error.errno}`);
+      }
+      if (error.syscall) {
+        console.error(`[EMAIL_DEBUG]   - System call: ${error.syscall}`);
+      }
+      if (error.hostname) {
+        console.error(`[EMAIL_DEBUG]   - Hostname: ${error.hostname}`);
+      }
+      if (error.port) {
+        console.error(`[EMAIL_DEBUG]   - Port: ${error.port}`);
+      }
+
       return { success: false, error: error.message };
     }
   }

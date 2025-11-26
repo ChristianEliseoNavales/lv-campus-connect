@@ -271,6 +271,15 @@ async function createUser(req, res, next) {
 
     // Send welcome email to new user (truly non-blocking with timeout)
     // Use Promise.race to ensure email sending doesn't block the response
+    const emailStartTime = Date.now();
+    const emailTimestamp = new Date().toISOString();
+
+    // [EMAIL_DEBUG] Log email sending attempt start
+    console.log(`[EMAIL_DEBUG] ${emailTimestamp} - User creation email sending initiated`);
+    console.log(`[EMAIL_DEBUG]   - User: ${user.name} (${user.email})`);
+    console.log(`[EMAIL_DEBUG]   - Office: ${user.office}`);
+    console.log(`[EMAIL_DEBUG]   - Access Level: ${user.accessLevel}`);
+
     const emailPromise = emailService.sendWelcomeEmail({
       name: user.name,
       email: user.email,
@@ -281,7 +290,9 @@ async function createUser(req, res, next) {
     // Create a timeout promise (3 seconds max wait)
     const timeoutPromise = new Promise((resolve) => {
       setTimeout(() => {
-        resolve({ success: false, error: 'Connection timeout' });
+        const timeoutTimestamp = new Date().toISOString();
+        console.log(`[EMAIL_DEBUG] ${timeoutTimestamp} - Promise.race timeout triggered (3 seconds)`);
+        resolve({ success: false, error: 'Connection timeout', timeout: true });
       }, 3000);
     });
 
@@ -289,14 +300,36 @@ async function createUser(req, res, next) {
     // This ensures the HTTP response is sent immediately regardless of email status
     Promise.race([emailPromise, timeoutPromise])
       .then((result) => {
+        const resultTimestamp = new Date().toISOString();
+        const emailDuration = Date.now() - emailStartTime;
+
+        console.log(`[EMAIL_DEBUG] ${resultTimestamp} - Promise.race completed`);
+        console.log(`[EMAIL_DEBUG]   - Duration: ${emailDuration}ms`);
+        console.log(`[EMAIL_DEBUG]   - Result: ${JSON.stringify(result)}`);
+
         if (result && !result.success) {
           // Only log if email failed (timeout or other error)
           // Note: emailService already logs errors internally, this is for additional context
-          console.error('❌ Error sending welcome email:', result.error || 'Connection timeout');
+          if (result.timeout) {
+            console.error(`[EMAIL_DEBUG] ${resultTimestamp} - Email sending timed out after 3 seconds`);
+          } else {
+            console.error(`[EMAIL_DEBUG] ${resultTimestamp} - Email sending failed:`, result.error || 'Connection timeout');
+          }
+        } else if (result && result.success) {
+          console.log(`[EMAIL_DEBUG] ${resultTimestamp} - Email sending succeeded via Promise.race`);
         }
       })
       .catch((emailError) => {
+        const errorTimestamp = new Date().toISOString();
+        const emailDuration = Date.now() - emailStartTime;
+
         // Log email error but don't fail user creation
+        console.error(`[EMAIL_DEBUG] ${errorTimestamp} - Promise.race catch block triggered`);
+        console.error(`[EMAIL_DEBUG]   - Duration: ${emailDuration}ms`);
+        console.error(`[EMAIL_DEBUG]   - Error: ${emailError.message}`);
+        if (emailError.stack) {
+          console.error(`[EMAIL_DEBUG]   - Stack:`, emailError.stack);
+        }
         console.error('❌ Error sending welcome email:', emailError.message);
       });
 
