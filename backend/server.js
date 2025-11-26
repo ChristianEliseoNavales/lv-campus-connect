@@ -177,9 +177,12 @@ app.get('/api/health', (req, res) => {
 
 // Lightweight ping endpoint for keep-alive pings
 app.get('/api/ping', (req, res) => {
+  const timestamp = new Date().toISOString();
+  const userAgent = req.headers['user-agent'] || 'unknown';
+  console.log(`[Keep-Alive] Ping received at ${timestamp} from ${userAgent}`);
   res.json({
     status: 'pong',
-    timestamp: new Date().toISOString()
+    timestamp: timestamp
   });
 });
 
