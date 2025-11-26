@@ -179,7 +179,10 @@ app.get('/api/health', (req, res) => {
 app.get('/api/ping', (req, res) => {
   const timestamp = new Date().toISOString();
   const userAgent = req.headers['user-agent'] || 'unknown';
-  console.log(`[Keep-Alive] Ping received at ${timestamp} from ${userAgent}`);
+  // Use console.error (STDERR) instead of console.log (STDOUT) for better visibility in Render logs
+  console.error(`[Keep-Alive] Ping received at ${timestamp} from ${userAgent}`);
+  // Also write to STDOUT for redundancy
+  process.stdout.write(`[Keep-Alive] Ping received at ${timestamp} from ${userAgent}\n`);
   res.json({
     status: 'pong',
     timestamp: timestamp
