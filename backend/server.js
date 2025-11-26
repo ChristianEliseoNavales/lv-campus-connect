@@ -82,7 +82,7 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('🔌 Client disconnected:', socket.id);
-    
+
     // Clean up user session tracking
     sessionService.removeSession(socket.id);
   });
@@ -96,12 +96,12 @@ const emitForceLogout = (userId, reason) => {
       reason,
       timestamp: new Date().toISOString()
     };
-    
+
     socketIds.forEach(socketId => {
       io.to(socketId).emit('force-logout', eventData);
       console.log(`🚪 Emitted force-logout to socket ${socketId} for user ${userId}: ${reason}`);
     });
-    
+
     return true;
   }
   console.log(`⚠️ No active sessions found for user ${userId}`);
@@ -175,7 +175,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-
+// Lightweight ping endpoint for keep-alive pings
+app.get('/api/ping', (req, res) => {
+  res.json({
+    status: 'pong',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
