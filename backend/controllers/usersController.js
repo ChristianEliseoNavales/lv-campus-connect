@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const { AuditService } = require('../middleware/auditMiddleware');
 const { validatePageAccessForOffice, getDefaultPageAccess } = require('../utils/rolePermissions');
+const emailService = require('../services/emailService');
 
 // Helper function to compare arrays (order-independent) - extracted for reuse
 const arraysEqual = (arr1, arr2) => {
@@ -124,13 +125,13 @@ async function getUserById(req, res, next) {
     const user = await User.findById(req.params.id)
       .select('-password -googleId')
       .populate('createdBy', 'name email');
-    
+
     if (!user) {
       return res.status(404).json({
         error: 'User not found'
       });
     }
-    
+
     res.json(user);
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -268,6 +269,19 @@ async function createUser(req, res, next) {
       }
     });
 
+    // Send welcome email to new user (non-blocking)
+    try {
+      await emailService.sendWelcomeEmail({
+        name: user.name,
+        email: user.email,
+        office: user.office,
+        accessLevel: user.accessLevel
+      });
+    } catch (emailError) {
+      // Log email error but don't fail user creation
+      console.error('Failed to send welcome email:', emailError.message);
+    }
+
     // Emit real-time update
     const io = req.app.get('io');
     io.emit('user-created', {
@@ -380,11 +394,11 @@ async function updateUser(req, res, next) {
 
       // Safeguard: Prevent last Super Admin from removing Users Management access
       if (oldUser.role === 'MIS Super Admin' && !updateData.pageAccess.includes('/admin/mis/users')) {
-        const superAdminCount = await User.countDocuments({ 
-          role: 'MIS Super Admin', 
-          isActive: true 
+        const superAdminCount = await User.countDocuments({
+          role: 'MIS Super Admin',
+          isActive: true
         });
-        
+
         if (superAdminCount === 1) {
           await AuditService.logCRUD({
             user: req.user,
