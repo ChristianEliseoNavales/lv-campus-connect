@@ -269,18 +269,36 @@ async function createUser(req, res, next) {
       }
     });
 
-    // Send welcome email to new user (non-blocking)
-    try {
-      await emailService.sendWelcomeEmail({
-        name: user.name,
-        email: user.email,
-        office: user.office,
-        accessLevel: user.accessLevel
+    // Send welcome email to new user (truly non-blocking with timeout)
+    // Use Promise.race to ensure email sending doesn't block the response
+    const emailPromise = emailService.sendWelcomeEmail({
+      name: user.name,
+      email: user.email,
+      office: user.office,
+      accessLevel: user.accessLevel
+    });
+
+    // Create a timeout promise (3 seconds max wait)
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ success: false, error: 'Connection timeout' });
+      }, 3000);
+    });
+
+    // Race between email sending and timeout - don't await, fire and forget
+    // This ensures the HTTP response is sent immediately regardless of email status
+    Promise.race([emailPromise, timeoutPromise])
+      .then((result) => {
+        if (result && !result.success) {
+          // Only log if email failed (timeout or other error)
+          // Note: emailService already logs errors internally, this is for additional context
+          console.error('❌ Error sending welcome email:', result.error || 'Connection timeout');
+        }
+      })
+      .catch((emailError) => {
+        // Log email error but don't fail user creation
+        console.error('❌ Error sending welcome email:', emailError.message);
       });
-    } catch (emailError) {
-      // Log email error but don't fail user creation
-      console.error('Failed to send welcome email:', emailError.message);
-    }
 
     // Emit real-time update
     const io = req.app.get('io');
@@ -289,6 +307,7 @@ async function createUser(req, res, next) {
       timestamp: new Date().toISOString()
     });
 
+    // Send response immediately - don't wait for email
     res.status(201).json(user.toJSON());
   } catch (error) {
     console.error('Error creating user:', error);
