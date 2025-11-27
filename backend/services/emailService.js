@@ -2,11 +2,16 @@ const nodemailer = require('nodemailer');
 
 // Try to load googleapis for Gmail API support (optional dependency)
 let google = null;
+let OAuth2Client = null;
 try {
   google = require('googleapis');
+  // OAuth2Client should be imported from google-auth-library, not googleapis
+  const { OAuth2Client: OAuth2 } = require('google-auth-library');
+  OAuth2Client = OAuth2;
 } catch (error) {
-  // googleapis not installed, will use SMTP only
+  // googleapis or google-auth-library not installed, will use SMTP only
   // This is fine - SMTP will be used as fallback
+  console.warn('⚠️  googleapis or google-auth-library not available:', error.message);
 }
 
 /**
@@ -95,10 +100,12 @@ class EmailService {
     const timestamp = new Date().toISOString();
 
     try {
-      if (!google) {
-        // googleapis not installed
-        console.warn(`[EMAIL_DEBUG] ${timestamp} - Gmail API initialization failed: googleapis package not installed`);
-        console.warn('   Install with: npm install googleapis');
+      if (!google || !OAuth2Client) {
+        // googleapis or google-auth-library not installed
+        console.warn(`[EMAIL_DEBUG] ${timestamp} - Gmail API initialization failed: Required packages not installed`);
+        console.warn('   Install with: npm install googleapis google-auth-library');
+        console.warn(`   - googleapis: ${google ? 'INSTALLED' : 'NOT INSTALLED'}`);
+        console.warn(`   - google-auth-library: ${OAuth2Client ? 'INSTALLED' : 'NOT INSTALLED'}`);
         return false;
       }
 
@@ -135,7 +142,11 @@ class EmailService {
       }
 
       // Set up OAuth2 client
-      const { OAuth2Client } = google.auth;
+      if (!OAuth2Client) {
+        console.error(`[EMAIL_DEBUG] ${timestamp} - OAuth2Client not available. google-auth-library may not be installed.`);
+        return false;
+      }
+
       const oauth2Client = new OAuth2Client(
         gmailClientId,
         gmailClientSecret,
