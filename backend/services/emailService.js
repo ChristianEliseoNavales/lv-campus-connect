@@ -17,9 +17,15 @@ class EmailService {
   constructor() {
     this.transporter = null;
     this.gmailClient = null;
+    this.oauth2Client = null; // Store OAuth2 client for token refresh
     this.isConfigured = false;
     this.emailMethod = null; // 'gmail-api' or 'smtp'
     this.initializeTransporter();
+    // Non-blocking startup verification
+    this.verifyGmailAPIConnection().catch(err => {
+      // Verification failure doesn't block startup
+      console.warn('⚠️  Gmail API verification skipped or failed:', err.message);
+    });
   }
 
   /**
@@ -58,9 +64,13 @@ class EmailService {
    * Requires: GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN
    */
   initializeGmailAPI() {
+    const timestamp = new Date().toISOString();
+
     try {
       if (!google) {
         // googleapis not installed
+        console.warn(`[EMAIL_DEBUG] ${timestamp} - Gmail API initialization failed: googleapis package not installed`);
+        console.warn('   Install with: npm install googleapis');
         return false;
       }
 
@@ -69,8 +79,21 @@ class EmailService {
       const gmailRefreshToken = process.env.GMAIL_REFRESH_TOKEN;
       const emailUser = process.env.EMAIL_USER;
 
-      // Check if Gmail API credentials are available
-      if (!gmailClientId || !gmailClientSecret || !gmailRefreshToken || !emailUser) {
+      // Detailed logging for missing environment variables
+      const missingVars = [];
+      if (!gmailClientId) missingVars.push('GMAIL_CLIENT_ID');
+      if (!gmailClientSecret) missingVars.push('GMAIL_CLIENT_SECRET');
+      if (!gmailRefreshToken) missingVars.push('GMAIL_REFRESH_TOKEN');
+      if (!emailUser) missingVars.push('EMAIL_USER');
+
+      if (missingVars.length > 0) {
+        console.warn(`[EMAIL_DEBUG] ${timestamp} - Gmail API initialization failed: Missing required environment variables`);
+        console.warn(`   Missing variables: ${missingVars.join(', ')}`);
+        console.warn('   To enable Gmail API on Render:');
+        console.warn('   1. Set GMAIL_CLIENT_ID in Render environment variables');
+        console.warn('   2. Set GMAIL_CLIENT_SECRET in Render environment variables');
+        console.warn('   3. Set GMAIL_REFRESH_TOKEN in Render environment variables (generate using scripts/generateGmailRefreshToken.js)');
+        console.warn('   4. Set EMAIL_USER in Render environment variables (your Gmail address)');
         return false;
       }
 
@@ -82,28 +105,82 @@ class EmailService {
         'urn:ietf:wg:oauth:2.0:oob' // Redirect URI for installed apps
       );
 
-      // Set refresh token
-      oauth2Client.setCredentials({
-        refresh_token: gmailRefreshToken
-      });
+      // Set refresh token with error handling
+      try {
+        oauth2Client.setCredentials({
+          refresh_token: gmailRefreshToken
+        });
+      } catch (tokenError) {
+        console.error(`[EMAIL_DEBUG] ${timestamp} - Error setting OAuth2 credentials:`, tokenError.message);
+        console.error('   This may indicate an invalid refresh token. Regenerate using scripts/generateGmailRefreshToken.js');
+        return false;
+      }
+
+      // Store OAuth2 client for token refresh operations
+      this.oauth2Client = oauth2Client;
 
       // Create Gmail API client
       this.gmailClient = google.gmail({ version: 'v1', auth: oauth2Client });
 
       // [EMAIL_DEBUG] Log Gmail API configuration
-      const timestamp = new Date().toISOString();
       console.log(`[EMAIL_DEBUG] ${timestamp} - Gmail API Configuration:`);
       console.log(`[EMAIL_DEBUG]   - Method: Gmail API (OAuth2)`);
       console.log(`[EMAIL_DEBUG]   - From Email: ${emailUser}`);
       console.log(`[EMAIL_DEBUG]   - From Name: ${process.env.EMAIL_FROM_NAME || 'LVCampusConnect System'}`);
-      console.log(`[EMAIL_DEBUG]   - Client ID: ${gmailClientId ? '***SET***' : '***NOT SET***'}`);
-      console.log(`[EMAIL_DEBUG]   - Client Secret: ${gmailClientSecret ? '***SET***' : '***NOT SET***'}`);
-      console.log(`[EMAIL_DEBUG]   - Refresh Token: ${gmailRefreshToken ? '***SET***' : '***NOT SET***'}`);
+      console.log(`[EMAIL_DEBUG]   - Client ID: ***SET***`);
+      console.log(`[EMAIL_DEBUG]   - Client Secret: ***SET***`);
+      console.log(`[EMAIL_DEBUG]   - Refresh Token: ***SET***`);
       console.log(`[EMAIL_DEBUG]   - Note: Uses HTTPS, works on Render (no blocked ports)`);
 
       return true;
     } catch (error) {
-      console.error('❌ Error initializing Gmail API:', error.message);
+      console.error(`[EMAIL_DEBUG] ${timestamp} - Error initializing Gmail API:`, error.message);
+      if (error.stack) {
+        console.error(`[EMAIL_DEBUG]   - Stack trace:`, error.stack);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Verify Gmail API connection by testing authentication
+   * @returns {Promise<boolean>} True if Gmail API is working
+   */
+  async verifyGmailAPIConnection() {
+    if (this.emailMethod !== 'gmail-api' || !this.gmailClient) {
+      return false;
+    }
+
+    try {
+      const timestamp = new Date().toISOString();
+      console.log(`[EMAIL_DEBUG] ${timestamp} - Verifying Gmail API connection...`);
+
+      // Test by getting user profile
+      const profile = await this.gmailClient.users.getProfile({ userId: 'me' });
+
+      console.log(`[EMAIL_DEBUG] ${timestamp} - ✅ Gmail API verification successful`);
+      console.log(`[EMAIL_DEBUG]   - Authenticated as: ${profile.data.emailAddress}`);
+      console.log(`[EMAIL_DEBUG]   - Messages total: ${profile.data.messagesTotal || 'N/A'}`);
+
+      return true;
+    } catch (error) {
+      const timestamp = new Date().toISOString();
+      console.error(`[EMAIL_DEBUG] ${timestamp} - ❌ Gmail API verification failed`);
+      console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
+      console.error(`[EMAIL_DEBUG]   - Error code: ${error.code || 'N/A'}`);
+
+      if (error.response) {
+        console.error(`[EMAIL_DEBUG]   - Response status: ${error.response.status}`);
+        console.error(`[EMAIL_DEBUG]   - Response data:`, JSON.stringify(error.response.data));
+
+        // Provide helpful guidance for common errors
+        if (error.response.status === 401) {
+          console.error(`[EMAIL_DEBUG]   - Recommendation: Refresh token may be invalid or expired. Regenerate using scripts/generateGmailRefreshToken.js`);
+        } else if (error.response.status === 403) {
+          console.error(`[EMAIL_DEBUG]   - Recommendation: Check that Gmail API is enabled in Google Cloud Console and OAuth2 scopes are correct`);
+        }
+      }
+
       return false;
     }
   }
@@ -498,70 +575,125 @@ class EmailService {
 
   /**
    * Send email via Gmail API (works on Render)
+   * Includes automatic token refresh retry logic
    */
   async sendViaGmailAPI(mailOptions, startTime, timestamp) {
-    try {
-      const connectionStartTime = Date.now();
-      console.log(`[EMAIL_DEBUG] ${timestamp} - Attempting Gmail API send`);
+    const maxRetries = 2;
+    let attempt = 0;
 
-      // Create email message in RFC 2822 format
-      const message = [
-        `From: ${mailOptions.fromName} <${mailOptions.from}>`,
-        `To: ${mailOptions.to}`,
-        `Subject: ${mailOptions.subject}`,
-        `MIME-Version: 1.0`,
-        `Content-Type: multipart/alternative; boundary="boundary123"`,
-        ``,
-        `--boundary123`,
-        `Content-Type: text/plain; charset=UTF-8`,
-        ``,
-        mailOptions.text,
-        ``,
-        `--boundary123`,
-        `Content-Type: text/html; charset=UTF-8`,
-        ``,
-        mailOptions.html,
-        ``,
-        `--boundary123--`
-      ].join('\n');
-
-      // Encode message in base64url format
-      const encodedMessage = Buffer.from(message)
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-
-      // Send email via Gmail API
-      const response = await this.gmailClient.users.messages.send({
-        userId: 'me',
-        requestBody: {
-          raw: encodedMessage
+    while (attempt <= maxRetries) {
+      try {
+        const connectionStartTime = Date.now();
+        if (attempt > 0) {
+          console.log(`[EMAIL_DEBUG] ${new Date().toISOString()} - Retrying Gmail API send (attempt ${attempt + 1}/${maxRetries + 1})`);
+        } else {
+          console.log(`[EMAIL_DEBUG] ${timestamp} - Attempting Gmail API send`);
         }
-      });
 
-      const connectionEndTime = Date.now();
-      const connectionDuration = connectionEndTime - connectionStartTime;
-      const totalDuration = Date.now() - startTime;
+        // Create email message in RFC 2822 format
+        const message = [
+          `From: ${mailOptions.fromName} <${mailOptions.from}>`,
+          `To: ${mailOptions.to}`,
+          `Subject: ${mailOptions.subject}`,
+          `MIME-Version: 1.0`,
+          `Content-Type: multipart/alternative; boundary="boundary123"`,
+          ``,
+          `--boundary123`,
+          `Content-Type: text/plain; charset=UTF-8`,
+          ``,
+          mailOptions.text,
+          ``,
+          `--boundary123`,
+          `Content-Type: text/html; charset=UTF-8`,
+          ``,
+          mailOptions.html,
+          ``,
+          `--boundary123--`
+        ].join('\n');
 
-      console.log('✅ Welcome email sent successfully via Gmail API to:', mailOptions.to);
-      console.log(`[EMAIL_DEBUG] ${new Date().toISOString()} - Email sent successfully via Gmail API`);
-      console.log(`[EMAIL_DEBUG]   - Connection duration: ${connectionDuration}ms`);
-      console.log(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
-      console.log(`[EMAIL_DEBUG]   - Message ID: ${response.data.id}`);
+        // Encode message in base64url format
+        const encodedMessage = Buffer.from(message)
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
 
-      return { success: true, messageId: response.data.id };
-    } catch (error) {
-      const totalDuration = Date.now() - startTime;
-      console.error(`[EMAIL_DEBUG] ${new Date().toISOString()} - Gmail API send failed`);
-      console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
-      console.error(`[EMAIL_DEBUG]   - Error code: ${error.code || 'N/A'}`);
-      console.error(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
-      if (error.response) {
-        console.error(`[EMAIL_DEBUG]   - Response status: ${error.response.status}`);
-        console.error(`[EMAIL_DEBUG]   - Response data:`, JSON.stringify(error.response.data));
+        // Send email via Gmail API
+        const response = await this.gmailClient.users.messages.send({
+          userId: 'me',
+          requestBody: {
+            raw: encodedMessage
+          }
+        });
+
+        const connectionEndTime = Date.now();
+        const connectionDuration = connectionEndTime - connectionStartTime;
+        const totalDuration = Date.now() - startTime;
+
+        console.log('✅ Welcome email sent successfully via Gmail API to:', mailOptions.to);
+        console.log(`[EMAIL_DEBUG] ${new Date().toISOString()} - Email sent successfully via Gmail API`);
+        console.log(`[EMAIL_DEBUG]   - Connection duration: ${connectionDuration}ms`);
+        console.log(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
+        console.log(`[EMAIL_DEBUG]   - Message ID: ${response.data.id}`);
+
+        return { success: true, messageId: response.data.id };
+      } catch (error) {
+        const totalDuration = Date.now() - startTime;
+        const errorTimestamp = new Date().toISOString();
+
+        // Check if error is due to expired/invalid token (401 Unauthorized)
+        const isUnauthorized = error.response && error.response.status === 401;
+        const canRetry = attempt < maxRetries && isUnauthorized && this.oauth2Client;
+
+        if (isUnauthorized && canRetry) {
+          console.warn(`[EMAIL_DEBUG] ${errorTimestamp} - Gmail API authentication failed (401), attempting token refresh...`);
+
+          try {
+            // Force token refresh by getting a new access token
+            const { credentials } = await this.oauth2Client.refreshAccessToken();
+            this.oauth2Client.setCredentials(credentials);
+
+            // Update Gmail client with refreshed credentials
+            this.gmailClient = google.gmail({ version: 'v1', auth: this.oauth2Client });
+
+            console.log(`[EMAIL_DEBUG] ${errorTimestamp} - Token refreshed successfully, retrying...`);
+            attempt++;
+            continue; // Retry the send
+          } catch (refreshError) {
+            console.error(`[EMAIL_DEBUG] ${errorTimestamp} - Token refresh failed:`, refreshError.message);
+            // Fall through to error handling
+          }
+        }
+
+        // Log detailed error information
+        console.error(`[EMAIL_DEBUG] ${errorTimestamp} - Gmail API send failed`);
+        console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
+        console.error(`[EMAIL_DEBUG]   - Error code: ${error.code || 'N/A'}`);
+        console.error(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
+        console.error(`[EMAIL_DEBUG]   - Attempt: ${attempt + 1}/${maxRetries + 1}`);
+
+        if (error.response) {
+          console.error(`[EMAIL_DEBUG]   - Response status: ${error.response.status}`);
+          console.error(`[EMAIL_DEBUG]   - Response data:`, JSON.stringify(error.response.data));
+
+          // Provide helpful error messages
+          if (error.response.status === 401) {
+            const helpfulMessage = 'Gmail API authentication failed. The refresh token may be invalid or expired. Regenerate using scripts/generateGmailRefreshToken.js';
+            console.error(`[EMAIL_DEBUG]   - Recommendation: ${helpfulMessage}`);
+            throw new Error(helpfulMessage);
+          } else if (error.response.status === 403) {
+            const helpfulMessage = 'Gmail API access denied. Check that Gmail API is enabled in Google Cloud Console and OAuth2 scopes include gmail.send';
+            console.error(`[EMAIL_DEBUG]   - Recommendation: ${helpfulMessage}`);
+            throw new Error(helpfulMessage);
+          } else if (error.response.status === 400) {
+            const helpfulMessage = `Gmail API request invalid: ${error.response.data?.error?.message || error.message}`;
+            console.error(`[EMAIL_DEBUG]   - Recommendation: ${helpfulMessage}`);
+            throw new Error(helpfulMessage);
+          }
+        }
+
+        throw error;
       }
-      throw error;
     }
   }
 
@@ -626,14 +758,23 @@ class EmailService {
    * @returns {Promise<boolean>} True if configuration is valid
    */
   async verifyConfiguration() {
-    if (!this.isConfigured || !this.transporter) {
+    if (!this.isConfigured) {
       return false;
     }
 
     try {
-      await this.transporter.verify();
-      console.log('✅ Email service configuration verified');
-      return true;
+      if (this.emailMethod === 'gmail-api' && this.gmailClient) {
+        // Verify Gmail API connection
+        return await this.verifyGmailAPIConnection();
+      } else if (this.emailMethod === 'smtp' && this.transporter) {
+        // Verify SMTP connection
+        await this.transporter.verify();
+        console.log('✅ Email service configuration verified (SMTP)');
+        return true;
+      } else {
+        console.error('❌ Email service configuration verification failed: Method not properly initialized');
+        return false;
+      }
     } catch (error) {
       console.error('❌ Email service configuration verification failed:', error.message);
       return false;
