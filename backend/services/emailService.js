@@ -35,13 +35,35 @@ class EmailService {
    */
   initializeTransporter() {
     const timestamp = new Date().toISOString();
+    const isRender = process.env.RENDER || process.env.RENDER_EXTERNAL_URL;
+
+    console.log(`[EMAIL_DEBUG] ${timestamp} - Initializing email service...`);
+    console.log(`[EMAIL_DEBUG]   - Environment: ${isRender ? 'Render (Cloud)' : 'Local'}`);
 
     // Try Gmail API first (works on Render)
-    if (this.initializeGmailAPI()) {
+    const gmailApiResult = this.initializeGmailAPI();
+    if (gmailApiResult) {
       this.emailMethod = 'gmail-api';
       this.isConfigured = true;
       console.log('✅ Email service configured successfully (Gmail API)');
       return;
+    }
+
+    // If on Render and Gmail API env vars exist but init failed, don't use SMTP
+    if (isRender) {
+      const hasGmailVars = process.env.GMAIL_CLIENT_ID || process.env.GMAIL_CLIENT_SECRET || process.env.GMAIL_REFRESH_TOKEN;
+      if (hasGmailVars) {
+        console.error('❌ Gmail API initialization failed on Render, but Gmail API environment variables are set!');
+        console.error('   This indicates a configuration issue. Please check:');
+        console.error('   1. All Gmail API env vars are set: GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN, EMAIL_USER');
+        console.error('   2. The refresh token is valid (regenerate if needed using scripts/generateGmailRefreshToken.js)');
+        console.error('   3. Gmail API is enabled in Google Cloud Console');
+        console.error('   4. OAuth2 scopes include: https://www.googleapis.com/auth/gmail.send');
+        console.error('   SMTP will NOT be used on Render due to blocked ports.');
+        this.isConfigured = false;
+        this.emailMethod = null;
+        return;
+      }
     }
 
     // Fallback to SMTP (works locally, may fail on Render)
@@ -49,13 +71,19 @@ class EmailService {
       this.emailMethod = 'smtp';
       this.isConfigured = true;
       console.log('✅ Email service configured successfully (SMTP)');
-      console.warn('⚠️  Note: SMTP may fail on cloud providers like Render due to blocked ports (25, 587, 465)');
-      console.warn('   Consider using Gmail API by setting GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN');
+      if (isRender) {
+        console.error('⚠️  WARNING: Using SMTP on Render will likely fail due to blocked ports (25, 587, 465)');
+        console.error('   Please configure Gmail API by setting: GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN, EMAIL_USER');
+      } else {
+        console.warn('⚠️  Note: SMTP may fail on cloud providers like Render due to blocked ports (25, 587, 465)');
+        console.warn('   Consider using Gmail API by setting GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN');
+      }
       return;
     }
 
     // Neither method configured
     this.isConfigured = false;
+    this.emailMethod = null;
     console.warn('⚠️  Email service not configured: No valid configuration found');
   }
 
@@ -79,6 +107,13 @@ class EmailService {
       const gmailRefreshToken = process.env.GMAIL_REFRESH_TOKEN;
       const emailUser = process.env.EMAIL_USER;
 
+      // Diagnostic logging - show what we found
+      console.log(`[EMAIL_DEBUG] ${timestamp} - Checking Gmail API environment variables:`);
+      console.log(`[EMAIL_DEBUG]   - GMAIL_CLIENT_ID: ${gmailClientId ? `SET (${gmailClientId.length} chars, starts with ${gmailClientId.substring(0, 10)}...)` : 'NOT SET'}`);
+      console.log(`[EMAIL_DEBUG]   - GMAIL_CLIENT_SECRET: ${gmailClientSecret ? `SET (${gmailClientSecret.length} chars)` : 'NOT SET'}`);
+      console.log(`[EMAIL_DEBUG]   - GMAIL_REFRESH_TOKEN: ${gmailRefreshToken ? `SET (${gmailRefreshToken.length} chars, starts with ${gmailRefreshToken.substring(0, 10)}...)` : 'NOT SET'}`);
+      console.log(`[EMAIL_DEBUG]   - EMAIL_USER: ${emailUser ? `SET (${emailUser})` : 'NOT SET'}`);
+
       // Detailed logging for missing environment variables
       const missingVars = [];
       if (!gmailClientId) missingVars.push('GMAIL_CLIENT_ID');
@@ -90,10 +125,12 @@ class EmailService {
         console.warn(`[EMAIL_DEBUG] ${timestamp} - Gmail API initialization failed: Missing required environment variables`);
         console.warn(`   Missing variables: ${missingVars.join(', ')}`);
         console.warn('   To enable Gmail API on Render:');
-        console.warn('   1. Set GMAIL_CLIENT_ID in Render environment variables');
-        console.warn('   2. Set GMAIL_CLIENT_SECRET in Render environment variables');
-        console.warn('   3. Set GMAIL_REFRESH_TOKEN in Render environment variables (generate using scripts/generateGmailRefreshToken.js)');
-        console.warn('   4. Set EMAIL_USER in Render environment variables (your Gmail address)');
+        console.warn('   1. Go to Render Dashboard > Your Service > Environment');
+        console.warn('   2. Add GMAIL_CLIENT_ID (from Google Cloud Console)');
+        console.warn('   3. Add GMAIL_CLIENT_SECRET (from Google Cloud Console)');
+        console.warn('   4. Add GMAIL_REFRESH_TOKEN (generate using: node scripts/generateGmailRefreshToken.js)');
+        console.warn('   5. Add EMAIL_USER (your Gmail address, e.g., lvcampusconnect@gmail.com)');
+        console.warn('   6. RESTART the Render service after adding environment variables');
         return false;
       }
 
@@ -107,12 +144,17 @@ class EmailService {
 
       // Set refresh token with error handling
       try {
+        console.log(`[EMAIL_DEBUG] ${timestamp} - Setting OAuth2 credentials...`);
         oauth2Client.setCredentials({
           refresh_token: gmailRefreshToken
         });
+        console.log(`[EMAIL_DEBUG] ${timestamp} - OAuth2 credentials set successfully`);
       } catch (tokenError) {
         console.error(`[EMAIL_DEBUG] ${timestamp} - Error setting OAuth2 credentials:`, tokenError.message);
         console.error('   This may indicate an invalid refresh token. Regenerate using scripts/generateGmailRefreshToken.js');
+        if (tokenError.stack) {
+          console.error(`[EMAIL_DEBUG]   - Stack: ${tokenError.stack}`);
+        }
         return false;
       }
 
@@ -120,7 +162,17 @@ class EmailService {
       this.oauth2Client = oauth2Client;
 
       // Create Gmail API client
-      this.gmailClient = google.gmail({ version: 'v1', auth: oauth2Client });
+      try {
+        console.log(`[EMAIL_DEBUG] ${timestamp} - Creating Gmail API client...`);
+        this.gmailClient = google.gmail({ version: 'v1', auth: oauth2Client });
+        console.log(`[EMAIL_DEBUG] ${timestamp} - Gmail API client created successfully`);
+      } catch (clientError) {
+        console.error(`[EMAIL_DEBUG] ${timestamp} - Error creating Gmail API client:`, clientError.message);
+        if (clientError.stack) {
+          console.error(`[EMAIL_DEBUG]   - Stack: ${clientError.stack}`);
+        }
+        return false;
+      }
 
       // [EMAIL_DEBUG] Log Gmail API configuration
       console.log(`[EMAIL_DEBUG] ${timestamp} - Gmail API Configuration:`);
@@ -754,6 +806,35 @@ class EmailService {
   }
 
   /**
+   * Get diagnostic information about email service configuration
+   * @returns {Object} Diagnostic information
+   */
+  getDiagnostics() {
+    const timestamp = new Date().toISOString();
+    const isRender = process.env.RENDER || process.env.RENDER_EXTERNAL_URL;
+
+    return {
+      timestamp,
+      environment: isRender ? 'Render (Cloud)' : 'Local',
+      isConfigured: this.isConfigured,
+      emailMethod: this.emailMethod,
+      hasGmailClient: !!this.gmailClient,
+      hasOAuth2Client: !!this.oauth2Client,
+      hasTransporter: !!this.transporter,
+      envVars: {
+        GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID ? `SET (${process.env.GMAIL_CLIENT_ID.length} chars)` : 'NOT SET',
+        GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET ? `SET (${process.env.GMAIL_CLIENT_SECRET.length} chars)` : 'NOT SET',
+        GMAIL_REFRESH_TOKEN: process.env.GMAIL_REFRESH_TOKEN ? `SET (${process.env.GMAIL_REFRESH_TOKEN.length} chars)` : 'NOT SET',
+        EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
+        EMAIL_HOST: process.env.EMAIL_HOST || 'NOT SET',
+        EMAIL_PORT: process.env.EMAIL_PORT || 'NOT SET',
+        EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'NOT SET'
+      },
+      googleapisInstalled: !!google
+    };
+  }
+
+  /**
    * Verify email service configuration
    * @returns {Promise<boolean>} True if configuration is valid
    */
@@ -783,7 +864,9 @@ class EmailService {
 }
 
 // Export singleton instance
+console.log('📧 Initializing Email Service...');
 const emailService = new EmailService();
+console.log(`📧 Email Service initialized - Method: ${emailService.emailMethod || 'NONE'}, Configured: ${emailService.isConfigured}`);
 
 module.exports = emailService;
 
