@@ -6,7 +6,7 @@ const { AuditTrail } = require('../models');
  * Provides centralized audit logging functionality
  */
 class AuditService {
-  
+
   /**
    * Log an audit trail entry
    * @param {Object} params - Audit parameters
@@ -110,39 +110,45 @@ class AuditService {
         tags,
         metadata
       };
-      
+
       // Remove null/undefined values to keep the document clean
       // BUT preserve required fields (userId is conditionally required - optional for LOGIN_FAILED)
       // For LOGIN_FAILED actions, userId can be undefined/null
-      const conditionallyRequiredFields = action === 'LOGIN_FAILED' 
+      const conditionallyRequiredFields = action === 'LOGIN_FAILED'
         ? ['userEmail', 'userName', 'userRole', 'action', 'actionDescription', 'resourceType', 'ipAddress', 'requestMethod', 'requestUrl', 'statusCode', 'success']
         : ['userId', 'userEmail', 'userName', 'userRole', 'action', 'actionDescription', 'resourceType', 'ipAddress', 'requestMethod', 'requestUrl', 'statusCode', 'success'];
-      
+
       Object.keys(auditData).forEach(key => {
         if ((auditData[key] === null || auditData[key] === undefined) && !conditionallyRequiredFields.includes(key)) {
           delete auditData[key];
         }
       });
-      
+
       // For LOGIN_FAILED actions without userId, explicitly set it to null/undefined
       if (action === 'LOGIN_FAILED' && !userId) {
         delete auditData.userId;
       }
-      
+
+      // Check if database is connected before attempting to save
+      if (mongoose.connection.readyState !== 1) {
+        console.warn('⚠️  Database not connected, skipping audit log save');
+        return null;
+      }
+
       const auditEntry = new AuditTrail(auditData);
       await auditEntry.save();
-      
+
       console.log(`📝 Audit logged: ${action} by ${userName} (${userRole}) on ${resourceType}`);
-      
+
       return auditEntry;
-      
+
     } catch (error) {
       // Don't let audit logging failures break the main operation
       console.error('❌ Audit logging failed:', error);
       return null;
     }
   }
-  
+
   /**
    * Log authentication events
    * Accepts either a user object OR userId/email separately
@@ -171,7 +177,7 @@ class AuditService {
       metadata
     });
   }
-  
+
   /**
    * Log CRUD operations
    */
@@ -207,7 +213,7 @@ class AuditService {
       tags: ['crud']
     });
   }
-  
+
   /**
    * Log queue operations
    */
@@ -215,16 +221,16 @@ class AuditService {
     // For bulk operations (requeue-all, requeue-selected), use Window as resourceType if queueId is actually a windowId
     const isBulkOperation = action === 'QUEUE_REQUEUE_ALL' || action === 'QUEUE_REQUEUE_SELECTED';
     const finalResourceType = (isBulkOperation && queueId && !queueNumber) ? 'Window' : resourceType;
-    const resourceName = queueNumber 
+    const resourceName = queueNumber
       ? `Queue #${queueNumber} (${department})`
-      : isBulkOperation 
+      : isBulkOperation
         ? `Window ${metadata.windowName || queueId} (${department})`
         : `Queue Operation (${department})`;
-    
+
     return this.logAction({
       user,
       action,
-      actionDescription: queueNumber 
+      actionDescription: queueNumber
         ? `Queue ${action.toLowerCase()} - #${queueNumber}`
         : `Queue ${action.toLowerCase()} - ${metadata.requeuedCount || 'bulk'} queue(s)`,
       resourceType: finalResourceType,
@@ -239,7 +245,7 @@ class AuditService {
       metadata: { queueNumber, department, ...metadata }
     });
   }
-  
+
   /**
    * Log settings changes
    */

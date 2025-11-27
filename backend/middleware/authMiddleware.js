@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const { User } = require('../models');
 
 /**
  * Middleware to verify JWT token and attach user to request
- * 
+ *
  * Usage:
  * router.get('/protected-route', verifyToken, (req, res) => {
  *   // req.user is available here
@@ -45,17 +46,26 @@ const verifyToken = async (req, res, next) => {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (jwtError) {
       console.error('JWT verification failed:', jwtError.message);
-      
+
       if (jwtError.name === 'TokenExpiredError') {
         return res.status(401).json({
           error: 'Token expired',
           message: 'Your session has expired. Please sign in again.'
         });
       }
-      
+
       return res.status(401).json({
         error: 'Invalid token',
         message: 'Invalid authentication token. Please sign in again.'
+      });
+    }
+
+    // Check if database is connected before attempting query
+    if (mongoose.connection.readyState !== 1) {
+      console.error('❌ Database not connected. Connection state:', mongoose.connection.readyState);
+      return res.status(503).json({
+        error: 'Service unavailable',
+        message: 'Database connection is not available. Please try again later.'
       });
     }
 
@@ -107,7 +117,7 @@ const verifyToken = async (req, res, next) => {
 
 /**
  * Middleware to check if user has access to a specific page/route
- * 
+ *
  * Usage:
  * router.get('/admin/mis/users', verifyToken, checkPageAccess('/admin/mis/users'), (req, res) => {
  *   // User has access to this route

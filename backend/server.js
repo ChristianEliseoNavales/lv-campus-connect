@@ -35,8 +35,45 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB Atlas
-connectDB();
+// Start server function - ensures database is connected first
+const startServer = async () => {
+  try {
+    // Connect to MongoDB Atlas and wait for connection
+    console.log('🔄 Connecting to MongoDB Atlas...');
+    await connectDB();
+
+    // Verify connection before starting server
+    if (mongoose.connection.readyState !== 1) {
+      console.warn('⚠️  MongoDB connection not ready, but starting server anyway...');
+      console.warn('⚠️  Database operations may fail until connection is established');
+    } else {
+      console.log('✅ MongoDB connection verified before starting server');
+    }
+  } catch (error) {
+    console.error('❌ Failed to connect to MongoDB:', error.message);
+    console.error('⚠️  Starting server without database connection');
+    console.error('⚠️  Database operations will fail until connection is established');
+  }
+
+  // Start server regardless of database connection status
+  // (allows server to start and handle requests, but DB ops will fail)
+  server.listen(PORT, () => {
+    console.log('🚀 LVCampusConnect Backend Server');
+    console.log(`📍 Running on: http://localhost:${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+    console.log(`📊 Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`🔌 Socket.io enabled for real-time updates`);
+    console.log(`💾 Database Status: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
+    console.log('✅ Server ready for connections');
+
+    // Initialize queue cleanup service after server starts
+    initializeQueueCleanup();
+  });
+};
+
+// Start the server
+startServer();
 
 // Middleware - Dynamic CORS
 app.use(cors({
@@ -224,16 +261,3 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Start server
-server.listen(PORT, () => {
-  console.log('🚀 LVCampusConnect Backend Server');
-  console.log(`📍 Running on: http://localhost:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-  console.log(`📊 Health Check: http://localhost:${PORT}/api/health`);
-  console.log(`🔌 Socket.io enabled for real-time updates`);
-  console.log('✅ Server ready for connections');
-
-  // Initialize queue cleanup service after server starts
-  initializeQueueCleanup();
-});

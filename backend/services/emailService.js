@@ -28,10 +28,9 @@ class EmailService {
     this.isConfigured = false;
     this.emailMethod = null; // 'gmail-api' or 'smtp'
     this.initializeTransporter();
-    // Non-blocking startup verification
-    this.verifyGmailAPIConnection().catch(err => {
+    // Non-blocking startup verification (silent failure)
+    this.verifyGmailAPIConnection().catch(() => {
       // Verification failure doesn't block startup
-      console.warn('⚠️  Gmail API verification skipped or failed:', err.message);
     });
   }
 
@@ -41,18 +40,14 @@ class EmailService {
    * SMTP works locally but may fail on Render due to port blocking
    */
   initializeTransporter() {
-    const timestamp = new Date().toISOString();
     const isRender = process.env.RENDER || process.env.RENDER_EXTERNAL_URL;
-
-    console.log(`[EMAIL_DEBUG] ${timestamp} - Initializing email service...`);
-    console.log(`[EMAIL_DEBUG]   - Environment: ${isRender ? 'Render (Cloud)' : 'Local'}`);
 
     // Try Gmail API first (works on Render)
     const gmailApiResult = this.initializeGmailAPI();
     if (gmailApiResult) {
       this.emailMethod = 'gmail-api';
       this.isConfigured = true;
-      console.log('✅ Email service configured successfully (Gmail API)');
+      console.log('✅ Email service configured (Gmail API)');
       return;
     }
 
@@ -116,14 +111,7 @@ class EmailService {
       const gmailRefreshToken = process.env.GMAIL_REFRESH_TOKEN;
       const emailUser = process.env.EMAIL_USER;
 
-      // Diagnostic logging - show what we found
-      console.log(`[EMAIL_DEBUG] ${timestamp} - Checking Gmail API environment variables:`);
-      console.log(`[EMAIL_DEBUG]   - GMAIL_CLIENT_ID: ${gmailClientId ? `SET (${gmailClientId.length} chars, starts with ${gmailClientId.substring(0, 10)}...)` : 'NOT SET'}`);
-      console.log(`[EMAIL_DEBUG]   - GMAIL_CLIENT_SECRET: ${gmailClientSecret ? `SET (${gmailClientSecret.length} chars)` : 'NOT SET'}`);
-      console.log(`[EMAIL_DEBUG]   - GMAIL_REFRESH_TOKEN: ${gmailRefreshToken ? `SET (${gmailRefreshToken.length} chars, starts with ${gmailRefreshToken.substring(0, 10)}...)` : 'NOT SET'}`);
-      console.log(`[EMAIL_DEBUG]   - EMAIL_USER: ${emailUser ? `SET (${emailUser})` : 'NOT SET'}`);
-
-      // Detailed logging for missing environment variables
+      // Check for missing environment variables
       const missingVars = [];
       if (!gmailClientId) missingVars.push('GMAIL_CLIENT_ID');
       if (!gmailClientSecret) missingVars.push('GMAIL_CLIENT_SECRET');
@@ -131,15 +119,7 @@ class EmailService {
       if (!emailUser) missingVars.push('EMAIL_USER');
 
       if (missingVars.length > 0) {
-        console.warn(`[EMAIL_DEBUG] ${timestamp} - Gmail API initialization failed: Missing required environment variables`);
-        console.warn(`   Missing variables: ${missingVars.join(', ')}`);
-        console.warn('   To enable Gmail API on Render:');
-        console.warn('   1. Go to Render Dashboard > Your Service > Environment');
-        console.warn('   2. Add GMAIL_CLIENT_ID (from Google Cloud Console)');
-        console.warn('   3. Add GMAIL_CLIENT_SECRET (from Google Cloud Console)');
-        console.warn('   4. Add GMAIL_REFRESH_TOKEN (generate using: node scripts/generateGmailRefreshToken.js)');
-        console.warn('   5. Add EMAIL_USER (your Gmail address, e.g., lvcampusconnect@gmail.com)');
-        console.warn('   6. RESTART the Render service after adding environment variables');
+        console.warn(`⚠️  Gmail API initialization failed: Missing environment variables: ${missingVars.join(', ')}`);
         return false;
       }
 
@@ -157,16 +137,14 @@ class EmailService {
 
       // Set refresh token with error handling
       try {
-        console.log(`[EMAIL_DEBUG] ${timestamp} - Setting OAuth2 credentials...`);
         oauth2Client.setCredentials({
           refresh_token: gmailRefreshToken
         });
-        console.log(`[EMAIL_DEBUG] ${timestamp} - OAuth2 credentials set successfully`);
       } catch (tokenError) {
-        console.error(`[EMAIL_DEBUG] ${timestamp} - Error setting OAuth2 credentials:`, tokenError.message);
-        console.error('   This may indicate an invalid refresh token. Regenerate using scripts/generateGmailRefreshToken.js');
+        console.error(`❌ Error setting OAuth2 credentials: ${tokenError.message}`);
+        console.error('   Invalid refresh token. Regenerate using scripts/generateGmailRefreshToken.js');
         if (tokenError.stack) {
-          console.error(`[EMAIL_DEBUG]   - Stack: ${tokenError.stack}`);
+          console.error(`   Stack: ${tokenError.stack}`);
         }
         return false;
       }
@@ -176,26 +154,14 @@ class EmailService {
 
       // Create Gmail API client
       try {
-        console.log(`[EMAIL_DEBUG] ${timestamp} - Creating Gmail API client...`);
         this.gmailClient = google.gmail({ version: 'v1', auth: oauth2Client });
-        console.log(`[EMAIL_DEBUG] ${timestamp} - Gmail API client created successfully`);
       } catch (clientError) {
-        console.error(`[EMAIL_DEBUG] ${timestamp} - Error creating Gmail API client:`, clientError.message);
+        console.error(`❌ Error creating Gmail API client: ${clientError.message}`);
         if (clientError.stack) {
-          console.error(`[EMAIL_DEBUG]   - Stack: ${clientError.stack}`);
+          console.error(`   Stack: ${clientError.stack}`);
         }
         return false;
       }
-
-      // [EMAIL_DEBUG] Log Gmail API configuration
-      console.log(`[EMAIL_DEBUG] ${timestamp} - Gmail API Configuration:`);
-      console.log(`[EMAIL_DEBUG]   - Method: Gmail API (OAuth2)`);
-      console.log(`[EMAIL_DEBUG]   - From Email: ${emailUser}`);
-      console.log(`[EMAIL_DEBUG]   - From Name: ${process.env.EMAIL_FROM_NAME || 'LVCampusConnect System'}`);
-      console.log(`[EMAIL_DEBUG]   - Client ID: ***SET***`);
-      console.log(`[EMAIL_DEBUG]   - Client Secret: ***SET***`);
-      console.log(`[EMAIL_DEBUG]   - Refresh Token: ***SET***`);
-      console.log(`[EMAIL_DEBUG]   - Note: Uses HTTPS, works on Render (no blocked ports)`);
 
       return true;
     } catch (error) {
@@ -217,35 +183,18 @@ class EmailService {
     }
 
     try {
-      const timestamp = new Date().toISOString();
-      console.log(`[EMAIL_DEBUG] ${timestamp} - Verifying Gmail API connection...`);
-
       // Test by getting user profile
-      const profile = await this.gmailClient.users.getProfile({ userId: 'me' });
-
-      console.log(`[EMAIL_DEBUG] ${timestamp} - ✅ Gmail API verification successful`);
-      console.log(`[EMAIL_DEBUG]   - Authenticated as: ${profile.data.emailAddress}`);
-      console.log(`[EMAIL_DEBUG]   - Messages total: ${profile.data.messagesTotal || 'N/A'}`);
-
+      await this.gmailClient.users.getProfile({ userId: 'me' });
       return true;
     } catch (error) {
-      const timestamp = new Date().toISOString();
-      console.error(`[EMAIL_DEBUG] ${timestamp} - ❌ Gmail API verification failed`);
-      console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
-      console.error(`[EMAIL_DEBUG]   - Error code: ${error.code || 'N/A'}`);
-
+      console.error(`❌ Gmail API verification failed: ${error.message}`);
       if (error.response) {
-        console.error(`[EMAIL_DEBUG]   - Response status: ${error.response.status}`);
-        console.error(`[EMAIL_DEBUG]   - Response data:`, JSON.stringify(error.response.data));
-
-        // Provide helpful guidance for common errors
         if (error.response.status === 401) {
-          console.error(`[EMAIL_DEBUG]   - Recommendation: Refresh token may be invalid or expired. Regenerate using scripts/generateGmailRefreshToken.js`);
+          console.error('   Refresh token may be invalid. Regenerate using scripts/generateGmailRefreshToken.js');
         } else if (error.response.status === 403) {
-          console.error(`[EMAIL_DEBUG]   - Recommendation: Check that Gmail API is enabled in Google Cloud Console and OAuth2 scopes are correct`);
+          console.error('   Check Gmail API is enabled and OAuth2 scopes are correct');
         }
       }
-
       return false;
     }
   }
@@ -279,20 +228,6 @@ class EmailService {
         connectionTimeout: 5000, // 5 seconds to establish connection
         socketTimeout: 10000 // 10 seconds for socket operations
       });
-
-      // [EMAIL_DEBUG] Log SMTP configuration
-      const timestamp = new Date().toISOString();
-      console.log(`[EMAIL_DEBUG] ${timestamp} - SMTP Configuration:`);
-      console.log(`[EMAIL_DEBUG]   - Method: SMTP`);
-      console.log(`[EMAIL_DEBUG]   - Host: ${emailHost}`);
-      console.log(`[EMAIL_DEBUG]   - Port: ${emailPort}`);
-      console.log(`[EMAIL_DEBUG]   - Secure: ${emailSecure}`);
-      console.log(`[EMAIL_DEBUG]   - From Email: ${emailUser}`);
-      console.log(`[EMAIL_DEBUG]   - From Name: ${process.env.EMAIL_FROM_NAME || 'LVCampusConnect System'}`);
-      console.log(`[EMAIL_DEBUG]   - Connection Timeout: 5000ms`);
-      console.log(`[EMAIL_DEBUG]   - Socket Timeout: 10000ms`);
-      console.log(`[EMAIL_DEBUG]   - Password: ${emailPass ? '***SET***' : '***NOT SET***'}`);
-      console.log(`[EMAIL_DEBUG]   - Warning: May fail on Render due to blocked SMTP ports (25, 587, 465)`);
 
       return true;
     } catch (error) {
@@ -551,29 +486,15 @@ class EmailService {
    */
   async sendWelcomeEmail(userData) {
     const startTime = Date.now();
-    const timestamp = new Date().toISOString();
-
-    // [EMAIL_DEBUG] Log email sending attempt start
-    console.log(`[EMAIL_DEBUG] ${timestamp} - Starting welcome email send`);
-    console.log(`[EMAIL_DEBUG]   - Method: ${this.emailMethod || 'unknown'}`);
 
     // Check if email service is configured
     if (!this.isConfigured) {
       console.warn('⚠️  Email service not configured. Skipping welcome email.');
-      console.log(`[EMAIL_DEBUG] ${timestamp} - Email service not configured. isConfigured: ${this.isConfigured}`);
       return { success: false, error: 'Email service not configured' };
     }
 
     try {
       const { name, email, office, accessLevel } = userData;
-
-      // [EMAIL_DEBUG] Log user data
-      console.log(`[EMAIL_DEBUG] ${timestamp} - User data:`, {
-        name,
-        email,
-        office,
-        accessLevel
-      });
 
       // Validate required user data
       if (!name || !email || !office || !accessLevel) {
@@ -588,13 +509,6 @@ class EmailService {
       const fromName = process.env.EMAIL_FROM_NAME || 'LVCampusConnect System';
       const fromEmail = process.env.EMAIL_USER;
 
-      // [EMAIL_DEBUG] Log email configuration
-      console.log(`[EMAIL_DEBUG] ${timestamp} - Email configuration:`, {
-        from: `"${fromName}" <${fromEmail}>`,
-        to: email,
-        subject: 'Welcome to LVCampusConnect System'
-      });
-
       // Generate HTML email template
       const htmlContent = this.generateWelcomeEmailTemplate(userData);
       const textContent = `Welcome to LVCampusConnect System\n\nDear ${name},\n\nYour account has been successfully created.\n\nAccount Details:\n- Full Name: ${name}\n- Email: ${email}\n- Office: ${office}\n- Access Level: ${this.formatAccessLevel(accessLevel)}\n\nPlease visit https://lv-campus-connect.pages.dev/login to access the admin portal.\n\nUse your Google account (${email}) to sign in.\n\nThis is an automated message. Please do not reply.`;
@@ -608,7 +522,7 @@ class EmailService {
           subject: 'Welcome to LVCampusConnect System',
           html: htmlContent,
           text: textContent
-        }, startTime, timestamp);
+        }, startTime);
       } else if (this.emailMethod === 'smtp' && this.transporter) {
         return await this.sendViaSMTP({
           from: `"${fromName}" <${fromEmail}>`,
@@ -616,24 +530,15 @@ class EmailService {
           subject: 'Welcome to LVCampusConnect System',
           html: htmlContent,
           text: textContent
-        }, startTime, timestamp);
+        }, startTime);
       } else {
         throw new Error(`Email method "${this.emailMethod}" not properly initialized`);
       }
     } catch (error) {
-      const totalDuration = Date.now() - startTime;
-      console.error('❌ Error sending welcome email:', error.message);
-
-      // [EMAIL_DEBUG] Log detailed error information
-      console.error(`[EMAIL_DEBUG] ${new Date().toISOString()} - Email sending failed`);
-      console.error(`[EMAIL_DEBUG]   - Method: ${this.emailMethod || 'unknown'}`);
-      console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
-      console.error(`[EMAIL_DEBUG]   - Error code: ${error.code || 'N/A'}`);
-      console.error(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
+      console.error(`❌ Error sending welcome email: ${error.message}`);
       if (error.stack) {
-        console.error(`[EMAIL_DEBUG]   - Stack trace:`, error.stack);
+        console.error(`   Stack: ${error.stack}`);
       }
-
       return { success: false, error: error.message };
     }
   }
@@ -642,17 +547,14 @@ class EmailService {
    * Send email via Gmail API (works on Render)
    * Includes automatic token refresh retry logic
    */
-  async sendViaGmailAPI(mailOptions, startTime, timestamp) {
+  async sendViaGmailAPI(mailOptions, startTime) {
     const maxRetries = 2;
     let attempt = 0;
 
     while (attempt <= maxRetries) {
       try {
-        const connectionStartTime = Date.now();
         if (attempt > 0) {
-          console.log(`[EMAIL_DEBUG] ${new Date().toISOString()} - Retrying Gmail API send (attempt ${attempt + 1}/${maxRetries + 1})`);
-        } else {
-          console.log(`[EMAIL_DEBUG] ${timestamp} - Attempting Gmail API send`);
+          console.log(`🔄 Retrying Gmail API send (attempt ${attempt + 1}/${maxRetries + 1})`);
         }
 
         // Create email message in RFC 2822 format
@@ -691,27 +593,16 @@ class EmailService {
           }
         });
 
-        const connectionEndTime = Date.now();
-        const connectionDuration = connectionEndTime - connectionStartTime;
-        const totalDuration = Date.now() - startTime;
-
-        console.log('✅ Welcome email sent successfully via Gmail API to:', mailOptions.to);
-        console.log(`[EMAIL_DEBUG] ${new Date().toISOString()} - Email sent successfully via Gmail API`);
-        console.log(`[EMAIL_DEBUG]   - Connection duration: ${connectionDuration}ms`);
-        console.log(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
-        console.log(`[EMAIL_DEBUG]   - Message ID: ${response.data.id}`);
+        console.log(`✅ Welcome email sent via Gmail API to: ${mailOptions.to}`);
 
         return { success: true, messageId: response.data.id };
       } catch (error) {
-        const totalDuration = Date.now() - startTime;
-        const errorTimestamp = new Date().toISOString();
-
         // Check if error is due to expired/invalid token (401 Unauthorized)
         const isUnauthorized = error.response && error.response.status === 401;
         const canRetry = attempt < maxRetries && isUnauthorized && this.oauth2Client;
 
         if (isUnauthorized && canRetry) {
-          console.warn(`[EMAIL_DEBUG] ${errorTimestamp} - Gmail API authentication failed (401), attempting token refresh...`);
+          console.warn('🔄 Gmail API authentication failed (401), refreshing token...');
 
           try {
             // Force token refresh by getting a new access token
@@ -721,39 +612,23 @@ class EmailService {
             // Update Gmail client with refreshed credentials
             this.gmailClient = google.gmail({ version: 'v1', auth: this.oauth2Client });
 
-            console.log(`[EMAIL_DEBUG] ${errorTimestamp} - Token refreshed successfully, retrying...`);
             attempt++;
             continue; // Retry the send
           } catch (refreshError) {
-            console.error(`[EMAIL_DEBUG] ${errorTimestamp} - Token refresh failed:`, refreshError.message);
+            console.error(`❌ Token refresh failed: ${refreshError.message}`);
             // Fall through to error handling
           }
         }
 
-        // Log detailed error information
-        console.error(`[EMAIL_DEBUG] ${errorTimestamp} - Gmail API send failed`);
-        console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
-        console.error(`[EMAIL_DEBUG]   - Error code: ${error.code || 'N/A'}`);
-        console.error(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
-        console.error(`[EMAIL_DEBUG]   - Attempt: ${attempt + 1}/${maxRetries + 1}`);
-
+        // Log error information
+        console.error(`❌ Gmail API send failed: ${error.message}`);
         if (error.response) {
-          console.error(`[EMAIL_DEBUG]   - Response status: ${error.response.status}`);
-          console.error(`[EMAIL_DEBUG]   - Response data:`, JSON.stringify(error.response.data));
-
-          // Provide helpful error messages
           if (error.response.status === 401) {
-            const helpfulMessage = 'Gmail API authentication failed. The refresh token may be invalid or expired. Regenerate using scripts/generateGmailRefreshToken.js';
-            console.error(`[EMAIL_DEBUG]   - Recommendation: ${helpfulMessage}`);
-            throw new Error(helpfulMessage);
+            throw new Error('Gmail API authentication failed. Refresh token may be invalid. Regenerate using scripts/generateGmailRefreshToken.js');
           } else if (error.response.status === 403) {
-            const helpfulMessage = 'Gmail API access denied. Check that Gmail API is enabled in Google Cloud Console and OAuth2 scopes include gmail.send';
-            console.error(`[EMAIL_DEBUG]   - Recommendation: ${helpfulMessage}`);
-            throw new Error(helpfulMessage);
+            throw new Error('Gmail API access denied. Check Gmail API is enabled and OAuth2 scopes include gmail.send');
           } else if (error.response.status === 400) {
-            const helpfulMessage = `Gmail API request invalid: ${error.response.data?.error?.message || error.message}`;
-            console.error(`[EMAIL_DEBUG]   - Recommendation: ${helpfulMessage}`);
-            throw new Error(helpfulMessage);
+            throw new Error(`Gmail API request invalid: ${error.response.data?.error?.message || error.message}`);
           }
         }
 
@@ -765,53 +640,26 @@ class EmailService {
   /**
    * Send email via SMTP (works locally, may fail on Render)
    */
-  async sendViaSMTP(mailOptions, startTime, timestamp) {
+  async sendViaSMTP(mailOptions, startTime) {
     try {
-      const connectionStartTime = Date.now();
-      console.log(`[EMAIL_DEBUG] ${timestamp} - Attempting SMTP connection to ${this.transporter.options.host}:${this.transporter.options.port}`);
-
       // Send email
       const info = await this.transporter.sendMail(mailOptions);
-      const connectionEndTime = Date.now();
-      const connectionDuration = connectionEndTime - connectionStartTime;
-      const totalDuration = Date.now() - startTime;
 
-      console.log('✅ Welcome email sent successfully via SMTP to:', mailOptions.to);
-      console.log('   Message ID:', info.messageId);
-      console.log(`[EMAIL_DEBUG] ${new Date().toISOString()} - Email sent successfully via SMTP`);
-      console.log(`[EMAIL_DEBUG]   - Connection duration: ${connectionDuration}ms`);
-      console.log(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
-      console.log(`[EMAIL_DEBUG]   - Message ID: ${info.messageId}`);
-      console.log(`[EMAIL_DEBUG]   - Response: ${JSON.stringify(info.response || 'N/A')}`);
+      console.log(`✅ Welcome email sent via SMTP to: ${mailOptions.to}`);
 
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      const totalDuration = Date.now() - startTime;
-      console.error(`[EMAIL_DEBUG] ${new Date().toISOString()} - SMTP send failed`);
-      console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
-      console.error(`[EMAIL_DEBUG]   - Error code: ${error.code || 'N/A'}`);
-      console.error(`[EMAIL_DEBUG]   - Error responseCode: ${error.responseCode || 'N/A'}`);
-      console.error(`[EMAIL_DEBUG]   - Error command: ${error.command || 'N/A'}`);
-      console.error(`[EMAIL_DEBUG]   - Error response: ${error.response || 'N/A'}`);
-      console.error(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
-      if (error.errno) {
-        console.error(`[EMAIL_DEBUG]   - System errno: ${error.errno}`);
-      }
-      if (error.syscall) {
-        console.error(`[EMAIL_DEBUG]   - System call: ${error.syscall}`);
-      }
-      if (error.hostname) {
-        console.error(`[EMAIL_DEBUG]   - Hostname: ${error.hostname}`);
-      }
-      if (error.port) {
-        console.error(`[EMAIL_DEBUG]   - Port: ${error.port}`);
-      }
+      console.error(`❌ SMTP send failed: ${error.message}`);
 
       // Provide helpful error message for Render deployments
       if (error.code === 'ETIMEDOUT' && error.command === 'CONN') {
-        const helpfulMessage = `${error.message}. This is likely because Render blocks SMTP ports (25, 587, 465). Consider using Gmail API by setting GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REFRESH_TOKEN environment variables.`;
-        console.error(`[EMAIL_DEBUG]   - Recommendation: ${helpfulMessage}`);
+        const helpfulMessage = `${error.message}. Render blocks SMTP ports (25, 587, 465). Use Gmail API instead.`;
+        console.error(`   ${helpfulMessage}`);
         throw new Error(helpfulMessage);
+      }
+
+      if (error.stack) {
+        console.error(`   Stack: ${error.stack}`);
       }
 
       throw error;
@@ -877,9 +725,7 @@ class EmailService {
 }
 
 // Export singleton instance
-console.log('📧 Initializing Email Service...');
 const emailService = new EmailService();
-console.log(`📧 Email Service initialized - Method: ${emailService.emailMethod || 'NONE'}, Configured: ${emailService.isConfigured}`);
 
 module.exports = emailService;
 

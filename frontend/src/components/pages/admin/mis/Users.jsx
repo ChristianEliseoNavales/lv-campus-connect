@@ -121,53 +121,24 @@ const Users = () => {
   // Helper function to get default page access based on office and access level
   // Returns route paths (not old-style IDs)
   const getDefaultPageAccess = useCallback((office, accessLevel) => {
-    // Admin gets full office access
-    const adminAccess = {
-      'MIS': [
-        '/admin/mis',
-        '/admin/mis/users',
-        '/admin/mis/database-manager',
-        '/admin/mis/audit-trail',
-        '/admin/mis/bulletin',
-        '/admin/mis/ratings'
-      ],
-      'Registrar': [
-        '/admin/registrar',
-        '/admin/registrar/queue',
-        '/admin/registrar/transaction-logs',
-        '/admin/registrar/settings'
-      ],
-      'Admissions': [
-        '/admin/admissions',
-        '/admin/admissions/queue',
-        '/admin/admissions/transaction-logs',
-        '/admin/admissions/settings'
-      ],
-      'Senior Management': [
-        '/admin/seniormanagement/charts'
-      ]
-    };
-
-    // Admin Staff gets limited access (queue page only)
-    const adminStaffAccess = {
-      'MIS': [
-        '/admin/mis'
-      ],
-      'Registrar': [
-        '/admin/registrar/queue'
-      ],
-      'Admissions': [
-        '/admin/admissions/queue'
-      ],
-      'Senior Management': []
-    };
-
-    // Return appropriate access based on access level
+    // Admin Staff gets limited access (queue page only for Registrar/Admissions)
     if (accessLevel === 'admin_staff') {
-      return adminStaffAccess[office] || [];
+      if (office === 'Registrar') {
+        return ['/admin/registrar/queue'];
+      }
+      if (office === 'Admissions') {
+        return ['/admin/admissions/queue'];
+      }
+      // For MIS and Senior Management, return empty array (no auto-select)
+      return [];
     }
 
-    return adminAccess[office] || [];
+    // Admin gets full office access - dynamically get all pages from the office category
+    const officePages = adminPages
+      .filter(page => page.category === office)
+      .map(page => page.path);
+
+    return officePages;
   }, []);
 
   // Helper function to format refresh time
@@ -386,16 +357,27 @@ const Users = () => {
 
         // If accessLevel is admin, auto-select all pages from the new office
         if (prev.accessLevel === 'admin') {
-          const defaultAccess = getDefaultPageAccess(value);
+          const defaultAccess = getDefaultPageAccess(value, 'admin');
           return {
             ...prev,
             pageAccess: defaultAccess
           };
         }
 
-        // If accessLevel is super_admin and office is MIS, select all pages
+        // If accessLevel is admin_staff, auto-select default staff pages (queue pages for Registrar/Admissions)
+        if (prev.accessLevel === 'admin_staff') {
+          const defaultAccess = getDefaultPageAccess(value, 'admin_staff');
+          return {
+            ...prev,
+            pageAccess: defaultAccess
+          };
+        }
+
+        // If accessLevel is super_admin and office is MIS, select all pages except database-manager
         if (prev.accessLevel === 'super_admin' && value === 'MIS') {
-          const allPagePaths = adminPages.map(page => page.path);
+          const allPagePaths = adminPages
+            .filter(page => page.path !== '/admin/mis/database-manager')
+            .map(page => page.path);
           return {
             ...prev,
             pageAccess: allPagePaths
@@ -410,9 +392,11 @@ const Users = () => {
       });
     }
 
-    // Smart auto-selection: When accessLevel changes to super_admin with MIS office, select all pages
+    // Smart auto-selection: When accessLevel changes to super_admin with MIS office, select all pages except database-manager
     if (field === 'accessLevel' && value === 'super_admin' && formData.office === 'MIS') {
-      const allPagePaths = adminPages.map(page => page.path);
+      const allPagePaths = adminPages
+        .filter(page => page.path !== '/admin/mis/database-manager')
+        .map(page => page.path);
       setFormData(prev => ({
         ...prev,
         pageAccess: allPagePaths
