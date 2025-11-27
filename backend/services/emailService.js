@@ -4,7 +4,9 @@ const nodemailer = require('nodemailer');
 let google = null;
 let OAuth2Client = null;
 try {
-  google = require('googleapis');
+  // Import googleapis - match the pattern from generateGmailRefreshToken.js
+  const { google: googleApi } = require('googleapis');
+  google = googleApi;
   // OAuth2Client should be imported from google-auth-library, not googleapis
   const { OAuth2Client: OAuth2 } = require('google-auth-library');
   OAuth2Client = OAuth2;
