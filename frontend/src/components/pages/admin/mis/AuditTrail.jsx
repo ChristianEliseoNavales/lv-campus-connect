@@ -231,11 +231,11 @@ const AuditTrail = () => {
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1.5 transition-all duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                 title="Refresh audit logs"
               >
                 <IoMdRefresh
-                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -294,7 +294,7 @@ const AuditTrail = () => {
                 placeholder="Search logs..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-full sm:w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-full sm:w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -304,7 +304,7 @@ const AuditTrail = () => {
               <select
                 value={filterBy}
                 onChange={(e) => updateState('filterBy', e.target.value)}
-                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200"
               >
                 <option value="all">All Actions</option>
                 <option value="user_actions">User Management</option>
@@ -321,8 +321,8 @@ const AuditTrail = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
-                <div className="grid grid-cols-5 gap-3 text-sm font-bold text-gray-700 w-full">
+              <div className="bg-[#1F3463] px-5 py-3 border-b border-[#1F3463] h-12 flex items-center">
+                <div className="grid grid-cols-5 gap-3 text-sm font-bold text-white w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>User</div>
@@ -355,8 +355,8 @@ const AuditTrail = () => {
           ) : (
             <>
               {/* Table Header - Hidden on mobile, shown on md+ */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
-                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>User</div>
@@ -367,10 +367,10 @@ const AuditTrail = () => {
 
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
-                {currentLogs.map((log) => {
+                {currentLogs.map((log, index) => {
                   const { time, date } = formatDateTime(log.createdAt);
                   return (
-                    <div key={log._id} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 hover:bg-gray-50 transition-colors flex items-center">
+                    <div key={log._id} className={`px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 hover:bg-gray-50 transition-colors duration-200 flex items-center ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
                         {/* Time */}
                         <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
@@ -400,7 +400,7 @@ const AuditTrail = () => {
                         <div className="truncate">
                           <span className="md:hidden text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Department</span>
                           {log.department && (
-                            <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${getDepartmentColor(log.department)}`}>
+                            <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold shadow-sm transition-all duration-200 ${getDepartmentColor(log.department)}`}>
                               {log.department}
                             </span>
                           )}

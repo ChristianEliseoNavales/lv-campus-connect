@@ -217,7 +217,7 @@ const MISAdminDashboard = () => {
         </h1>
         <motion.button
           onClick={() => setIsDateRangeModalOpen(true)}
-          className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1F3463] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
+          className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1F3463] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#152847] transition-all duration-200 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2"
           whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.95, transition: { duration: 0.15 } }}
         >
@@ -251,7 +251,7 @@ const MISAdminDashboard = () => {
 
         {/* Row 1, Column 1 - User Management & Active Sessions */}
         <div className="col-span-1">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 flex flex-col h-full hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
             <div className="grid grid-cols-2 gap-0 h-full">
               {/* Left Column - Total Users */}
               <div className="border-r border-[#1F3463] pr-2 sm:pr-3 flex flex-col items-center text-center h-full">
@@ -264,7 +264,7 @@ const MISAdminDashboard = () => {
                 </div>
                 <button
                   onClick={() => navigate('/admin/mis/users')}
-                  className="bg-[#1F3463] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-opacity-90 transition w-full"
+                  className="bg-[#1F3463] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1 shadow-md shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 w-full"
                 >
                   Manage Users
                 </button>
@@ -295,7 +295,7 @@ const MISAdminDashboard = () => {
 
         {/* Row 1, Column 2 - Kiosk Ratings Summary */}
         <div className="col-span-1">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center text-center h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center text-center h-full hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
             <div className="w-full">
               <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Kiosk Total Ratings</p>
               <p className="text-2xl sm:text-3xl font-bold text-[#1F3463] mb-2 sm:mb-3">{kioskRatings.totalRatings}</p>
@@ -326,7 +326,7 @@ const MISAdminDashboard = () => {
 
         {/* Row 1, Column 3 - Most Visited Office */}
         <div className="col-span-1 lg:col-span-1">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 flex flex-col h-full hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
             <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Most Visited Office</p>
             <div className="flex-1 flex items-center justify-center">
               <DepartmentDonutChart data={departmentQueues} />

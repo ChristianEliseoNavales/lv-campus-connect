@@ -166,7 +166,7 @@ const AdmissionsAdminDashboard = () => {
           {/* Row 1 - Upper row (40% height) */}
           <div className="col-span-1">
             {/* Window & Incoming Queue Table Skeleton */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 h-full hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
               <div className="space-y-1">
                 {/* Header Row Skeleton */}
                 <div className="bg-gray-300 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
@@ -191,7 +191,7 @@ const AdmissionsAdminDashboard = () => {
 
           <div className="col-span-1">
             {/* Window & Now Serving Table Skeleton */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 h-full hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
               <div className="space-y-1">
                 {/* Header Row Skeleton */}
                 <div className="bg-gray-300 rounded-lg grid grid-cols-2 gap-0 animate-pulse">
@@ -216,11 +216,11 @@ const AdmissionsAdminDashboard = () => {
 
           <div className="col-span-1 grid grid-rows-2 gap-2 sm:gap-2.5">
             {/* Statistics Cards Skeleton */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
               <div className="w-10 h-8 sm:w-12 sm:h-10 bg-gray-300 rounded mb-1 animate-pulse"></div>
               <div className="h-3 bg-gray-200 rounded w-14 sm:w-16 animate-pulse"></div>
             </div>
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
               <div className="w-14 h-8 sm:w-16 sm:h-10 bg-gray-300 rounded mb-1 animate-pulse"></div>
               <div className="h-3 bg-gray-200 rounded w-24 sm:w-28 animate-pulse"></div>
             </div>
@@ -258,7 +258,7 @@ const AdmissionsAdminDashboard = () => {
         </h1>
         <button
           onClick={() => setIsDateRangeModalOpen(true)}
-          className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1F3463] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
+          className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1F3463] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#152847] transition-all duration-200 active:scale-95 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2"
         >
           View Analytic Report
         </button>
@@ -351,11 +351,11 @@ const AdmissionsAdminDashboard = () => {
 
         <div className="col-span-1 lg:col-span-1 grid grid-rows-2 gap-2 sm:gap-2.5">
           {/* Row 1, Column 3 - Statistics Cards */}
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
             <div className="text-xl sm:text-2xl font-bold text-[#1F3463] mb-1">{tableData.todayVisits}</div>
             <div className="text-xs sm:text-sm text-gray-600 text-center font-medium">Visits Today</div>
           </div>
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/10 border border-gray-200 p-3 sm:p-4 flex flex-col justify-center items-center hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300">
             <div className="text-xl sm:text-2xl font-bold text-[#1F3463] mb-1">{tableData.averageTurnaroundTime}</div>
             <div className="text-xs sm:text-sm text-gray-600 text-center font-medium">Average Turnaround Time</div>
           </div>

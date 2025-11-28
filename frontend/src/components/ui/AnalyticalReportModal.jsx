@@ -47,7 +47,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
         URL.revokeObjectURL(pdfPreviewUrl);
         setPdfPreviewUrl(null);
       }
-      
+
       // Starting report generation with intermediate steps
       setProgress(10);
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -92,16 +92,16 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       const result = await response.json();
       const data = result.data;
       setReportData(data);
-      
+
       // Report data fetched from API with intermediate steps
       setProgress(25);
       await new Promise(resolve => setTimeout(resolve, 150));
       setProgress(30);
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
       // Wait for React to render the chart container with data
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // Generate PDF preview as part of data loading
       // Pass data directly since state update is async
       // This ensures single loading state covers entire process
@@ -130,12 +130,12 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       await new Promise(resolve => setTimeout(resolve, 150));
       setProgress(50);
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
       // Wait for chart container to be in DOM and charts to have dimensions
       let attempts = 0;
       const maxAttempts = 15; // Increased attempts for slower rendering
       let chartsReady = false;
-      
+
       while (attempts < maxAttempts && !chartsReady) {
         if (chartContainerRef.current) {
           const chartElements = chartContainerRef.current.querySelectorAll('[data-chart]');
@@ -147,7 +147,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                 allChartsHaveDimensions = false;
               }
             });
-            
+
             if (allChartsHaveDimensions) {
               chartsReady = true;
               // Charts ready and validated with intermediate steps
@@ -182,7 +182,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       await new Promise(resolve => setTimeout(resolve, 150));
       setProgress(85);
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
       console.log('Chart images collected:', Object.keys(chartImages));
 
       // Generate PDF using @react-pdf/renderer
@@ -199,16 +199,16 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       // Create object URL for preview
       const url = URL.createObjectURL(blob);
       setPdfPreviewUrl(url);
-      
+
       // Set progress to 100% and show completion state
       setProgress(95);
       await new Promise(resolve => setTimeout(resolve, 150));
       setProgress(100);
-      
+
       // Show completion state for 1.5-2 seconds before showing preview
       setIsComplete(true);
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Transition to preview
       setIsComplete(false);
       setIsLoading(false);
@@ -271,7 +271,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   // Collect all chart images
   const collectChartImages = async (data = null) => {
     const chartImages = {};
-    
+
     // Use chartContainerRef if available, otherwise fallback to reportRef
     const container = chartContainerRef.current || reportRef.current;
     if (!container) {
@@ -399,15 +399,15 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto">
       {/* Overlay */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-gray-100 rounded-lg shadow-xl w-full max-w-[230mm] max-h-[90vh]"
+          className="relative bg-gray-100 rounded-xl shadow-2xl w-full max-w-[230mm] max-h-[90vh] transform transition-all duration-300 scale-100"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button - Circular Navy Blue with White Border (Outside Corner) */}
@@ -450,7 +450,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                       {progress}%
                     </p>
                   </div>
-                  
+
                   {/* Progress Bar */}
                   <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
                     <div
@@ -458,7 +458,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                       style={{ width: `${progress}%` }}
                     />
                   </div>
-                  
+
                   {/* Status Text */}
                   <p className="text-[#1F3463] font-medium text-center">
                     Generating Report...
@@ -479,7 +479,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                       {progress}%
                     </p>
                   </div>
-                  
+
                   {/* Progress Bar */}
                   <div className="w-full bg-gray-200 rounded-full h-3 mb-6 overflow-hidden">
                     <motion.div
@@ -489,13 +489,13 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                       className="bg-[#1F3463] h-full rounded-full"
                     />
                   </div>
-                  
+
                   {/* Success Icon and Text */}
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ 
+                      transition={{
                         type: "spring",
                         stiffness: 200,
                         damping: 15,
@@ -546,13 +546,13 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
 
             {/* Hidden chart container for PDF generation - positioned off-screen but visible for Recharts to render */}
             {reportData && (
-              <div 
-                ref={chartContainerRef} 
-                className="fixed pointer-events-none" 
-                style={{ 
-                  left: '-9999px', 
-                  top: '0px', 
-                  width: '210mm', 
+              <div
+                ref={chartContainerRef}
+                className="fixed pointer-events-none"
+                style={{
+                  left: '-9999px',
+                  top: '0px',
+                  width: '210mm',
                   minHeight: '297mm',
                   zIndex: -1,
                   opacity: 0.01, // Very low opacity but not 0, so browser still renders it

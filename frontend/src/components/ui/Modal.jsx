@@ -44,14 +44,14 @@ const Modal = ({
     <div className="fixed inset-0 z-[60] overflow-y-auto">
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
         onClick={closeOnOverlayClick ? onClose : undefined}
       />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-3">
         <div
-          className={`relative bg-white rounded-xl shadow-xl w-full ${sizeClasses[size]} ${className}`}
+          className={`relative bg-white rounded-xl shadow-2xl w-full ${sizeClasses[size]} transform transition-all duration-300 scale-100 ${className}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
@@ -138,7 +138,7 @@ export const ConfirmModal = ({
         {/* Icon positioned to overflow top of modal */}
         <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10 flex items-center justify-center">
           {/* White triangular background */}
-          <div 
+          <div
             className="absolute w-16 h-16 bg-white"
             style={{
               clipPath: 'polygon(50% 5%, 0% 90%, 100% 90%)'

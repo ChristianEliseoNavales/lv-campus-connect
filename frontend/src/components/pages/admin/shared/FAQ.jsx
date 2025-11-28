@@ -348,11 +348,11 @@ const FAQ = () => {
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-1 sm:p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1 sm:p-1.5 transition-all duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                 title="Refresh FAQs"
               >
                 <IoMdRefresh
-                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -401,7 +401,7 @@ const FAQ = () => {
                 placeholder="Search FAQs..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-full sm:w-52 pl-7 sm:pl-8 pr-2 sm:pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-full sm:w-52 pl-7 sm:pl-8 pr-2 sm:pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -411,7 +411,7 @@ const FAQ = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => updateState('filterStatus', e.target.value)}
-                className="px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -422,9 +422,9 @@ const FAQ = () => {
             {/* Add FAQ Button */}
             <button
               onClick={openAddModal}
-              className="flex items-center justify-center gap-1 sm:gap-1.5 px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#2d4a7a] transition-colors font-medium"
+              className="flex items-center justify-center gap-1 sm:gap-1.5 px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#2d4a7a] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 font-medium"
             >
-              <FaPlus className="text-[10px] sm:text-xs" />
+              <FaPlus className="text-[10px] sm:text-xs transition-transform duration-200" />
               Add FAQ
             </button>
           </div>
@@ -435,8 +435,8 @@ const FAQ = () => {
           {loading ? (
             <>
               {/* Table Header - Desktop only */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
-                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
                   <div>Category</div>
                   <div>Question</div>
                   <div>Status</div>
@@ -476,8 +476,8 @@ const FAQ = () => {
           ) : (
             <>
               {/* Table Header - Desktop only */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
-                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
                   <div>Office</div>
                   <div>Question</div>
                   <div>Status</div>
@@ -487,13 +487,13 @@ const FAQ = () => {
 
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
-                {currentFAQs.map((faq) => (
-                  <div key={faq._id} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors md:h-12 flex items-center">
+                {currentFAQs.map((faq, index) => (
+                  <div key={faq._id} className={`px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors duration-200 md:h-12 flex items-center ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
                     {/* Desktop view */}
                     <div className="hidden md:grid md:grid-cols-4 gap-2 sm:gap-3 items-center w-full">
                       {/* Office */}
                       <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-800">
+                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-800 shadow-sm transition-all duration-200">
                           {faq.office}
                         </span>
                       </div>
@@ -505,7 +505,7 @@ const FAQ = () => {
 
                       {/* Status */}
                       <div className="text-xs sm:text-sm truncate">
-                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
+                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 ${
                           faq.status === 'active'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
@@ -518,17 +518,17 @@ const FAQ = () => {
                       <div className="flex gap-1.5 sm:gap-2">
                         <button
                           onClick={() => openEditModal(faq)}
-                          className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                           title="Edit FAQ"
                         >
-                          <FiEdit3 className="text-sm sm:text-base" />
+                          <FiEdit3 className="text-sm sm:text-base transition-transform duration-200" />
                         </button>
                         <button
                           onClick={() => openDeleteModal(faq)}
-                          className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                           title="Delete FAQ"
                         >
-                          <FaTrash className="text-xs sm:text-sm" />
+                          <FaTrash className="text-xs sm:text-sm transition-transform duration-200" />
                         </button>
                       </div>
                     </div>
@@ -538,12 +538,12 @@ const FAQ = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-0.5">Office</span>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800 shadow-sm transition-all duration-200">
                             {faq.office}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium shadow-sm transition-all duration-200 ${
                             faq.status === 'active'
                               ? 'bg-green-100 text-green-800'
                               : 'bg-gray-100 text-gray-800'
@@ -607,21 +607,21 @@ const FAQ = () => {
       {/* Add/Edit Modal - Rendered outside space-y-5 container */}
       {showAddEditModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
-              <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full">
+              <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full transform transition-all duration-300 scale-100">
                 {/* Close Button */}
                 <button
                   onClick={closeModal}
-                  className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+                  className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                 >
-                  <MdClose className="w-3 h-3" />
+                  <MdClose className="w-3 h-3 transition-transform duration-200" />
                 </button>
 
                 {/* Modal Content with max height and scroll */}
                 <div className="max-h-[90vh] overflow-y-auto">
                   {/* Modal Header */}
-                  <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4">
+                  <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4 rounded-t-xl">
                     <h2 className="text-base sm:text-lg md:text-xl font-semibold text-[#1F3463]">
                       {editingFAQ ? 'Edit FAQ' : 'Add New FAQ'}
                     </h2>
@@ -645,8 +645,8 @@ const FAQ = () => {
                       }}
                       rows={2}
                       maxLength={500}
-                      className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
-                        formErrors.question ? 'border-red-500' : 'border-gray-300'
+                      className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                        formErrors.question ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
                       }`}
                       placeholder="Enter the question..."
                     />
@@ -675,8 +675,8 @@ const FAQ = () => {
                       }}
                       rows={5}
                       maxLength={2000}
-                      className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
-                        formErrors.answer ? 'border-red-500' : 'border-gray-300'
+                      className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                        formErrors.answer ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
                       }`}
                       placeholder="Enter the answer..."
                     />
@@ -698,7 +698,7 @@ const FAQ = () => {
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 focus:ring-[#1F3463] focus:border-[#1F3463]"
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>

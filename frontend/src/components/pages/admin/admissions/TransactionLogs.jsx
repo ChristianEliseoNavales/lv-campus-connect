@@ -274,11 +274,11 @@ const TransactionLogs = () => {
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-1 sm:p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1 sm:p-1.5 transition-all duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                 title="Refresh transaction logs"
               >
                 <IoMdRefresh
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1F3463] transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -337,7 +337,7 @@ const TransactionLogs = () => {
                 placeholder="Search logs..."
                 value={searchTerm}
                 onChange={(e) => updateState('searchTerm', e.target.value)}
-                className="w-full md:w-44 lg:w-52 pl-7 sm:pl-8 pr-2 sm:pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-full md:w-44 lg:w-52 pl-7 sm:pl-8 pr-2 sm:pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -347,7 +347,7 @@ const TransactionLogs = () => {
               <select
                 value={filterBy}
                 onChange={(e) => updateState('filterBy', e.target.value)}
-                className="flex-1 md:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-xs sm:text-sm"
+                className="flex-1 md:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200 text-xs sm:text-sm"
               >
                 <option value="all">All</option>
                 <option value="complete">Complete</option>
@@ -362,7 +362,7 @@ const TransactionLogs = () => {
             {/* Add Button */}
             <button
               onClick={handleAddTransaction}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-xs sm:text-sm font-semibold whitespace-nowrap"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 text-xs sm:text-sm font-semibold whitespace-nowrap"
             >
               + Add Transaction
             </button>
@@ -374,8 +374,8 @@ const TransactionLogs = () => {
           {loading ? (
             <>
               {/* Table Header - Desktop only */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 h-10 sm:h-11 md:h-12 items-center">
-                <div className="grid grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 text-[10px] sm:text-xs font-medium text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] h-10 sm:h-11 md:h-12 items-center">
+                <div className="grid grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 text-[10px] sm:text-xs font-medium text-white w-full">
                   <div>Queue No.</div>
                   <div>Name</div>
                   <div>Purpose of Visit</div>
@@ -423,8 +423,8 @@ const TransactionLogs = () => {
           ) : (
             <>
               {/* Table Header - Desktop only */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 h-10 sm:h-11 md:h-12 items-center">
-                <div className="grid grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] h-10 sm:h-11 md:h-12 items-center shadow-sm">
+                <div className="grid grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 text-xs sm:text-sm font-bold text-white w-full">
                   <div>Queue No.</div>
                   <div>Name</div>
                   <div>Purpose of Visit</div>
@@ -438,8 +438,8 @@ const TransactionLogs = () => {
 
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
-                {currentLogs.map((log) => (
-                  <div key={log.id} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors md:h-12 flex items-center">
+                {currentLogs.map((log, index) => (
+                  <div key={log.id} className={`px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors duration-200 md:h-12 flex items-center ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
                     {/* Desktop view */}
                     <div className="hidden md:grid md:grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 items-center w-full">
                       <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
@@ -452,7 +452,7 @@ const TransactionLogs = () => {
                         {log.purposeOfVisit}
                       </div>
                       <div className="text-[10px] sm:text-xs truncate">
-                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
+                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold shadow-sm transition-all duration-200 ${
                           log.priority === 'Yes' ? 'text-red-600 bg-red-50' : 'text-gray-600 bg-gray-50'
                         }`}>
                           {log.priority}
@@ -471,15 +471,15 @@ const TransactionLogs = () => {
                           </span>
                           <button
                             onClick={() => handleEditRemarks(log)}
-                            className="text-gray-400 hover:text-[#1F3463] transition-colors"
+                            className="text-gray-400 hover:text-[#1F3463] transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1 rounded"
                             title="Edit remarks"
                           >
-                            <PiNotePencilDuotone className="text-base sm:text-lg" />
+                            <PiNotePencilDuotone className="text-base sm:text-lg transition-transform duration-200" />
                           </button>
                         </div>
                       </div>
                       <div className="text-[10px] sm:text-xs">
-                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${getStatusColor(log.status)}`}>
+                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold shadow-sm transition-all duration-200 ${getStatusColor(log.status)}`}>
                           {log.status}
                         </span>
                       </div>
@@ -566,14 +566,14 @@ const TransactionLogs = () => {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Overlay */}
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
             onClick={handleCancelEdit}
           />
 
           {/* Modal */}
           <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
             <div
-              className="relative bg-white rounded-lg sm:rounded-xl shadow-xl w-full max-w-md"
+              className="relative bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}

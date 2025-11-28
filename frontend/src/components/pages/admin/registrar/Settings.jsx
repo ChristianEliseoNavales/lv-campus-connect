@@ -304,22 +304,22 @@ const AddEditWindowModal = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-3">
         <div
-          className="relative bg-white rounded-xl shadow-xl w-full max-w-md"
+          className="relative bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
           >
-            <MdClose className="w-3 h-3" />
+            <MdClose className="w-3 h-3 transition-transform duration-200" />
           </button>
 
           {/* Row 1: Header */}
@@ -534,14 +534,14 @@ const AddEditServiceModal = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-3">
         <div
-          className="relative bg-white rounded-xl shadow-xl w-full max-w-md"
+          className="relative bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
@@ -1423,7 +1423,7 @@ const Settings = () => {
         </div>
 
         {/* Second div: Row 2, Column 1 only - Toggle Section */}
-        <div className="lg:col-span-1 lg:row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex items-center justify-between">
+        <div className="lg:col-span-1 lg:row-span-1 bg-white rounded-xl border border-gray-300 shadow-md shadow-[#1F3463]/10 p-3 sm:p-4 md:p-5 flex items-center justify-between hover:shadow-lg hover:shadow-[#1F3463]/15 transition-shadow duration-300">
           <div className="flex flex-col">
             <span className="text-base sm:text-lg font-semibold text-gray-900">Tap to Enable Queueing</span>
             {(isToggling || toggleCooldown > 0) && (
@@ -1457,7 +1457,7 @@ const Settings = () => {
         </div>
 
         {/* Third div: Column 1, spanning rows 3-4 - Services Section */}
-        <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex flex-col">
+        <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl border border-gray-300 shadow-md shadow-[#1F3463]/10 p-3 sm:p-4 md:p-5 flex flex-col hover:shadow-lg hover:shadow-[#1F3463]/15 transition-shadow duration-300">
           {/* Row 1: Header */}
           <div className="mb-2 sm:mb-3">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900">Services</h2>
@@ -1544,7 +1544,7 @@ const Settings = () => {
         </div>
 
         {/* Fourth div: Column 2, spanning rows 2-4 - Windows Management Section */}
-        <div className="lg:col-start-2 lg:row-start-2 lg:row-span-3 bg-white rounded-xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex flex-col">
+        <div className="lg:col-start-2 lg:row-start-2 lg:row-span-3 bg-white rounded-xl border border-gray-300 shadow-md shadow-[#1F3463]/10 p-3 sm:p-4 md:p-5 flex flex-col hover:shadow-lg hover:shadow-[#1F3463]/15 transition-shadow duration-300">
           {/* Row 1: Table Header */}
           <div className="mb-2 sm:mb-3">
             <div className="hidden md:grid md:grid-cols-3 gap-2 sm:gap-3 items-center p-2 sm:p-2.5">

@@ -296,33 +296,33 @@ const DatabaseManager = () => {
 
     const commonFields = ['_id', 'createdAt', 'updatedAt'];
     const allFields = Object.keys(record);
-    
+
     // Filter out common fields and show them at the end
     const specificFields = allFields.filter(field => !commonFields.includes(field));
-    
+
     return [...specificFields, ...commonFields.filter(field => allFields.includes(field))];
   };
 
   // Format field value for display
   const formatFieldValue = (value, field) => {
     if (value === null || value === undefined) return 'N/A';
-    
+
     if (field === 'createdAt' || field === 'updatedAt') {
       return new Date(value).toLocaleString();
     }
-    
+
     if (typeof value === 'boolean') {
       return value ? 'Yes' : 'No';
     }
-    
+
     if (typeof value === 'object') {
       return JSON.stringify(value, null, 2);
     }
-    
+
     if (typeof value === 'string' && value.length > 50) {
       return value.substring(0, 50) + '...';
     }
-    
+
     return value.toString();
   };
 
@@ -348,10 +348,10 @@ const DatabaseManager = () => {
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="flex items-center space-x-1.5 px-4 py-2 text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-colors disabled:opacity-50"
+            className="flex items-center space-x-1.5 px-4 py-2 text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: '#1F3463' }}
           >
-            <MdRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <MdRefresh className={`w-4 h-4 transition-transform duration-200 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -399,13 +399,13 @@ const DatabaseManager = () => {
                 placeholder={`Search ${selectedModel} records...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-[#1F3463] focus:border-transparent w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200 w-64"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: '#1F3463' }}
             >
               Search
@@ -416,18 +416,18 @@ const DatabaseManager = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => openEditModal()}
-              className="flex items-center space-x-2 px-5 py-2.5 bg-green-600 text-white rounded-lg text-base font-semibold hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-2 px-5 py-2.5 bg-green-600 text-white rounded-lg text-base font-semibold hover:bg-green-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-lg shadow-green-600/20 hover:shadow-green-600/30"
             >
-              <MdAdd className="w-5 h-5" />
+              <MdAdd className="w-5 h-5 transition-transform duration-200" />
               <span>Add Record</span>
             </button>
 
             <button
               onClick={openDeleteAllModal}
               disabled={records.length === 0}
-              className="flex items-center space-x-2 px-5 py-2.5 bg-red-600 text-white rounded-lg text-base font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center space-x-2 px-5 py-2.5 bg-red-600 text-white rounded-lg text-base font-semibold hover:bg-red-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <MdDeleteSweep className="w-5 h-5" />
+              <MdDeleteSweep className="w-5 h-5 transition-transform duration-200" />
               <span>Delete All</span>
             </button>
           </div>
@@ -506,7 +506,7 @@ const DatabaseManager = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 shadow-sm">
                 <tr>
                   {records[0] && getDisplayFields(records[0]).slice(0, 6).map((field) => (
                     <th
@@ -523,7 +523,7 @@ const DatabaseManager = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {records.map((record, index) => (
-                  <tr key={record._id || index} className="hover:bg-gray-50">
+                  <tr key={record._id || index} className={`hover:bg-gray-50 transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
                     {getDisplayFields(record).slice(0, 6).map((field) => (
                       <td key={field} className="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900">
                         <div className="max-w-xs truncate" title={formatFieldValue(record[field], field)}>
@@ -535,17 +535,17 @@ const DatabaseManager = () => {
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => openEditModal(record)}
-                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
+                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                           title="Edit record"
                         >
-                          <MdEdit className="h-5 w-5" />
+                          <MdEdit className="h-5 w-5 transition-transform duration-200" />
                         </button>
                         <button
                           onClick={() => openDeleteModal(record)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded"
+                          className="text-red-600 hover:text-red-900 p-1 rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                           title="Delete record"
                         >
-                          <MdDelete className="h-5 w-5" />
+                          <MdDelete className="h-5 w-5 transition-transform duration-200" />
                         </button>
                       </div>
                     </td>

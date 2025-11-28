@@ -301,7 +301,7 @@ const Bulletin = () => {
               const mediaUrl = bulletin.image?.secure_url || bulletin.image?.url || `${API_CONFIG.getAdminUrl()}/${bulletin.image?.path}`;
 
               return (
-                <div key={bulletin._id} className="rounded-lg sm:rounded-xl border border-gray-200 shadow-sm overflow-hidden h-40 sm:h-48 md:h-52 bg-white hover:shadow-lg transition-shadow relative group">
+                <div key={bulletin._id} className="rounded-lg sm:rounded-xl border border-gray-200 shadow-sm shadow-[#1F3463]/5 overflow-hidden h-40 sm:h-48 md:h-52 bg-white hover:shadow-xl hover:shadow-[#1F3463]/15 transition-shadow duration-300 relative group">
                   {/* Media Preview - Video or Image - Clickable for fullscreen */}
                   <div onClick={() => openFullscreen(bulletin)} className="cursor-pointer w-full h-full">
                     {(bulletin.image?.secure_url || bulletin.image?.url || bulletin.image?.path) ? (

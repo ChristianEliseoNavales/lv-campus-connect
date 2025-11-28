@@ -759,11 +759,11 @@ const Users = () => {
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1.5 transition-all duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                 title="Refresh users"
               >
                 <IoMdRefresh
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1F3463] transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -812,7 +812,7 @@ const Users = () => {
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full sm:w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-full sm:w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -822,7 +822,7 @@ const Users = () => {
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
-                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-xs sm:text-sm"
+                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200 text-xs sm:text-sm"
               >
                 <option value="all">All</option>
                 <option value="active">Active</option>
@@ -836,7 +836,7 @@ const Users = () => {
             {/* Add Button */}
             <button
               onClick={openAddModal}
-              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors text-xs sm:text-sm font-semibold"
+              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 text-xs sm:text-sm font-semibold"
             >
               + Add User
             </button>
@@ -848,8 +848,8 @@ const Users = () => {
           {loading ? (
             <>
               {/* Table Header - Hidden on mobile, shown on md+ */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
-                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs font-medium text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] text-white px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center shadow-sm">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm font-bold w-full">
                   <div>Name</div>
                   <div>Email</div>
                   <div>Office</div>
@@ -891,8 +891,8 @@ const Users = () => {
           ) : (
             <>
               {/* Table Header - Hidden on mobile, shown on md+ */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
-                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] text-white px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center shadow-sm">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm font-bold w-full">
                   <div>Name</div>
                   <div>Email</div>
                   <div>Office</div>
@@ -903,8 +903,8 @@ const Users = () => {
 
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
-                {currentUsers.map((user) => (
-                  <div key={user._id} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors md:h-12 flex items-center">
+                {currentUsers.map((user, index) => (
+                  <div key={user._id} className={`px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors duration-200 md:h-12 flex items-center ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
                       {/* Mobile: Stacked layout, Desktop: Grid layout */}
 
@@ -936,10 +936,10 @@ const Users = () => {
                       <div className="text-xs mt-2 md:mt-0">
                         <button
                           onClick={() => openEditModal(user)}
-                          className="text-[#1F3463] hover:text-[#1F3463]/80 p-0.5 rounded"
+                          className="text-[#1F3463] hover:text-[#1F3463]/80 p-0.5 rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                           title="Edit user"
                         >
-                          <FiEdit3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <FiEdit3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-200" />
                         </button>
                       </div>
                     </div>
@@ -960,14 +960,14 @@ const Users = () => {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
               >
                 Previous
               </button>
 
               {/* Current Page Number */}
               <button
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md shadow-sm shadow-[#1F3463]/20"
               >
                 {currentPage}
               </button>
@@ -975,7 +975,7 @@ const Users = () => {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
               >
                 Next
               </button>
@@ -987,15 +987,15 @@ const Users = () => {
       {/* Add/Edit User Modal */}
       {showAddEditModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-[100] overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
-              <div className="relative bg-white rounded-xl w-full max-w-2xl shadow-xl">
+              <div className="relative bg-white rounded-xl w-full max-w-2xl shadow-2xl transform transition-all duration-300 scale-100">
                 {/* Close Button */}
                 <button
                   onClick={closeModal}
-                  className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+                  className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                 >
-                  <MdClose className="w-3 h-3" />
+                  <MdClose className="w-3 h-3 transition-transform duration-200" />
                 </button>
 
                 {/* Modal Content with max height and scroll */}
@@ -1014,10 +1014,10 @@ const Users = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
                     formErrors.name
-                      ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
                   }`}
                   placeholder="Enter full name"
                 />
@@ -1035,10 +1035,10 @@ const Users = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
                     formErrors.email
-                      ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
                   }`}
                   placeholder="Enter email address"
                 />
@@ -1055,10 +1055,10 @@ const Users = () => {
                 <select
                   value={formData.office}
                   onChange={(e) => handleInputChange('office', e.target.value)}
-                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
                     formErrors.office
-                      ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
                   }`}
                 >
                   <option value="">Select an office</option>
@@ -1081,10 +1081,10 @@ const Users = () => {
                 <select
                   value={formData.accessLevel}
                   onChange={(e) => handleInputChange('accessLevel', e.target.value)}
-                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
                     formErrors.accessLevel
-                      ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
                   }`}
                   disabled={!formData.office}
                 >
@@ -1188,7 +1188,7 @@ const Users = () => {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors order-2 sm:order-1"
+                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 order-2 sm:order-1 disabled:opacity-50"
                   disabled={isSubmitting}
                 >
                   Cancel
@@ -1196,7 +1196,7 @@ const Users = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 order-1 sm:order-2"
+                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
                   style={{ backgroundColor: '#1F3463' }}
                 >
                   {isSubmitting ? 'Saving...' : (editingUser ? 'Update User' : 'Create User')}

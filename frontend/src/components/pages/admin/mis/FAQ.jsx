@@ -453,8 +453,8 @@ const FAQ = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
-                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-gray-700 w-full">
+              <div className="bg-[#1F3463] px-5 py-3 border-b border-[#1F3463] h-12 flex items-center">
+                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-white w-full">
                   <div>Category</div>
                   <div>Question</div>
                   <div>Status</div>
@@ -488,8 +488,8 @@ const FAQ = () => {
           ) : (
             <>
               {/* Table Header - Hidden on mobile, shown on md+ */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
-                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
                   <div>Category</div>
                   <div>Question</div>
                   <div>Status</div>
@@ -575,9 +575,9 @@ const FAQ = () => {
       {/* Add/Edit Modal - Rendered outside space-y-5 container */}
       {showAddEditModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
-              <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full">
+              <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full transform transition-all duration-300 scale-100">
                 {/* Close Button */}
                 <button
                   onClick={closeModal}
@@ -589,7 +589,7 @@ const FAQ = () => {
                 {/* Modal Content with max height and scroll */}
                 <div className="max-h-[90vh] overflow-y-auto">
                   {/* Modal Header */}
-                  <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4">
+                  <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 md:py-4 rounded-t-xl">
                     <h2 className="text-base sm:text-lg md:text-xl font-semibold text-[#1F3463]">
                       {editingFAQ ? 'Edit FAQ' : 'Add New FAQ'}
                     </h2>

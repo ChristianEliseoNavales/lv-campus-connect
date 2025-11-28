@@ -1061,8 +1061,22 @@ const Queue = () => {
 
     {/* Transfer Modal */}
     {showTransferModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
-        <div className="relative bg-white rounded-xl shadow-xl p-4 sm:p-5 md:p-6 max-w-md w-full">
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        {/* Overlay */}
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
+          onClick={() => {
+            setShowTransferModal(false);
+            setSelectedWindow(null);
+          }}
+        />
+
+        {/* Modal */}
+        <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+          <div
+            className="relative bg-white rounded-xl shadow-2xl p-4 sm:p-5 md:p-6 max-w-md w-full transform transition-all duration-300 scale-100"
+            onClick={(e) => e.stopPropagation()}
+          >
           {/* Close Button */}
           <button
             onClick={() => {
@@ -1117,6 +1131,7 @@ const Queue = () => {
             >
               {actionLoading.transfer ? 'Transferring...' : 'Transfer'}
             </button>
+          </div>
           </div>
         </div>
       </div>

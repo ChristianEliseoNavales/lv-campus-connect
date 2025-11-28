@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { MdClose, MdSave, MdWarning, MdDelete, MdDeleteSweep } from 'react-icons/md';
 
 // Edit/Add Record Modal
-export const EditRecordModal = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  formData, 
-  onInputChange, 
-  formErrors, 
-  selectedModel, 
-  editingRecord 
+export const EditRecordModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  formData,
+  onInputChange,
+  formErrors,
+  selectedModel,
+  editingRecord
 }) => {
   if (!isOpen) return null;
 
@@ -150,8 +150,8 @@ export const EditRecordModal = ({
           <select
             value={value}
             onChange={(e) => onInputChange(field.name, e.target.value)}
-            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
-              error ? 'border-red-500' : 'border-gray-300'
+            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+              error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
             }`}
             required={field.required}
           >
@@ -169,8 +169,8 @@ export const EditRecordModal = ({
           <textarea
             value={value}
             onChange={(e) => onInputChange(field.name, e.target.value)}
-            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
-              error ? 'border-red-500' : 'border-gray-300'
+            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+              error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
             }`}
             rows={3}
             required={field.required}
@@ -193,8 +193,8 @@ export const EditRecordModal = ({
             type="number"
             value={value}
             onChange={(e) => onInputChange(field.name, e.target.value)}
-            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
-              error ? 'border-red-500' : 'border-gray-300'
+            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+              error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
             }`}
             min={field.min}
             max={field.max}
@@ -208,8 +208,8 @@ export const EditRecordModal = ({
             type={field.type}
             value={value}
             onChange={(e) => onInputChange(field.name, e.target.value)}
-            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
-              error ? 'border-red-500' : 'border-gray-300'
+            className={`w-full px-2.5 py-1.5 text-sm border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+              error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[#1F3463] focus:border-[#1F3463]'
             }`}
             required={field.required}
           />
@@ -218,15 +218,15 @@ export const EditRecordModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[60] overflow-y-auto">
       <div className="flex min-h-full items-center justify-center p-3">
-        <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full">
+        <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full transform transition-all duration-300 scale-100">
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
           >
-            <MdClose className="w-3 h-3" />
+            <MdClose className="w-3 h-3 transition-transform duration-200" />
           </button>
 
           {/* Modal Content with max height and scroll */}
@@ -260,15 +260,15 @@ export const EditRecordModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-colors"
+              className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-[#1F3463] text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30"
             >
-              <MdSave className="w-3 h-3" />
+              <MdSave className="w-3 h-3 transition-transform duration-200" />
               <span>{editingRecord ? 'Update' : 'Create'} Record</span>
             </button>
           </div>
@@ -321,8 +321,8 @@ export const DeleteAllRecordsModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3">
-      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[60] p-3">
+      <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
         {/* Content - Centered like ConfirmModal */}
         <div className="p-5 text-center">
           <div className="text-3xl mb-3">🗑️</div>
@@ -350,7 +350,7 @@ export const DeleteAllRecordsModal = ({
             type="text"
             value={confirmText}
             placeholder="Type DELETE ALL to confirm"
-            className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:border-transparent transition-all duration-200"
             onChange={handleConfirmTextChange}
           />
         </div>
@@ -359,16 +359,16 @@ export const DeleteAllRecordsModal = ({
         <div className="flex space-x-2.5 justify-center pb-5 px-5">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 active:bg-gray-50 active:scale-95 transition-all duration-150"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 active:bg-gray-50 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={!isConfirmEnabled}
-            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <MdDeleteSweep className="w-3 h-3" />
+            <MdDeleteSweep className="w-3 h-3 transition-transform duration-200" />
             <span>Delete All Records</span>
           </button>
         </div>

@@ -5,7 +5,7 @@ import { getPhilippineDate, formatPhilippineDate } from '../../utils/philippineT
 
 /**
  * DateRangeModal Component
- * 
+ *
  * Modal for selecting date range before generating analytical reports
  * Features:
  * - Two date pickers (start date and end date)
@@ -89,14 +89,14 @@ const DateRangeModal = ({ isOpen, onClose, onGenerateReport, userRole }) => {
     <div className="fixed inset-0 z-[70] overflow-y-auto">
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-3">
         <div
-          className="relative bg-white rounded-lg shadow-xl w-full max-w-md"
+          className="relative bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button - Circular Navy Blue with White Border */}

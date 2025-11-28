@@ -207,11 +207,11 @@ const Ratings = () => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <span key={i}>
+        <span key={i} className="transition-transform duration-200 hover:scale-110">
           {i <= rating ? (
-            <MdStar className="text-[#1F3463] text-base sm:text-lg md:text-xl" />
+            <MdStar className="text-[#1F3463] text-base sm:text-lg md:text-xl transition-all duration-200" />
           ) : (
-            <MdStarBorder className="text-gray-300 text-base sm:text-lg md:text-xl" />
+            <MdStarBorder className="text-gray-300 text-base sm:text-lg md:text-xl transition-all duration-200" />
           )}
         </span>
       );
@@ -235,11 +235,11 @@ const Ratings = () => {
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-1.5 transition-colors duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20"
+                className="p-1.5 transition-all duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                 title="Refresh ratings"
               >
                 <IoMdRefresh
-                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
@@ -308,7 +308,7 @@ const Ratings = () => {
               <select
                 value={filterBy}
                 onChange={(e) => updateState('filterBy', e.target.value)}
-                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200"
               >
                 <option value="all">All Ratings</option>
                 <option value="5_star">5 Stars</option>
@@ -328,8 +328,8 @@ const Ratings = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 h-12 flex items-center">
-                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-gray-700 w-full">
+              <div className="bg-[#1F3463] px-5 py-3 border-b border-[#1F3463] h-12 flex items-center">
+                <div className="grid grid-cols-4 gap-3 text-sm font-bold text-white w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>Role</div>
@@ -364,8 +364,8 @@ const Ratings = () => {
           ) : (
             <>
               {/* Table Header - Hidden on mobile, shown on md+ */}
-              <div className="hidden md:flex bg-gray-50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-gray-200 items-center">
-                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-gray-700 w-full">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>Role</div>
@@ -375,13 +375,13 @@ const Ratings = () => {
 
               {/* Table Body */}
               <div className="divide-y divide-gray-200">
-                {currentRatings.map((rating) => {
+                {currentRatings.map((rating, index) => {
                   // Use queuedAt from the aggregated data, fallback to createdAt
                   const dateToFormat = rating.queuedAt || rating.createdAt;
                   const { time, date } = formatDateTime(dateToFormat);
 
                   return (
-                    <div key={rating._id} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors md:h-12 flex items-center">
+                    <div key={rating._id} className={`px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 hover:bg-gray-50 transition-colors duration-200 md:h-12 flex items-center ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
                         {/* Time */}
                         <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
