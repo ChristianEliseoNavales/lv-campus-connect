@@ -556,28 +556,6 @@ const AdminLayout = ({ children }) => {
     </svg>
   );
 
-  // Animation variants for navigation items
-  const navContainerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-        delayChildren: 0.1
-      }
-    }
-  };
-
-  const navItemVariants = {
-    hidden: { opacity: 0, y: -10 },
-    show: { opacity: 1, y: 0 }
-  };
-
-  const dropdownItemVariants = {
-    hidden: { opacity: 0, y: -5 },
-    show: { opacity: 1, y: 0 }
-  };
-
   // Create motion-wrapped NavLink component
   const MotionNavLink = motion(NavLink);
 
@@ -637,9 +615,6 @@ const AdminLayout = ({ children }) => {
         {/* Navigation */}
         <motion.nav
           className="flex-1 px-2.5 sm:px-3 space-y-1 sm:space-y-1.5"
-          variants={navContainerVariants}
-          initial="hidden"
-          animate="show"
         >
           {navigationItems.map((item, index) => {
             const IconComponent = item.icon;
@@ -653,7 +628,7 @@ const AdminLayout = ({ children }) => {
               const isQueueRoute = location.pathname.includes('/queue');
 
               return (
-                <motion.div key={item.name} className="space-y-0.5 sm:space-y-1" variants={navItemVariants}>
+                <div key={item.name} className="space-y-0.5 sm:space-y-1">
                   {/* Parent item - expandable */}
                   <motion.button
                     onClick={() => setIsQueueExpanded(!isQueueExpanded)}
@@ -694,24 +669,15 @@ const AdminLayout = ({ children }) => {
                     {isExpanded && !isSidebarCollapsed && (
                       <motion.div
                         className="ml-4 sm:ml-5 space-y-0.5 sm:space-y-1"
-                        initial="hidden"
-                        animate="show"
-                        exit="hidden"
-                        variants={{
-                          hidden: { opacity: 0 },
-                          show: {
-                            opacity: 1,
-                            transition: {
-                              staggerChildren: 0.03
-                            }
-                          }
-                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
                       >
                         {item.children?.map((child) => (
                           <MotionNavLink
                             key={child.path}
                             to={child.path}
-                            variants={dropdownItemVariants}
                             className={({ isActive }) =>
                               `flex items-center px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-all duration-300 ease-in-out ${
                                 isActive
@@ -728,7 +694,7 @@ const AdminLayout = ({ children }) => {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </motion.div>
+                </div>
               );
             }
 
@@ -738,7 +704,6 @@ const AdminLayout = ({ children }) => {
                 key={item.path}
                 to={item.path}
                 end={item.end}
-                variants={navItemVariants}
                 className={({ isActive }) =>
                   `flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2 sm:space-x-2.5'} px-2 sm:px-2.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 ease-in-out ${
                     isActive
@@ -838,19 +803,10 @@ const AdminLayout = ({ children }) => {
                 {isUserDropdownOpen && (
                   <motion.div
                     className="absolute right-0 mt-1 sm:mt-1.5 w-36 sm:w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
-                    initial="hidden"
-                    animate="show"
-                    exit="hidden"
-                    variants={{
-                      hidden: { opacity: 0, y: -5 },
-                      show: {
-                        opacity: 1,
-                        y: 0,
-                        transition: {
-                          staggerChildren: 0.03
-                        }
-                      }
-                    }}
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
                   >
                     {/* Office Switch Buttons - only visible for users with multi-office access */}
                     {canSwitchOffices() && getOfficeSwitchButtons().map((button) => (
@@ -858,7 +814,6 @@ const AdminLayout = ({ children }) => {
                         key={button.key}
                         onClick={button.onClick}
                         className="w-full flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 text-left text-xs sm:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                        variants={dropdownItemVariants}
                         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
                         whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
                       >
@@ -869,7 +824,6 @@ const AdminLayout = ({ children }) => {
                     <motion.button
                       onClick={handleSignOut}
                       className="w-full flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 text-left text-xs sm:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                      variants={dropdownItemVariants}
                       whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
                       whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
                     >

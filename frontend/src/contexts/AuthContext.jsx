@@ -235,6 +235,31 @@ export const AuthProvider = ({ children }) => {
   const canAccessRoute = (route) => {
     if (!isAuthenticated || !user) return false;
 
+    // Special exception: Queue-monitor routes are accessible to all admin users from matching department
+    // General /admin/queue-monitor is accessible to Super Admin only
+    if (route === '/admin/queue-monitor') {
+      // MIS Super Admin has access
+      if (user.pageAccess?.includes('*') || user.role === 'MIS Super Admin') {
+        return true;
+      }
+      return false;
+    }
+
+    if (route === '/admin/registrar/queue-monitor' || route === '/admin/admissions/queue-monitor') {
+      // MIS Super Admin has access to all routes
+      if (user.pageAccess?.includes('*') || user.role === 'MIS Super Admin') {
+        return true;
+      }
+
+      // Check if user's office matches the department
+      const department = route.includes('/registrar') ? 'Registrar' : 'Admissions';
+      if (user.office === department) {
+        return true;
+      }
+
+      return false;
+    }
+
     // Check pageAccess array for specific route permissions
     const pageAccess = user.pageAccess || [];
 

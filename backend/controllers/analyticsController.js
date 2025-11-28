@@ -498,17 +498,27 @@ async function getQueueMonitor(req, res, next) {
           isCurrentlyServing: true
         });
 
-        // Get next waiting queue for this window
+        // Get next waiting queue for this window (for backward compatibility)
         const nextWaiting = await Queue.findOne({
           windowId: window._id,
           status: 'waiting'
         }).sort({ queuedAt: 1 });
 
+        // Get ALL waiting queues for this window (sorted by queuedAt, oldest first)
+        const allWaitingQueues = await Queue.find({
+          windowId: window._id,
+          status: 'waiting'
+        })
+        .sort({ queuedAt: 1 })
+        .select('queueNumber')
+        .lean();
+
         return {
           windowId: window._id.toString(), // Keep as string for API response compatibility
           windowName: window.name,
           currentServingNumber: currentServing ? currentServing.queueNumber : 0,
-          incomingNumber: nextWaiting ? nextWaiting.queueNumber : 0,
+          incomingNumber: nextWaiting ? nextWaiting.queueNumber : 0, // Next queue (for backward compatibility)
+          incomingQueues: allWaitingQueues.map(q => q.queueNumber), // All waiting queue numbers
           isServing: window.isServing,
           isOpen: window.isOpen
         };

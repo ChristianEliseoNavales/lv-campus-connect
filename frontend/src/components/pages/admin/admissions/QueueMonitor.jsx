@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../../../contexts/SocketContext';
 import { getPhilippineDate } from '../../../../utils/philippineTimezone';
+import { authFetch } from '../../../../utils/apiClient';
 import API_CONFIG from '../../../../config/api';
 
 const AdmissionsQueueMonitor = () => {
@@ -11,15 +12,11 @@ const AdmissionsQueueMonitor = () => {
 
   // State for queue monitoring data (fetched from Admissions API)
   const [windowsData, setWindowsData] = useState([]);
-  const [nextQueueInfo, setNextQueueInfo] = useState({
-    nextNumber: 0,
-    assignedWindow: 1
-  });
 
   // Fetch queue monitor data from Admissions API
   const fetchQueueData = async () => {
     try {
-      const response = await fetch(`${API_CONFIG.getAdminUrl()}/api/analytics/queue-monitor/admissions`);
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/analytics/queue-monitor/admissions`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch admissions queue data');
@@ -28,29 +25,18 @@ const AdmissionsQueueMonitor = () => {
       const result = await response.json();
 
       if (result.success) {
-        // Transform API data to match original layout structure
+        // Transform API data to include incomingQueues array
         const transformedWindows = result.data.windowData.map((window, index) => ({
           id: index + 1,
+          windowId: window.windowId,
           name: window.windowName,
           serving: window.currentServingNumber || 0,
-          incoming: window.incomingNumber || 0,
+          incomingQueues: window.incomingQueues || [], // All waiting queue numbers
           isServing: window.isServing,
           isOpen: window.isOpen
         }));
 
         setWindowsData(transformedWindows);
-
-        // Set next queue info based on overall next queue
-        if (result.data.nextQueueNumber > 0) {
-          // Find which window this queue is assigned to based on incoming numbers
-          const assignedWindow = transformedWindows.find(w => w.incoming === result.data.nextQueueNumber);
-          setNextQueueInfo({
-            nextNumber: result.data.nextQueueNumber,
-            assignedWindow: assignedWindow ? assignedWindow.name : 'TBD'
-          });
-        } else {
-          setNextQueueInfo({ nextNumber: 0, assignedWindow: null });
-        }
 
         console.log('📊 Admissions queue data updated:', result.data);
       }
@@ -102,71 +88,8 @@ const AdmissionsQueueMonitor = () => {
     const unsubscribeQueue = subscribe('queue-updated', (data) => {
       if (data.department === 'admissions') {
         console.log('📡 Admissions Queue Monitor - Real-time update received:', data);
-
-        // Handle specific queue update types
-        switch (data.type) {
-          case 'next-called':
-            // Update the serving number for the specific window
-            setWindowsData(prev => prev.map(window => {
-              if (window.id === data.windowId || window.name.includes(data.data.windowName)) {
-                return {
-                  ...window,
-                  serving: data.data.queueNumber
-                };
-              }
-              return window;
-            }));
-            // Refresh to get updated next queue info
-            fetchQueueData();
-            break;
-
-          case 'queue-recalled':
-            // No specific window update needed, just refresh to ensure consistency
-            fetchQueueData();
-            break;
-
-          case 'previous-recalled':
-            // Update the serving number for the specific window
-            setWindowsData(prev => prev.map(window => {
-              if (window.id === data.windowId) {
-                return {
-                  ...window,
-                  serving: data.data.queueNumber
-                };
-              }
-              return window;
-            }));
-            // Refresh to get updated next queue info
-            fetchQueueData();
-            break;
-
-          case 'queue-skipped':
-            // Refresh to get updated data
-            fetchQueueData();
-            break;
-
-          case 'queue-transferred':
-            // Update serving numbers for both windows
-            setWindowsData(prev => prev.map(window => {
-              if (window.id === data.data.fromWindowId) {
-                return { ...window, serving: 0 };
-              }
-              if (window.id === data.data.toWindowId) {
-                return { ...window, serving: data.data.queueNumber };
-              }
-              return window;
-            }));
-            // Refresh to get updated next queue info
-            fetchQueueData();
-            break;
-
-          case 'queue-added':
-          case 'queue-requeued-all':
-          default:
-            // For other updates, refresh all data
-            fetchQueueData();
-            break;
-        }
+        // Refresh all data to get updated incoming queues
+        fetchQueueData();
       }
     });
 
@@ -174,16 +97,8 @@ const AdmissionsQueueMonitor = () => {
     const unsubscribeWindow = subscribe('window-status-updated', (data) => {
       if (data.department === 'admissions') {
         console.log('📡 Admissions Queue Monitor - Window status update received:', data);
-
-        setWindowsData(prev => prev.map(window => {
-          if (window.id === data.windowId || window.name === data.data.windowName) {
-            return {
-              ...window,
-              isServing: data.data.isServing
-            };
-          }
-          return window;
-        }));
+        // Refresh all data to get updated window status
+        fetchQueueData();
       }
     });
 
@@ -199,90 +114,130 @@ const AdmissionsQueueMonitor = () => {
       unsubscribeWindow();
       leaveRoom('admin-admissions');
     };
-  }, [socket, isConnected]);
+  }, [socket, isConnected, joinRoom, leaveRoom, subscribe]);
+
+  // Get first 4 windows (for 4 rows)
+  const displayWindows = windowsData.slice(0, 4);
 
   return (
-    <div className="bg-gray-50 min-h-screen flex items-center justify-center p-6">
-      {/* Centered Main Container - 90% of viewport */}
-      <div className="w-[95vw] h-[95vh] bg-white grid grid-cols-2 gap-5 p-5" style={{ gridTemplateRows: '1fr 4fr' }}>
-        {/* Column 1, Row 1: Window/Serving Headers */}
-        <div className="flex">
-          {/* Left sub-column: WINDOW header */}
-          <div className="flex-1 flex items-center justify-center py-5">
-            <h2 className="text-4xl font-bold text-gray-800 tracking-wide">WINDOW</h2>
+    <div className="h-screen bg-gray-50 p-4 overflow-hidden flex flex-col">
+      {/* Header Section - Compact */}
+      <div className="mb-3 bg-white rounded-xl shadow-lg p-3 flex-shrink-0">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-[#1F3463] tracking-wide">
+              Admissions Office
+            </h1>
+            <div className="text-sm text-gray-600 font-medium">
+              Queue Monitor Display
+            </div>
           </div>
-
-          {/* Right sub-column: SERVING header */}
-          <div className="flex-1 flex items-center justify-center py-5">
-            <h2 className="text-4xl font-bold text-gray-800 tracking-wide">SERVING</h2>
-          </div>
-        </div>
-
-        {/* Column 2, Row 1: Date/Time Display */}
-        <div className="flex items-center justify-center p-5">
-          <div className="bg-white border-2 border-gray-300 rounded-2xl px-8 py-5 w-full shadow-lg">
-            <div className="text-2xl font-bold text-gray-800 text-center tracking-wide">
+          <div className="text-right">
+            <div className="text-xl font-bold text-gray-800">
               {currentDateTime}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Column 1, Row 2: Window Queue List */}
-        <div className="flex flex-col justify-evenly p-5 space-y-3">
-          {windowsData.map((window) => (
+      {/* Main Content: 3-Column Layout with 4 Rows - Flex to fill remaining space */}
+      <div className="flex-1 grid grid-rows-4 gap-2 overflow-hidden">
+        {displayWindows.map((window, rowIndex) => {
+          // Display all incoming queue numbers - they will dynamically fill the available space
+          const displayIncoming = window.incomingQueues || [];
+
+          return (
             <div
               key={window.id}
-              className={`relative rounded-xl flex shadow-lg transition-all duration-300 ${
-                window.isServing
-                  ? 'bg-[#1F3463] text-white'
-                  : 'bg-gray-400 text-gray-200'
-              }`}
+              className="grid grid-cols-3 gap-3 bg-white rounded-xl shadow-lg p-3"
             >
-              {/* STOP indicator overlay */}
-              {!window.isServing && (
-                <div className="absolute inset-0 bg-red-500 bg-opacity-20 rounded-xl flex items-center justify-center">
-                  <span className="bg-red-600 text-white px-5 py-2.5 rounded-lg text-xl font-bold tracking-wide">
-                    CLOSED
-                  </span>
+              {/* Column 1: Window Name and Now Serving */}
+              <div
+                className={`relative rounded-xl p-3 flex flex-col items-center justify-center ${
+                  window.isServing && window.isOpen
+                    ? 'bg-gradient-to-br from-[#1F3463] to-[#2a4a7a] text-white'
+                    : 'bg-gradient-to-br from-gray-400 to-gray-500 text-gray-100'
+                }`}
+              >
+                {/* Window Name */}
+                <div className="text-xl font-bold tracking-wide mb-2 text-center">
+                  {window.name}
+                </div>
+
+                {/* Now Serving Section - Relative for On Break overlay */}
+                <div className="relative w-full flex flex-col items-center">
+                  {/* On Break indicator - covers NOW SERVING label and number */}
+                  {(!window.isServing || !window.isOpen) && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-400 to-gray-500 rounded-lg z-10">
+                      <span className="text-3xl font-bold text-gray-100 tracking-wide">On Break</span>
+                    </div>
+                  )}
+
+                  {/* Now Serving Label */}
+                  <div className="text-sm font-semibold mb-1 tracking-wide">
+                    NOW SERVING
+                  </div>
+
+                  {/* Now Serving Number */}
+                  <div className="text-5xl font-bold tracking-wider">
+                    {window.serving > 0 ? window.serving.toString().padStart(2, '0') : '--'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Columns 2-3: Incoming Queue Numbers or On Break Message */}
+              {window.isServing && window.isOpen ? (
+                <div className="col-span-2 flex items-center">
+                  <div className="w-full">
+                    <div className="text-base font-bold text-gray-700 mb-2 tracking-wide">
+                      INCOMING QUEUES
+                    </div>
+                    <div className="flex gap-2 overflow-hidden">
+                      {displayIncoming.length > 0 ? (
+                        displayIncoming.map((queueNum, idx) => (
+                          <div
+                            key={idx}
+                            className="bg-[#3930A8] text-white rounded-lg px-3 py-2 shadow-md flex-shrink-0"
+                          >
+                            <span className="text-2xl font-bold tracking-wide">
+                              {queueNum.toString().padStart(2, '0')}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-lg text-gray-400 font-semibold italic">
+                          No queues waiting
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="col-span-2 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-500 tracking-wide mb-2">
+                      Window is on break
+                    </div>
+                    <div className="text-lg text-gray-400 font-medium">
+                      Will be back shortly
+                    </div>
+                  </div>
                 </div>
               )}
-
-              {/* Left sub-column: Window name */}
-              <div className="flex-1 flex items-center justify-center py-5 text-center">
-                <span className="text-4xl font-bold tracking-wide">{window.name}</span>
-              </div>
-
-              {/* Right sub-column: Serving number */}
-              <div className="flex-1 flex items-center justify-center py-5 text-center">
-                <span className="text-5xl font-bold tracking-wider">
-                  {window.serving > 0 ? window.serving.toString().padStart(2, '0') : '--'}
-                </span>
-              </div>
             </div>
-          ))}
-        </div>
-
-        {/* Column 2, Row 2: Next Queue Information */}
-        <div className="rounded-2xl shadow-md border-2 border-gray-200 flex flex-col p-5 space-y-3">
-          {/* First row: Next Queue Number */}
-          <div className="flex-1 bg-white flex flex-col items-center justify-center border-b-2 border-gray-300">
-            <div className="text-xl text-gray-600 mb-1.5 font-semibold">Next</div>
-            <div className="text-2xl text-gray-700 mb-3 font-bold">Queue No.</div>
-            <div className="text-7xl font-bold text-[#1F3463] tracking-wider">
-              {nextQueueInfo.nextNumber > 0 ? nextQueueInfo.nextNumber.toString().padStart(2, '0') : '--'}
-            </div>
-          </div>
-
-          {/* Second row: Window Assignment */}
-          <div className="flex-1 bg-white flex flex-col items-center justify-center">
-            <div className="text-xl text-gray-600 mb-1.5 font-semibold">Please Proceed to</div>
-            <div className="text-2xl text-gray-700 mb-3 font-bold">Window</div>
-            <div className="text-7xl font-bold text-[#1F3463] tracking-wider">
-              {nextQueueInfo.assignedWindow || '--'}
-            </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
+
+      {/* Empty State */}
+      {windowsData.length === 0 && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center bg-white rounded-xl shadow-lg p-8">
+            <div className="text-3xl font-bold text-gray-400 mb-2">No Windows Available</div>
+            <div className="text-xl text-gray-500">Waiting for window data...</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

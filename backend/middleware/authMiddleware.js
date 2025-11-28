@@ -502,6 +502,14 @@ const checkApiAccess = (req, res, next) => {
 
   console.log(`   Required pages for ${matchedPath}:`, requiredPages);
 
+  // Special handling for queue-monitor API routes: allow access for any authenticated admin user
+  // Queue-monitor is read-only display, safe for all offices to access
+  if (apiPath === '/api/analytics/queue-monitor/registrar' || apiPath === '/api/analytics/queue-monitor/admissions') {
+    // Allow any authenticated admin user (read-only display, no CUD operations)
+    console.log(`   ✓ Queue-monitor access granted: Read-only display accessible to all admin users`);
+    return next();
+  }
+
   // Check if user has access to at least one of the required pages
   const pageAccess = req.user.pageAccess || [];
 

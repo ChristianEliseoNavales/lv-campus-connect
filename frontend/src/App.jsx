@@ -64,7 +64,7 @@ function App() {
           {/* Public Kiosk Routes - No Authentication Required */}
           {/* Idle Page - Default Landing Page - No Layout Wrapper */}
           <Route path="/" element={<IdlePage />} />
-          
+
           <Route path="/home" element={
             <KioskLayout>
               <Home />
@@ -153,6 +153,13 @@ function App() {
             </ProtectedRoute>
           } />
 
+          {/* General Queue Monitor - Super Admin Access */}
+          <Route path="/admin/queue-monitor" element={
+            <ProtectedRoute>
+              <QueueMonitor />
+            </ProtectedRoute>
+          } />
+
           {/* Registrar Admin Routes */}
           <Route path="/admin/registrar" element={
             <ProtectedRoute requiredRoles={['super_admin', 'registrar_admin']}>
@@ -176,7 +183,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/admin/registrar/queue-monitor" element={
-            <ProtectedRoute requiredRoles={['super_admin', 'registrar_admin']}>
+            <ProtectedRoute>
               <RegistrarQueueMonitor />
             </ProtectedRoute>
           } />
@@ -232,7 +239,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/admin/admissions/queue-monitor" element={
-            <ProtectedRoute requiredRoles={['super_admin', 'admissions_admin']}>
+            <ProtectedRoute>
               <AdmissionsQueueMonitor />
             </ProtectedRoute>
           } />
