@@ -17,12 +17,19 @@ async function getAuditTrail(req, res, next) {
       page = 1,
       limit = 20,
       search,
+      searchTerm,
+      filterBy,
       department,
       action,
       startDate,
       endDate,
       userId
     } = req.query;
+
+    // Validate and parse pagination params
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
 
     // Build query object
     const query = {};
@@ -32,9 +39,30 @@ async function getAuditTrail(req, res, next) {
       query.department = department;
     }
 
-    // Action filter
+    // Action filter (direct action match)
     if (action) {
       query.action = action;
+    }
+
+    // FilterBy support (for frontend filterBy parameter)
+    if (filterBy && filterBy !== 'all') {
+      switch (filterBy) {
+        case 'user_actions':
+          query.action = { $regex: '^USER_', $options: 'i' };
+          break;
+        case 'queue_actions':
+          query.action = { $regex: '^QUEUE_', $options: 'i' };
+          break;
+        case 'settings_actions':
+          query.$or = [
+            { action: { $regex: 'SETTINGS', $options: 'i' } },
+            { action: { $regex: 'CONFIG', $options: 'i' } }
+          ];
+          break;
+        case 'failed_actions':
+          query.success = false;
+          break;
+      }
     }
 
     // User filter
@@ -53,18 +81,35 @@ async function getAuditTrail(req, res, next) {
       }
     }
 
-    // Search filter (search in actionDescription, userName, userEmail, resourceName)
-    if (search) {
-      query.$or = [
-        { actionDescription: { $regex: search, $options: 'i' } },
-        { userName: { $regex: search, $options: 'i' } },
-        { userEmail: { $regex: search, $options: 'i' } },
-        { resourceName: { $regex: search, $options: 'i' } }
-      ];
+    // Search filter (support both 'search' and 'searchTerm' for compatibility)
+    const searchValue = search || searchTerm;
+    if (searchValue && searchValue.trim()) {
+      const searchRegex = { $regex: searchValue.trim(), $options: 'i' };
+      // If filterBy already has $or, merge it; otherwise create new $or
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          {
+            $or: [
+              { actionDescription: searchRegex },
+              { userName: searchRegex },
+              { userEmail: searchRegex },
+              { resourceName: searchRegex },
+              { action: searchRegex }
+            ]
+          }
+        ];
+        delete query.$or;
+      } else {
+        query.$or = [
+          { actionDescription: searchRegex },
+          { userName: searchRegex },
+          { userEmail: searchRegex },
+          { resourceName: searchRegex },
+          { action: searchRegex }
+        ];
+      }
     }
-
-    // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Get total count for pagination
     const totalCount = await AuditTrail.countDocuments(query);
@@ -74,24 +119,20 @@ async function getAuditTrail(req, res, next) {
       .populate('userId', 'name email role department')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limitNum)
       .lean();
 
     // Calculate pagination info
-    const totalPages = Math.ceil(totalCount / parseInt(limit));
-    const hasNextPage = parseInt(page) < totalPages;
-    const hasPrevPage = parseInt(page) > 1;
+    const totalPages = Math.ceil(totalCount / limitNum);
 
     res.json({
       success: true,
       data: auditLogs,
       pagination: {
-        currentPage: parseInt(page),
+        currentPage: pageNum,
         totalPages,
         totalCount,
-        limit: parseInt(limit),
-        hasNextPage,
-        hasPrevPage
+        limit: limitNum
       }
     });
 

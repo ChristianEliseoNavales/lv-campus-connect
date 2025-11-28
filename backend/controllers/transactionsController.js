@@ -59,7 +59,13 @@ const formatTurnaroundTime = (diffMs) => {
 async function getTransactionsByDepartment(req, res, next) {
   try {
     const { department } = req.params;
-    const { date } = req.query; // Get date filter from query parameters
+    const {
+      date,
+      page = 1,
+      limit = 20,
+      search,
+      filterBy
+    } = req.query;
 
     // Validate department
     if (!['registrar', 'admissions'].includes(department)) {
@@ -69,7 +75,12 @@ async function getTransactionsByDepartment(req, res, next) {
       });
     }
 
-    // Build query filter
+    // Validate and parse pagination params
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build base query filter
     let queryFilter = {
       office: department,
       status: { $in: ['completed', 'skipped', 'serving', 'waiting', 'no-show'] }
@@ -107,22 +118,137 @@ async function getTransactionsByDepartment(req, res, next) {
       }
     }
 
-    // Fetch transaction logs
-    const transactions = await Queue.find(queryFilter)
-    .populate('visitationFormId', 'customerName contactNumber email address idNumber')
-    .sort({ completedAt: -1, calledAt: -1, queuedAt: -1 }) // Most recent first
-    .lean();
+    // Add filterBy support (status or priority)
+    if (filterBy) {
+      if (filterBy === 'priority') {
+        queryFilter.isPriority = true;
+      } else if (filterBy === 'complete') {
+        queryFilter.status = 'completed';
+      } else if (filterBy === 'serving') {
+        queryFilter.status = 'serving';
+      } else if (filterBy === 'waiting') {
+        queryFilter.status = 'waiting';
+      } else if (filterBy === 'skipped') {
+        queryFilter.status = 'skipped';
+      } else if (filterBy === 'no-show') {
+        queryFilter.status = 'no-show';
+      }
+    }
 
-    // Fetch services for mapping serviceId to service name
-    const services = await Service.find({ office: department }).lean();
-    const serviceMap = services.reduce((map, service) => {
-      map[service._id.toString()] = service.name;
-      return map;
-    }, {});
+    // Build aggregation pipeline for search and pagination
+    const pipeline = [
+      // Match base filters
+      { $match: queryFilter },
+
+      // Lookup visitation form
+      {
+        $lookup: {
+          from: 'visitationforms',
+          localField: 'visitationFormId',
+          foreignField: '_id',
+          as: 'visitationForm'
+        }
+      },
+
+      // Lookup service
+      {
+        $lookup: {
+          from: 'services',
+          localField: 'serviceId',
+          foreignField: '_id',
+          as: 'service'
+        }
+      },
+
+      // Unwind arrays
+      { $unwind: { path: '$visitationForm', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+
+      // Add computed fields for search
+      {
+        $addFields: {
+          customerName: {
+            $ifNull: [
+              '$visitationForm.customerName',
+              {
+                $cond: {
+                  if: { $eq: ['$service.name', 'Enroll'] },
+                  then: {
+                    $cond: {
+                      if: { $eq: ['$office', 'registrar'] },
+                      then: 'Enrollee',
+                      else: {
+                        $cond: {
+                          if: { $eq: ['$office', 'admissions'] },
+                          then: 'New Student',
+                          else: 'Anonymous Customer'
+                        }
+                      }
+                    }
+                  },
+                  else: 'Anonymous Customer'
+                }
+              }
+            ]
+          },
+          purposeOfVisit: { $ifNull: ['$service.name', 'Unknown Service'] },
+          priorityDisplay: {
+            $cond: {
+              if: '$isPriority',
+              then: { $ifNull: ['$visitationForm.idNumber', 'No'] },
+              else: 'No'
+            }
+          },
+          statusDisplay: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$status', 'serving'] }, then: 'Now Serving' },
+                { case: { $eq: ['$status', 'completed'] }, then: 'Complete' },
+                { case: { $eq: ['$status', 'skipped'] }, then: 'Skipped' },
+                { case: { $eq: ['$status', 'waiting'] }, then: 'Waiting' },
+                { case: { $eq: ['$status', 'no-show'] }, then: 'No-show/Cancelled' }
+              ],
+              default: '$status'
+            }
+          }
+        }
+      }
+    ];
+
+    // Add search filter if provided
+    if (search && search.trim()) {
+      const searchRegex = { $regex: search.trim(), $options: 'i' };
+      pipeline.push({
+        $match: {
+          $or: [
+            { customerName: searchRegex },
+            { purposeOfVisit: searchRegex },
+            { queueNumber: { $regex: search.trim(), $options: 'i' } },
+            { role: searchRegex },
+            { remarks: searchRegex }
+          ]
+        }
+      });
+    }
+
+    // Get total count for pagination (before skip/limit)
+    const countPipeline = [...pipeline, { $count: 'total' }];
+    const countResult = await Queue.aggregate(countPipeline);
+    const totalCount = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Add sorting and pagination
+    pipeline.push(
+      { $sort: { completedAt: -1, calledAt: -1, queuedAt: -1 } },
+      { $skip: skip },
+      { $limit: limitNum }
+    );
+
+    // Execute aggregation
+    const transactions = await Queue.aggregate(pipeline);
 
     // Transform data for frontend
     const transformedTransactions = transactions.map(transaction => {
-      // Calculate turnaround time (total time from queue submission to completion)
+      // Calculate turnaround time
       let turnaroundTime = '0 secs';
       if (transaction.queuedAt && transaction.completedAt) {
         const diffMs = new Date(transaction.completedAt) - new Date(transaction.queuedAt);
@@ -131,60 +257,34 @@ async function getTransactionsByDepartment(req, res, next) {
         turnaroundTime = 'In Progress';
       }
 
-      // Determine status display
-      let statusDisplay = transaction.status;
-      if (transaction.status === 'serving') {
-        statusDisplay = 'Now Serving';
-      } else if (transaction.status === 'completed') {
-        statusDisplay = 'Complete';
-      } else if (transaction.status === 'skipped') {
-        statusDisplay = 'Skipped';
-      } else if (transaction.status === 'waiting') {
-        statusDisplay = 'Waiting';
-      } else if (transaction.status === 'no-show') {
-        statusDisplay = 'No-show/Cancelled';
-      }
-
-      // Determine customer name using same logic as queue display
-      let customerName;
-      if (transaction.visitationFormId?.customerName) {
-        customerName = transaction.visitationFormId.customerName;
-      } else {
-        // For Enroll service without visitation form, use office-specific labels
-        const serviceName = serviceMap[transaction.serviceId];
-        if (serviceName === 'Enroll') {
-          if (transaction.office === 'registrar') {
-            customerName = 'Enrollee';
-          } else if (transaction.office === 'admissions') {
-            customerName = 'New Student';
-          } else {
-            customerName = 'N/A (Enroll Service)';
-          }
-        } else {
-          customerName = 'Anonymous Customer';
-        }
-      }
-
       return {
         id: transaction._id,
         queueNumber: transaction.queueNumber,
-        customerName,
-        purposeOfVisit: serviceMap[transaction.serviceId] || 'Unknown Service',
-        priority: transaction.isPriority ? (transaction.visitationFormId?.idNumber || 'No') : 'No',
+        customerName: transaction.customerName,
+        purposeOfVisit: transaction.purposeOfVisit,
+        priority: transaction.priorityDisplay,
         role: transaction.role,
         turnaroundTime,
         remarks: transaction.remarks || '',
-        status: statusDisplay,
+        status: transaction.statusDisplay,
         timestamp: transaction.completedAt || transaction.calledAt || transaction.createdAt,
         serviceStartTime: transaction.calledAt,
         serviceEndTime: transaction.completedAt
       };
     });
 
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / limitNum);
+
     res.json({
       success: true,
       data: transformedTransactions,
-      count: transformedTransactions.length
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalCount,
+        limit: limitNum
+      }
     });
 
   } catch (error) {

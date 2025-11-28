@@ -27,7 +27,7 @@ const Ratings = () => {
 
   // Non-persisted state (resets on navigation)
   const [ratings, setRatings] = useState([]);
-  const [filteredRatings, setFilteredRatings] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalCount: 0, limit: 10 });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -45,27 +45,32 @@ const Ratings = () => {
     return formatDateForAPI(selectedDate);
   }, [selectedDate]);
 
-  // Fetch ratings - only depends on date changes
+  // Fetch ratings - depends on pagination and filter changes
   const fetchRatings = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     errorShownRef.current = false;
 
     try {
-      let url = `${API_CONFIG.getAdminUrl()}/api/queue-ratings`;
       const params = new URLSearchParams();
 
+      // Add pagination params
+      params.append('page', currentPage.toString());
+      params.append('limit', logsPerPage.toString());
+
+      // Add filters
       if (dateParam) {
         params.append('startDate', dateParam);
         params.append('endDate', dateParam);
       }
-
-      // Fetch all ratings for the selected date (or all if no date selected)
-      params.append('limit', '10000'); // High limit to get all records
-
-      if (params.toString()) {
-        url += `?${params.toString()}`;
+      if (searchTerm && searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
       }
+      if (filterBy && filterBy !== 'all') {
+        params.append('filterBy', filterBy);
+      }
+
+      const url = `${API_CONFIG.getAdminUrl()}/api/queue-ratings?${params.toString()}`;
 
       const response = await authFetch(url);
 
@@ -77,6 +82,7 @@ const Ratings = () => {
 
       if (result.success) {
         setRatings(result.data);
+        setPagination(result.pagination || { currentPage: 1, totalPages: 1, totalCount: 0, limit: logsPerPage });
         setLastRefreshTime(new Date());
       } else {
         throw new Error(result.error || 'Failed to fetch ratings');
@@ -85,10 +91,11 @@ const Ratings = () => {
       console.error('Error fetching ratings:', error);
       setFetchError(error.message);
       setRatings([]);
+      setPagination({ currentPage: 1, totalPages: 1, totalCount: 0, limit: logsPerPage });
     } finally {
       setLoading(false);
     }
-  }, [dateParam]);
+  }, [currentPage, logsPerPage, dateParam, searchTerm, filterBy]); // Dependencies include all filter params
 
   // Manual refresh function for ratings
   const handleManualRefresh = async () => {
@@ -106,41 +113,10 @@ const Ratings = () => {
     }
   };
 
-  // Client-side filtering - separate from API fetching
-  const applyFilters = useCallback(() => {
-    let filtered = [...ratings];
-
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(rating =>
-        rating.serviceName?.toLowerCase().includes(searchLower) ||
-        rating.department?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply filter by rating value or department
-    if (filterBy !== 'all') {
-      if (filterBy === 'registrar' || filterBy === 'admissions') {
-        filtered = filtered.filter(rating => rating.department === filterBy);
-      } else if (filterBy.endsWith('_star')) {
-        const ratingValue = parseInt(filterBy.charAt(0));
-        filtered = filtered.filter(rating => rating.rating === ratingValue);
-      }
-    }
-
-    setFilteredRatings(filtered);
-  }, [ratings, searchTerm, filterBy]);
-
-  // Effect for fetching data - only when date changes or on mount
+  // Effect for fetching data - triggers on filter/pagination changes
   useEffect(() => {
     fetchRatings();
   }, [fetchRatings]);
-
-  // Effect for client-side filtering - when data or filter criteria change
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
 
   // Effect for resetting page when filters change (separate to avoid loops)
   useEffect(() => {
@@ -166,11 +142,10 @@ const Ratings = () => {
     updateState('currentPage', 1);
   };
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredRatings.length / logsPerPage);
-  const startIndex = (currentPage - 1) * logsPerPage;
-  const endIndex = startIndex + logsPerPage;
-  const currentRatings = filteredRatings.slice(startIndex, endIndex);
+  // Pagination - use backend pagination data
+  const totalPages = pagination.totalPages || 1;
+  const totalCount = pagination.totalCount || 0;
+  const currentRatings = ratings; // Backend already returns paginated data
 
   const handlePageChange = (page) => {
     updateState('currentPage', page);
@@ -419,7 +394,7 @@ const Ratings = () => {
         {totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 mt-3 sm:mt-4 md:mt-5">
             <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredRatings.length)} of {filteredRatings.length} ratings
+              Showing {((currentPage - 1) * logsPerPage) + 1} to {Math.min(currentPage * logsPerPage, totalCount)} of {totalCount} ratings
             </div>
             <div className="order-1 sm:order-2">
               <Pagination

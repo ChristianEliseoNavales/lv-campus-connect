@@ -26,7 +26,7 @@ const AuditTrail = () => {
 
   // Non-persisted state (resets on navigation)
   const [auditLogs, setAuditLogs] = useState([]);
-  const [filteredLogs, setFilteredLogs] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalCount: 0, limit: 10 });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -44,24 +44,32 @@ const AuditTrail = () => {
     return formatDateForAPI(selectedDate);
   }, [selectedDate]);
 
-  // Fetch audit logs - only depends on date changes
+  // Fetch audit logs - depends on pagination and filter changes
   const fetchAuditLogs = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     errorShownRef.current = false;
 
     try {
-      let url = `${API_CONFIG.getAdminUrl()}/api/audit`;
       const params = new URLSearchParams();
 
+      // Add pagination params
+      params.append('page', currentPage.toString());
+      params.append('limit', logsPerPage.toString());
+
+      // Add filters
       if (dateParam) {
         params.append('startDate', dateParam);
         params.append('endDate', dateParam);
       }
-
-      if (params.toString()) {
-        url += `?${params.toString()}`;
+      if (searchTerm && searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
       }
+      if (filterBy && filterBy !== 'all') {
+        params.append('filterBy', filterBy);
+      }
+
+      const url = `${API_CONFIG.getAdminUrl()}/api/audit?${params.toString()}`;
 
       const response = await authFetch(url);
 
@@ -73,6 +81,7 @@ const AuditTrail = () => {
 
       if (result.success) {
         setAuditLogs(result.data);
+        setPagination(result.pagination || { currentPage: 1, totalPages: 1, totalCount: 0, limit: logsPerPage });
         setLastRefreshTime(new Date());
       } else {
         throw new Error(result.error || 'Failed to fetch audit logs');
@@ -81,10 +90,11 @@ const AuditTrail = () => {
       console.error('Error fetching audit logs:', error);
       setFetchError(error.message);
       setAuditLogs([]);
+      setPagination({ currentPage: 1, totalPages: 1, totalCount: 0, limit: logsPerPage });
     } finally {
       setLoading(false);
     }
-  }, [dateParam]);
+  }, [currentPage, logsPerPage, dateParam, searchTerm, filterBy]); // Dependencies include all filter params
 
   // Manual refresh function for audit logs
   const handleManualRefresh = async () => {
@@ -110,47 +120,10 @@ const AuditTrail = () => {
     }
   }, [fetchError, showError]);
 
-  // Initial data fetch
+  // Effect for fetching data - triggers on filter/pagination changes
   useEffect(() => {
     fetchAuditLogs();
   }, [fetchAuditLogs]);
-
-  // Filter and search logic
-  useEffect(() => {
-    let filtered = [...auditLogs];
-
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(log =>
-        log.actionDescription?.toLowerCase().includes(searchLower) ||
-        log.userName?.toLowerCase().includes(searchLower) ||
-        log.userEmail?.toLowerCase().includes(searchLower) ||
-        log.resourceName?.toLowerCase().includes(searchLower) ||
-        log.action?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply filter by action type
-    if (filterBy !== 'all') {
-      filtered = filtered.filter(log => {
-        switch (filterBy) {
-          case 'user_actions':
-            return log.action?.startsWith('USER_');
-          case 'queue_actions':
-            return log.action?.startsWith('QUEUE_');
-          case 'settings_actions':
-            return log.action?.includes('SETTINGS') || log.action?.includes('CONFIG');
-          case 'failed_actions':
-            return !log.success;
-          default:
-            return true;
-        }
-      });
-    }
-
-    setFilteredLogs(filtered);
-  }, [auditLogs, searchTerm, filterBy]);
 
   // Reset to first page when filters change (separate effect to avoid circular dependency)
   useEffect(() => {
@@ -160,10 +133,10 @@ const AuditTrail = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, filterBy]); // Only reset when filters change, not when currentPage changes
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
-  const startIndex = (currentPage - 1) * logsPerPage;
-  const currentLogs = filteredLogs.slice(startIndex, startIndex + logsPerPage);
+  // Pagination - use backend pagination data
+  const totalPages = pagination.totalPages || 1;
+  const totalCount = pagination.totalCount || 0;
+  const currentLogs = auditLogs; // Backend already returns paginated data
 
   // Handle pagination
   const handlePageChange = (newPage) => {
@@ -334,7 +307,7 @@ const AuditTrail = () => {
               {/* Skeleton Loading Rows */}
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 flex items-center animate-pulse">
+                  <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-2 sm:gap-3 items-center w-full">
                       <div className="h-3 bg-gray-200 rounded w-12"></div>
                       <div className="hidden md:block h-3 bg-gray-200 rounded w-16"></div>
@@ -370,7 +343,7 @@ const AuditTrail = () => {
                 {currentLogs.map((log, index) => {
                   const { time, date } = formatDateTime(log.createdAt);
                   return (
-                    <div key={log._id} className={`px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 hover:bg-gray-50 transition-colors duration-200 flex items-center ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
+                    <div key={log._id} className={`px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 hover:bg-gray-50 transition-colors duration-200 md:h-12 flex items-center ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 items-start md:items-center w-full">
                         {/* Time */}
                         <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
@@ -418,7 +391,7 @@ const AuditTrail = () => {
         {totalPages > 1 && (
           <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
             <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
-              Showing {startIndex + 1} to {Math.min(startIndex + logsPerPage, filteredLogs.length)} of {filteredLogs.length} logs
+              Showing {((currentPage - 1) * logsPerPage) + 1} to {Math.min(currentPage * logsPerPage, totalCount)} of {totalCount} logs
             </div>
             <div className="order-1 sm:order-2">
               <Pagination

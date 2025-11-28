@@ -29,7 +29,7 @@ const TransactionLogs = () => {
 
   // Non-persisted state (resets on navigation)
   const [transactionLogs, setTransactionLogs] = useState([]);
-  const [filteredLogs, setFilteredLogs] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalCount: 0, limit: 10 });
   const [loading, setLoading] = useState(true);
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null);
@@ -54,14 +54,31 @@ const TransactionLogs = () => {
     return formatDateForAPI(selectedDate);
   }, [selectedDate]);
 
-  // Fetch transaction logs - only depends on date changes
+  // Fetch transaction logs - depends on pagination and filter changes
   const fetchTransactionLogs = useCallback(async () => {
     setLoading(true);
     setFetchError(null); // Clear previous errors
     errorShownRef.current = false; // Reset error shown flag
 
     try {
-      const url = `${API_CONFIG.getAdminUrl()}/api/transactions/admissions${dateParam ? `?date=${dateParam}` : ''}`;
+      const params = new URLSearchParams();
+
+      // Add pagination params
+      params.append('page', currentPage.toString());
+      params.append('limit', logsPerPage.toString());
+
+      // Add filters
+      if (dateParam) {
+        params.append('date', dateParam);
+      }
+      if (searchTerm && searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      if (filterBy && filterBy !== 'all') {
+        params.append('filterBy', filterBy);
+      }
+
+      const url = `${API_CONFIG.getAdminUrl()}/api/transactions/admissions?${params.toString()}`;
 
       const response = await authFetch(url);
 
@@ -73,6 +90,7 @@ const TransactionLogs = () => {
 
       if (result.success) {
         setTransactionLogs(result.data);
+        setPagination(result.pagination || { currentPage: 1, totalPages: 1, totalCount: 0, limit: logsPerPage });
         // Update refresh timestamp
         setLastRefreshTime(new Date());
       } else {
@@ -82,10 +100,11 @@ const TransactionLogs = () => {
       console.error('Error fetching transaction logs:', error);
       setFetchError(error.message); // Set error state instead of calling showError directly
       setTransactionLogs([]); // Set empty array on error
+      setPagination({ currentPage: 1, totalPages: 1, totalCount: 0, limit: logsPerPage });
     } finally {
       setLoading(false);
     }
-  }, [dateParam]); // Removed showError from dependencies to prevent infinite loop
+  }, [currentPage, logsPerPage, dateParam, searchTerm, filterBy]); // Dependencies include all filter params
 
   // Manual refresh function for transaction logs
   const handleManualRefresh = async () => {
@@ -112,51 +131,10 @@ const TransactionLogs = () => {
     });
   };
 
-  // Client-side filtering - separate from API fetching
-  const applyFilters = useCallback(() => {
-    let filtered = [...transactionLogs];
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(log =>
-        log.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.purposeOfVisit.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.queueNumber.toString().includes(searchTerm) ||
-        log.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.remarks.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply filter by status/priority
-    if (filterBy !== 'all') {
-      if (filterBy === 'priority') {
-        filtered = filtered.filter(log => log.priority !== 'No');
-      } else if (filterBy === 'complete') {
-        filtered = filtered.filter(log => log.status === 'Complete');
-      } else if (filterBy === 'serving') {
-        filtered = filtered.filter(log => log.status === 'Now Serving');
-      } else if (filterBy === 'waiting') {
-        filtered = filtered.filter(log => log.status === 'Waiting');
-      } else if (filterBy === 'skipped') {
-        filtered = filtered.filter(log => log.status === 'Skipped');
-      } else if (filterBy === 'no-show') {
-        filtered = filtered.filter(log => log.status === 'No-show/Cancelled');
-      }
-    }
-
-    setFilteredLogs(filtered);
-  }, [transactionLogs, searchTerm, filterBy]);
-
-  // Effect for fetching data - only when date changes or on mount
+  // Effect for fetching data - triggers on filter/pagination changes
   useEffect(() => {
     fetchTransactionLogs();
   }, [fetchTransactionLogs]);
-
-  // Effect for client-side filtering - when data or filter criteria change
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
 
   // Effect for resetting page when filters change (separate to avoid loops)
   useEffect(() => {
@@ -246,11 +224,10 @@ const TransactionLogs = () => {
     }
   };
 
-  // Pagination
-  const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
-  const startIndex = (currentPage - 1) * logsPerPage;
-  const endIndex = startIndex + logsPerPage;
-  const currentLogs = filteredLogs.slice(startIndex, endIndex);
+  // Pagination - use backend pagination data
+  const totalPages = pagination.totalPages || 1;
+  const totalCount = pagination.totalCount || 0;
+  const currentLogs = transactionLogs; // Backend already returns paginated data
 
   const handlePageChange = (page) => {
     updateState('currentPage', page);
@@ -546,7 +523,7 @@ const TransactionLogs = () => {
         {totalPages > 1 && (
           <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
             <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredLogs.length)} of {filteredLogs.length} logs
+              Showing {((currentPage - 1) * logsPerPage) + 1} to {Math.min(currentPage * logsPerPage, totalCount)} of {totalCount} logs
             </div>
             <div className="order-1 sm:order-2">
               <Pagination

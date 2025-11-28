@@ -14,10 +14,22 @@ const emitFAQUpdate = (io, eventData) => {
   }
 };
 
-// GET /api/faq - Get all FAQs (with optional filtering)
+// GET /api/faq - Get all FAQs (with optional filtering and pagination)
 async function getFAQs(req, res, next) {
   try {
-    const { status, search } = req.query;
+    const {
+      status,
+      filterStatus,
+      filterCategory,
+      search,
+      page = 1,
+      limit = 20
+    } = req.query;
+
+    // Validate and parse pagination params
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
 
     let query = {};
 
@@ -29,26 +41,48 @@ async function getFAQs(req, res, next) {
       query.office = userOffice;
     }
 
-    if (status) {
-      query.status = status;
+    // Status filter (support both 'status' and 'filterStatus' for compatibility)
+    const statusFilter = filterStatus || status;
+    if (statusFilter) {
+      query.status = statusFilter;
     }
 
-    if (search) {
+    // Category filter (for MIS FAQ page)
+    if (filterCategory && filterCategory !== 'all') {
+      query.category = filterCategory;
+    }
+
+    // Search filter
+    if (search && search.trim()) {
       query.$or = [
-        { question: { $regex: search, $options: 'i' } },
-        { answer: { $regex: search, $options: 'i' } }
+        { question: { $regex: search.trim(), $options: 'i' } },
+        { answer: { $regex: search.trim(), $options: 'i' } }
       ];
     }
 
+    // Get total count for pagination
+    const totalCount = await FAQ.countDocuments(query);
+
+    // Fetch FAQs with pagination
     const faqs = await FAQ.find(query)
       .populate('createdBy', 'name email')
       .populate('updatedBy', 'name email')
-      .sort({ office: 1, order: 1, createdAt: -1 });
+      .sort({ office: 1, order: 1, createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / limitNum);
 
     res.json({
       success: true,
-      count: faqs.length,
-      data: faqs
+      data: faqs,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalCount,
+        limit: limitNum
+      }
     });
   } catch (error) {
     console.error('Error fetching FAQs:', error);

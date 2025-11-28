@@ -32,6 +32,7 @@ const FAQ = () => {
 
   // Non-persisted state (resets on navigation)
   const [faqs, setFaqs] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalCount: 0, limit: 10 });
   const [loading, setLoading] = useState(true);
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -78,19 +79,33 @@ const FAQ = () => {
     };
   }, [socket, isConnected]);
 
-  // Fetch FAQs on component mount
-  useEffect(() => {
-    fetchFAQs();
-  }, []);
-
-  // Fetch FAQs function
+  // Fetch FAQs function - depends on pagination and filter changes
   const fetchFAQs = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     errorShownRef.current = false;
 
     try {
-      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/faq`);
+      const params = new URLSearchParams();
+
+      // Add pagination params
+      params.append('page', currentPage.toString());
+      params.append('limit', faqsPerPage.toString());
+
+      // Add filters
+      if (searchTerm && searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      if (filterStatus && filterStatus !== 'all') {
+        params.append('filterStatus', filterStatus);
+      }
+      if (filterCategory && filterCategory !== 'all') {
+        params.append('filterCategory', filterCategory);
+      }
+
+      const url = `${API_CONFIG.getAdminUrl()}/api/faq?${params.toString()}`;
+
+      const response = await authFetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -100,6 +115,7 @@ const FAQ = () => {
 
       if (result.success) {
         setFaqs(result.data || []);
+        setPagination(result.pagination || { currentPage: 1, totalPages: 1, totalCount: 0, limit: faqsPerPage });
         setLastRefreshTime(new Date());
       } else {
         throw new Error(result.error || 'Failed to fetch FAQs');
@@ -108,10 +124,16 @@ const FAQ = () => {
       console.error('Error fetching FAQs:', error);
       setFetchError(error.message);
       setFaqs([]);
+      setPagination({ currentPage: 1, totalPages: 1, totalCount: 0, limit: faqsPerPage });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, faqsPerPage, searchTerm, filterStatus, filterCategory]); // Dependencies include all filter params
+
+  // Fetch FAQs on component mount and when filters change
+  useEffect(() => {
+    fetchFAQs();
+  }, [fetchFAQs]);
 
   // Manual refresh function
   const handleManualRefresh = async () => {
@@ -146,30 +168,17 @@ const FAQ = () => {
     updateState('currentPage', 1); // Reset to first page
   };
 
-  // Filter and search FAQs - Sort alphabetically by question
-  const filteredFAQs = useMemo(() => {
-    const filtered = faqs.filter(faq => {
-      const matchesSearch =
-        faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
+  // Reset to first page when filters change
+  useEffect(() => {
+    if (currentPage > 1) {
+      updateState('currentPage', 1);
+    }
+  }, [searchTerm, filterCategory, filterStatus, updateState]);
 
-      const matchesCategory = filterCategory === 'all' || faq.category === filterCategory;
-      const matchesStatus = filterStatus === 'all' || faq.status === filterStatus;
-
-      return matchesSearch && matchesCategory && matchesStatus;
-    });
-
-    // Sort alphabetically by question
-    return filtered.sort((a, b) => {
-      return a.question.toLowerCase().localeCompare(b.question.toLowerCase());
-    });
-  }, [faqs, searchTerm, filterCategory, filterStatus]);
-
-  // Pagination
-  const indexOfLastFAQ = currentPage * faqsPerPage;
-  const indexOfFirstFAQ = indexOfLastFAQ - faqsPerPage;
-  const currentFAQs = filteredFAQs.slice(indexOfFirstFAQ, indexOfLastFAQ);
-  const totalPages = Math.ceil(filteredFAQs.length / faqsPerPage);
+  // Pagination - use backend pagination data
+  const totalPages = pagination.totalPages || 1;
+  const totalCount = pagination.totalCount || 0;
+  const currentFAQs = faqs; // Backend already returns paginated and filtered data
 
   // Handle page change
   const handlePageChange = (newPage) => {
@@ -557,7 +566,7 @@ const FAQ = () => {
         {totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 mt-3 sm:mt-4 md:mt-5">
             <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
-              Showing {indexOfFirstFAQ + 1} to {Math.min(indexOfLastFAQ, filteredFAQs.length)} of {filteredFAQs.length} FAQs
+              Showing {((currentPage - 1) * faqsPerPage) + 1} to {Math.min(currentPage * faqsPerPage, totalCount)} of {totalCount} FAQs
             </div>
             <div className="order-1 sm:order-2">
               <Pagination

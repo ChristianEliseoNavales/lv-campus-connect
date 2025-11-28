@@ -19,25 +19,37 @@ async function getQueueRatings(req, res, next) {
       page = 1,
       limit = 20,
       search,
+      searchTerm,
+      filterBy,
       department,
       rating,
       startDate,
       endDate
     } = req.query;
 
+    // Validate and parse pagination params
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
     // Build match stage for aggregation
     const matchStage = {
       rating: { $exists: true, $ne: null } // Only queues with ratings
     };
 
-    // Department filter
-    if (department) {
-      matchStage.office = department;
+    // Department filter (support both 'department' and 'filterBy' for compatibility)
+    const deptFilter = department || (filterBy && (filterBy === 'registrar' || filterBy === 'admissions') ? filterBy : null);
+    if (deptFilter) {
+      matchStage.office = deptFilter;
     }
 
-    // Rating filter
-    if (rating) {
-      matchStage.rating = parseInt(rating);
+    // Rating filter (support both 'rating' and 'filterBy' with _star suffix)
+    let ratingFilter = rating;
+    if (filterBy && filterBy.endsWith('_star')) {
+      ratingFilter = parseInt(filterBy.charAt(0));
+    }
+    if (ratingFilter) {
+      matchStage.rating = parseInt(ratingFilter);
     }
 
     // Date range filter
@@ -52,9 +64,6 @@ async function getQueueRatings(req, res, next) {
         matchStage.queuedAt.$lte = endDateTime;
       }
     }
-
-    // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Build aggregation pipeline
     const pipeline = [
@@ -118,12 +127,13 @@ async function getQueueRatings(req, res, next) {
         }
       },
 
-      // Search filter (after joining to access customerName)
-      ...(search ? [{
+      // Search filter (support both 'search' and 'searchTerm' for compatibility)
+      ...((search || searchTerm) ? [{
         $match: {
           $or: [
-            { customerName: { $regex: search, $options: 'i' } },
-            { serviceName: { $regex: search, $options: 'i' } }
+            { customerName: { $regex: (search || searchTerm).trim(), $options: 'i' } },
+            { serviceName: { $regex: (search || searchTerm).trim(), $options: 'i' } },
+            { department: { $regex: (search || searchTerm).trim(), $options: 'i' } }
           ]
         }
       }] : []),
@@ -139,7 +149,7 @@ async function getQueueRatings(req, res, next) {
           ],
           data: [
             { $skip: skip },
-            { $limit: parseInt(limit) },
+            { $limit: limitNum },
             {
               $project: {
                 _id: 1,
@@ -163,7 +173,7 @@ async function getQueueRatings(req, res, next) {
 
     const total = result[0].metadata[0]?.total || 0;
     const ratings = result[0].data || [];
-    const totalPages = Math.ceil(total / parseInt(limit));
+    const totalPages = Math.ceil(total / limitNum);
 
     // Debug logging for Enroll service ratings
     const enrollRatings = ratings.filter(r => r.serviceName === 'Enroll');
@@ -176,10 +186,10 @@ async function getQueueRatings(req, res, next) {
       success: true,
       data: ratings,
       pagination: {
-        currentPage: parseInt(page),
+        currentPage: pageNum,
         totalPages,
-        totalItems: total,
-        itemsPerPage: parseInt(limit)
+        totalCount: total,
+        limit: limitNum
       }
     });
   } catch (error) {
