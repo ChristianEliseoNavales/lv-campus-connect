@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FaUsers } from 'react-icons/fa';
 import { MdStar, MdStarBorder } from 'react-icons/md';
@@ -214,12 +215,14 @@ const MISAdminDashboard = () => {
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">
           MIS Super Admin Dashboard
         </h1>
-        <button
+        <motion.button
           onClick={() => setIsDateRangeModalOpen(true)}
           className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1F3463] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#152847] transition-colors duration-200 shadow-md hover:shadow-lg"
+          whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.95, transition: { duration: 0.15 } }}
         >
           View Analytic Report
-        </button>
+        </motion.button>
       </div>
 
       {/* Date Range Selection Modal */}

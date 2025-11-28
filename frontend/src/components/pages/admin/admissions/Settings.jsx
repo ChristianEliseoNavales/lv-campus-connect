@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { MdAdd, MdLocationOn, MdClose, MdKeyboardArrowDown, MdMonitor } from 'react-icons/md';
-import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMinusCircle } from 'react-icons/ai';
+import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { LuSettings2 } from 'react-icons/lu';
+import { FiEdit3 } from 'react-icons/fi';
 import { useSocket } from '../../../../contexts/SocketContext';
 import { ToastContainer, ConfirmModal } from '../../../ui';
 import { useNotification } from '../../../../hooks/useNotification';
@@ -235,20 +237,22 @@ const LocationAutocomplete = ({
         {isOpen && filteredOptions.length > 0 && !disabled && (
           <div className="absolute top-full left-0 right-0 mt-0.5 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-20">
             {filteredOptions.map((option, index) => (
-              <button
+              <motion.button
                 key={index}
                 onClick={() => handleOptionSelect(option)}
                 className="w-full text-left text-sm px-3 py-1.5 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors duration-150"
+                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
               >
                 {option}
-              </button>
+              </motion.button>
             ))}
           </div>
         )}
       </div>
 
       {/* Save Button - Positioned outside on the right */}
-      <button
+      <motion.button
         onClick={handleSave}
         disabled={isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()}
         className={`ml-2.5 px-3 py-1.5 text-xs rounded-full transition-colors ${
@@ -256,9 +260,11 @@ const LocationAutocomplete = ({
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
             : 'bg-[#1F3463] text-white hover:opacity-90'
         }`}
+        whileHover={!(isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()) ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
+        whileTap={!(isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()) ? { scale: 0.95, transition: { duration: 0.15 } } : undefined}
       >
         {isUpdating ? 'Saving...' : 'Save'}
-      </button>
+      </motion.button>
     </div>
   );
 };
@@ -275,7 +281,6 @@ const AddEditWindowModal = ({
   adminUsers,
   adminUsersLoading,
   isEditing,
-  onRemove,
   errors = {},
   initialFormData = { name: '', serviceIds: [], assignedAdmin: '', isPriority: false },
   showWarning
@@ -310,12 +315,14 @@ const AddEditWindowModal = ({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
-          <button
+          <motion.button
             onClick={onClose}
             className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            whileHover={{ scale: 1.1, transition: { duration: 0.2 } }}
+            whileTap={{ scale: 0.9, transition: { duration: 0.15 } }}
           >
             <MdClose className="w-3 h-3" />
-          </button>
+          </motion.button>
 
           {/* Row 1: Header */}
           <div className="p-5">
@@ -476,7 +483,7 @@ const AddEditWindowModal = ({
 
             {/* Row 5: Action Buttons */}
             <div className="flex space-x-2.5">
-              <button
+              <motion.button
                 onClick={handleSave}
                 disabled={!hasFormChanges()}
                 className={`flex-1 flex items-center justify-center space-x-1.5 p-2.5 text-sm rounded-lg transition-colors ${
@@ -485,17 +492,11 @@ const AddEditWindowModal = ({
                     : 'text-white hover:opacity-90'
                 }`}
                 style={{ backgroundColor: !hasFormChanges() ? undefined : '#1F3463' }}
+                whileHover={hasFormChanges() ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
+                whileTap={hasFormChanges() ? { scale: 0.95, transition: { duration: 0.15 } } : undefined}
               >
                 <span className="font-medium">Save</span>
-              </button>
-              {isEditing && onRemove && (
-                <button
-                  onClick={onRemove}
-                  className="flex items-center justify-center space-x-1.5 p-2.5 text-sm bg-red-600 text-white rounded-lg transition-colors hover:bg-red-700"
-                >
-                  <span className="font-medium">Remove</span>
-                </button>
-              )}
+              </motion.button>
             </div>
           </div>
         </div>
@@ -504,15 +505,16 @@ const AddEditWindowModal = ({
   );
 };
 
-// Add Service Modal Component - Moved outside to prevent re-creation on every render
-const AddServiceModal = ({
+// Add/Edit Service Modal Component - Moved outside to prevent re-creation on every render
+const AddEditServiceModal = ({
   isOpen,
   onClose,
   serviceFormData,
   onFormChange,
   onSave,
   errors = {},
-  initialFormData = { name: '' },
+  initialFormData = { name: '', id: '' },
+  isEditing = false,
   showWarning
 }) => {
   if (!isOpen) return null;
@@ -545,17 +547,19 @@ const AddServiceModal = ({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
-          <button
+          <motion.button
             onClick={onClose}
             className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+            whileHover={{ scale: 1.1, transition: { duration: 0.2 } }}
+            whileTap={{ scale: 0.9, transition: { duration: 0.15 } }}
           >
             <MdClose className="w-3 h-3" />
-          </button>
+          </motion.button>
 
           {/* Row 1: Header */}
           <div className="p-5">
             <h3 className="text-lg font-semibold text-gray-900">
-              Adding Service
+              {isEditing ? 'Editing Service' : 'Adding Service'}
             </h3>
           </div>
 
@@ -583,7 +587,7 @@ const AddServiceModal = ({
             </div>
 
             {/* Row 3: Save Button */}
-            <button
+            <motion.button
               onClick={handleSave}
               disabled={!hasFormChanges()}
               className={`w-full flex items-center justify-center space-x-1.5 p-2.5 text-sm rounded-lg transition-colors ${
@@ -592,9 +596,11 @@ const AddServiceModal = ({
                   : 'text-white hover:opacity-90'
               }`}
               style={{ backgroundColor: !hasFormChanges() ? undefined : '#1F3463' }}
+              whileHover={hasFormChanges() ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
+              whileTap={hasFormChanges() ? { scale: 0.95, transition: { duration: 0.15 } } : undefined}
             >
               <span className="font-medium">Save</span>
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -629,7 +635,7 @@ const Settings = () => {
     services: [],
     windows: [],
     windowFormData: { name: '', serviceIds: [], assignedAdmin: '', isPriority: false },
-    serviceFormData: { name: '' }
+    serviceFormData: { name: '', id: '' }
   });
 
   // Notifications (saves to database)
@@ -659,6 +665,8 @@ const Settings = () => {
         fetchServices();
         if (data.type === 'service-added') {
           showSuccess('Service Added', `${data.data.name} has been added`);
+        } else if (data.type === 'service-updated') {
+          showSuccess('Service Updated', `${data.data.name} has been updated`);
         } else if (data.type === 'service-deleted') {
           showSuccess('Service Removed', 'Service has been removed');
         }
@@ -764,6 +772,7 @@ const Settings = () => {
   const [showAddEditWindowModal, setShowAddEditWindowModal] = useState(false);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [editingWindow, setEditingWindow] = useState(null);
+  const [editingService, setEditingService] = useState(null);
 
   // Form states for Add/Edit Window Modal
   const [windowFormData, setWindowFormData] = useState({
@@ -773,9 +782,10 @@ const Settings = () => {
     isPriority: false
   });
 
-  // Form state for Add Service Modal
+  // Form state for Add/Edit Service Modal
   const [serviceFormData, setServiceFormData] = useState({
-    name: ''
+    name: '',
+    id: ''
   });
 
   // Error states for form validation
@@ -964,7 +974,8 @@ const Settings = () => {
   };
 
   const openAddServiceModal = () => {
-    const newFormData = { name: '' };
+    setEditingService(null);
+    const newFormData = { name: '', id: '' };
     setServiceFormData(newFormData);
     setServiceErrors({});
     // Set initial state for change detection
@@ -972,9 +983,27 @@ const Settings = () => {
     setShowAddServiceModal(true);
   };
 
+  const openEditServiceModal = (service) => {
+    if (isQueueingEnabled) {
+      showError('Settings Locked', 'Cannot modify services while queueing is active. Please disable queueing first.');
+      return;
+    }
+    setEditingService(service);
+    const editFormData = {
+      name: service.name,
+      id: service.id
+    };
+    setServiceFormData(editFormData);
+    setServiceErrors({});
+    // Set initial state for change detection
+    setInitialState(prev => ({ ...prev, serviceFormData: editFormData }));
+    setShowAddServiceModal(true);
+  };
+
   const closeAddServiceModal = () => {
     setShowAddServiceModal(false);
-    setServiceFormData({ name: '' });
+    setEditingService(null);
+    setServiceFormData({ name: '', id: '' });
     setServiceErrors({});
   };
 
@@ -1126,7 +1155,8 @@ const Settings = () => {
     const serviceName = serviceFormData.name?.trim();
     if (serviceName) {
       const isDuplicate = services.some(service =>
-        service.name.toLowerCase() === serviceName.toLowerCase()
+        service.name.toLowerCase() === serviceName.toLowerCase() &&
+        (!editingService || service.id !== editingService.id)
       );
 
       if (isDuplicate) {
@@ -1145,29 +1175,55 @@ const Settings = () => {
     setServiceErrors({});
 
     try {
-      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/services`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: serviceName,
-          office: 'admissions'
-        }),
-      });
+      if (editingService) {
+        // Edit existing service
+        const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/services/${editingService.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: serviceName
+          }),
+        });
 
-      if (response.ok) {
-        const newService = await response.json();
-        setServices(prev => [...prev, newService]);
-        closeAddServiceModal();
-        showSuccess('Service Added', `${newService.name} has been added successfully`);
+        if (response.ok) {
+          const updatedService = await response.json();
+          setServices(prev => prev.map(service =>
+            service.id === editingService.id ? updatedService : service
+          ));
+          closeAddServiceModal();
+          showSuccess('Service Updated', `${updatedService.name} has been updated successfully`);
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update service');
+        }
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add service');
+        // Add new service
+        const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/services`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: serviceName,
+            office: 'admissions'
+          }),
+        });
+
+        if (response.ok) {
+          const newService = await response.json();
+          setServices(prev => [...prev, newService]);
+          closeAddServiceModal();
+          showSuccess('Service Added', `${newService.name} has been added successfully`);
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add service');
+        }
       }
     } catch (error) {
       showError('Error', error.message);
-      console.error('Error adding service:', error);
+      console.error(`Error ${editingService ? 'updating' : 'adding'} service:`, error);
     }
   };
 
@@ -1206,55 +1262,6 @@ const Settings = () => {
     }
   };
 
-  const handleRemoveService = async (serviceId) => {
-    const service = services.find(s => s.id === serviceId);
-    if (!service) return;
-
-    // Check if service is assigned to any windows
-    const assignedWindows = (windows || []).filter(window =>
-      window && window.serviceIds && window.serviceIds.some(s => s._id === serviceId || s === serviceId)
-    );
-
-    if (assignedWindows.length > 0) {
-      // Show warning toast with assigned windows
-      const windowNames = assignedWindows.map(w => w.name || 'Unnamed Window').join(', ');
-      showWarning(
-        'Service In Use',
-        `Cannot remove "${service.name}" because it is currently assigned to: ${windowNames}. Please remove it from these windows first.`
-      );
-      return;
-    }
-
-    // Show confirmation modal instead of window.confirm
-    setConfirmModalConfig({
-      title: 'Remove Service',
-      message: `Are you sure you want to remove "${service.name}"? This action cannot be undone.`,
-      onConfirm: () => performRemoveService(serviceId),
-      type: 'danger'
-    });
-    setShowConfirmModal(true);
-  };
-
-  const performRemoveService = async (serviceId) => {
-    const service = services.find(s => s.id === serviceId);
-    if (!service) return;
-
-    try {
-      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/services/${serviceId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setServices(prev => prev.filter(service => service.id !== serviceId));
-        showSuccess('Service Removed', `${service.name} has been removed successfully`);
-      } else {
-        throw new Error('Failed to remove service');
-      }
-    } catch (error) {
-      showError('Error', 'Failed to remove service');
-      console.error('Error removing service:', error);
-    }
-  };
 
   const handleToggleWindow = async (windowId) => {
     try {
@@ -1287,42 +1294,6 @@ const Settings = () => {
     }
   };
 
-  const handleRemoveWindow = async (windowId) => {
-    const windowToRemove = windows.find(w => w.id === windowId);
-    if (!windowToRemove) return;
-
-    // Show confirmation modal instead of window.confirm
-    setConfirmModalConfig({
-      title: 'Remove Window',
-      message: `Are you sure you want to remove "${windowToRemove.name}"? This action cannot be undone.`,
-      onConfirm: () => performRemoveWindow(windowId),
-      type: 'danger'
-    });
-    setShowConfirmModal(true);
-  };
-
-  const performRemoveWindow = async (windowId) => {
-    const windowToRemove = windows.find(w => w.id === windowId);
-    if (!windowToRemove) return;
-
-    try {
-      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/windows/${windowId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setWindows(prev => prev.filter(w => w.id !== windowId));
-        showSuccess('Window Removed', `${windowToRemove.name} has been removed successfully`);
-        // Close the modal after successful deletion
-        closeAddEditWindowModal();
-      } else {
-        throw new Error('Failed to remove window');
-      }
-    } catch (error) {
-      showError('Error', 'Failed to remove window');
-      console.error('Error removing window:', error);
-    }
-  };
 
   if (loading) {
     return (
@@ -1421,13 +1392,15 @@ const Settings = () => {
 
             {/* Column 2: Queue Monitor Button */}
             <div className="flex justify-start lg:justify-center w-full lg:w-auto">
-              <button
+              <motion.button
                 onClick={() => window.open('/admin/admissions/queue-monitor', '_blank')}
                 className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 flex items-center space-x-1 sm:space-x-1.5"
+                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.95, transition: { duration: 0.15 } }}
               >
                 <MdMonitor className="text-base sm:text-lg" />
                 <span>Open Queue Monitor</span>
-              </button>
+              </motion.button>
             </div>
 
             {/* Column 3: Warning banner when queueing is enabled */}
@@ -1517,22 +1490,24 @@ const Settings = () => {
                     )}
                   </div>
                   <div className="flex items-center space-x-1 sm:space-x-1.5">
-                    <button
-                      onClick={() => handleRemoveService(service.id)}
+                    <motion.button
+                      onClick={() => openEditServiceModal(service)}
                       disabled={isQueueingEnabled}
                       className={`p-0.5 sm:p-1 rounded-lg transition-colors ${
                         isQueueingEnabled
                           ? 'opacity-50 cursor-not-allowed text-gray-400'
-                          : 'text-red-500 hover:text-red-600 hover:bg-red-50'
+                          : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
                       }`}
                       title={
                         isQueueingEnabled
-                          ? 'Cannot remove services while queueing is active'
-                          : 'Remove Service'
+                          ? 'Cannot edit services while queueing is active'
+                          : 'Edit Service'
                       }
+                      whileHover={!isQueueingEnabled ? { scale: 1.1, transition: { duration: 0.2 } } : undefined}
+                      whileTap={!isQueueingEnabled ? { scale: 0.9, transition: { duration: 0.15 } } : undefined}
                     >
-                      <AiOutlineMinusCircle className="text-sm sm:text-base" />
-                    </button>
+                      <FiEdit3 className="text-sm sm:text-base" />
+                    </motion.button>
                   </div>
                 </div>
               ))
@@ -1540,7 +1515,7 @@ const Settings = () => {
           </div>
 
           {/* Row 3: Add Button */}
-          <button
+          <motion.button
             onClick={handleAddService}
             disabled={isQueueingEnabled}
             className={`flex items-center justify-center space-x-1 sm:space-x-1.5 p-2 sm:p-2.5 text-xs sm:text-sm text-white rounded-lg transition-colors ${
@@ -1550,10 +1525,12 @@ const Settings = () => {
             }`}
             style={{ backgroundColor: '#1F3463' }}
             title={isQueueingEnabled ? 'Cannot add services while queueing is active' : 'Add Service'}
+            whileHover={!isQueueingEnabled ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
+            whileTap={!isQueueingEnabled ? { scale: 0.95, transition: { duration: 0.15 } } : undefined}
           >
             <MdAdd className="text-base sm:text-lg" />
             <span className="font-medium">Add Service</span>
-          </button>
+          </motion.button>
         </div>
 
         {/* Fourth div: Column 2, spanning rows 2-4 - Windows Management Section */}
@@ -1616,7 +1593,7 @@ const Settings = () => {
                 </div>
 
                 <div className="hidden md:flex items-center justify-center space-x-2 sm:space-x-2.5">
-                  <button
+                  <motion.button
                     onClick={() => !isQueueingEnabled && handleToggleWindow(window.id)}
                     disabled={isQueueingEnabled}
                     className={`p-1 sm:p-1.5 rounded-lg transition-colors ${
@@ -1631,14 +1608,16 @@ const Settings = () => {
                         ? 'Cannot change window visibility while queueing is active'
                         : window.isOpen ? 'Close Window' : 'Open Window'
                     }
+                    whileHover={!isQueueingEnabled ? { scale: 1.1, transition: { duration: 0.2 } } : undefined}
+                    whileTap={!isQueueingEnabled ? { scale: 0.9, transition: { duration: 0.15 } } : undefined}
                   >
                     {window.isOpen ? (
                       <AiOutlineEye className="text-lg sm:text-xl" />
                     ) : (
                       <AiOutlineEyeInvisible className="text-lg sm:text-xl" />
                     )}
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
                     onClick={() => handleConfigureWindow(window.id)}
                     disabled={isQueueingEnabled}
                     className={`p-1 sm:p-1.5 rounded-lg transition-colors ${
@@ -1651,9 +1630,11 @@ const Settings = () => {
                         ? 'Cannot configure windows while queueing is active'
                         : 'Configure Window'
                     }
+                    whileHover={!isQueueingEnabled ? { scale: 1.1, transition: { duration: 0.2 } } : undefined}
+                    whileTap={!isQueueingEnabled ? { scale: 0.9, transition: { duration: 0.15 } } : undefined}
                   >
                     <LuSettings2 className="text-xl sm:text-2xl" />
-                  </button>
+                  </motion.button>
                 </div>
 
                 {/* Mobile card view */}
@@ -1750,12 +1731,11 @@ const Settings = () => {
         adminUsers={adminUsers}
         adminUsersLoading={adminUsersLoading}
         isEditing={!!editingWindow}
-        onRemove={editingWindow ? () => handleRemoveWindow(editingWindow.id) : null}
         errors={windowErrors}
         initialFormData={initialState.windowFormData}
         showWarning={showWarning}
       />
-      <AddServiceModal
+      <AddEditServiceModal
         isOpen={showAddServiceModal}
         onClose={closeAddServiceModal}
         serviceFormData={serviceFormData}
@@ -1763,6 +1743,7 @@ const Settings = () => {
         onSave={handleSaveService}
         errors={serviceErrors}
         initialFormData={initialState.serviceFormData}
+        isEditing={!!editingService}
         showWarning={showWarning}
       />
 

@@ -265,6 +265,96 @@ async function toggleService(req, res, next) {
   }
 }
 
+// PUT /api/services/:id - Update service
+async function updateService(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    const service = await Service.findById(id);
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    // Check for duplicate service names in the office (case-insensitive)
+    if (name && name.trim() !== service.name) {
+      const existingService = await Service.findOne({
+        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+        office: service.office,
+        _id: { $ne: id }
+      });
+
+      if (existingService) {
+        return res.status(409).json({ error: 'Service with this name already exists in the office' });
+      }
+    }
+
+    // Track old value for audit logging
+    const oldName = service.name;
+
+    // Invalidate cache for this service's office before updating
+    CacheHelper.invalidateServices(service.office);
+
+    // Update service name
+    if (name) {
+      service.name = name.trim();
+    }
+
+    await service.save();
+
+    // Log successful service update
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'Service',
+      resourceId: service._id,
+      resourceName: service.name,
+      department: service.office,
+      req,
+      success: true,
+      oldValues: { name: oldName },
+      newValues: { name: service.name }
+    });
+
+    // Emit real-time update
+    const io = req.app.get('io');
+    io.to(`admin-${service.office}`).emit('services-updated', {
+      type: 'service-updated',
+      department: service.office, // Keep 'department' for backward compatibility with frontend
+      data: {
+        id: service._id,
+        name: service.name,
+        office: service.office,
+        isActive: service.isActive
+      }
+    });
+
+    res.json({
+      id: service._id,
+      name: service.name,
+      office: service.office,
+      isActive: service.isActive,
+      updatedAt: service.updatedAt
+    });
+  } catch (error) {
+    console.error('Error updating service:', error);
+
+    await AuditService.logCRUD({
+      user: req.user,
+      action: 'UPDATE',
+      resourceType: 'Service',
+      resourceId: req.params.id,
+      resourceName: 'Unknown',
+      department: 'unknown',
+      req,
+      success: false,
+      errorMessage: error.message
+    });
+
+    res.status(500).json({ error: error.message });
+  }
+}
+
 // DELETE /api/services/:id - Delete service
 async function deleteService(req, res, next) {
   try {
@@ -338,6 +428,7 @@ module.exports = {
   getServicesByDepartment,
   getActiveServicesByDepartment,
   createService,
+  updateService,
   toggleService,
   deleteService
 };

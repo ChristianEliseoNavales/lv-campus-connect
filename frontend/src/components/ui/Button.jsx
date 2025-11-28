@@ -1,19 +1,20 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
-const Button = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  disabled = false, 
+const Button = ({
+  children,
+  variant = 'primary',
+  size = 'md',
+  disabled = false,
   loading = false,
   icon,
   className = '',
   onClick,
   type = 'button',
-  ...props 
+  ...props
 }) => {
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-  
+
   const variants = {
     primary: 'bg-blue-600 active:bg-blue-700 text-white shadow-lg active:shadow-md active:scale-95 focus:ring-blue-200',
     secondary: 'bg-gray-600 active:bg-gray-700 text-white shadow-lg active:shadow-md active:scale-95 focus:ring-gray-200',
@@ -42,13 +43,16 @@ const Button = ({
   };
 
   const classes = `${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`;
+  const isDisabled = disabled || loading;
 
   return (
-    <button
+    <motion.button
       type={type}
       className={classes}
-      disabled={disabled || loading}
+      disabled={isDisabled}
       onClick={onClick}
+      whileHover={!isDisabled ? { scale: 1.02, transition: { duration: 0.2, ease: "easeOut" } } : undefined}
+      whileTap={!isDisabled ? { scale: 0.95, transition: { duration: 0.15, ease: "easeIn" } } : undefined}
       {...props}
     >
       {loading && (
@@ -63,7 +67,7 @@ const Button = ({
         </span>
       )}
       {children}
-    </button>
+    </motion.button>
   );
 };
 

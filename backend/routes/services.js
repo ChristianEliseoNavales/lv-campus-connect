@@ -24,6 +24,18 @@ router.post('/', verifyToken, checkApiAccess, invalidateCache((req, data) => {
   }
 }), servicesController.createService);
 
+// PUT /api/services/:id - Update service
+router.put('/:id', verifyToken, checkApiAccess, invalidateCache((req, data) => {
+  const office = data && data.office;
+  if (office) {
+    CacheHelper.invalidateServices(office);
+  } else {
+    // If office not in response, get it from service before updating
+    // This will be handled in the route handler, but we invalidate all to be safe
+    CacheHelper.invalidateServices();
+  }
+}), servicesController.updateService);
+
 // PATCH /api/services/:id/toggle - Toggle service active status
 router.patch('/:id/toggle', verifyToken, checkApiAccess, invalidateCache((req, data) => {
   const office = data && data.office;

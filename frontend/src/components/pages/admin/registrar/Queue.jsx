@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { IoMdRefresh } from 'react-icons/io';
 import { MdClose } from 'react-icons/md';
@@ -932,7 +933,7 @@ const Queue = () => {
 
         {/* Control Buttons */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-col gap-2 sm:gap-2.5 md:gap-3">
-          <button
+          <motion.button
             onClick={handleStop}
             disabled={actionLoading.stop}
             className={`flex-1 rounded-full border-2 font-bold text-sm sm:text-base md:text-lg tracking-wide transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
@@ -941,56 +942,68 @@ const Queue = () => {
                 : 'border-green-500 text-green-500 hover:bg-green-500 hover:text-white'
             } ${actionLoading.stop ? 'opacity-50 cursor-not-allowed' : ''}`}
             data-testid="stop-button"
+            whileHover={!actionLoading.stop ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!actionLoading.stop ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.stop ? 'Loading...' : (isWindowServing ? 'STOP' : 'RESUME')}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={handleNext}
             disabled={actionLoading.next || !isWindowServing}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.next || !isWindowServing) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             data-testid="call-next-button"
+            whileHover={!(actionLoading.next || !isWindowServing) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.next || !isWindowServing) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.next ? 'Calling...' : 'NEXT'}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={handleRecall}
             disabled={actionLoading.recall || currentServing === 0}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.recall || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
+            whileHover={!(actionLoading.recall || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.recall || currentServing === 0) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.recall ? 'Recalling...' : 'RECALL'}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={handlePrevious}
             disabled={actionLoading.previous}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               actionLoading.previous ? 'opacity-50 cursor-not-allowed' : ''
             }`}
+            whileHover={!actionLoading.previous ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!actionLoading.previous ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.previous ? 'Loading...' : 'PREVIOUS'}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={handleTransfer}
             disabled={actionLoading.transfer || transferLoading || currentServing === 0}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.transfer || transferLoading || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
+            whileHover={!(actionLoading.transfer || transferLoading || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.transfer || transferLoading || currentServing === 0) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {(actionLoading.transfer || transferLoading) ? 'Loading...' : 'TRANSFER'}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={handleSkip}
             disabled={actionLoading.skip || currentServing === 0}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.skip || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             data-testid="skip-button"
+            whileHover={!(actionLoading.skip || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.skip || currentServing === 0) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.skip ? 'Skipping...' : 'SKIP'}
-          </button>
+          </motion.button>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { FaPlus, FaUpload } from 'react-icons/fa';
 import { FiEdit3 } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
@@ -281,13 +282,15 @@ const Bulletin = () => {
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] mb-3 sm:mb-4 md:mb-5 tracking-tight">Bulletin</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 auto-rows-max">
           {/* Add Content Button - Always First */}
-          <div
+          <motion.div
             onClick={() => setShowUploadModal(true)}
             className="rounded-lg sm:rounded-xl border-2 border-dashed border-[#1F3463] hover:border-[#1F3463] cursor-pointer transition-colors flex flex-col items-center justify-center h-40 sm:h-48 md:h-52 bg-white hover:bg-gray-50"
+            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+            whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
           >
             <FaPlus className="text-3xl sm:text-4xl text-[#1F3463] mb-2 sm:mb-2.5" />
             <p className="text-center font-semibold text-xs sm:text-sm text-[#1F3463]">Add Content</p>
-          </div>
+          </motion.div>
 
           {/* Bulletin Items */}
           {bulletins && bulletins.length > 0 ? (

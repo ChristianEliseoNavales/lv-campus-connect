@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   MdDashboard,
@@ -555,6 +556,31 @@ const AdminLayout = ({ children }) => {
     </svg>
   );
 
+  // Animation variants for navigation items
+  const navContainerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const navItemVariants = {
+    hidden: { opacity: 0, y: -10 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  const dropdownItemVariants = {
+    hidden: { opacity: 0, y: -5 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  // Create motion-wrapped NavLink component
+  const MotionNavLink = motion(NavLink);
+
   return (
     <div className="min-h-screen admin-layout" style={{ backgroundColor: '#efefef' }}>
       {/* Overlay - only visible on tablet/mobile when sidebar is open */}
@@ -609,8 +635,13 @@ const AdminLayout = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2.5 sm:px-3 space-y-1 sm:space-y-1.5">
-          {navigationItems.map((item) => {
+        <motion.nav
+          className="flex-1 px-2.5 sm:px-3 space-y-1 sm:space-y-1.5"
+          variants={navContainerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          {navigationItems.map((item, index) => {
             const IconComponent = item.icon;
 
             // Handle expandable items (like Queue)
@@ -622,15 +653,17 @@ const AdminLayout = ({ children }) => {
               const isQueueRoute = location.pathname.includes('/queue');
 
               return (
-                <div key={item.name} className="space-y-0.5 sm:space-y-1">
+                <motion.div key={item.name} className="space-y-0.5 sm:space-y-1" variants={navItemVariants}>
                   {/* Parent item - expandable */}
-                  <button
+                  <motion.button
                     onClick={() => setIsQueueExpanded(!isQueueExpanded)}
                     className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2 sm:space-x-2.5'} px-2 sm:px-2.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 ease-in-out ${
                       isAnyChildActive || isExpanded || isQueueRoute
                         ? 'bg-white/40 text-white'
                         : 'text-white hover:bg-white/10'
                     }`}
+                    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
                   >
                     {/* Icon - always visible with fixed width */}
                     <IconComponent className="text-base sm:text-lg flex-shrink-0" />
@@ -654,38 +687,58 @@ const AdminLayout = ({ children }) => {
                         </div>
                       )}
                     </div>
-                  </button>
+                  </motion.button>
 
                   {/* Child items - windows */}
-                  {isExpanded && !isSidebarCollapsed && (
-                    <div className="ml-4 sm:ml-5 space-y-0.5 sm:space-y-1">
-                      {item.children?.map((child) => (
-                        <NavLink
-                          key={child.path}
-                          to={child.path}
-                          className={({ isActive }) =>
-                            `flex items-center px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-all duration-300 ease-in-out ${
-                              isActive
-                                ? 'bg-white/50 text-white'
-                                : 'text-white/80 hover:bg-white/20 hover:text-white'
-                            }`
+                  <AnimatePresence>
+                    {isExpanded && !isSidebarCollapsed && (
+                      <motion.div
+                        className="ml-4 sm:ml-5 space-y-0.5 sm:space-y-1"
+                        initial="hidden"
+                        animate="show"
+                        exit="hidden"
+                        variants={{
+                          hidden: { opacity: 0 },
+                          show: {
+                            opacity: 1,
+                            transition: {
+                              staggerChildren: 0.03
+                            }
                           }
-                        >
-                          <span className="font-medium text-[10px] sm:text-xs">{child.name}</span>
-                        </NavLink>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                        }}
+                      >
+                        {item.children?.map((child) => (
+                          <MotionNavLink
+                            key={child.path}
+                            to={child.path}
+                            variants={dropdownItemVariants}
+                            className={({ isActive }) =>
+                              `flex items-center px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-all duration-300 ease-in-out ${
+                                isActive
+                                  ? 'bg-white/50 text-white'
+                                  : 'text-white/80 hover:bg-white/20 hover:text-white'
+                              }`
+                            }
+                            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                            whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
+                          >
+                            <span className="font-medium text-[10px] sm:text-xs">{child.name}</span>
+                          </MotionNavLink>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               );
             }
 
             // Handle regular navigation items
             return (
-              <NavLink
+              <MotionNavLink
                 key={item.path}
                 to={item.path}
                 end={item.end}
+                variants={navItemVariants}
                 className={({ isActive }) =>
                   `flex items-center ${isSidebarCollapsed ? 'justify-center' : 'space-x-2 sm:space-x-2.5'} px-2 sm:px-2.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 ease-in-out ${
                     isActive
@@ -693,6 +746,8 @@ const AdminLayout = ({ children }) => {
                       : 'text-white hover:bg-white/10'
                   }`
                 }
+                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
               >
                 {/* Icon - always visible with fixed width */}
                 <IconComponent className="text-base sm:text-lg flex-shrink-0" />
@@ -707,10 +762,10 @@ const AdminLayout = ({ children }) => {
                 >
                   <span className="font-medium text-xs sm:text-sm whitespace-nowrap text-white">{item.name}</span>
                 </div>
-              </NavLink>
+              </MotionNavLink>
             );
           })}
-        </nav>
+        </motion.nav>
       </div>
 
       {/* Main Content Area - margin adjusts based on sidebar state and screen size */}
@@ -736,17 +791,19 @@ const AdminLayout = ({ children }) => {
           {/* Left side: Sidebar Toggle Button and Dev Mode Indicator */}
           <div className="flex items-center space-x-2 sm:space-x-2.5">
             {/* Sidebar Toggle Button - Always visible with chevron arrows */}
-            <button
+            <motion.button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:opacity-80 transition-opacity flex items-center justify-center text-white shadow-md"
               style={{ backgroundColor: '#161F55' }}
+              whileHover={{ scale: 1.1, transition: { duration: 0.2 } }}
+              whileTap={{ scale: 0.9, transition: { duration: 0.15 } }}
             >
               {isSidebarCollapsed ? (
                 <MdChevronRight className="text-base sm:text-lg" />
               ) : (
                 <MdChevronLeft className="text-base sm:text-lg" />
               )}
-            </button>
+            </motion.button>
 
             {/* Development Mode Indicator */}
             {isDevelopmentMode && (
@@ -764,39 +821,64 @@ const AdminLayout = ({ children }) => {
 
             {/* User Profile with navy blue background */}
             <div className="relative" ref={dropdownRef}>
-              <button
+              <motion.button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-2.5 px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-colors text-white"
                 style={{ backgroundColor: '#1F3463' }}
+                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
               >
                 <UserIcon />
                 <span className="hidden sm:inline font-medium text-xs sm:text-sm">{getDisplayName()}</span>
                 <ChevronDownIcon />
-              </button>
+              </motion.button>
 
               {/* User Dropdown */}
-              {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-1 sm:mt-1.5 w-36 sm:w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  {/* Office Switch Buttons - only visible for users with multi-office access */}
-                  {canSwitchOffices() && getOfficeSwitchButtons().map((button) => (
-                    <button
-                      key={button.key}
-                      onClick={button.onClick}
-                      className="w-full flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 text-left text-xs sm:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      <MdSwapHoriz className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span className="truncate">{button.text}</span>
-                    </button>
-                  ))}
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 text-left text-xs sm:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+              <AnimatePresence>
+                {isUserDropdownOpen && (
+                  <motion.div
+                    className="absolute right-0 mt-1 sm:mt-1.5 w-36 sm:w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                    initial="hidden"
+                    animate="show"
+                    exit="hidden"
+                    variants={{
+                      hidden: { opacity: 0, y: -5 },
+                      show: {
+                        opacity: 1,
+                        y: 0,
+                        transition: {
+                          staggerChildren: 0.03
+                        }
+                      }
+                    }}
                   >
-                    <LogoutIcon />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              )}
+                    {/* Office Switch Buttons - only visible for users with multi-office access */}
+                    {canSwitchOffices() && getOfficeSwitchButtons().map((button) => (
+                      <motion.button
+                        key={button.key}
+                        onClick={button.onClick}
+                        className="w-full flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 text-left text-xs sm:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        variants={dropdownItemVariants}
+                        whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                        whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
+                      >
+                        <MdSwapHoriz className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="truncate">{button.text}</span>
+                      </motion.button>
+                    ))}
+                    <motion.button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 text-left text-xs sm:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      variants={dropdownItemVariants}
+                      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                      whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
+                    >
+                      <LogoutIcon />
+                      <span>Sign Out</span>
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
