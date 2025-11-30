@@ -220,11 +220,19 @@ class AuditService {
   static async logQueue({ user, action, queueId, queueNumber, department, req, success, metadata = {}, errorMessage = null, resourceType = 'Queue' }) {
     // For bulk operations (requeue-all, requeue-selected), use Window as resourceType if queueId is actually a windowId
     const isBulkOperation = action === 'QUEUE_REQUEUE_ALL' || action === 'QUEUE_REQUEUE_SELECTED';
-    const finalResourceType = (isBulkOperation && queueId && !queueNumber) ? 'Window' : resourceType;
+
+    // If queueId is null but we have windowId in metadata, use Window as resourceType
+    const hasWindowId = metadata.windowId || metadata.window;
+    const shouldUseWindow = (isBulkOperation && queueId && !queueNumber) || (!queueId && hasWindowId);
+
+    // If no queueId and no windowId, use System resourceType to avoid validation error
+    const finalResourceType = shouldUseWindow ? 'Window' : (!queueId && !hasWindowId ? 'System' : resourceType);
+    const finalResourceId = shouldUseWindow ? (metadata.windowId || metadata.window) : queueId;
+
     const resourceName = queueNumber
       ? `Queue #${queueNumber} (${department})`
-      : isBulkOperation
-        ? `Window ${metadata.windowName || queueId} (${department})`
+      : isBulkOperation || shouldUseWindow
+        ? `Window ${metadata.windowName || finalResourceId || 'Unknown'} (${department})`
         : `Queue Operation (${department})`;
 
     return this.logAction({
@@ -234,7 +242,7 @@ class AuditService {
         ? `Queue ${action.toLowerCase()} - #${queueNumber}`
         : `Queue ${action.toLowerCase()} - ${metadata.requeuedCount || 'bulk'} queue(s)`,
       resourceType: finalResourceType,
-      resourceId: queueId,
+      resourceId: finalResourceId,
       resourceName,
       req,
       statusCode: success ? 200 : 500,

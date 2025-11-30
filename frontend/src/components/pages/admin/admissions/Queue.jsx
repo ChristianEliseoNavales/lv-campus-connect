@@ -50,6 +50,22 @@ const Queue = () => {
   // Selected skipped queue numbers for selective requeue
   const [selectedSkippedQueues, setSelectedSkippedQueues] = useState([]);
 
+  // Queue enabled status from Settings
+  const [isQueueingEnabled, setIsQueueingEnabled] = useState(true);
+
+  // Fetch queue enabled status
+  const fetchQueueEnabledStatus = async () => {
+    try {
+      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/settings/queue/admissions`);
+      if (response.ok) {
+        const data = await response.json();
+        setIsQueueingEnabled(data.isEnabled);
+      }
+    } catch (error) {
+      console.error('Error fetching queue enabled status:', error);
+    }
+  };
+
   // Fetch window data
   useEffect(() => {
     const fetchWindowData = async () => {
@@ -67,6 +83,7 @@ const Queue = () => {
 
     if (windowId) {
       fetchWindowData();
+      fetchQueueEnabledStatus();
     } else {
       setLoading(false);
     }
@@ -239,6 +256,13 @@ const Queue = () => {
       }
     });
 
+    // Subscribe to settings updates for queue toggle
+    const unsubscribeSettings = subscribe('settings-updated', (data) => {
+      if (data.department === 'admissions' && data.type === 'queue-toggle') {
+        setIsQueueingEnabled(data.data.isEnabled);
+      }
+    });
+
     // Fetch initial queue data only if window data is available
     if (windowData) {
       fetchQueueData();
@@ -247,6 +271,7 @@ const Queue = () => {
     return () => {
       unsubscribeQueue();
       unsubscribeWindow();
+      unsubscribeSettings();
       leaveRoom('admin-admissions');
     };
   }, [socket, isConnected, windowData]); // Add windowData as dependency
@@ -263,6 +288,11 @@ const Queue = () => {
   const handleStop = async () => {
     if (!windowData) {
       showError('Error', 'Window data not available');
+      return;
+    }
+
+    if (!isQueueingEnabled) {
+      showWarning('Queue Management Disabled', 'Queue management is currently off. Please enable queueing in Settings to manage queues.');
       return;
     }
 
@@ -304,6 +334,11 @@ const Queue = () => {
   const handleNext = async () => {
     if (!windowData) {
       showError('Error', 'Window data not available');
+      return;
+    }
+
+    if (!isQueueingEnabled) {
+      showWarning('Queue Management Disabled', 'Queue management is currently off. Please enable queueing in Settings to manage queues.');
       return;
     }
 
@@ -390,6 +425,11 @@ const Queue = () => {
       return;
     }
 
+    if (!isQueueingEnabled) {
+      showWarning('Queue Management Disabled', 'Queue management is currently off. Please enable queueing in Settings to manage queues.');
+      return;
+    }
+
     if (currentServing === 0) {
       showWarning('No Queue', 'No queue currently being served');
       return;
@@ -442,6 +482,11 @@ const Queue = () => {
       return;
     }
 
+    if (!isQueueingEnabled) {
+      showWarning('Queue Management Disabled', 'Queue management is currently off. Please enable queueing in Settings to manage queues.');
+      return;
+    }
+
     setActionLoading(prev => ({ ...prev, previous: true }));
 
     try {
@@ -489,7 +534,12 @@ const Queue = () => {
       }
     } catch (error) {
       console.error('❌ Previous queue error:', error);
-      showError('Error', error.message);
+      // Check if it's specifically about no previous queues (not an actual error)
+      if (error.message && error.message.includes('No previously served queue')) {
+        showWarning('No Previous Queue', 'There are no previously served queues to recall.');
+      } else {
+        showError('Error', error.message);
+      }
     } finally {
       setActionLoading(prev => ({ ...prev, previous: false }));
     }
@@ -498,6 +548,11 @@ const Queue = () => {
   const handleTransfer = async () => {
     if (!windowData) {
       showError('Error', 'Window data not available');
+      return;
+    }
+
+    if (!isQueueingEnabled) {
+      showWarning('Queue Management Disabled', 'Queue management is currently off. Please enable queueing in Settings to manage queues.');
       return;
     }
 
@@ -585,6 +640,11 @@ const Queue = () => {
   const handleSkip = async () => {
     if (!windowData) {
       showError('Error', 'Window data not available');
+      return;
+    }
+
+    if (!isQueueingEnabled) {
+      showWarning('Queue Management Disabled', 'Queue management is currently off. Please enable queueing in Settings to manage queues.');
       return;
     }
 
@@ -779,13 +839,32 @@ const Queue = () => {
     <>
     <div className="space-y-3 sm:space-y-4 md:space-y-5" data-testid="queue-management">
       {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">Manage Queueing</h1>
-      </div>
-      <div>
-        <h1 className="text-base sm:text-lg md:text-xl font-bold text-[#1F3463] tracking-wide">
-          {windowData.name.toUpperCase()} QUEUE
-        </h1>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 sm:gap-2.5 md:gap-3">
+        {/* Left side: Manage Queueing and Window name stacked */}
+        <div className="flex flex-col">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">Manage Queueing</h1>
+          <h1 className="text-base sm:text-lg md:text-xl font-bold text-[#1F3463] tracking-wide">
+            {windowData.name.toUpperCase()} QUEUE
+          </h1>
+        </div>
+        {/* Right side: Warning banner when queue is disabled */}
+        <div className="flex justify-start lg:justify-end w-full lg:w-auto">
+          {!isQueueingEnabled && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 sm:p-2.5 flex items-center space-x-1 sm:space-x-1.5 max-w-md">
+              <div className="flex-shrink-0">
+                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-[9px] sm:text-[10px] font-medium text-yellow-800">Queue Management Disabled</h3>
+                <p className="text-[9px] sm:text-[10px] text-yellow-700">
+                  Queue management is currently off. Please enable queueing in Settings to manage queues.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Control Area */}
@@ -917,58 +996,58 @@ const Queue = () => {
           </motion.button>
           <motion.button
             onClick={handleNext}
-            disabled={actionLoading.next || !isWindowServing}
+            disabled={actionLoading.next || !isQueueingEnabled}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              (actionLoading.next || !isWindowServing) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
+              (actionLoading.next || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             data-testid="call-next-button"
-            whileHover={!(actionLoading.next || !isWindowServing) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
-            whileTap={!(actionLoading.next || !isWindowServing) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
+            whileHover={!(actionLoading.next || !isQueueingEnabled) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.next || !isQueueingEnabled) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.next ? 'Calling...' : 'NEXT'}
           </motion.button>
           <motion.button
             onClick={handleRecall}
-            disabled={actionLoading.recall || currentServing === 0}
+            disabled={actionLoading.recall || !isQueueingEnabled}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              (actionLoading.recall || currentServing === 0) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
+              (actionLoading.recall || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
-            whileHover={!(actionLoading.recall || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
-            whileTap={!(actionLoading.recall || currentServing === 0) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
+            whileHover={!(actionLoading.recall || !isQueueingEnabled) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.recall || !isQueueingEnabled) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.recall ? 'Recalling...' : 'RECALL'}
           </motion.button>
           <motion.button
             onClick={handlePrevious}
-            disabled={actionLoading.previous}
+            disabled={actionLoading.previous || !isQueueingEnabled}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              actionLoading.previous ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
+              (actionLoading.previous || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
-            whileHover={!actionLoading.previous ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
-            whileTap={!actionLoading.previous ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
+            whileHover={!(actionLoading.previous || !isQueueingEnabled) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.previous || !isQueueingEnabled) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.previous ? 'Loading...' : 'PREVIOUS'}
           </motion.button>
           <motion.button
             onClick={handleTransfer}
-            disabled={actionLoading.transfer || transferLoading || currentServing === 0}
+            disabled={actionLoading.transfer || transferLoading || !isQueueingEnabled}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              (actionLoading.transfer || transferLoading || currentServing === 0) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
+              (actionLoading.transfer || transferLoading || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
-            whileHover={!(actionLoading.transfer || transferLoading || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
-            whileTap={!(actionLoading.transfer || transferLoading || currentServing === 0) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
+            whileHover={!(actionLoading.transfer || transferLoading || !isQueueingEnabled) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.transfer || transferLoading || !isQueueingEnabled) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {(actionLoading.transfer || transferLoading) ? 'Loading...' : 'TRANSFER'}
           </motion.button>
           <motion.button
             onClick={handleSkip}
-            disabled={actionLoading.skip || currentServing === 0}
+            disabled={actionLoading.skip || !isQueueingEnabled}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              (actionLoading.skip || currentServing === 0) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
+              (actionLoading.skip || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             data-testid="skip-button"
-            whileHover={!(actionLoading.skip || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
-            whileTap={!(actionLoading.skip || currentServing === 0) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
+            whileHover={!(actionLoading.skip || !isQueueingEnabled) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
+            whileTap={!(actionLoading.skip || !isQueueingEnabled) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
           >
             {actionLoading.skip ? 'Skipping...' : 'SKIP'}
           </motion.button>

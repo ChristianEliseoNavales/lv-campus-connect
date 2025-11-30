@@ -129,8 +129,8 @@ exports.getQueueData = async (req, res, next) => {
     const transformedWindows = windowsWithCurrentNumbers.map((window) => {
       // Find next queue number from departmentQueues
       // window.id is already an ObjectId from aggregation, compare directly
-      const windowIdForComparison = window.id instanceof mongoose.Types.ObjectId 
-        ? window.id 
+      const windowIdForComparison = window.id instanceof mongoose.Types.ObjectId
+        ? window.id
         : new mongoose.Types.ObjectId(window.id);
       const nextQueue = departmentQueues.find(q => {
         if (!q.windowId) return false;
@@ -140,7 +140,7 @@ exports.getQueueData = async (req, res, next) => {
         }
         return q.windowId.toString() === windowIdForComparison.toString();
       });
-      
+
       return {
         id: window.id,
         name: window.name,
@@ -156,7 +156,7 @@ exports.getQueueData = async (req, res, next) => {
 
     res.json({
       isEnabled: true,
-      currentNumber: transformedWindows.length > 0 
+      currentNumber: transformedWindows.length > 0
         ? Math.max(...transformedWindows.map(w => w.currentQueueNumber), 0)
         : 0,
       nextNumber: departmentQueues.length > 0
@@ -1015,7 +1015,7 @@ exports.callNextQueue = async (req, res, next) => {
       windowId: nextQueue.windowId,
       isPriority: nextQueue.isPriority,
       serviceId: nextQueue.serviceId,
-      isTransferred: nextQueue.serviceId && !serviceIds.some(sid => 
+      isTransferred: nextQueue.serviceId && !serviceIds.some(sid =>
         (sid instanceof mongoose.Types.ObjectId && nextQueue.serviceId instanceof mongoose.Types.ObjectId && sid.equals(nextQueue.serviceId)) ||
         (sid.toString() === nextQueue.serviceId.toString())
       )
@@ -1359,10 +1359,17 @@ exports.recallPreviousQueue = async (req, res, next) => {
       });
     }
 
-    // Find the most recently completed queue for this window
+    // Calculate today's date range (00:00:00 to 23:59:59.999)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Find the most recently completed queue for this window (completed today only)
     const previousQueue = await Queue.findOne({
       windowId: windowId,
-      status: 'completed'
+      status: 'completed',
+      completedAt: { $gte: today, $lt: tomorrow }
     }).sort({ completedAt: -1 }).populate('visitationFormId');
 
     if (!previousQueue) {
@@ -1374,7 +1381,11 @@ exports.recallPreviousQueue = async (req, res, next) => {
         department: window.office,
         req,
         success: false,
-        errorMessage: 'No previously served queue found for this window'
+        errorMessage: 'No previously served queue found for this window',
+        metadata: {
+          windowId: window._id,
+          windowName: window.name
+        }
       });
 
       return res.status(404).json({
@@ -1820,7 +1831,7 @@ exports.requeueAllSkipped = async (req, res, next) => {
           return s._id ? s._id : s;
         })
       : [];
-    
+
     if (serviceIds.length === 0) {
       return res.status(400).json({
         error: 'Window has no services assigned'
@@ -1987,7 +1998,7 @@ exports.requeueSelectedSkipped = async (req, res, next) => {
           return s._id ? s._id : s;
         })
       : [];
-    
+
     if (serviceIds.length === 0) {
       return res.status(400).json({
         error: 'Window has no services assigned'
