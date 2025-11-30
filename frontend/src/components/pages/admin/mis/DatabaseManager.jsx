@@ -348,8 +348,8 @@ const DatabaseManager = () => {
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="flex items-center space-x-1.5 px-4 py-2 text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ backgroundColor: '#1F3463' }}
+            className="flex items-center space-x-1.5 px-4 py-2 text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100 disabled:hover:shadow-none"
+            style={{ backgroundColor: loading ? undefined : '#1F3463' }}
           >
             <MdRefresh className={`w-4 h-4 transition-transform duration-200 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
@@ -405,8 +405,8 @@ const DatabaseManager = () => {
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: '#1F3463' }}
+              className="px-4 py-2 text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100 disabled:hover:shadow-none"
+              style={{ backgroundColor: loading ? undefined : '#1F3463' }}
             >
               Search
             </button>
@@ -425,7 +425,7 @@ const DatabaseManager = () => {
             <button
               onClick={openDeleteAllModal}
               disabled={records.length === 0}
-              className="flex items-center space-x-2 px-5 py-2.5 bg-red-600 text-white rounded-lg text-base font-semibold hover:bg-red-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center space-x-2 px-5 py-2.5 bg-red-600 text-white rounded-lg text-base font-semibold hover:bg-red-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:shadow-none"
             >
               <MdDeleteSweep className="w-5 h-5 transition-transform duration-200" />
               <span>Delete All</span>
@@ -457,12 +457,12 @@ const DatabaseManager = () => {
               <thead className="bg-gray-50">
                 <tr>
                   {[...Array(6)].map((_, index) => (
-                    <th key={index} className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                    <th key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                      <div className="h-3 sm:h-3.5 md:h-4 bg-gray-200 rounded w-16 sm:w-18 md:w-20 animate-pulse"></div>
                     </th>
                   ))}
-                  <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wider">
-                    <div className="h-4 bg-gray-200 rounded w-16 ml-auto animate-pulse"></div>
+                  <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wider">
+                    <div className="h-3 sm:h-3.5 md:h-4 bg-gray-200 rounded w-12 sm:w-14 md:w-16 ml-auto animate-pulse"></div>
                   </th>
                 </tr>
               </thead>
@@ -470,14 +470,14 @@ const DatabaseManager = () => {
                 {[...Array(7)].map((_, index) => (
                   <tr key={index} className="animate-pulse">
                     {[...Array(6)].map((_, colIndex) => (
-                      <td key={colIndex} className="px-6 py-4 whitespace-nowrap">
-                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <td key={colIndex} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 whitespace-nowrap">
+                        <div className="h-3 sm:h-3.5 md:h-4 bg-gray-200 rounded w-18 sm:w-20 md:w-24"></div>
                       </td>
                     ))}
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex justify-end space-x-2">
-                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
-                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 whitespace-nowrap text-right">
+                      <div className="flex justify-end space-x-1.5 sm:space-x-2">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gray-200 rounded"></div>
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gray-200 rounded"></div>
                       </div>
                     </td>
                   </tr>
@@ -568,7 +568,7 @@ const DatabaseManager = () => {
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-4 py-2 text-base font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-base font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400"
               >
                 Previous
               </button>
@@ -596,7 +596,7 @@ const DatabaseManager = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 text-base font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-base font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400"
               >
                 Next
               </button>

@@ -261,9 +261,9 @@ const Bulletin = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">Bulletin</h1>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
           {[...Array(6)].map((_, index) => (
-            <div key={index} className="bg-white rounded-xl border border-gray-200 shadow-sm h-40 sm:h-48 md:h-52 animate-pulse"></div>
+            <div key={index} className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm h-40 sm:h-48 md:h-52 animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -441,7 +441,7 @@ const Bulletin = () => {
               <button
                 onClick={handleUploadBulletin}
                 disabled={uploading || !uploadFile}
-                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100"
               >
                 {uploading ? 'Posting...' : 'Post to Bulletin'}
               </button>

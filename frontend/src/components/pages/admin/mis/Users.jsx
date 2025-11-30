@@ -864,19 +864,19 @@ const Users = () => {
                   <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-2 sm:gap-3 items-center w-full">
                       {/* Name Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-28"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-24 sm:w-26 md:w-28"></div>
 
                       {/* Email Skeleton - Hidden on mobile */}
-                      <div className="hidden md:block h-3 bg-gray-200 rounded w-32"></div>
+                      <div className="hidden md:block h-2.5 sm:h-3 bg-gray-200 rounded w-28 sm:w-30 md:w-32"></div>
 
                       {/* Office Skeleton - Hidden on mobile */}
-                      <div className="hidden md:block h-3 bg-gray-200 rounded w-20"></div>
+                      <div className="hidden md:block h-2.5 sm:h-3 bg-gray-200 rounded w-16 sm:w-18 md:w-20"></div>
 
                       {/* Role Skeleton - Hidden on mobile */}
-                      <div className="hidden md:block h-3 bg-gray-200 rounded w-24"></div>
+                      <div className="hidden md:block h-2.5 sm:h-3 bg-gray-200 rounded w-20 sm:w-22 md:w-24"></div>
 
                       {/* Action Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-5"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-4 sm:w-4.5 md:w-5"></div>
                     </div>
                   </div>
                 ))}
@@ -960,7 +960,7 @@ const Users = () => {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
               >
                 Previous
               </button>
@@ -975,7 +975,7 @@ const Users = () => {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
               >
                 Next
               </button>
@@ -1188,7 +1188,7 @@ const Users = () => {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 order-2 sm:order-1 disabled:opacity-50"
+                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 order-2 sm:order-1 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400"
                   disabled={isSubmitting}
                 >
                   Cancel
@@ -1196,8 +1196,8 @@ const Users = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
-                  style={{ backgroundColor: '#1F3463' }}
+                  className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100 disabled:hover:shadow-none order-1 sm:order-2"
+                  style={{ backgroundColor: isSubmitting ? undefined : '#1F3463' }}
                 >
                   {isSubmitting ? 'Saving...' : (editingUser ? 'Update User' : 'Create User')}
                 </button>

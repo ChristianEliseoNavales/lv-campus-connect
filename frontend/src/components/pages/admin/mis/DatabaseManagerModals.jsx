@@ -366,7 +366,7 @@ export const DeleteAllRecordsModal = ({
           <button
             onClick={handleConfirm}
             disabled={!isConfirmEnabled}
-            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:shadow-none"
           >
             <MdDeleteSweep className="w-3 h-3 transition-transform duration-200" />
             <span>Delete All Records</span>

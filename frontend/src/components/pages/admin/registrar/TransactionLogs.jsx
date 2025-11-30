@@ -350,8 +350,8 @@ const TransactionLogs = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-[#1F3463] px-5 py-3 border-b border-[#1F3463] h-12 flex items-center">
-                <div className="grid grid-cols-8 gap-3 text-xs font-medium text-white w-full">
+              <div className="bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 border-b border-[#1F3463] h-10 sm:h-11 md:h-12 flex items-center">
+                <div className="grid grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 text-xs font-medium text-white w-full">
                   <div>Queue No.</div>
                   <div>Name</div>
                   <div>Purpose of Visit</div>
@@ -367,33 +367,33 @@ const TransactionLogs = () => {
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
                   <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
-                    <div className="grid grid-cols-8 gap-3 items-center w-full">
+                    <div className="grid grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 items-center w-full">
                       {/* Queue No. Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-6"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-4 sm:w-5 md:w-6"></div>
 
                       {/* Name Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-16 sm:w-18 md:w-20"></div>
 
                       {/* Purpose of Visit Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-24"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-20 sm:w-22 md:w-24"></div>
 
                       {/* Priority Skeleton */}
-                      <div className="h-5 bg-gray-200 rounded-full w-10"></div>
+                      <div className="h-4 sm:h-4.5 md:h-5 bg-gray-200 rounded-full w-8 sm:w-9 md:w-10"></div>
 
                       {/* Role Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-12"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-10 sm:w-11 md:w-12"></div>
 
                       {/* Turnaround Time Skeleton */}
-                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-12 sm:w-14 md:w-16"></div>
 
                       {/* Remarks Skeleton */}
-                      <div className="flex items-center space-x-1.5">
-                        <div className="h-3 bg-gray-200 rounded flex-1"></div>
-                        <div className="h-4 w-4 bg-gray-200 rounded"></div>
+                      <div className="flex items-center space-x-1 sm:space-x-1.5">
+                        <div className="h-2.5 sm:h-3 bg-gray-200 rounded flex-1"></div>
+                        <div className="h-3.5 w-3.5 sm:h-4 sm:w-4 bg-gray-200 rounded"></div>
                       </div>
 
                       {/* Status Skeleton */}
-                      <div className="h-5 bg-gray-200 rounded-full w-12"></div>
+                      <div className="h-4 sm:h-4.5 md:h-5 bg-gray-200 rounded-full w-10 sm:w-11 md:w-12"></div>
                     </div>
                   </div>
                 ))}
@@ -633,7 +633,7 @@ const TransactionLogs = () => {
                   <button
                     onClick={handleSaveRemarks}
                     disabled={savingRemarks}
-                    className="w-full sm:w-auto px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
+                    className="w-full sm:w-auto px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 order-1 sm:order-2"
                   >
                     {savingRemarks ? 'Saving...' : 'Save'}
                   </button>

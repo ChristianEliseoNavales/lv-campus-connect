@@ -456,19 +456,19 @@ const FAQ = () => {
                 {[...Array(7)].map((_, index) => (
                   <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
                     <div className="hidden md:grid md:grid-cols-4 gap-2 sm:gap-3 items-center w-full">
-                      <div className="h-3 bg-gray-200 rounded w-20"></div>
-                      <div className="h-3 bg-gray-200 rounded w-full"></div>
-                      <div className="h-3 bg-gray-200 rounded w-16"></div>
-                      <div className="flex space-x-2">
-                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
-                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-16 sm:w-18 md:w-20"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-full"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-12 sm:w-14 md:w-16"></div>
+                      <div className="flex space-x-1.5 sm:space-x-2">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gray-200 rounded"></div>
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gray-200 rounded"></div>
                       </div>
                     </div>
                     {/* Mobile skeleton */}
-                    <div className="md:hidden w-full space-y-2">
-                      <div className="h-3 bg-gray-200 rounded w-24"></div>
-                      <div className="h-3 bg-gray-200 rounded w-full"></div>
-                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                    <div className="md:hidden w-full space-y-1.5 sm:space-y-2">
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-20 sm:w-22 md:w-24"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-full"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-16 sm:w-18 md:w-20"></div>
                     </div>
                   </div>
                 ))}
@@ -726,7 +726,7 @@ const FAQ = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white bg-[#1F3463] rounded-lg hover:bg-[#2d4a7a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-1 sm:order-2"
+                    className="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white bg-[#1F3463] rounded-lg hover:bg-[#2d4a7a] disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 transition-colors order-1 sm:order-2"
                   >
                     {isSubmitting ? 'Saving...' : (editingFAQ ? 'Update FAQ' : 'Create FAQ')}
                   </button>

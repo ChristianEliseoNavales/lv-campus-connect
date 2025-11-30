@@ -4,7 +4,7 @@ import { ConfirmModal } from '../../../ui';
 
 /**
  * Temporary Component: Fix User PageAccess
- * 
+ *
  * This component provides a UI to fix all users with empty pageAccess.
  * Should be removed after fixing all users.
  */
@@ -87,7 +87,7 @@ const FixUsers = () => {
           <button
             onClick={checkUsers}
             disabled={checking}
-            className="bg-blue-600 text-white px-5 py-1.5 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
+            className="bg-blue-600 text-white px-5 py-1.5 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 text-sm"
           >
             {checking ? 'Checking...' : 'Check Users Needing Fix'}
           </button>
@@ -129,7 +129,7 @@ const FixUsers = () => {
             <button
               onClick={handleFixUsersClick}
               disabled={loading}
-              className="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium text-sm"
+              className="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 font-medium text-sm"
             >
               {loading ? 'Fixing Users...' : `Fix ${usersToFix.count} Users`}
             </button>

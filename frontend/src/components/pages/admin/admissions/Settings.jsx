@@ -255,11 +255,7 @@ const LocationAutocomplete = ({
       <motion.button
         onClick={handleSave}
         disabled={isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()}
-        className={`ml-2.5 px-3 py-1.5 text-xs rounded-full transition-colors ${
-          isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-[#1F3463] text-white hover:opacity-90'
-        }`}
+        className="ml-2.5 px-3 py-1.5 text-xs rounded-full transition-colors bg-[#1F3463] text-white hover:opacity-90 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:opacity-100"
         whileHover={!(isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()) ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
         whileTap={!(isUpdating || !value.trim() || disabled || value.trim() === initialValue.trim()) ? { scale: 0.95, transition: { duration: 0.15 } } : undefined}
       >
@@ -486,11 +482,7 @@ const AddEditWindowModal = ({
               <motion.button
                 onClick={handleSave}
                 disabled={!hasFormChanges()}
-                className={`flex-1 flex items-center justify-center space-x-1.5 p-2.5 text-sm rounded-lg transition-colors ${
-                  !hasFormChanges()
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'text-white hover:opacity-90'
-                }`}
+                className="flex-1 flex items-center justify-center space-x-1.5 p-2.5 text-sm rounded-lg transition-colors text-white hover:opacity-90 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:opacity-100"
                 style={{ backgroundColor: !hasFormChanges() ? undefined : '#1F3463' }}
                 whileHover={hasFormChanges() ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
                 whileTap={hasFormChanges() ? { scale: 0.95, transition: { duration: 0.15 } } : undefined}
@@ -590,11 +582,7 @@ const AddEditServiceModal = ({
             <motion.button
               onClick={handleSave}
               disabled={!hasFormChanges()}
-              className={`w-full flex items-center justify-center space-x-1.5 p-2.5 text-sm rounded-lg transition-colors ${
-                !hasFormChanges()
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'text-white hover:opacity-90'
-              }`}
+              className="w-full flex items-center justify-center space-x-1.5 p-2.5 text-sm rounded-lg transition-colors text-white hover:opacity-90 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed"
               style={{ backgroundColor: !hasFormChanges() ? undefined : '#1F3463' }}
               whileHover={hasFormChanges() ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
               whileTap={hasFormChanges() ? { scale: 0.95, transition: { duration: 0.15 } } : undefined}
@@ -1329,75 +1317,75 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-2 sm:space-y-3 md:space-y-4">
         {/* Settings Management Grid Skeleton */}
-        <div className="grid gap-3 h-[calc(100vh-10rem)] bg-white p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
+        <div className="grid gap-2 sm:gap-3 md:gap-4 h-[calc(100vh-10rem)] bg-white p-3 sm:p-4 md:p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
           {/* Header Skeleton */}
-          <div className="col-span-2 row-span-1 bg-white rounded-xl p-5">
-            <div className="grid grid-cols-2 gap-3 items-center">
+          <div className="col-span-2 row-span-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 items-center">
               <div>
-                <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
+                <div className="h-6 sm:h-7 md:h-8 bg-gray-200 rounded w-48 sm:w-56 md:w-64 animate-pulse"></div>
               </div>
               <div className="flex justify-end">
-                <div className="h-12 bg-gray-200 rounded-lg w-52 animate-pulse"></div>
+                <div className="h-10 sm:h-11 md:h-12 bg-gray-200 rounded-lg w-40 sm:w-46 md:w-52 animate-pulse"></div>
               </div>
             </div>
           </div>
 
           {/* Toggle Section Skeleton */}
-          <div className="col-span-1 row-span-1 bg-white rounded-xl border border-gray-300 shadow-md p-5">
+          <div className="col-span-1 row-span-1 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5">
             <div className="flex items-center justify-between">
-              <div className="flex flex-col space-y-1.5">
-                <div className="h-5 bg-gray-200 rounded w-40 animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
+              <div className="flex flex-col space-y-1 sm:space-y-1.5">
+                <div className="h-4 sm:h-5 bg-gray-200 rounded w-32 sm:w-36 md:w-40 animate-pulse"></div>
+                <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-18 sm:w-20 md:w-24 animate-pulse"></div>
               </div>
-              <div className="w-14 h-7 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="w-12 sm:w-13 md:w-14 h-6 sm:h-6.5 md:h-7 bg-gray-200 rounded-full animate-pulse"></div>
             </div>
           </div>
 
           {/* Services Section Skeleton */}
-          <div className="col-start-1 row-start-3 row-span-2 bg-white rounded-xl border border-gray-300 shadow-md p-5">
+          <div className="col-start-1 row-start-3 row-span-2 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5">
             <div className="h-full flex flex-col">
-              <div className="h-6 bg-gray-200 rounded w-20 mb-3 animate-pulse"></div>
-              <div className="flex-1 space-y-1.5 mb-3">
+              <div className="h-5 sm:h-5.5 md:h-6 bg-gray-200 rounded w-16 sm:w-18 md:w-20 mb-2 sm:mb-2.5 md:mb-3 animate-pulse"></div>
+              <div className="flex-1 space-y-1 sm:space-y-1.5 mb-2 sm:mb-2.5 md:mb-3">
                 {[...Array(5)].map((_, index) => (
-                  <div key={index} className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
+                  <div key={index} className="p-2 sm:p-2.5 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="h-3 bg-gray-200 rounded w-24"></div>
-                        <div className="h-4 bg-gray-200 rounded-full w-12"></div>
+                      <div className="flex items-center space-x-2 sm:space-x-2.5">
+                        <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-18 sm:w-20 md:w-24"></div>
+                        <div className="h-3 sm:h-3.5 md:h-4 bg-gray-200 rounded-full w-8 sm:w-10 md:w-12"></div>
                       </div>
-                      <div className="w-6 h-6 bg-gray-200 rounded-lg"></div>
+                      <div className="w-5 h-5 sm:w-5.5 sm:h-5.5 md:w-6 md:h-6 bg-gray-200 rounded-lg"></div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="h-8 sm:h-9 md:h-10 bg-gray-200 rounded-lg animate-pulse"></div>
             </div>
           </div>
 
           {/* Windows Section Skeleton */}
-          <div className="col-start-2 row-start-2 row-span-3 bg-white rounded-xl border border-gray-300 shadow-md p-5">
-            <div className="mb-3">
-              <div className="grid grid-cols-3 gap-3 items-center p-2.5">
-                <div className="h-5 bg-gray-200 rounded w-12 animate-pulse"></div>
-                <div className="h-5 bg-gray-200 rounded w-24 animate-pulse"></div>
-                <div className="h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="col-start-2 row-start-2 row-span-3 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5">
+            <div className="mb-2 sm:mb-2.5 md:mb-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 items-center p-2 sm:p-2.5">
+                <div className="h-4 sm:h-4.5 md:h-5 bg-gray-200 rounded w-8 sm:w-10 md:w-12 animate-pulse"></div>
+                <div className="h-4 sm:h-4.5 md:h-5 bg-gray-200 rounded w-18 sm:w-20 md:w-24 animate-pulse"></div>
+                <div className="h-7 sm:h-7.5 md:h-8 bg-gray-200 rounded-lg animate-pulse"></div>
               </div>
             </div>
-            <div className="flex-1 flex flex-col space-y-2.5">
+            <div className="flex-1 flex flex-col space-y-2 sm:space-y-2.5">
               {[...Array(4)].map((_, index) => (
-                <div key={index} className="grid grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
+                <div key={index} className="grid grid-cols-3 gap-2 sm:gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
                   <div className="flex items-center">
-                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-12 sm:w-14 md:w-16"></div>
                   </div>
-                  <div className="flex flex-col justify-center space-y-0.5">
-                    <div className="h-3 bg-gray-200 rounded w-20"></div>
-                    <div className="h-2.5 bg-gray-200 rounded w-24"></div>
+                  <div className="flex flex-col justify-center space-y-0.5 sm:space-y-1">
+                    <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-16 sm:w-18 md:w-20"></div>
+                    <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-20 sm:w-22 md:w-24"></div>
                   </div>
-                  <div className="flex items-center justify-center space-x-0.5">
-                    <div className="w-6 h-6 bg-gray-200 rounded-lg"></div>
-                    <div className="w-6 h-6 bg-gray-200 rounded-lg"></div>
+                  <div className="flex items-center justify-center space-x-0.5 sm:space-x-1">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gray-200 rounded-lg"></div>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gray-200 rounded-lg"></div>
                   </div>
                 </div>
               ))}
@@ -1471,7 +1459,7 @@ const Settings = () => {
             disabled={isToggling || toggleCooldown > 0}
             className={`relative inline-flex h-6 w-12 sm:h-7 sm:w-14 items-center rounded-full transition-colors focus:outline-none ${
               isToggling || toggleCooldown > 0
-                ? 'opacity-50 cursor-not-allowed bg-gray-300'
+                ? 'bg-gray-400 cursor-not-allowed'
                 : isQueueingEnabled
                 ? 'bg-[#1F3463]'
                 : 'bg-gray-300'
@@ -1527,7 +1515,7 @@ const Settings = () => {
                       disabled={isQueueingEnabled}
                       className={`p-0.5 sm:p-1 rounded-lg transition-colors ${
                         isQueueingEnabled
-                          ? 'opacity-50 cursor-not-allowed text-gray-400'
+                          ? 'opacity-50 cursor-not-allowed text-gray-400 disabled:hover:text-gray-400 disabled:hover:bg-transparent'
                           : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
                       }`}
                       title={

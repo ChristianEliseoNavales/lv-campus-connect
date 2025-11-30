@@ -204,11 +204,11 @@ const AuditTrail = () => {
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-1.5 transition-all duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
+                className="p-1.5 transition-all duration-200 hover:bg-[#1F3463]/10 rounded-lg border border-[#1F3463]/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:scale-100"
                 title="Refresh audit logs"
               >
                 <IoMdRefresh
-                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-[#1F3463] transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''} disabled:text-gray-600`}
                 />
               </button>
             </div>
@@ -294,8 +294,8 @@ const AuditTrail = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-[#1F3463] px-5 py-3 border-b border-[#1F3463] h-12 flex items-center">
-                <div className="grid grid-cols-5 gap-3 text-sm font-bold text-white w-full">
+              <div className="bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 border-b border-[#1F3463] h-10 sm:h-11 md:h-12 flex items-center">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
                   <div>Time</div>
                   <div>Date</div>
                   <div>User</div>
@@ -309,11 +309,11 @@ const AuditTrail = () => {
                 {[...Array(7)].map((_, index) => (
                   <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-2 sm:gap-3 items-center w-full">
-                      <div className="h-3 bg-gray-200 rounded w-12"></div>
-                      <div className="hidden md:block h-3 bg-gray-200 rounded w-16"></div>
-                      <div className="hidden md:block h-3 bg-gray-200 rounded w-20"></div>
-                      <div className="h-3 bg-gray-200 rounded w-32"></div>
-                      <div className="h-5 bg-gray-200 rounded-full w-12"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-10 sm:w-11 md:w-12"></div>
+                      <div className="hidden md:block h-2.5 sm:h-3 bg-gray-200 rounded w-14 sm:w-15 md:w-16"></div>
+                      <div className="hidden md:block h-2.5 sm:h-3 bg-gray-200 rounded w-18 sm:w-19 md:w-20"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-28 sm:w-30 md:w-32"></div>
+                      <div className="h-4 sm:h-4.5 md:h-5 bg-gray-200 rounded-full w-10 sm:w-11 md:w-12"></div>
                     </div>
                   </div>
                 ))}

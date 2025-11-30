@@ -17,54 +17,54 @@ const AuditTrail = () => {
 
   if (loading) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-2 sm:space-y-3 md:space-y-4">
         {/* Header Skeleton */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
+            <div className="w-5 h-5 sm:w-5.5 sm:h-5.5 md:w-6 md:h-6 bg-gray-200 rounded animate-pulse"></div>
             <div>
-              <div className="h-6 bg-gray-200 rounded w-40 mb-1.5 animate-pulse"></div>
-              <div className="h-3 bg-gray-200 rounded w-52 animate-pulse"></div>
+              <div className="h-5 sm:h-5.5 md:h-6 bg-gray-200 rounded w-32 sm:w-36 md:w-40 mb-1 sm:mb-1.5 animate-pulse"></div>
+              <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-40 sm:w-46 md:w-52 animate-pulse"></div>
             </div>
           </div>
-          <div className="flex items-center space-x-2.5">
-            <div className="w-20 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
-            <div className="w-16 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
+            <div className="w-16 h-7 sm:w-18 sm:h-7.5 md:w-20 md:h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="w-12 h-7 sm:w-14 sm:h-7.5 md:w-16 md:h-8 bg-gray-200 rounded-lg animate-pulse"></div>
           </div>
         </div>
 
         {/* Filters Skeleton */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-4 md:p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {[...Array(4)].map((_, index) => (
               <div key={index}>
-                <div className="h-3 bg-gray-200 rounded w-16 mb-1.5 animate-pulse"></div>
-                <div className="h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+                <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-12 sm:w-14 md:w-16 mb-1 sm:mb-1.5 animate-pulse"></div>
+                <div className="h-7 sm:h-7.5 md:h-8 bg-gray-200 rounded-lg animate-pulse"></div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Table Skeleton */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="divide-y divide-gray-200">
             {[...Array(5)].map((_, index) => (
-              <div key={index} className="p-5 animate-pulse">
+              <div key={index} className="p-3 sm:p-4 md:p-5 animate-pulse">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2.5 mb-1.5">
-                      <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
-                      <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
-                      <div className="h-5 bg-gray-200 rounded-full w-12 animate-pulse"></div>
+                    <div className="flex items-center space-x-2 sm:space-x-2.5 mb-1 sm:mb-1.5">
+                      <div className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-18 sm:w-20 md:w-24 animate-pulse"></div>
+                      <div className="h-4 sm:h-4.5 md:h-5 bg-gray-200 rounded-full w-8 sm:w-10 md:w-12 animate-pulse"></div>
                     </div>
-                    <div className="h-3 bg-gray-200 rounded w-80 mb-1.5 animate-pulse"></div>
-                    <div className="flex items-center space-x-3 text-xs">
-                      <div className="h-2.5 bg-gray-200 rounded w-20 animate-pulse"></div>
-                      <div className="h-2.5 bg-gray-200 rounded w-24 animate-pulse"></div>
+                    <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-64 sm:w-72 md:w-80 mb-1 sm:mb-1.5 animate-pulse"></div>
+                    <div className="flex items-center space-x-2 sm:space-x-3 text-xs">
+                      <div className="h-2 sm:h-2.5 bg-gray-200 rounded w-16 sm:w-18 md:w-20 animate-pulse"></div>
+                      <div className="h-2 sm:h-2.5 bg-gray-200 rounded w-20 sm:w-22 md:w-24 animate-pulse"></div>
                     </div>
                   </div>
-                  <div className="ml-3">
-                    <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+                  <div className="ml-2 sm:ml-3">
+                    <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-12 sm:w-14 md:w-16 animate-pulse"></div>
                   </div>
                 </div>
               </div>

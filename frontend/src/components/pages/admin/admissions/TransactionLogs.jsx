@@ -606,7 +606,7 @@ const TransactionLogs = () => {
                   <button
                     onClick={handleSaveRemarks}
                     disabled={savingRemarks}
-                    className="w-full sm:w-auto px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
+                    className="w-full sm:w-auto px-3 py-1.5 text-xs sm:text-sm bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-colors disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 order-1 sm:order-2"
                   >
                     {savingRemarks ? 'Saving...' : 'Save'}
                   </button>

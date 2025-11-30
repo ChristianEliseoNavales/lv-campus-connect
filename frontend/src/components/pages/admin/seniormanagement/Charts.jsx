@@ -86,7 +86,7 @@ const Charts = () => {
   const handleOfficeChange = (e) => {
     const officeId = e.target.value;
     setSelectedOfficeId(officeId);
-    
+
     // Find the selected office and populate email
     const selectedOffice = offices.find(o => o._id === officeId);
     if (selectedOffice) {
@@ -579,7 +579,7 @@ const Charts = () => {
               <button
                 onClick={handleUploadChart}
                 disabled={uploading || !uploadFile || !selectedOfficeId}
-                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100"
               >
                 {uploading ? 'Uploading...' : 'Upload Chart'}
               </button>
@@ -698,7 +698,7 @@ const Charts = () => {
               <button
                 onClick={handleEditChart}
                 disabled={updating || !selectedOfficeId}
-                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100"
               >
                 {updating ? 'Updating...' : 'Update Chart'}
               </button>

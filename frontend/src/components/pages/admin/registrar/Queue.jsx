@@ -940,7 +940,7 @@ const Queue = () => {
               isWindowServing
                 ? 'border-[#3930A8] text-[#3930A8] hover:bg-[#3930A8] hover:text-white'
                 : 'border-green-500 text-green-500 hover:bg-green-500 hover:text-white'
-            } ${actionLoading.stop ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${actionLoading.stop ? 'bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600 disabled:hover:border-gray-400' : ''}`}
             data-testid="stop-button"
             whileHover={!actionLoading.stop ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
             whileTap={!actionLoading.stop ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
@@ -951,7 +951,7 @@ const Queue = () => {
             onClick={handleNext}
             disabled={actionLoading.next || !isWindowServing}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              (actionLoading.next || !isWindowServing) ? 'opacity-50 cursor-not-allowed' : ''
+              (actionLoading.next || !isWindowServing) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             data-testid="call-next-button"
             whileHover={!(actionLoading.next || !isWindowServing) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
@@ -963,7 +963,7 @@ const Queue = () => {
             onClick={handleRecall}
             disabled={actionLoading.recall || currentServing === 0}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              (actionLoading.recall || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
+              (actionLoading.recall || currentServing === 0) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             whileHover={!(actionLoading.recall || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
             whileTap={!(actionLoading.recall || currentServing === 0) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
@@ -974,7 +974,7 @@ const Queue = () => {
             onClick={handlePrevious}
             disabled={actionLoading.previous}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              actionLoading.previous ? 'opacity-50 cursor-not-allowed' : ''
+              actionLoading.previous ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             whileHover={!actionLoading.previous ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
             whileTap={!actionLoading.previous ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
@@ -985,7 +985,7 @@ const Queue = () => {
             onClick={handleTransfer}
             disabled={actionLoading.transfer || transferLoading || currentServing === 0}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              (actionLoading.transfer || transferLoading || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
+              (actionLoading.transfer || transferLoading || currentServing === 0) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             whileHover={!(actionLoading.transfer || transferLoading || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
             whileTap={!(actionLoading.transfer || transferLoading || currentServing === 0) ? { scale: 0.92, transition: { duration: 0.15 } } : undefined}
@@ -996,7 +996,7 @@ const Queue = () => {
             onClick={handleSkip}
             disabled={actionLoading.skip || currentServing === 0}
             className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
-              (actionLoading.skip || currentServing === 0) ? 'opacity-50 cursor-not-allowed' : ''
+              (actionLoading.skip || currentServing === 0) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             data-testid="skip-button"
             whileHover={!(actionLoading.skip || currentServing === 0) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
@@ -1045,7 +1045,7 @@ const Queue = () => {
               onClick={handleRequeue}
               disabled={actionLoading.requeueAll}
               className={`w-full sm:w-auto rounded-full bg-[#3930A8] text-white font-bold text-xs sm:text-sm tracking-wide px-4 sm:px-6 py-2 sm:py-2.5 hover:bg-[#2F2580] transition-colors duration-200 flex items-center justify-center min-w-[120px] sm:min-w-[140px] ${
-                actionLoading.requeueAll ? 'opacity-50 cursor-not-allowed' : ''
+                actionLoading.requeueAll ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
               }`}
             >
               {actionLoading.requeueAll
@@ -1101,7 +1101,7 @@ const Queue = () => {
                 key={window.id}
                 onClick={() => setSelectedWindow(window)}
                 disabled={actionLoading.transfer}
-                className={`w-full p-2.5 sm:p-3 text-left border-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`w-full p-2.5 sm:p-3 text-left border-2 rounded-lg transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-600 disabled:border-gray-400 disabled:cursor-not-allowed ${
                   selectedWindow?.id === window.id
                     ? 'border-[#3930A8] bg-[#3930A8]/10'
                     : 'border-gray-300 hover:bg-gray-50 hover:border-[#3930A8]'
@@ -1120,14 +1120,14 @@ const Queue = () => {
                 setSelectedWindow(null);
               }}
               disabled={actionLoading.transfer}
-              className="w-full sm:flex-1 px-4 sm:px-5 py-2 sm:py-2.5 border-2 border-gray-300 text-gray-700 font-semibold text-xs sm:text-sm rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed order-2 sm:order-1"
+              className="w-full sm:flex-1 px-4 sm:px-5 py-2 sm:py-2.5 border-2 border-gray-300 text-gray-700 font-semibold text-xs sm:text-sm rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-600 disabled:border-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600 disabled:hover:border-gray-400 order-2 sm:order-1"
             >
               Cancel
             </button>
             <button
               onClick={handleTransferConfirm}
               disabled={actionLoading.transfer || !selectedWindow}
-              className="w-full sm:flex-1 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#3930A8] text-white font-semibold text-xs sm:text-sm rounded-lg hover:bg-[#2F2580] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
+              className="w-full sm:flex-1 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#3930A8] text-white font-semibold text-xs sm:text-sm rounded-lg hover:bg-[#2F2580] transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600 order-1 sm:order-2"
             >
               {actionLoading.transfer ? 'Transferring...' : 'Transfer'}
             </button>
