@@ -115,76 +115,80 @@ async function getCombinedPieChart(req, res, next) {
   }
 }
 
+// Helper function to get pie chart data (extracted for reuse)
+async function getPieChartData(department, timeRange = 'all') {
+  // Get date range
+  const { startDate } = getDateRange(timeRange);
+
+  // Build match stage for aggregation
+  const matchStage = {
+    office: department,
+    status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] }
+  };
+
+  if (startDate) {
+    matchStage.queuedAt = { $gte: startDate };
+  }
+
+  // Aggregate queue data by service
+  const serviceStats = await Queue.aggregate([
+    { $match: matchStage },
+    {
+      $group: {
+        _id: '$serviceId',
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { count: -1 } },
+    { $limit: 4 }
+  ]);
+
+  // Get service details
+  const serviceIds = serviceStats.map(stat => stat._id);
+  const services = await Service.find({
+    _id: { $in: serviceIds },
+    office: department
+  }).select('name').lean();
+
+  // Create service lookup map
+  const serviceMap = {};
+  services.forEach(service => {
+    serviceMap[service._id.toString()] = service.name;
+  });
+
+  // Calculate total for percentages
+  const total = serviceStats.reduce((sum, stat) => sum + stat.count, 0);
+
+  // Format data for pie chart
+  const chartData = serviceStats.map((stat, index) => {
+    const serviceName = serviceMap[stat._id] || 'Unknown Service';
+    const percentage = ((stat.count / total) * 100).toFixed(1);
+
+    return {
+      service: serviceName,
+      count: stat.count,
+      percentage: parseFloat(percentage),
+      fill: `var(--color-service-${index + 1})`
+    };
+  });
+
+  return {
+    success: true,
+    data: chartData,
+    total,
+    department,
+    timeRange,
+    timestamp: new Date().toISOString()
+  };
+}
+
 // GET /api/analytics/pie-chart/:department - Get service distribution for pie chart
 async function getPieChartByDepartment(req, res, next) {
   try {
     const { department } = req.params;
     const { timeRange = 'all' } = req.query;
-
-    // Get date range
-    const { startDate } = getDateRange(timeRange);
-
-    // Build match stage for aggregation
-    const matchStage = {
-      office: department, // Use 'office' field in database, value comes from route parameter
-      status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] } // Only historical data
-    };
-
-    if (startDate) {
-      matchStage.queuedAt = { $gte: startDate };
-    }
-
-    // Aggregate queue data by service
-    const serviceStats = await Queue.aggregate([
-      { $match: matchStage },
-      {
-        $group: {
-          _id: '$serviceId',
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } },
-      { $limit: 4 } // Top 4 services only
-    ]);
-
-    // Get service details
-    const serviceIds = serviceStats.map(stat => stat._id);
-    const services = await Service.find({
-      _id: { $in: serviceIds },
-      office: department // Use 'office' field in database, value comes from route parameter
-    }).select('name').lean();
-
-    // Create service lookup map
-    const serviceMap = {};
-    services.forEach(service => {
-      serviceMap[service._id.toString()] = service.name;
-    });
-
-    // Calculate total for percentages
-    const total = serviceStats.reduce((sum, stat) => sum + stat.count, 0);
-
-    // Format data for pie chart
-    const chartData = serviceStats.map((stat, index) => {
-      const serviceName = serviceMap[stat._id] || 'Unknown Service';
-      const percentage = ((stat.count / total) * 100).toFixed(1);
-
-      return {
-        service: serviceName,
-        count: stat.count,
-        percentage: parseFloat(percentage),
-        fill: `var(--color-service-${index + 1})`
-      };
-    });
-
-    res.json({
-      success: true,
-      data: chartData,
-      total,
-      department,
-      timeRange,
-      timestamp: new Date().toISOString()
-    });
-
+    const result = await getPieChartData(department, timeRange);
+    res.json(result);
   } catch (error) {
     console.error('Error fetching pie chart data:', error);
     res.status(500).json({
@@ -194,98 +198,98 @@ async function getPieChartByDepartment(req, res, next) {
   }
 }
 
+// Helper function to get area chart data (extracted for reuse)
+async function getAreaChartData(department, timeRange = '3months') {
+  // Get date range
+  const { startDate } = getDateRange(timeRange);
+
+  // Build match stage for aggregation
+  const matchStage = {
+    office: department,
+    status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] }
+  };
+
+  if (startDate) {
+    matchStage.queuedAt = { $gte: startDate };
+  }
+
+  // Choose aggregation based on time range
+  let chartData;
+  let aggregationStats;
+
+  if (timeRange === '1month') {
+    aggregationStats = await Queue.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$queuedAt' },
+            month: { $month: '$queuedAt' },
+            day: { $dayOfMonth: '$queuedAt' }
+          },
+          count: { $sum: 1 },
+          firstDate: { $min: '$queuedAt' }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
+    ]);
+
+    chartData = aggregationStats.map(stat => {
+      const date = new Date(stat._id.year, stat._id.month - 1, stat._id.day);
+      return {
+        date: date.toISOString().split('T')[0],
+        month: stat._id.day.toString(),
+        day: stat._id.day,
+        count: stat.count,
+        department
+      };
+    });
+  } else {
+    aggregationStats = await Queue.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$queuedAt' },
+            month: { $month: '$queuedAt' }
+          },
+          count: { $sum: 1 },
+          firstDate: { $min: '$queuedAt' }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
+    chartData = aggregationStats.map(stat => {
+      const date = new Date(stat._id.year, stat._id.month - 1, 1);
+      return {
+        date: date.toISOString().split('T')[0],
+        month: date.toLocaleDateString('en-US', { month: 'short' }),
+        count: stat.count,
+        department
+      };
+    });
+  }
+
+  return {
+    success: true,
+    data: chartData,
+    department,
+    timeRange,
+    aggregationType: timeRange === '1month' ? 'daily' : 'monthly',
+    totalEntries: chartData.length,
+    totalQueues: aggregationStats.reduce((sum, stat) => sum + stat.count, 0),
+    timestamp: new Date().toISOString()
+  };
+}
+
 // GET /api/analytics/area-chart/:department - Get time series data for area chart
 async function getAreaChartByDepartment(req, res, next) {
   try {
     const { department } = req.params;
     const { timeRange = '3months' } = req.query;
-
-    // Get date range
-    const { startDate } = getDateRange(timeRange);
-
-    // Build match stage for aggregation
-    const matchStage = {
-      office: department, // Use 'office' field in database, value comes from route parameter
-      status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] } // Only historical data
-    };
-
-    if (startDate) {
-      matchStage.queuedAt = { $gte: startDate };
-    }
-
-    // Choose aggregation based on time range
-    let chartData;
-    let aggregationStats;
-
-    if (timeRange === '1month') {
-      // For "This Month", aggregate by day for detailed view
-      aggregationStats = await Queue.aggregate([
-        { $match: matchStage },
-        {
-          $group: {
-            _id: {
-              year: { $year: '$queuedAt' },
-              month: { $month: '$queuedAt' },
-              day: { $dayOfMonth: '$queuedAt' }
-            },
-            count: { $sum: 1 },
-            firstDate: { $min: '$queuedAt' }
-          }
-        },
-        { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
-      ]);
-
-      // Format data for daily area chart
-      chartData = aggregationStats.map(stat => {
-        const date = new Date(stat._id.year, stat._id.month - 1, stat._id.day);
-        return {
-          date: date.toISOString().split('T')[0], // YYYY-MM-DD format
-          month: stat._id.day.toString(), // Day number for X-axis
-          day: stat._id.day, // Keep day number for reference
-          count: stat.count,
-          department
-        };
-      });
-    } else {
-      // For other time ranges, aggregate by month for cleaner chart display
-      aggregationStats = await Queue.aggregate([
-        { $match: matchStage },
-        {
-          $group: {
-            _id: {
-              year: { $year: '$queuedAt' },
-              month: { $month: '$queuedAt' }
-            },
-            count: { $sum: 1 },
-            firstDate: { $min: '$queuedAt' }
-          }
-        },
-        { $sort: { '_id.year': 1, '_id.month': 1 } }
-      ]);
-
-      // Format data for monthly area chart
-      chartData = aggregationStats.map(stat => {
-        const date = new Date(stat._id.year, stat._id.month - 1, 1); // First day of month
-        return {
-          date: date.toISOString().split('T')[0], // YYYY-MM-DD format
-          month: date.toLocaleDateString('en-US', { month: 'short' }), // Month shortcut (e.g., "Aug")
-          count: stat.count,
-          department
-        };
-      });
-    }
-
-    res.json({
-      success: true,
-      data: chartData,
-      department,
-      timeRange,
-      aggregationType: timeRange === '1month' ? 'daily' : 'monthly',
-      totalEntries: chartData.length,
-      totalQueues: aggregationStats.reduce((sum, stat) => sum + stat.count, 0),
-      timestamp: new Date().toISOString()
-    });
-
+    const result = await getAreaChartData(department, timeRange);
+    res.json(result);
   } catch (error) {
     console.error('Error fetching area chart data:', error);
     res.status(500).json({
@@ -295,18 +299,17 @@ async function getAreaChartByDepartment(req, res, next) {
   }
 }
 
-// GET /api/analytics/dashboard-stats/:department - Get dashboard statistics
-async function getDashboardStats(req, res, next) {
-  try {
-    const { department } = req.params;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+// Helper function to get dashboard stats (extracted for reuse)
+async function getDashboardStatsData(department) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Get today's stats
-    const todayStats = await Queue.aggregate([
+  // Get today's stats, active windows, and total queues in parallel
+  const [todayStats, activeWindows, totalQueues] = await Promise.all([
+    Queue.aggregate([
       {
         $match: {
-          office: department, // Use 'office' field in database, value comes from route parameter
+          office: department,
           queuedAt: { $gte: today }
         }
       },
@@ -325,38 +328,42 @@ async function getDashboardStats(req, res, next) {
           }
         }
       }
-    ]);
-
-    // Get active windows count
-    const activeWindows = await Window.countDocuments({
-      office: department, // Use 'office' field in database, value comes from route parameter
+    ]),
+    Window.countDocuments({
+      office: department,
       isOpen: true
-    });
-
-    // Get total historical queues
-    const totalQueues = await Queue.countDocuments({
-      office: department, // Use 'office' field in database, value comes from route parameter
+    }),
+    Queue.countDocuments({
+      office: department,
       status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] }
-    });
+    })
+  ]);
 
-    const stats = todayStats.length > 0 ? todayStats[0] : {
-      totalToday: 0,
-      completedToday: 0,
-      waitingToday: 0,
-      servingToday: 0
-    };
+  const stats = todayStats.length > 0 ? todayStats[0] : {
+    totalToday: 0,
+    completedToday: 0,
+    waitingToday: 0,
+    servingToday: 0
+  };
 
-    res.json({
-      success: true,
-      data: {
-        ...stats,
-        activeWindows,
-        totalQueues,
-        department,
-        lastUpdated: new Date().toISOString()
-      }
-    });
+  return {
+    success: true,
+    data: {
+      ...stats,
+      activeWindows,
+      totalQueues,
+      department,
+      lastUpdated: new Date().toISOString()
+    }
+  };
+}
 
+// GET /api/analytics/dashboard-stats/:department - Get dashboard statistics
+async function getDashboardStats(req, res, next) {
+  try {
+    const { department } = req.params;
+    const result = await getDashboardStatsData(department);
+    res.json(result);
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     res.status(500).json({
@@ -377,31 +384,89 @@ async function getDashboardTableData(req, res, next) {
     const windows = await Window.find({
       office: department, // Use 'office' field in database, value comes from route parameter
       isOpen: true
-    }).sort({ name: 1 }).lean();
+    }).sort({ name: 1 }).select('_id name').lean();
 
-    // Get window data with current serving and incoming queue numbers
-    const windowData = await Promise.all(
-      windows.map(async (window) => {
-        // Get current serving queue for this window
-        const currentServing = await Queue.findOne({
-          windowId: window._id,
-          status: 'serving',
-          isCurrentlyServing: true
-        });
+    if (windows.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          windows: [],
+          todayVisits: 0,
+          averageTurnaroundTime: '0 mins',
+          department,
+          lastUpdated: new Date().toISOString()
+        }
+      });
+    }
 
-        // Get next waiting queue for this window
-        const nextWaiting = await Queue.findOne({
-          windowId: window._id,
-          status: 'waiting'
-        }).sort({ queuedAt: 1 });
+    const windowIds = windows.map(w => w._id);
 
-        return {
-          windowName: window.name,
-          currentServingNumber: currentServing ? currentServing.queueNumber : 0,
-          incomingNumber: nextWaiting ? nextWaiting.queueNumber : 0
-        };
-      })
-    );
+    // Single aggregation to get all window queue data at once (eliminates N+1 queries)
+    const queueDataByWindow = await Queue.aggregate([
+      {
+        $match: {
+          windowId: { $in: windowIds },
+          status: { $in: ['serving', 'waiting'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$windowId',
+          // Get current serving queue (highest queue number with serving status and isCurrentlyServing)
+          currentServing: {
+            $max: {
+              $cond: [
+                { $and: [{ $eq: ['$status', 'serving'] }, { $eq: ['$isCurrentlyServing', true] }] },
+                '$queueNumber',
+                0
+              ]
+            }
+          },
+          // Get next waiting queue (lowest queue number with waiting status, sorted by queuedAt)
+          nextWaiting: {
+            $min: {
+              $cond: [
+                { $eq: ['$status', 'waiting'] },
+                '$queueNumber',
+                null
+              ]
+            }
+          },
+          // Store queuedAt for proper sorting of waiting queues
+          waitingQueues: {
+            $push: {
+              $cond: [
+                { $eq: ['$status', 'waiting'] },
+                { queueNumber: '$queueNumber', queuedAt: '$queuedAt' },
+                null
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    // Create a map for quick lookup
+    const queueDataMap = new Map();
+    queueDataByWindow.forEach(item => {
+      // Filter out null values and sort by queuedAt to get the actual next waiting
+      const validWaitingQueues = item.waitingQueues.filter(q => q !== null);
+      if (validWaitingQueues.length > 0) {
+        validWaitingQueues.sort((a, b) => new Date(a.queuedAt) - new Date(b.queuedAt));
+        item.nextWaiting = validWaitingQueues[0].queueNumber;
+      }
+      queueDataMap.set(item._id.toString(), item);
+    });
+
+    // Map windows to their queue data
+    const windowData = windows.map(window => {
+      const queueData = queueDataMap.get(window._id.toString());
+      return {
+        windowName: window.name,
+        currentServingNumber: queueData?.currentServing || 0,
+        incomingNumber: queueData?.nextWaiting || 0
+      };
+    });
 
     // Get today's total visits
     const todayVisits = await Queue.countDocuments({
@@ -478,73 +543,398 @@ async function getDashboardTableData(req, res, next) {
   }
 }
 
+// GET /api/analytics/dashboard-complete/:department - Get complete dashboard data in one request
+async function getCompleteDashboardData(req, res, next) {
+  try {
+    const { department } = req.params;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Get all windows for the department
+    const windows = await Window.find({
+      office: department,
+      isOpen: true
+    }).sort({ name: 1 }).select('_id name').lean();
+
+    if (windows.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          windows: [],
+          stats: {
+            totalToday: 0,
+            completedToday: 0,
+            waitingToday: 0,
+            servingToday: 0,
+            activeWindows: 0,
+            totalQueues: 0
+          },
+          tableData: {
+            windows: [],
+            todayVisits: 0,
+            averageTurnaroundTime: '0 mins'
+          },
+          department,
+          lastUpdated: new Date().toISOString()
+        }
+      });
+    }
+
+    const windowIds = windows.map(w => w._id);
+
+    // Parallel execution of independent queries
+    const [
+      todayStatsResult,
+      activeWindowsCount,
+      totalQueuesCount,
+      queueDataByWindow,
+      todayVisitsCount,
+      completedQueuesForTurnaround
+    ] = await Promise.all([
+      // Today's stats aggregation
+      Queue.aggregate([
+        {
+          $match: {
+            office: department,
+            queuedAt: { $gte: today }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalToday: { $sum: 1 },
+            completedToday: {
+              $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+            },
+            waitingToday: {
+              $sum: { $cond: [{ $eq: ['$status', 'waiting'] }, 1, 0] }
+            },
+            servingToday: {
+              $sum: { $cond: [{ $eq: ['$status', 'serving'] }, 1, 0] }
+            }
+          }
+        }
+      ]),
+      // Active windows count
+      Window.countDocuments({
+        office: department,
+        isOpen: true
+      }),
+      // Total historical queues
+      Queue.countDocuments({
+        office: department,
+        status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] }
+      }),
+      // Window queue data aggregation (reused from getDashboardTableData)
+      Queue.aggregate([
+        {
+          $match: {
+            windowId: { $in: windowIds },
+            status: { $in: ['serving', 'waiting'] }
+          }
+        },
+        {
+          $group: {
+            _id: '$windowId',
+            currentServing: {
+              $max: {
+                $cond: [
+                  { $and: [{ $eq: ['$status', 'serving'] }, { $eq: ['$isCurrentlyServing', true] }] },
+                  '$queueNumber',
+                  0
+                ]
+              }
+            },
+            nextWaiting: {
+              $min: {
+                $cond: [
+                  { $eq: ['$status', 'waiting'] },
+                  '$queueNumber',
+                  null
+                ]
+              }
+            },
+            waitingQueues: {
+              $push: {
+                $cond: [
+                  { $eq: ['$status', 'waiting'] },
+                  { queueNumber: '$queueNumber', queuedAt: '$queuedAt' },
+                  null
+                ]
+              }
+            }
+          }
+        }
+      ]),
+      // Today's visits count
+      Queue.countDocuments({
+        office: department,
+        queuedAt: { $gte: today }
+      }),
+      // Completed queues for turnaround time calculation
+      Queue.find({
+        office: department,
+        status: 'completed',
+        queuedAt: { $exists: true },
+        completedAt: { $exists: true }
+      }).select('queuedAt completedAt').lean()
+    ]);
+
+    // Process stats
+    const todayStats = todayStatsResult.length > 0 ? todayStatsResult[0] : {
+      totalToday: 0,
+      completedToday: 0,
+      waitingToday: 0,
+      servingToday: 0
+    };
+
+    // Process window queue data
+    const queueDataMap = new Map();
+    queueDataByWindow.forEach(item => {
+      const validWaitingQueues = item.waitingQueues.filter(q => q !== null);
+      if (validWaitingQueues.length > 0) {
+        validWaitingQueues.sort((a, b) => new Date(a.queuedAt) - new Date(b.queuedAt));
+        item.nextWaiting = validWaitingQueues[0].queueNumber;
+      }
+      queueDataMap.set(item._id.toString(), item);
+    });
+
+    const windowData = windows.map(window => {
+      const queueData = queueDataMap.get(window._id.toString());
+      return {
+        windowName: window.name,
+        currentServingNumber: queueData?.currentServing || 0,
+        incomingNumber: queueData?.nextWaiting || 0
+      };
+    });
+
+    // Calculate average turnaround time
+    let averageTurnaroundTime = '0 mins';
+    if (completedQueuesForTurnaround.length > 0) {
+      const totalTurnaroundMs = completedQueuesForTurnaround.reduce((total, queue) => {
+        const turnaroundMs = new Date(queue.completedAt) - new Date(queue.queuedAt);
+        return total + turnaroundMs;
+      }, 0);
+
+      const averageTurnaroundMs = totalTurnaroundMs / completedQueuesForTurnaround.length;
+      const averageTurnaroundMins = Math.round(averageTurnaroundMs / (1000 * 60));
+
+      if (averageTurnaroundMins < 60) {
+        averageTurnaroundTime = `${averageTurnaroundMins} ${averageTurnaroundMins === 1 ? 'min' : 'mins'}`;
+      } else if (averageTurnaroundMins < 1440) {
+        const hours = Math.floor(averageTurnaroundMins / 60);
+        const mins = averageTurnaroundMins % 60;
+        if (mins === 0) {
+          averageTurnaroundTime = `${hours} ${hours === 1 ? 'hr' : 'hrs'}`;
+        } else {
+          averageTurnaroundTime = `${hours} ${hours === 1 ? 'hr' : 'hrs'} and ${mins} ${mins === 1 ? 'min' : 'mins'}`;
+        }
+      } else {
+        const days = Math.floor(averageTurnaroundMins / 1440);
+        const remainingMins = averageTurnaroundMins % 1440;
+        const hours = Math.floor(remainingMins / 60);
+        const mins = remainingMins % 60;
+
+        let timeStr = `${days} ${days === 1 ? 'day' : 'days'}`;
+        if (hours > 0) {
+          timeStr += `, ${hours} ${hours === 1 ? 'hr' : 'hrs'}`;
+        }
+        if (mins > 0) {
+          timeStr += ` and ${mins} ${mins === 1 ? 'min' : 'mins'}`;
+        }
+        averageTurnaroundTime = timeStr;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        windows: windows.map(w => ({ _id: w._id, name: w.name })),
+        stats: {
+          ...todayStats,
+          activeWindows: activeWindowsCount,
+          totalQueues: totalQueuesCount
+        },
+        tableData: {
+          windows: windowData,
+          todayVisits: todayVisitsCount,
+          averageTurnaroundTime
+        },
+        department,
+        lastUpdated: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching complete dashboard data:', error);
+    res.status(500).json({
+      error: 'Failed to fetch complete dashboard data',
+      message: error.message
+    });
+  }
+}
+
 // GET /api/analytics/queue-monitor/:department - Get queue monitor data for real-time display
 async function getQueueMonitor(req, res, next) {
   try {
     const { department } = req.params;
 
-    // Get all windows for the department (including closed ones for status display)
-    const windows = await Window.find({
-      office: department // Use 'office' field in database, value comes from route parameter
-    }).sort({ name: 1 }).lean();
+    // Use single aggregation pipeline to get all window data with queue information at once
+    // This eliminates N+1 queries (3 queries per window) and replaces with single aggregation
+    const windowDataWithQueues = await Window.aggregate([
+      // Match all windows for the department
+      {
+        $match: {
+          office: department
+        }
+      },
+      // Sort by name
+      {
+        $sort: { name: 1 }
+      },
+      // Lookup current serving queue for each window
+      {
+        $lookup: {
+          from: 'queues',
+          let: { windowId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$windowId', '$$windowId'] },
+                    { $eq: ['$status', 'serving'] },
+                    { $eq: ['$isCurrentlyServing', true] }
+                  ]
+                }
+              }
+            },
+            {
+              $limit: 1
+            },
+            {
+              $project: {
+                queueNumber: 1
+              }
+            }
+          ],
+          as: 'currentServing'
+        }
+      },
+      // Lookup next waiting queue for each window (for backward compatibility)
+      {
+        $lookup: {
+          from: 'queues',
+          let: { windowId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$windowId', '$$windowId'] },
+                    { $eq: ['$status', 'waiting'] }
+                  ]
+                }
+              }
+            },
+            {
+              $sort: { queuedAt: 1 }
+            },
+            {
+              $limit: 1
+            },
+            {
+              $project: {
+                queueNumber: 1
+              }
+            }
+          ],
+          as: 'nextWaiting'
+        }
+      },
+      // Lookup all waiting queues for each window
+      {
+        $lookup: {
+          from: 'queues',
+          let: { windowId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$windowId', '$$windowId'] },
+                    { $eq: ['$status', 'waiting'] }
+                  ]
+                }
+              }
+            },
+            {
+              $sort: { queuedAt: 1 }
+            },
+            {
+              $project: {
+                queueNumber: 1
+              }
+            }
+          ],
+          as: 'allWaitingQueues'
+        }
+      },
+      // Project to match expected format
+      {
+        $project: {
+          windowId: { $toString: '$_id' },
+          windowName: '$name',
+          currentServingNumber: {
+            $ifNull: [
+              { $arrayElemAt: ['$currentServing.queueNumber', 0] },
+              0
+            ]
+          },
+          incomingNumber: {
+            $ifNull: [
+              { $arrayElemAt: ['$nextWaiting.queueNumber', 0] },
+              0
+            ]
+          },
+          incomingQueues: {
+            $map: {
+              input: '$allWaitingQueues',
+              as: 'queue',
+              in: '$$queue.queueNumber'
+            }
+          },
+          isServing: '$isServing',
+          isOpen: '$isOpen'
+        }
+      }
+    ]);
 
-    // Get window data with current serving, incoming queue numbers, and serving status
-    const windowData = await Promise.all(
-      windows.map(async (window) => {
-        // Get current serving queue for this window
-        const currentServing = await Queue.findOne({
-          windowId: window._id,
-          status: 'serving',
-          isCurrentlyServing: true
-        });
-
-        // Get next waiting queue for this window (for backward compatibility)
-        const nextWaiting = await Queue.findOne({
-          windowId: window._id,
-          status: 'waiting'
-        }).sort({ queuedAt: 1 });
-
-        // Get ALL waiting queues for this window (sorted by queuedAt, oldest first)
-        const allWaitingQueues = await Queue.find({
-          windowId: window._id,
-          status: 'waiting'
-        })
+    // Get recently skipped queues and next overall queue in parallel
+    const [skippedQueues, nextOverallQueue] = await Promise.all([
+      // Get recently skipped queues (last 10)
+      Queue.find({
+        office: department,
+        status: 'skipped'
+      })
+        .sort({ skippedAt: -1 })
+        .limit(10)
+        .select('queueNumber skippedAt')
+        .lean(),
+      // Get next overall queue number (earliest waiting queue across all windows)
+      Queue.findOne({
+        office: department,
+        status: 'waiting'
+      })
         .sort({ queuedAt: 1 })
         .select('queueNumber')
-        .lean();
-
-        return {
-          windowId: window._id.toString(), // Keep as string for API response compatibility
-          windowName: window.name,
-          currentServingNumber: currentServing ? currentServing.queueNumber : 0,
-          incomingNumber: nextWaiting ? nextWaiting.queueNumber : 0, // Next queue (for backward compatibility)
-          incomingQueues: allWaitingQueues.map(q => q.queueNumber), // All waiting queue numbers
-          isServing: window.isServing,
-          isOpen: window.isOpen
-        };
-      })
-    );
-
-    // Get recently skipped queues (last 10)
-    const skippedQueues = await Queue.find({
-      office: department, // Use 'office' field in database, value comes from route parameter
-      status: 'skipped'
-    })
-    .sort({ skippedAt: -1 })
-    .limit(10)
-    .select('queueNumber skippedAt')
-    .lean();
-
-    // Get next overall queue number (earliest waiting queue across all windows)
-    const nextOverallQueue = await Queue.findOne({
-      office: department, // Use 'office' field in database, value comes from route parameter
-      status: 'waiting'
-    }).sort({ queuedAt: 1 }).lean();
+        .lean()
+    ]);
 
     res.json({
       success: true,
       data: {
-        windowData,
+        windowData: windowDataWithQueues,
         skippedQueues: skippedQueues.map(q => q.queueNumber),
         nextQueueNumber: nextOverallQueue ? nextOverallQueue.queueNumber : 0,
         department,
@@ -567,35 +957,13 @@ async function getCombinedAnalytics(req, res, next) {
     const { department } = req.params;
     const { timeRange = '3months' } = req.query;
 
-    // Create mock request objects for internal controller calls
-    const pieChartReq = { params: { department }, query: { timeRange } };
-    const areaChartReq = { params: { department }, query: { timeRange } };
-    const dashboardStatsReq = { params: { department } };
-
-    // Get responses from other controller functions
-    const pieChartResponse = await new Promise((resolve) => {
-      const mockRes = {
-        json: (data) => resolve(data),
-        status: () => mockRes
-      };
-      getPieChartByDepartment(pieChartReq, mockRes, () => {});
-    });
-
-    const areaChartResponse = await new Promise((resolve) => {
-      const mockRes = {
-        json: (data) => resolve(data),
-        status: () => mockRes
-      };
-      getAreaChartByDepartment(areaChartReq, mockRes, () => {});
-    });
-
-    const dashboardStatsResponse = await new Promise((resolve) => {
-      const mockRes = {
-        json: (data) => resolve(data),
-        status: () => mockRes
-      };
-      getDashboardStats(dashboardStatsReq, mockRes, () => {});
-    });
+    // Call helper functions directly instead of using mock request/response pattern
+    // This is more efficient and cleaner
+    const [pieChartResponse, areaChartResponse, dashboardStatsResponse] = await Promise.all([
+      getPieChartData(department, timeRange),
+      getAreaChartData(department, timeRange),
+      getDashboardStatsData(department)
+    ]);
 
     res.json({
       success: true,
@@ -631,33 +999,40 @@ async function getActiveSessions(req, res, next) {
       });
     }
 
-    // Enrich with user information from database
-    const enrichedSessions = await Promise.all(
-      activeSessions.map(async (session) => {
-        try {
-          const user = await User.findById(session.userId).select('name email role office lastLogin').lean();
-          if (!user) {
-            // User not found in database, skip this session
-            return null;
-          }
-          return {
-            userId: session.userId,
-            name: user.name || 'Unknown',
-            email: user.email || 'Unknown',
-            role: user.role || 'Unknown',
-            office: user.office || 'Unknown',
-            sessionCount: session.sessionCount,
-            lastActivity: user.lastLogin || new Date()
-          };
-        } catch (error) {
-          console.error(`Error fetching user ${session.userId}:`, error);
+    // Batch query all users at once (eliminates N+1 queries)
+    const userIds = activeSessions.map(s => s.userId);
+    const users = await User.find({ _id: { $in: userIds } })
+      .select('_id name email role office lastLogin')
+      .lean();
+
+    // Create a map for quick lookup
+    const userMap = new Map();
+    users.forEach(user => {
+      userMap.set(user._id.toString(), user);
+    });
+
+    // Enrich sessions with user information
+    const enrichedSessions = activeSessions
+      .map(session => {
+        const user = userMap.get(session.userId.toString());
+        if (!user) {
+          // User not found in database, skip this session
           return null;
         }
+        return {
+          userId: session.userId,
+          name: user.name || 'Unknown',
+          email: user.email || 'Unknown',
+          role: user.role || 'Unknown',
+          office: user.office || 'Unknown',
+          sessionCount: session.sessionCount,
+          lastActivity: user.lastLogin || new Date()
+        };
       })
-    );
+      .filter(session => session !== null);
 
     // Filter out null values (users not found in database)
-    const validSessions = enrichedSessions.filter(session => session !== null);
+    const validSessions = enrichedSessions;
 
     // Sort by lastActivity (most recent first)
     validSessions.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
@@ -878,7 +1253,7 @@ async function getAnalyticalReport(req, res, next) {
       console.log('📊 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
 
       const serviceIds = serviceDistribution.map(s => s._id);
-      const services = await Service.find({ _id: { $in: serviceIds } });
+      const services = await Service.find({ _id: { $in: serviceIds } }).select('name').lean();
       const serviceMap = services.reduce((map, s) => {
         map[s._id.toString()] = s.name;
         return map;
@@ -1020,39 +1395,40 @@ async function getAnalyticalReport(req, res, next) {
 
       reportData.temporalTrends = temporalTrends;
 
-      // 8. Department Comparison Metrics
-      const registrarStats = await Queue.aggregate([
-        { $match: {
-          office: 'registrar',
-          status: 'completed',
-          queuedAt: { $gte: startDate, $lte: endDate }
-        } },
-        { $group: {
-          _id: null,
-          totalCompleted: { $sum: 1 },
-          avgTurnaround: {
-            $avg: {
-              $subtract: ['$completedAt', '$queuedAt']
+      // 8. Department Comparison Metrics - Parallelize both queries for better performance
+      const [registrarStats, admissionsStats] = await Promise.all([
+        Queue.aggregate([
+          { $match: {
+            office: 'registrar',
+            status: 'completed',
+            queuedAt: { $gte: startDate, $lte: endDate }
+          } },
+          { $group: {
+            _id: null,
+            totalCompleted: { $sum: 1 },
+            avgTurnaround: {
+              $avg: {
+                $subtract: ['$completedAt', '$queuedAt']
+              }
             }
-          }
-        }}
-      ]);
-
-      const admissionsStats = await Queue.aggregate([
-        { $match: {
-          office: 'admissions',
-          status: 'completed',
-          queuedAt: { $gte: startDate, $lte: endDate }
-        } },
-        { $group: {
-          _id: null,
-          totalCompleted: { $sum: 1 },
-          avgTurnaround: {
-            $avg: {
-              $subtract: ['$completedAt', '$queuedAt']
+          }}
+        ]),
+        Queue.aggregate([
+          { $match: {
+            office: 'admissions',
+            status: 'completed',
+            queuedAt: { $gte: startDate, $lte: endDate }
+          } },
+          { $group: {
+            _id: null,
+            totalCompleted: { $sum: 1 },
+            avgTurnaround: {
+              $avg: {
+                $subtract: ['$completedAt', '$queuedAt']
+              }
             }
-          }
-        }}
+          }}
+        ])
       ]);
 
       reportData.departmentComparison = {
@@ -1122,7 +1498,7 @@ async function getAnalyticalReport(req, res, next) {
       console.log('📋 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
 
       const serviceIds = serviceDistribution.map(s => s._id);
-      const services = await Service.find({ _id: { $in: serviceIds } }).lean();
+      const services = await Service.find({ _id: { $in: serviceIds } }).select('name').lean();
       const serviceMap = services.reduce((map, s) => {
         map[s._id.toString()] = s.name;
         return map;
@@ -1248,7 +1624,7 @@ async function getAnalyticalReport(req, res, next) {
       console.log('🪟 Window Performance Result:', JSON.stringify(windowPerformance, null, 2));
 
       const windowIds = windowPerformance.map(w => w._id);
-      const windows = await Window.find({ _id: { $in: windowIds } }).lean();
+      const windows = await Window.find({ _id: { $in: windowIds } }).select('name').lean();
       const windowMap = windows.reduce((map, w) => {
         map[w._id.toString()] = w.name;
         return map;
@@ -1262,176 +1638,238 @@ async function getAnalyticalReport(req, res, next) {
 
       console.log('✅ Window Performance Mapped:', reportData.windowPerformance);
 
-      // 8. Monthly Breakdown - Detailed data for each month in the date range
+      // 8. Monthly Breakdown - Optimized with single aggregation instead of 7+ queries per month
+      // Use a single aggregation pipeline to get all monthly metrics at once
+      const monthlyMetricsAggregation = await Queue.aggregate([
+        {
+          $match: {
+            office: departmentFilter,
+            queuedAt: { $gte: startDate, $lte: endDate }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$queuedAt' },
+              month: { $month: '$queuedAt' }
+            },
+            // Total visits (all historical statuses)
+            totalVisits: {
+              $sum: {
+                $cond: [
+                  { $in: ['$status', ['completed', 'cancelled', 'skipped', 'no-show']] },
+                  1,
+                  0
+                ]
+              }
+            },
+            // Average turnaround (only completed with timestamps)
+            avgTurnaround: {
+              $avg: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ['$status', 'completed'] },
+                      { $ifNull: ['$completedAt', false] },
+                      { $ifNull: ['$queuedAt', false] }
+                    ]
+                  },
+                  { $subtract: ['$completedAt', '$queuedAt'] },
+                  null
+                ]
+              }
+            },
+            // Service distribution (array of serviceId and count)
+            serviceDistribution: {
+              $push: {
+                $cond: [
+                  { $in: ['$status', ['completed', 'cancelled', 'skipped', 'no-show']] },
+                  '$serviceId',
+                  '$$REMOVE'
+                ]
+              }
+            },
+            // Role breakdown (array of role and count)
+            roleBreakdown: {
+              $push: {
+                $cond: [
+                  { $in: ['$status', ['completed', 'cancelled', 'skipped', 'no-show']] },
+                  '$role',
+                  '$$REMOVE'
+                ]
+              }
+            },
+            // Peak hours (array of hour and queuedAt)
+            peakHours: {
+              $push: {
+                $cond: [
+                  { $in: ['$status', ['completed', 'cancelled', 'skipped', 'no-show']] },
+                  { hour: { $hour: '$queuedAt' }, queuedAt: '$queuedAt' },
+                  '$$REMOVE'
+                ]
+              }
+            },
+            // Peak days (array of dayOfWeek and queuedAt)
+            peakDays: {
+              $push: {
+                $cond: [
+                  { $in: ['$status', ['completed', 'cancelled', 'skipped', 'no-show']] },
+                  { dayOfWeek: { $dayOfWeek: '$queuedAt' }, queuedAt: '$queuedAt' },
+                  '$$REMOVE'
+                ]
+              }
+            },
+            // Window performance (array of windowId, completedAt, queuedAt)
+            windowPerformance: {
+              $push: {
+                $cond: [
+                  { $eq: ['$status', 'completed'] },
+                  {
+                    windowId: '$windowId',
+                    completedAt: '$completedAt',
+                    queuedAt: '$queuedAt'
+                  },
+                  '$$REMOVE'
+                ]
+              }
+            }
+          }
+        },
+        {
+          $sort: { '_id.year': 1, '_id.month': 1 }
+        }
+      ]);
+
+      // Process aggregation results and organize by month
       const monthlyBreakdown = [];
+      // dayNames is already declared earlier in this function scope
 
-      // Generate list of months in the date range
-      const currentDate = new Date(startDate);
-      const endDateObj = new Date(endDate);
+      // Get all unique serviceIds and windowIds for batch fetching
+      const allServiceIds = new Set();
+      const allWindowIds = new Set();
+      monthlyMetricsAggregation.forEach(month => {
+        month.serviceDistribution?.forEach(sid => {
+          if (sid) allServiceIds.add(sid);
+        });
+        month.windowPerformance?.forEach(wp => {
+          if (wp?.windowId) allWindowIds.add(wp.windowId);
+        });
+      });
 
-      while (currentDate <= endDateObj) {
-        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999);
+      // Batch fetch all services and windows once
+      const [allServices, allWindows] = await Promise.all([
+        Service.find({ _id: { $in: Array.from(allServiceIds) } }).select('name').lean(),
+        Window.find({ _id: { $in: Array.from(allWindowIds) } }).select('name').lean()
+      ]);
 
-        // Ensure we don't go beyond the requested end date
-        const effectiveEnd = monthEnd > endDateObj ? endDateObj : monthEnd;
+      const monthlyServiceMap = new Map();
+      allServices.forEach(s => {
+        monthlyServiceMap.set(s._id.toString(), s.name);
+      });
+
+      const monthlyWindowMap = new Map();
+      allWindows.forEach(w => {
+        monthlyWindowMap.set(w._id.toString(), w.name);
+      });
+
+      // Process each month's data
+      for (const monthData of monthlyMetricsAggregation) {
+        const year = monthData._id.year;
+        const month = monthData._id.month;
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+        const effectiveEnd = monthEnd > endDate ? endDate : monthEnd;
         const effectiveStart = monthStart < startDate ? startDate : monthStart;
 
-        console.log(`📅 Processing month: ${monthStart.toISOString().substring(0, 7)}`);
-
-        // Get data for this specific month
-        const monthData = {
-          year: currentDate.getFullYear(),
-          month: currentDate.getMonth() + 1,
-          monthName: currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        const processedMonth = {
+          year,
+          month,
+          monthName: monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
           dateRange: {
             start: effectiveStart.toISOString(),
             end: effectiveEnd.toISOString()
-          }
+          },
+          totalVisits: monthData.totalVisits || 0,
+          avgTurnaroundMinutes: monthData.avgTurnaround
+            ? Math.round(monthData.avgTurnaround / 60000)
+            : 0
         };
 
-        // Total visits for this month
-        monthData.totalVisits = await Queue.countDocuments({
-          office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
+        // Process service distribution
+        const serviceCounts = new Map();
+        monthData.serviceDistribution?.forEach(sid => {
+          if (sid) {
+            const count = serviceCounts.get(sid.toString()) || 0;
+            serviceCounts.set(sid.toString(), count + 1);
+          }
         });
+        processedMonth.serviceDistribution = Array.from(serviceCounts.entries())
+          .map(([sid, count]) => ({
+            service: monthlyServiceMap.get(sid) || 'Unknown',
+            count
+          }))
+          .sort((a, b) => b.count - a.count);
 
-        // Average turnaround time for this month
-        const monthTurnaroundStats = await Queue.aggregate([
-          { $match: {
-            office: departmentFilter,
-            status: 'completed',
-            completedAt: { $exists: true },
-            queuedAt: { $exists: true, $gte: effectiveStart, $lte: effectiveEnd }
-          }},
-          { $group: {
-            _id: null,
-            avgTurnaround: {
-              $avg: {
-                $subtract: ['$completedAt', '$queuedAt']
-              }
-            }
-          }}
-        ]);
+        // Process role breakdown
+        const roleCounts = new Map();
+        monthData.roleBreakdown?.forEach(role => {
+          if (role) {
+            const count = roleCounts.get(role) || 0;
+            roleCounts.set(role, count + 1);
+          }
+        });
+        processedMonth.visitorsByRole = Array.from(roleCounts.entries())
+          .map(([role, count]) => ({ role, count }))
+          .sort((a, b) => b.count - a.count);
 
-        monthData.avgTurnaroundMinutes = monthTurnaroundStats.length > 0 ?
-          Math.round(monthTurnaroundStats[0].avgTurnaround / 60000) : 0;
+        // Process peak hours
+        const hourCounts = new Map();
+        monthData.peakHours?.forEach(h => {
+          if (h?.hour !== undefined) {
+            const count = hourCounts.get(h.hour) || 0;
+            hourCounts.set(h.hour, count + 1);
+          }
+        });
+        processedMonth.peakHours = Array.from(hourCounts.entries())
+          .map(([hour, count]) => ({ hour: parseInt(hour), count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
 
-        // Service distribution for this month
-        const monthServiceDistribution = await Queue.aggregate([
-          { $match: {
-            office: departmentFilter,
-            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
-          }},
-          { $group: { _id: '$serviceId', count: { $sum: 1 } } },
-          { $sort: { count: -1 } }
-        ]);
+        // Process peak days
+        const dayCounts = new Map();
+        monthData.peakDays?.forEach(d => {
+          if (d?.dayOfWeek !== undefined) {
+            const count = dayCounts.get(d.dayOfWeek) || 0;
+            dayCounts.set(d.dayOfWeek, count + 1);
+          }
+        });
+        processedMonth.peakDays = Array.from(dayCounts.entries())
+          .map(([dayOfWeek, count]) => ({
+            day: dayNames[parseInt(dayOfWeek) - 1],
+            count
+          }))
+          .sort((a, b) => b.count - a.count);
 
-        const monthServiceIds = monthServiceDistribution.map(s => s._id);
-        const monthServices = await Service.find({ _id: { $in: monthServiceIds } }).lean();
-        const monthServiceMap = monthServices.reduce((map, s) => {
-          map[s._id.toString()] = s.name;
-          return map;
-        }, {});
+        // Process window performance
+        const windowStats = new Map();
+        monthData.windowPerformance?.forEach(wp => {
+          if (wp?.windowId && wp.completedAt && wp.queuedAt) {
+            const wid = wp.windowId.toString();
+            const existing = windowStats.get(wid) || { totalServed: 0, totalTurnaround: 0 };
+            existing.totalServed += 1;
+            existing.totalTurnaround += (new Date(wp.completedAt) - new Date(wp.queuedAt));
+            windowStats.set(wid, existing);
+          }
+        });
+        processedMonth.windowPerformance = Array.from(windowStats.entries())
+          .map(([wid, stats]) => ({
+            window: monthlyWindowMap.get(wid) || 'Unknown',
+            totalServed: stats.totalServed,
+            avgTurnaroundMinutes: Math.round((stats.totalTurnaround / stats.totalServed) / 60000)
+          }))
+          .sort((a, b) => b.totalServed - a.totalServed);
 
-        monthData.serviceDistribution = monthServiceDistribution.map(s => ({
-          service: monthServiceMap[s._id] || 'Unknown',
-          count: s.count
-        }));
-
-        // Visitor breakdown by role for this month
-        const monthRoleBreakdown = await Queue.aggregate([
-          { $match: {
-            office: departmentFilter,
-            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
-          }},
-          { $group: { _id: '$role', count: { $sum: 1 } } },
-          { $sort: { count: -1 } }
-        ]);
-
-        monthData.visitorsByRole = monthRoleBreakdown.map(r => ({
-          role: r._id,
-          count: r.count
-        }));
-
-        // Peak hours for this month
-        const monthPeakHours = await Queue.aggregate([
-          { $match: {
-            office: departmentFilter,
-            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
-          }},
-          { $group: {
-            _id: { $hour: '$queuedAt' },
-            count: { $sum: 1 }
-          }},
-          { $sort: { count: -1 } },
-          { $limit: 5 }
-        ]);
-
-        monthData.peakHours = monthPeakHours.map(h => ({
-          hour: h._id,
-          count: h.count
-        }));
-
-        // Peak days for this month
-        const monthPeakDays = await Queue.aggregate([
-          { $match: {
-            office: departmentFilter,
-            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
-          }},
-          { $group: {
-            _id: { $dayOfWeek: '$queuedAt' },
-            count: { $sum: 1 }
-          }},
-          { $sort: { count: -1 } }
-        ]);
-
-        monthData.peakDays = monthPeakDays.map(d => ({
-          day: dayNames[d._id - 1],
-          count: d.count
-        }));
-
-        // Window performance for this month
-        const monthWindowPerformance = await Queue.aggregate([
-          { $match: {
-            office: departmentFilter,
-            status: 'completed',
-            queuedAt: { $gte: effectiveStart, $lte: effectiveEnd }
-          }},
-          { $group: {
-            _id: '$windowId',
-            totalServed: { $sum: 1 },
-            avgTurnaround: {
-              $avg: {
-                $subtract: ['$completedAt', '$queuedAt']
-              }
-            }
-          }},
-          { $sort: { totalServed: -1 } }
-        ]);
-
-        const monthWindowIds = monthWindowPerformance.map(w => w._id);
-        const monthWindows = await Window.find({ _id: { $in: monthWindowIds } }).lean();
-        const monthWindowMap = monthWindows.reduce((map, w) => {
-          map[w._id.toString()] = w.name;
-          return map;
-        }, {});
-
-        monthData.windowPerformance = monthWindowPerformance.map(w => ({
-          window: monthWindowMap[w._id] || 'Unknown',
-          totalServed: w.totalServed,
-          avgTurnaroundMinutes: Math.round(w.avgTurnaround / 60000)
-        }));
-
-        monthlyBreakdown.push(monthData);
-
-        // Move to next month
-        currentDate.setMonth(currentDate.getMonth() + 1);
+        monthlyBreakdown.push(processedMonth);
       }
 
       reportData.monthlyBreakdown = monthlyBreakdown;
@@ -1478,6 +1916,7 @@ module.exports = {
   getAreaChartByDepartment,
   getDashboardStats,
   getDashboardTableData,
+  getCompleteDashboardData,
   getQueueMonitor,
   getCombinedAnalytics,
   getActiveSessions,

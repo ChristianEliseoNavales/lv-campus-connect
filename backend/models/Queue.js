@@ -112,6 +112,19 @@ queueSchema.index({ windowId: 1, status: 1 });
 queueSchema.index({ isCurrentlyServing: 1 });
 queueSchema.index({ visitationFormId: 1 }); // Index for visitation form lookups
 
+// Compound indexes for dashboard analytics optimization
+queueSchema.index({ office: 1, queuedAt: 1 }); // For date range queries by office
+queueSchema.index({ office: 1, status: 1, queuedAt: 1 }); // Compound for aggregations
+queueSchema.index({ serviceId: 1, office: 1 }); // For service distribution queries
+queueSchema.index({ windowId: 1, status: 1, queuedAt: 1 }); // For window-specific queries
+queueSchema.index({ rating: 1 }); // For rating summary queries
+
+// Additional indexes for optimized query patterns
+queueSchema.index({ serviceId: 1, status: 1 }); // For service filtering by status
+queueSchema.index({ office: 1, status: 1, isPriority: 1 }); // For priority filtering
+queueSchema.index({ queuedAt: 1 }); // For date range queries without office filter
+queueSchema.index({ windowId: 1, status: 1, isCurrentlyServing: 1 }); // For window serving queries
+
 // Static method to get next queue number for an office
 queueSchema.statics.getNextQueueNumber = async function(office) {
   const today = new Date();
@@ -191,10 +204,10 @@ queueSchema.methods.markAsCompleted = async function(rating = null, feedback = n
   this.status = 'completed';
   this.isCurrentlyServing = false;
   this.completedAt = new Date();
-  
+
   if (rating) this.rating = rating;
   if (feedback) this.feedback = feedback;
-  
+
   return this.save();
 };
 

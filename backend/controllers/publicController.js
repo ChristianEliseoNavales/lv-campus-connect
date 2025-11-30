@@ -617,13 +617,6 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
 
     logger('🔍 Queue data query:', waitingQuery);
 
-    // Get waiting queues with populated visitation forms
-    const waitingQueues = await Queue.find(waitingQuery)
-    .populate('visitationFormId')
-    .sort({ queuedAt: 1 })
-    .limit(20)
-    .lean();
-
     // Build query for currently serving
     const servingQuery = {
       office: department,
@@ -639,9 +632,6 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
       servingQuery.serviceId = serviceId;
     }
 
-    // Get currently serving queue
-    const currentlyServing = await Queue.findOne(servingQuery).populate('visitationFormId').lean();
-
     // Get skipped queues (apply same filtering)
     const skippedQuery = {
       office: department,
@@ -654,13 +644,41 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
       skippedQuery.serviceId = serviceId;
     }
 
-    const skippedQueues = await Queue.find(skippedQuery).sort({ queuedAt: 1 }).lean();
+    // Parallelize all three Queue queries for better performance
+    const [waitingQueues, currentlyServing, skippedQueues] = await Promise.all([
+      // Get waiting queues with populated visitation forms
+      Queue.find(waitingQuery)
+        .populate('visitationFormId')
+        .sort({ queuedAt: 1 })
+        .limit(20)
+        .lean(),
+      // Get currently serving queue
+      Queue.findOne(servingQuery).populate('visitationFormId').lean(),
+      // Get skipped queues
+      Queue.find(skippedQuery).sort({ queuedAt: 1 }).lean()
+    ]);
 
-    // Format queue data for frontend with service lookup
+    // Extract unique serviceIds from all queues to batch fetch services (fixes N+1 problem)
+    const serviceIds = new Set();
+    waitingQueues.forEach(queue => {
+      if (queue.serviceId) serviceIds.add(queue.serviceId);
+    });
+    if (currentlyServing?.serviceId) {
+      serviceIds.add(currentlyServing.serviceId);
+    }
+
+    // Batch fetch all services at once
+    const services = await Service.find({ _id: { $in: Array.from(serviceIds) } }).lean();
+    const serviceMap = new Map();
+    services.forEach(service => {
+      serviceMap.set(service._id.toString(), service);
+    });
+
+    // Format queue data for frontend with service lookup using the service map
     const formattedQueues = await Promise.all(
       waitingQueues.map(async (queue) => {
-        // Find service by serviceId
-        const service = await Service.findById(queue.serviceId).lean();
+        // Get service from map (O(1) lookup instead of database query)
+        const service = serviceMap.get(queue.serviceId?.toString());
 
         // Get display customer name using helper function
         const displayCustomerName = await getDisplayCustomerName(queue, service);
@@ -682,7 +700,8 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
 
     let currentServingData = null;
     if (currentlyServing) {
-      const currentService = await Service.findById(currentlyServing.serviceId).lean();
+      // Get service from map (O(1) lookup instead of database query)
+      const currentService = serviceMap.get(currentlyServing.serviceId?.toString());
 
       // Get display customer name using helper function
       const displayCustomerName = await getDisplayCustomerName(currentlyServing, currentService);

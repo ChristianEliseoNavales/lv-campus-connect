@@ -8,7 +8,8 @@ async function getAllWindows(req, res, next) {
     const windows = await Window.find()
       .populate('serviceIds', 'name')
       .populate('assignedAdmin', 'name email')
-      .sort({ office: 1, name: 1 });
+      .sort({ office: 1, name: 1 })
+      .lean();
 
     res.json(windows.map(window => ({
       id: window._id,

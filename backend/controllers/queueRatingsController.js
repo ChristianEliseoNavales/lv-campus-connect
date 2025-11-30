@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const Queue = require('../models/Queue');
 const VisitationForm = require('../models/VisitationForm');
 const Service = require('../models/Service');
+const { getPhilippineDayBoundaries } = require('../utils/philippineTimezone');
 
 // GET /api/queue-ratings - Get ratings from Queue collection with pagination, filtering, and search
 async function getQueueRatings(req, res, next) {
@@ -52,16 +53,34 @@ async function getQueueRatings(req, res, next) {
       matchStage.rating = parseInt(ratingFilter);
     }
 
-    // Date range filter
+    // Date range filter - use Philippine timezone boundaries
     if (startDate || endDate) {
       matchStage.queuedAt = {};
       if (startDate) {
-        matchStage.queuedAt.$gte = new Date(startDate);
+        try {
+          // Get start of day in Philippine timezone, converted to UTC for MongoDB
+          const { startOfDay } = getPhilippineDayBoundaries(startDate);
+          matchStage.queuedAt.$gte = startOfDay;
+        } catch (error) {
+          console.error('Error processing startDate filter:', error);
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid startDate format. Expected YYYY-MM-DD format.'
+          });
+        }
       }
       if (endDate) {
-        const endDateTime = new Date(endDate);
-        endDateTime.setHours(23, 59, 59, 999);
-        matchStage.queuedAt.$lte = endDateTime;
+        try {
+          // Get end of day in Philippine timezone, converted to UTC for MongoDB
+          const { endOfDay } = getPhilippineDayBoundaries(endDate);
+          matchStage.queuedAt.$lte = endOfDay;
+        } catch (error) {
+          console.error('Error processing endDate filter:', error);
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid endDate format. Expected YYYY-MM-DD format.'
+          });
+        }
       }
     }
 

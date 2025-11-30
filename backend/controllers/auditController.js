@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const AuditTrail = require('../models/AuditTrail');
+const { getPhilippineDayBoundaries } = require('../utils/philippineTimezone');
 
 // GET /api/audit - Get audit trail with pagination, filtering, and search
 async function getAuditTrail(req, res, next) {
@@ -70,14 +71,34 @@ async function getAuditTrail(req, res, next) {
       query.userId = userId;
     }
 
-    // Date range filter
+    // Date range filter - use Philippine timezone boundaries
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) {
-        query.createdAt.$gte = new Date(startDate);
+        try {
+          // Get start of day in Philippine timezone, converted to UTC for MongoDB
+          const { startOfDay } = getPhilippineDayBoundaries(startDate);
+          query.createdAt.$gte = startOfDay;
+        } catch (error) {
+          console.error('Error processing startDate filter:', error);
+          return res.status(400).json({
+            error: 'Invalid startDate format. Expected YYYY-MM-DD format.',
+            details: error.message
+          });
+        }
       }
       if (endDate) {
-        query.createdAt.$lte = new Date(endDate);
+        try {
+          // Get end of day in Philippine timezone, converted to UTC for MongoDB
+          const { endOfDay } = getPhilippineDayBoundaries(endDate);
+          query.createdAt.$lte = endOfDay;
+        } catch (error) {
+          console.error('Error processing endDate filter:', error);
+          return res.status(400).json({
+            error: 'Invalid endDate format. Expected YYYY-MM-DD format.',
+            details: error.message
+          });
+        }
       }
     }
 

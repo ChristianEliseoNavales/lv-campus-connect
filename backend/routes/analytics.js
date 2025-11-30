@@ -39,6 +39,9 @@ router.get('/dashboard-stats/:department', verifyToken, checkApiAccess, validate
 // GET /api/analytics/dashboard-table-data/:department - Get dashboard table data
 router.get('/dashboard-table-data/:department', verifyToken, checkApiAccess, validateDepartment, analyticsController.getDashboardTableData);
 
+// GET /api/analytics/dashboard-complete/:department - Get complete dashboard data in one request
+router.get('/dashboard-complete/:department', verifyToken, checkApiAccess, validateDepartment, analyticsController.getCompleteDashboardData);
+
 // GET /api/analytics/queue-monitor/:department - Get queue monitor data for real-time display
 router.get('/queue-monitor/:department', verifyToken, checkApiAccess, validateDepartment, analyticsController.getQueueMonitor);
 

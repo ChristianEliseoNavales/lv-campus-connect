@@ -62,24 +62,90 @@ async function getModelRecords(req, res, next) {
     // Build search query
     const searchQuery = buildSearchQuery(searchTerm, req.modelName);
 
-    // Get total count
-    const totalRecords = await req.Model.countDocuments(searchQuery);
-    const totalPages = Math.ceil(totalRecords / limit);
+    // Use aggregation with $facet to get count and data in a single query
+    const pipeline = [
+      { $match: searchQuery },
+      {
+        $facet: {
+          metadata: [
+            { $count: 'total' }
+          ],
+          data: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit }
+          ]
+        }
+      }
+    ];
 
-    // Get records with pagination
-    let query = req.Model.find(searchQuery)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    // Populate references for certain models
+    // Add $lookup stages for models that need population (replaces populate)
     if (req.modelName === 'queue') {
-      query = query.populate('serviceId windowId visitationFormId');
+      // Add lookups before $facet
+      pipeline.splice(1, 0,
+        {
+          $lookup: {
+            from: 'services',
+            localField: 'serviceId',
+            foreignField: '_id',
+            as: 'serviceId'
+          }
+        },
+        {
+          $lookup: {
+            from: 'windows',
+            localField: 'windowId',
+            foreignField: '_id',
+            as: 'windowId'
+          }
+        },
+        {
+          $lookup: {
+            from: 'visitationforms',
+            localField: 'visitationFormId',
+            foreignField: '_id',
+            as: 'visitationFormId'
+          }
+        },
+        {
+          $addFields: {
+            serviceId: { $arrayElemAt: ['$serviceId', 0] },
+            windowId: { $arrayElemAt: ['$windowId', 0] },
+            visitationFormId: { $arrayElemAt: ['$visitationFormId', 0] }
+          }
+        }
+      );
     } else if (req.modelName === 'window') {
-      query = query.populate('serviceIds assignedAdmin');
+      // Add lookups before $facet
+      pipeline.splice(1, 0,
+        {
+          $lookup: {
+            from: 'services',
+            localField: 'serviceIds',
+            foreignField: '_id',
+            as: 'serviceIds'
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'assignedAdmin',
+            foreignField: '_id',
+            as: 'assignedAdmin'
+          }
+        },
+        {
+          $addFields: {
+            assignedAdmin: { $arrayElemAt: ['$assignedAdmin', 0] }
+          }
+        }
+      );
     }
 
-    const records = await query.exec();
+    const result = await req.Model.aggregate(pipeline);
+    const totalRecords = result[0]?.metadata[0]?.total || 0;
+    const totalPages = Math.ceil(totalRecords / limit);
+    const records = result[0]?.data || [];
 
     res.json({
       records,

@@ -51,25 +51,31 @@ const MISAdminDashboard = () => {
         // Fetch system-wide data for MIS Super Admin
         const baseUrl = API_CONFIG.getAdminUrl();
 
-        const usersResponse = await authFetch(`${baseUrl}/api/users`);
+        // Parallelize all independent API calls for faster loading
+        const [
+          usersResponse,
+          registrarResponse,
+          admissionsResponse,
+          ratingsResponse,
+          departmentResponse
+        ] = await Promise.all([
+          authFetch(`${baseUrl}/api/users`),
+          authFetch(`${baseUrl}/api/windows/registrar`),
+          authFetch(`${baseUrl}/api/windows/admissions`),
+          authFetch(`${baseUrl}/api/analytics/queue-ratings-summary`),
+          authFetch(`${baseUrl}/api/analytics/queue-by-department`)
+        ]);
+
         const usersData = usersResponse.ok ? await usersResponse.json() : { data: [] };
         const users = usersData.data || [];
 
-        // Fetch all windows data
-        const registrarResponse = await authFetch(`${baseUrl}/api/windows/registrar`);
-        const admissionsResponse = await authFetch(`${baseUrl}/api/windows/admissions`);
         const registrarWindows = registrarResponse.ok ? await registrarResponse.json() : [];
         const admissionsWindows = admissionsResponse.ok ? await admissionsResponse.json() : [];
 
-        // Fetch active sessions (initial load)
+        // Fetch active sessions (initial load) - can run in parallel but kept separate for clarity
         await fetchActiveSessions();
 
-        // Fetch kiosk ratings summary
-        const ratingsResponse = await authFetch(`${baseUrl}/api/analytics/queue-ratings-summary`);
         const ratingsData = ratingsResponse.ok ? await ratingsResponse.json() : { data: { totalRatings: 0, averageRating: 0 } };
-
-        // Fetch queue distribution by department
-        const departmentResponse = await authFetch(`${baseUrl}/api/analytics/queue-by-department`);
         const departmentData = departmentResponse.ok ? await departmentResponse.json() : { data: [] };
 
         // Stats based on actual data

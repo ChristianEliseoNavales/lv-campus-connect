@@ -62,7 +62,7 @@ async function getServicesByDepartment(req, res, next) {
       return res.status(400).json({ error: 'Invalid office' });
     }
 
-    const services = await Service.find({ office: department }).sort({ name: 1 });
+    const services = await Service.find({ office: department }).sort({ name: 1 }).lean();
     res.json(services.map(service => ({
       id: service._id,
       name: service.name,

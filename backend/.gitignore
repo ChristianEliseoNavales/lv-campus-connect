@@ -131,6 +131,7 @@ scripts/fix*.js
 scripts/create*.js
 scripts/add*.js
 scripts/clear-*.js
+scripts/cleanup-*.js
 scripts/generateGmailRefreshToken.js
 
 # Test files at backend root

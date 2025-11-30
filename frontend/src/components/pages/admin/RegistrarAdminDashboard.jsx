@@ -33,12 +33,13 @@ const RegistrarAdminDashboard = () => {
     try {
       const baseUrl = API_CONFIG.getAdminUrl();
 
-      // Fetch windows data
-      const windowsResponse = await authFetch(`${baseUrl}/api/windows/registrar`);
-      const windows = windowsResponse.ok ? await windowsResponse.json() : [];
+      // Parallelize independent API calls for faster loading
+      const [windowsResponse, tableResponse] = await Promise.all([
+        authFetch(`${baseUrl}/api/windows/registrar`),
+        authFetch(`${baseUrl}/api/analytics/dashboard-table-data/registrar`)
+      ]);
 
-      // Fetch table data for analytics (visits, turnaround time)
-      const tableResponse = await authFetch(`${baseUrl}/api/analytics/dashboard-table-data/registrar`);
+      const windows = windowsResponse.ok ? await windowsResponse.json() : [];
       const tableResult = tableResponse.ok ? await tableResponse.json() : { data: { windows: [], todayVisits: 0, averageTurnaroundTime: '0 mins' } };
 
       // Transform windows data to match dashboard table format
