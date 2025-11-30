@@ -8,7 +8,7 @@ const IdleModal = ({ isOpen, countdown, onStayActive }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-100 flex flex-col items-center justify-center font-kiosk-public">
+    <div className="fixed inset-0 z-[10000] flex flex-col items-center justify-center font-kiosk-public">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" />
 

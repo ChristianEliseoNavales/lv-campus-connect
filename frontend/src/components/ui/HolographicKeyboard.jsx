@@ -55,10 +55,7 @@ const HolographicKeyboard = ({
   const handleKeyPress = (keyData) => {
     const value = isShiftActive ? keyData.shift : keyData.normal;
     onKeyPress(value);
-    // Auto-release shift after key press (standard keyboard behavior)
-    if (isShiftActive) {
-      setIsShiftActive(false);
-    }
+    // SHIFT remains toggled until manually turned off
   };
 
   // Standard QWERTY keyboard layout with shift functionality
@@ -343,25 +340,25 @@ const HolographicKeyboard = ({
         className="bg-transparent rounded-xl p-5 max-w-5xl mx-auto"
       >
         {/* Number Row with Dynamic Shift Character Display */}
-        <div className="flex justify-center gap-2.5 mb-3">
+        <div className="flex justify-center gap-3 mb-3">
           {numberRowKeys.map((keyData, index) => (
             <button
               key={index}
               onClick={() => handleKeyPress(keyData)}
-              className="w-16 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex flex-col items-center justify-center"
+              className="w-16 h-12 px-3 py-2 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex flex-col items-center justify-center gap-1"
             >
               {/* Dynamic character display based on Shift state */}
               {isShiftActive ? (
                 <>
                   {/* Shift active: Special character prominent, number secondary */}
-                  <span className="text-[10px] opacity-60 transition-all duration-150">{keyData.normal}</span>
-                  <span className="text-xl transition-all duration-150">{keyData.shift}</span>
+                  <span className="text-[10px] opacity-60 transition-all duration-150 leading-none">{keyData.normal}</span>
+                  <span className="text-xl transition-all duration-150 leading-none">{keyData.shift}</span>
                 </>
               ) : (
                 <>
                   {/* Shift inactive: Number prominent, special character secondary */}
-                  <span className="text-[10px] opacity-75 transition-all duration-150">{keyData.shift}</span>
-                  <span className="text-xl transition-all duration-150">{keyData.normal}</span>
+                  <span className="text-[10px] opacity-75 transition-all duration-150 leading-none">{keyData.shift}</span>
+                  <span className="text-xl transition-all duration-150 leading-none">{keyData.normal}</span>
                 </>
               )}
             </button>
@@ -371,20 +368,20 @@ const HolographicKeyboard = ({
             <button
               key={`additional-${index}`}
               onClick={() => handleKeyPress(keyData)}
-              className="w-16 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex flex-col items-center justify-center"
+              className="w-16 h-12 px-3 py-2 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex flex-col items-center justify-center gap-1"
             >
               {/* Dynamic character display based on Shift state */}
               {isShiftActive ? (
                 <>
                   {/* Shift active: Special character prominent, normal character secondary */}
-                  <span className="text-[10px] opacity-60 transition-all duration-150">{keyData.normal}</span>
-                  <span className="text-xl transition-all duration-150">{keyData.shift}</span>
+                  <span className="text-[10px] opacity-60 transition-all duration-150 leading-none">{keyData.normal}</span>
+                  <span className="text-xl transition-all duration-150 leading-none">{keyData.shift}</span>
                 </>
               ) : (
                 <>
                   {/* Shift inactive: Normal character prominent, special character secondary */}
-                  <span className="text-[10px] opacity-75 transition-all duration-150">{keyData.shift}</span>
-                  <span className="text-xl transition-all duration-150">{keyData.normal}</span>
+                  <span className="text-[10px] opacity-75 transition-all duration-150 leading-none">{keyData.shift}</span>
+                  <span className="text-xl transition-all duration-150 leading-none">{keyData.normal}</span>
                 </>
               )}
             </button>
@@ -393,12 +390,12 @@ const HolographicKeyboard = ({
 
         {/* Letter Rows */}
         {keyboardRows.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex justify-center gap-2.5 mb-3">
+          <div key={rowIndex} className="flex justify-center gap-3 mb-3">
             {/* Add Shift key to the third row (before letters) */}
             {rowIndex === 2 && (
               <button
                 onClick={handleShiftToggle}
-                className={`w-20 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xs font-bold text-white active:scale-95 shadow-lg transition-all duration-150 select-none flex items-center justify-center gap-0.5 ${
+                className={`w-20 h-12 px-3 py-2 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xs font-bold text-white active:scale-95 shadow-lg transition-all duration-150 select-none flex items-center justify-center gap-0.5 ${
                   isShiftActive
                     ? 'bg-[#1F3463] bg-opacity-80 border-opacity-100'
                     : 'active:bg-white active:bg-opacity-20 active:border-opacity-80'
@@ -413,7 +410,7 @@ const HolographicKeyboard = ({
               <button
                 key={keyIndex}
                 onClick={() => handleKeyPress(keyData)}
-                className="w-16 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xl font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
+                className="w-16 h-12 px-3 py-2 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xl font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex items-center justify-center"
               >
                 {isShiftActive ? keyData.shift : keyData.normal}
               </button>
@@ -423,7 +420,7 @@ const HolographicKeyboard = ({
             {rowIndex === 2 && (
               <button
                 onClick={onBackspace}
-                className="w-20 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xs font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
+                className="w-20 h-12 px-3 py-2 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-xs font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex items-center justify-center"
               >
                 ⌫ BACK
               </button>
@@ -432,11 +429,11 @@ const HolographicKeyboard = ({
         ))}
 
         {/* Bottom Row with Spacebar */}
-        <div className="flex justify-center gap-2.5 mb-3">
+        <div className="flex justify-center gap-3 mb-3">
           {/* Spacebar */}
           <button
             onClick={onSpace}
-            className="w-64 h-12 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none"
+            className="w-64 h-12 px-3 py-2 bg-transparent border-2 border-white border-opacity-50 rounded-lg text-base font-bold text-white active:bg-white active:bg-opacity-20 active:border-opacity-80 active:scale-95 shadow-lg active:shadow-md transition-all duration-150 select-none flex items-center justify-center"
           >
             SPACE
           </button>

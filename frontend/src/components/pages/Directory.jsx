@@ -681,11 +681,10 @@ const Directory = () => {
             <div className="fixed bottom-5 left-5 flex flex-col space-y-3 z-50">
               {/* Location Button */}
               <button
-                className="w-16 h-16 bg-[#FFE251] text-[#1A2E56] border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-md active:drop-shadow-sm active:bg-[#1A2E56] active:scale-95 transition-all duration-150 flex flex-col items-center justify-center focus:outline-none focus:ring-3 focus:ring-blue-200"
+                className="w-16 h-16 bg-[#FFE251] text-[#1A2E56] border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-md active:drop-shadow-sm active:bg-[#1A2E56] active:scale-95 transition-all duration-150 flex items-center justify-center focus:outline-none focus:ring-3 focus:ring-blue-200"
                 aria-label="Find office location"
               >
-                <FaLocationDot className="w-5 h-5 mb-0.5" />
-                <span className="text-base font-semibold">Location</span>
+                <FaLocationDot className="w-6 h-6" />
               </button>
 
               {/* Back Button */}

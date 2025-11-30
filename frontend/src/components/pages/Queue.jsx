@@ -95,7 +95,7 @@ const ConfirmationModal = ({ isOpen, onYes, onNo }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center font-kiosk-public">
       {/* Black background with 80% opacity */}
       <div className="absolute inset-0 bg-black bg-opacity-80" />
 
@@ -114,7 +114,7 @@ const ConfirmationModal = ({ isOpen, onYes, onNo }) => {
           {/* Yes Button */}
           <button
             onClick={onYes}
-            className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+            className="w-20 h-20 rounded-full border-2 border-white bg-[#FFE251] text-[#1F3463] font-bold text-xs active:bg-[#FFD700] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
           >
             YES
           </button>
@@ -418,11 +418,113 @@ const Queue = () => {
     if (!email.trim()) {
       return 'Email is required';
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      return 'Enter a valid email address (e.g., user@example.com)';
+
+    const trimmedEmail = email.trim();
+
+    // Basic email format validation
+    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return 'Enter a valid email address';
     }
-    return '';
+
+    // Extract domain part after @
+    const domainPart = trimmedEmail.split('@')[1];
+    if (!domainPart) {
+      return 'Enter a valid email address';
+    }
+
+    // Split by dots to check TLD
+    const domainParts = domainPart.split('.');
+    if (domainParts.length < 2) {
+      return 'Enter a valid email address';
+    }
+
+    const tld = domainParts[domainParts.length - 1];
+    // Require TLD to be at least 3 characters (rejects .co, .uk as standalone, but allows .co.uk, .com, .org)
+    if (tld.length < 3 && domainParts.length === 2) {
+      return 'Enter a valid email address';
+    }
+
+    // Blacklist: Reject known example/test/decoy domains
+    const blacklistedDomains = [
+      'example.com',
+      'example.org',
+      'example.net',
+      'example.edu',
+      'sample.com',
+      'sample.org',
+      'test.com',
+      'test.org',
+      'test.net',
+      'decoy.com',
+      'decoy.org',
+      'fake.com',
+      'fake.org',
+      'dummy.com',
+      'dummy.org',
+      'placeholder.com',
+      'placeholder.org',
+      'demo.com',
+      'demo.org',
+      'trial.com',
+      'trial.org'
+    ];
+
+    const lowerDomain = domainPart.toLowerCase();
+    if (blacklistedDomains.some(blocked => lowerDomain === blocked || lowerDomain.endsWith('.' + blocked))) {
+      return 'Please use a real email address (e.g., @gmail.com, @laverdad.edu.ph)';
+    }
+
+    // Whitelist: Accept known real email providers
+    const realEmailProviders = [
+      'gmail.com',
+      'yahoo.com',
+      'yahoo.com.ph',
+      'outlook.com',
+      'hotmail.com',
+      'hotmail.com.ph',
+      'icloud.com',
+      'protonmail.com',
+      'proton.me',
+      'mail.com',
+      'aol.com',
+      'zoho.com',
+      'yandex.com',
+      'gmx.com',
+      'live.com',
+      'msn.com'
+    ];
+
+    // Check if domain is a real email provider
+    const isRealProvider = realEmailProviders.some(provider =>
+      lowerDomain === provider || lowerDomain.endsWith('.' + provider)
+    );
+
+    // Check if domain is educational (.edu or .edu.ph)
+    const isEducational = lowerDomain.includes('.edu') || lowerDomain.includes('.edu.ph');
+
+    // Accept if it's a real provider or educational domain
+    if (isRealProvider || isEducational) {
+      return '';
+    }
+
+    // For other domains, check if they look like real business domains
+    // Reject if it contains obvious test/example keywords
+    const testKeywords = ['example', 'sample', 'test', 'decoy', 'fake', 'dummy', 'placeholder', 'demo', 'trial'];
+    const hasTestKeyword = testKeywords.some(keyword => lowerDomain.includes(keyword));
+
+    if (hasTestKeyword) {
+      return 'Please use a real email address (e.g., @gmail.com, @laverdad.edu.ph)';
+    }
+
+    // For other domains, accept if they have a proper structure (at least 2 parts before TLD)
+    // This allows real business domains while being somewhat restrictive
+    if (domainParts.length >= 2) {
+      // Accept domains that look legitimate (have proper structure)
+      return '';
+    }
+
+    return 'Please use a real email address (e.g., @gmail.com, @laverdad.edu.ph)';
   };
 
   const validateAddress = (address) => {
@@ -444,10 +546,21 @@ const Queue = () => {
       setFormData(prev => {
         const updatedData = { ...prev, [fieldName]: value };
 
-        // Clear error for this field when user starts typing
+        // Real-time validation after value change
+        let error = '';
+        if (fieldName === 'name') {
+          error = validateName(value);
+        } else if (fieldName === 'contactNumber') {
+          error = validateContactNumber(value);
+        } else if (fieldName === 'email') {
+          error = validateEmail(value);
+        } else if (fieldName === 'address') {
+          error = validateAddress(value);
+        }
+
         setFormErrors(prevErrors => ({
           ...prevErrors,
-          [fieldName]: ''
+          [fieldName]: error
         }));
 
         return updatedData;
@@ -464,10 +577,21 @@ const Queue = () => {
         const newValue = prev[activeField] + key;
         const updatedData = { ...prev, [activeField]: newValue };
 
-        // Clear error for this field when user starts typing
+        // Real-time validation after value change
+        let error = '';
+        if (activeField === 'name') {
+          error = validateName(newValue);
+        } else if (activeField === 'contactNumber') {
+          error = validateContactNumber(newValue);
+        } else if (activeField === 'email') {
+          error = validateEmail(newValue);
+        } else if (activeField === 'address') {
+          error = validateAddress(newValue);
+        }
+
         setFormErrors(prevErrors => ({
           ...prevErrors,
-          [activeField]: ''
+          [activeField]: error
         }));
 
         return updatedData;
@@ -479,10 +603,29 @@ const Queue = () => {
     if (activeField === 'idNumber') {
       setIdNumber(prev => prev.slice(0, -1));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [activeField]: prev[activeField].slice(0, -1)
-      }));
+      setFormData(prev => {
+        const newValue = prev[activeField].slice(0, -1);
+        const updatedData = { ...prev, [activeField]: newValue };
+
+        // Real-time validation after deletion
+        let error = '';
+        if (activeField === 'name') {
+          error = validateName(newValue);
+        } else if (activeField === 'contactNumber') {
+          error = validateContactNumber(newValue);
+        } else if (activeField === 'email') {
+          error = validateEmail(newValue);
+        } else if (activeField === 'address') {
+          error = validateAddress(newValue);
+        }
+
+        setFormErrors(prevErrors => ({
+          ...prevErrors,
+          [activeField]: error
+        }));
+
+        return updatedData;
+      });
     }
   };
 
@@ -490,10 +633,29 @@ const Queue = () => {
     if (activeField === 'idNumber') {
       setIdNumber(prev => prev + ' ');
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [activeField]: prev[activeField] + ' '
-      }));
+      setFormData(prev => {
+        const newValue = prev[activeField] + ' ';
+        const updatedData = { ...prev, [activeField]: newValue };
+
+        // Real-time validation after space addition
+        let error = '';
+        if (activeField === 'name') {
+          error = validateName(newValue);
+        } else if (activeField === 'contactNumber') {
+          error = validateContactNumber(newValue);
+        } else if (activeField === 'email') {
+          error = validateEmail(newValue);
+        } else if (activeField === 'address') {
+          error = validateAddress(newValue);
+        }
+
+        setFormErrors(prevErrors => ({
+          ...prevErrors,
+          [activeField]: error
+        }));
+
+        return updatedData;
+      });
     }
   };
 
@@ -1477,9 +1639,17 @@ const Queue = () => {
     setStudentStatus(null);
   };
 
-  // Check if form steps are valid
-  const isFormStep1Valid = formData.name.trim() && formData.contactNumber.trim();
-  const isFormStep2Valid = formData.email.trim(); // Email is required, address is optional
+  // Check if form steps are valid - must have no validation errors
+  const isFormStep1Valid =
+    formData.name.trim() &&
+    formData.contactNumber.trim() &&
+    !formErrors.name &&
+    !formErrors.contactNumber;
+
+  const isFormStep2Valid =
+    formData.email.trim() &&
+    !formErrors.email &&
+    !formErrors.address; // Address is optional, but if provided must be valid
 
 
 
@@ -1594,44 +1764,65 @@ const Queue = () => {
 
           <div className="h-full flex flex-col justify-center">
             {/* Form Container - Centered horizontally with positioned buttons */}
-            <div className="flex items-center justify-center w-full px-8 relative overflow-visible">
-              {/* Form Section - Perfectly centered */}
-              <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-8 w-[500px]">
-                {/* Header */}
-                <h2 className="text-4xl font-bold text-gray-800 mb-4 text-center">
-                  Enter a valid ID number
-                </h2>
+            <div className="flex items-center justify-center w-full px-8">
+              <div className="flex items-center gap-3 relative">
+                {/* Form Section - Perfectly centered */}
+                <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-8 w-[500px]">
+                  {/* Header */}
+                  <h2 className="text-4xl font-bold text-gray-800 mb-4 text-center">
+                    Enter a valid ID number
+                  </h2>
 
-                {/* Subheader */}
-                <p className="text-xl text-gray-600 mb-8 text-center">
-                  Please present your ID at the office for verification
-                </p>
+                  {/* Subheader */}
+                  <p className="text-xl text-gray-600 mb-8 text-center">
+                    Please present your ID at the office for verification
+                  </p>
 
-                <div className="space-y-4">
-                  {/* ID Number Field */}
-                  <div>
-                    <label htmlFor="idNumber" className="block text-xl font-semibold text-gray-700 mb-2">
-                      ID NUMBER <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="idNumber"
-                      type="text"
-                      value={idNumber}
-                      onFocus={() => handleFieldFocus('idNumber')}
-                      onChange={(e) => handlePhysicalInputChange('idNumber', e.target.value)}
-                      // TEMPORARY: readOnly removed for testing - restore for production
-                      className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
-                        activeField === 'idNumber'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-300 bg-gray-50'
-                      }`}
-                      placeholder="Enter your ID number"
-                    />
+                  <div className="space-y-4">
+                    {/* ID Number Field */}
+                    <div>
+                      <label htmlFor="idNumber" className="block text-xl font-semibold text-gray-700 mb-2">
+                        ID NUMBER <span className="text-gray-700">(REQUIRED)</span>
+                      </label>
+                      <input
+                        id="idNumber"
+                        type="text"
+                        value={idNumber}
+                        onFocus={() => handleFieldFocus('idNumber')}
+                        onChange={(e) => handlePhysicalInputChange('idNumber', e.target.value)}
+                        // TEMPORARY: readOnly removed for testing - restore for production
+                        className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
+                          activeField === 'idNumber'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 bg-gray-50'
+                        }`}
+                        placeholder="Enter your ID number"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Navigation buttons are now handled within the HolographicKeyboard overlay */}
+                {/* Navigation buttons positioned next to form container */}
+                <div className="flex flex-col space-y-3">
+                <button
+                  onClick={handleIdVerificationNext}
+                  disabled={!idNumber.trim()}
+                  className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
+                    !idNumber.trim()
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-[#FFE251] text-[#1F3463] active:bg-[#FFD700] active:shadow-md active:scale-95'
+                  }`}
+                >
+                  NEXT
+                </button>
+                <button
+                  onClick={handleIdVerificationPrevious}
+                  className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] active:shadow-md active:scale-95 transition-all duration-150 shadow-lg"
+                >
+                  PREVIOUS
+                </button>
+              </div>
+              </div>
             </div>
           </div>
 
@@ -1648,7 +1839,7 @@ const Queue = () => {
           onHide={hideKeyboard}
           isVisible={showKeyboard}
           activeInputValue={idNumber}
-          activeInputLabel="ID NUMBER *"
+          activeInputLabel="ID NUMBER (REQUIRED)"
           activeInputPlaceholder="Enter your ID number"
           // Navigation buttons for ID verification step
           showNavigationButtons={true}
@@ -1684,69 +1875,90 @@ const Queue = () => {
 
           <div className="h-full flex flex-col justify-center">
             {/* Form Container - Centered horizontally with positioned buttons */}
-            <div className="flex items-center justify-center w-full px-8 relative overflow-visible">
-              {/* Form Section - Perfectly centered */}
-              <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-6 w-[500px]">
-                <div className="space-y-4">
-                  {/* Name Field */}
-                  <div>
-                    <label htmlFor="name" className="block text-xl font-semibold text-gray-700 mb-2">
-                      NAME <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      value={formData.name}
-                      onFocus={() => handleFieldFocus('name')}
-                      onChange={(e) => handlePhysicalInputChange('name', e.target.value)}
-                      // TEMPORARY: readOnly removed for testing - restore for production
-                      className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
-                        activeField === 'name'
-                          ? 'border-blue-500 bg-blue-50'
-                          : formErrors.name
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-300 bg-gray-50'
-                      }`}
-                      placeholder="Enter your full name"
-                    />
-                    {formErrors.name && (
-                      <p className="mt-1 text-sm text-red-600 font-medium">
-                        {formErrors.name}
-                      </p>
-                    )}
-                  </div>
+            <div className="flex items-center justify-center w-full px-8">
+              <div className="flex items-center gap-3 relative">
+                {/* Form Section - Perfectly centered */}
+                <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-6 w-[500px]">
+                  <div className="space-y-4">
+                    {/* Name Field */}
+                    <div>
+                      <label htmlFor="name" className="block text-xl font-semibold text-gray-700 mb-2">
+                        NAME <span className="text-gray-700">(REQUIRED)</span>
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        value={formData.name}
+                        onFocus={() => handleFieldFocus('name')}
+                        onChange={(e) => handlePhysicalInputChange('name', e.target.value)}
+                        // TEMPORARY: readOnly removed for testing - restore for production
+                        className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
+                          activeField === 'name'
+                            ? 'border-blue-500 bg-blue-50'
+                            : formErrors.name
+                            ? 'border-red-500 bg-red-50'
+                            : 'border-gray-300 bg-gray-50'
+                        }`}
+                        placeholder="Enter your full name"
+                      />
+                      {formErrors.name && (
+                        <p className="mt-1 text-sm text-red-600 font-medium">
+                          {formErrors.name}
+                        </p>
+                      )}
+                    </div>
 
-                  {/* Contact Number Field */}
-                  <div>
-                    <label htmlFor="contactNumber" className="block text-xl font-semibold text-gray-700 mb-2">
-                      CONTACT NUMBER <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="contactNumber"
-                      type="text"
-                      value={formData.contactNumber}
-                      onFocus={() => handleFieldFocus('contactNumber')}
-                      onChange={(e) => handlePhysicalInputChange('contactNumber', e.target.value)}
-                      // TEMPORARY: readOnly removed for testing - restore for production
-                      className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
-                        activeField === 'contactNumber'
-                          ? 'border-blue-500 bg-blue-50'
-                          : formErrors.contactNumber
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-300 bg-gray-50'
-                      }`}
-                      placeholder="e.g., +639123456789 or 09123456789"
-                    />
-                    {formErrors.contactNumber && (
-                      <p className="mt-1 text-sm text-red-600 font-medium">
-                        {formErrors.contactNumber}
-                      </p>
-                    )}
+                    {/* Contact Number Field */}
+                    <div>
+                      <label htmlFor="contactNumber" className="block text-xl font-semibold text-gray-700 mb-2">
+                        CONTACT NUMBER <span className="text-gray-700">(REQUIRED)</span>
+                      </label>
+                      <input
+                        id="contactNumber"
+                        type="text"
+                        value={formData.contactNumber}
+                        onFocus={() => handleFieldFocus('contactNumber')}
+                        onChange={(e) => handlePhysicalInputChange('contactNumber', e.target.value)}
+                        // TEMPORARY: readOnly removed for testing - restore for production
+                        className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
+                          activeField === 'contactNumber'
+                            ? 'border-blue-500 bg-blue-50'
+                            : formErrors.contactNumber
+                            ? 'border-red-500 bg-red-50'
+                            : 'border-gray-300 bg-gray-50'
+                        }`}
+                        placeholder="e.g., +639123456789 or 09123456789"
+                      />
+                      {formErrors.contactNumber && (
+                        <p className="mt-1 text-sm text-red-600 font-medium">
+                          {formErrors.contactNumber}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Navigation buttons are now handled within the HolographicKeyboard overlay */}
+                {/* Navigation buttons positioned next to form container */}
+                <div className="flex flex-col space-y-3">
+                <button
+                  onClick={handleFormStep1Next}
+                  disabled={!isFormStep1Valid}
+                  className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
+                    !isFormStep1Valid
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-[#FFE251] text-[#1F3463] active:bg-[#FFD700] active:shadow-md active:scale-95'
+                  }`}
+                >
+                  NEXT
+                </button>
+                <button
+                  onClick={handleFormStep1Previous}
+                  className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] active:shadow-md active:scale-95 transition-all duration-150 shadow-lg"
+                >
+                  PREVIOUS
+                </button>
+              </div>
+              </div>
             </div>
           </div>
 
@@ -1766,13 +1978,13 @@ const Queue = () => {
           allFieldsData={[
             {
               name: 'name',
-              label: 'NAME *',
+              label: 'NAME (REQUIRED)',
               value: formData.name,
               placeholder: 'Enter your full name'
             },
             {
               name: 'contactNumber',
-              label: 'CONTACT NUMBER *',
+              label: 'CONTACT NUMBER (REQUIRED)',
               value: formData.contactNumber,
               placeholder: 'Enter your contact number'
             }
@@ -1815,74 +2027,94 @@ const Queue = () => {
 
           <div className="h-full flex flex-col justify-center">
             {/* Form Container - Centered horizontally with positioned buttons */}
-            <div className="flex items-center justify-center w-full px-8 relative overflow-visible">
-              {/* Form Section - Perfectly centered */}
-              <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-6 w-[500px]">
-                <div className="space-y-4">
-                  {/* Email Field */}
-                  <div className="relative">
-                    <div className="flex justify-between items-center mb-2">
-                      <label htmlFor="email" className="block text-xl font-semibold text-gray-700">
-                        EMAIL <span className="text-red-500">*</span>
-                      </label>
+            <div className="flex items-center justify-center w-full px-8">
+              <div className="flex items-center gap-3 relative">
+                {/* Form Section - Perfectly centered */}
+                <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-6 w-[500px]">
+                  <div className="space-y-4">
+                    {/* Email Field */}
+                    <div className="relative">
+                      <div className="flex justify-between items-center mb-2">
+                        <label htmlFor="email" className="block text-xl font-semibold text-gray-700">
+                          EMAIL <span className="text-gray-700">(REQUIRED)</span>
+                        </label>
+                      </div>
+                      <input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onFocus={() => handleFieldFocus('email')}
+                        onChange={(e) => handlePhysicalInputChange('email', e.target.value)}
+                        // TEMPORARY: readOnly removed for testing - restore for production
+                        className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
+                          activeField === 'email'
+                            ? 'border-blue-500 bg-blue-50'
+                            : formErrors.email
+                            ? 'border-red-500 bg-red-50'
+                            : 'border-gray-300 bg-gray-50'
+                        }`}
+                        placeholder="e.g., user@example.com"
+                      />
+                      {formErrors.email && (
+                        <p className="mt-1 text-sm text-red-600 font-medium">
+                          {formErrors.email}
+                        </p>
+                      )}
                     </div>
-                    <input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onFocus={() => handleFieldFocus('email')}
-                      onChange={(e) => handlePhysicalInputChange('email', e.target.value)}
-                      // TEMPORARY: readOnly removed for testing - restore for production
-                      className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
-                        activeField === 'email'
-                          ? 'border-blue-500 bg-blue-50'
-                          : formErrors.email
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-300 bg-gray-50'
-                      }`}
-                      placeholder="e.g., user@example.com"
-                    />
-                    {formErrors.email && (
-                      <p className="mt-1 text-sm text-red-600 font-medium">
-                        {formErrors.email}
-                      </p>
-                    )}
-                  </div>
 
-                  {/* Address Field */}
-                  <div className="relative">
-                    <div className="flex justify-between items-center mb-2">
-                      <label htmlFor="address" className="block text-xl font-semibold text-gray-700">
-                        ADDRESS
-                      </label>
-                      <span className="text-sm text-gray-500 font-medium">Optional</span>
+                    {/* Address Field */}
+                    <div className="relative">
+                      <div className="flex justify-between items-center mb-2">
+                        <label htmlFor="address" className="block text-xl font-semibold text-gray-700">
+                          ADDRESS <span className="text-gray-500">(OPTIONAL)</span>
+                        </label>
+                      </div>
+                      <input
+                        id="address"
+                        type="text"
+                        value={formData.address}
+                        onFocus={() => handleFieldFocus('address')}
+                        onChange={(e) => handlePhysicalInputChange('address', e.target.value)}
+                        // TEMPORARY: readOnly removed for testing - restore for production
+                        className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
+                          activeField === 'address'
+                            ? 'border-blue-500 bg-blue-50'
+                            : formErrors.address
+                            ? 'border-red-500 bg-red-50'
+                            : 'border-gray-300 bg-gray-50'
+                        }`}
+                        placeholder="Enter your address (optional)"
+                      />
+                      {formErrors.address && (
+                        <p className="mt-1 text-sm text-red-600 font-medium">
+                          {formErrors.address}
+                        </p>
+                      )}
                     </div>
-                    <input
-                      id="address"
-                      type="text"
-                      value={formData.address}
-                      onFocus={() => handleFieldFocus('address')}
-                      onChange={(e) => handlePhysicalInputChange('address', e.target.value)}
-                      // TEMPORARY: readOnly removed for testing - restore for production
-                      className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
-                        activeField === 'address'
-                          ? 'border-blue-500 bg-blue-50'
-                          : formErrors.address
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-300 bg-gray-50'
-                      }`}
-                      placeholder="Enter your address (optional)"
-                    />
-                    {formErrors.address && (
-                      <p className="mt-1 text-sm text-red-600 font-medium">
-                        {formErrors.address}
-                      </p>
-                    )}
                   </div>
                 </div>
-              </div>
 
-              {/* Navigation buttons are now handled within the HolographicKeyboard overlay */}
+                {/* Navigation buttons positioned next to form container */}
+                <div className="flex flex-col space-y-3">
+                <button
+                  onClick={handleFormStep2Next}
+                  disabled={!isFormStep2Valid}
+                  className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
+                    !isFormStep2Valid
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-[#FFE251] text-[#1F3463] active:bg-[#FFD700] active:shadow-md active:scale-95'
+                  }`}
+                >
+                  NEXT
+                </button>
+                <button
+                  onClick={handleFormStep2Previous}
+                  className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] active:shadow-md active:scale-95 transition-all duration-150 shadow-lg"
+                >
+                  PREVIOUS
+                </button>
+              </div>
+              </div>
             </div>
           </div>
 
@@ -1902,13 +2134,13 @@ const Queue = () => {
           allFieldsData={[
             {
               name: 'email',
-              label: 'EMAIL *',
+              label: 'EMAIL (REQUIRED)',
               value: formData.email,
               placeholder: 'Enter your email address'
             },
             {
               name: 'address',
-              label: 'ADDRESS',
+              label: 'ADDRESS (OPTIONAL)',
               value: formData.address,
               placeholder: 'Enter your address'
             }
@@ -1963,20 +2195,20 @@ const Queue = () => {
     };
 
     return (
-      <QueueLayout>
-        <div className="h-full flex flex-col">
+      <QueueLayout noScroll={true}>
+        <div className="h-full flex items-center justify-center overflow-hidden px-8 py-8">
           {/* Main Content Area - 2 columns layout with equal widths */}
-          <div className="flex-grow grid grid-cols-2 gap-8 py-10 px-20">
+          <div className="flex gap-6 items-center justify-center">
             {/* First Div - QR Code Section */}
-            <div className="bg-white rounded-3xl shadow-xl drop-shadow-lg p-8 flex flex-col items-center justify-center">
+            <div className="bg-white rounded-3xl shadow-xl drop-shadow-lg p-2 flex flex-col items-center justify-center min-h-0 overflow-hidden w-[500px] h-[500px]">
               {/* Top Text */}
-              <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">
+              <h2 className="text-2xl font-bold text-gray-800 mb-3 text-center flex-shrink-0">
                 Scan the QR Code for your Queue Number
               </h2>
 
               {/* QR Code Image - Centered */}
-              <div className="flex-grow flex items-center justify-center mb-8">
-                <div className="w-96 h-96 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center min-h-0 w-full max-h-full overflow-hidden">
+                <div className="w-full max-w-[380px] aspect-square bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center">
                   {/* QR Code Image */}
                   {qrCodeDataUrl ? (
                     <img
@@ -1987,8 +2219,8 @@ const Queue = () => {
                   ) : (
                     <div className="flex items-center justify-center w-full h-full text-gray-500">
                       <div className="text-center">
-                        <div className="text-4xl mb-4">📱</div>
-                        <div className="text-lg">Generating QR Code...</div>
+                        <div className="text-3xl mb-2">📱</div>
+                        <div className="text-sm">Generating QR Code...</div>
                       </div>
                     </div>
                   )}
@@ -1997,9 +2229,9 @@ const Queue = () => {
             </div>
 
             {/* Second Div - Queue Information */}
-            <div className="bg-white rounded-3xl shadow-xl drop-shadow-lg p-6 flex flex-col items-center justify-evenly h-full">
+            <div className="bg-white rounded-3xl shadow-xl drop-shadow-lg p-2 flex flex-col items-center justify-center min-h-0 overflow-hidden w-[500px] h-[500px]">
               {/* Large Queue Number with Circular Border */}
-              <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center justify-center mb-4 flex-shrink-0">
                 <div className="w-32 h-32 border-4 border-[#1F3463] rounded-full flex items-center justify-center">
                   <span className="text-5xl font-bold text-[#1F3463]">
                     {queueNumber.toString().padStart(2, '0')}
@@ -2008,14 +2240,14 @@ const Queue = () => {
               </div>
 
               {/* Queue Number Label */}
-              <h3 className="text-3xl font-bold text-center text-gray-800 mb-4">
+              <h3 className="text-3xl font-bold text-center text-gray-800 mb-4 flex-shrink-0">
                 Queue Number
               </h3>
 
               {/* Location Text */}
-              <div className="mb-6 text-center">
-                <span className="text-xl text-gray-700">Location:<br /></span>
-                <span className="text-4xl text-gray-700">
+              <div className="mb-4 text-center flex-shrink-0">
+                <span className="text-lg text-gray-700">Location:<br /></span>
+                <span className="text-2xl font-semibold text-gray-700">
                   {(() => {
                     if (!selectedDepartment) return 'Location not set';
                     const departmentKey = selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions';
@@ -2024,16 +2256,15 @@ const Queue = () => {
                 </span>
               </div>
 
-
               {/* Instruction Text */}
-              <div className="mb-6 text-center">
-                <span className="text-xl text-gray-700">Please Proceed to <br /></span>
-                <span className="text-4xl text-gray-700">{windowName}</span>
+              <div className="mb-4 text-center flex-shrink-0">
+                <span className="text-lg text-gray-700">Please Proceed to <br /></span>
+                <span className="text-2xl font-semibold text-gray-700">{windowName}</span>
               </div>
 
               {/* Validity Notice */}
-              <div className="mb-4 text-center">
-                <p className="text-xl font-semibold text-[#1F3463]">
+              <div className="mb-4 text-center flex-shrink-0">
+                <p className="text-base font-semibold text-[#1F3463]">
                   This ticket is only valid on {formatCurrentDate()}
                 </p>
               </div>
@@ -2042,7 +2273,7 @@ const Queue = () => {
               <button
                 onClick={handlePrintClick}
                 disabled={isPrinting || !printerAvailable || printerChecking || printAttempts >= 3}
-                className={`px-20 py-4 rounded-full font-bold text-xl transition-all duration-150 shadow-lg ${
+                className={`px-16 py-3 rounded-full font-bold text-lg transition-all duration-150 shadow-lg flex-shrink-0 ${
                   isPrinting
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : !printerAvailable || printAttempts >= 3
@@ -2486,10 +2717,24 @@ const Queue = () => {
             <h2 className="text-4xl font-semibold text-center drop-shadow-lg whitespace-nowrap mb-3" style={{ color: '#1F3463' }}>
               DO YOU BELONG TO THE FOLLOWING?
             </h2>
-            {/* Subheader with bulleted format */}
-            <div className="text-2xl font-semibold text-center drop-shadow-lg" style={{ color: '#1F3463' }}>
-              <div className="mb-1.5">• PERSON WITH DISABILITIES (PWD)</div>
-              <div className="mb-1.5">• SENIOR CITIZEN</div>
+            {/* Subheader with side-by-side layout and images */}
+            <div className="flex items-start justify-center gap-8 text-2xl font-semibold text-center drop-shadow-lg mt-8" style={{ color: '#1F3463' }}>
+              <div className="flex flex-col items-center">
+                <img
+                  src="/queue/pwd.png"
+                  alt="Person with Disabilities"
+                  className="mb-2 h-16 w-auto object-contain"
+                />
+                <div>PERSON WITH <br></br>DISABILITIES (PWD)</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <img
+                  src="/queue/senior.png"
+                  alt="Senior Citizen"
+                  className="mb-2 h-16 w-auto object-contain"
+                />
+                <div>SENIOR CITIZEN</div>
+              </div>
             </div>
           </div>
 
