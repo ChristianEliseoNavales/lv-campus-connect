@@ -446,7 +446,7 @@ const formatHour = (hour) => {
 
 const AnalyticalReportPDF = ({ reportData, userRole, chartImages = {} }) => {
   const LVCampusConnectColors = [COLORS.navy, COLORS.purple, COLORS.blue, COLORS.lightBlue, COLORS.yellow];
-  
+
   // Get absolute URLs for images
   const getImageUrl = (path) => {
     if (typeof window !== 'undefined') {
@@ -564,14 +564,20 @@ const AnalyticalReportPDF = ({ reportData, userRole, chartImages = {} }) => {
                   <View style={[styles.grid4ColItem, styles.metricCard, styles.metricCardBlue]}>
                     <Text style={[styles.metricLabel, styles.metricLabelBlue]}>Busiest Month</Text>
                     <Text style={styles.metricValue}>
-                      {reportData.monthlyBreakdown?.reduce((max, month) =>
-                        month.totalVisits > max.totalVisits ? month : max
-                      )?.monthName || 'N/A'}
+                      {reportData.monthlyBreakdown && reportData.monthlyBreakdown.length > 0
+                        ? reportData.monthlyBreakdown.reduce((max, month) =>
+                            month.totalVisits > max.totalVisits ? month : max,
+                            { totalVisits: 0, monthName: 'N/A' }
+                          ).monthName
+                        : 'N/A'}
                     </Text>
                     <Text style={styles.metricSubtext}>
-                      {reportData.monthlyBreakdown?.reduce((max, month) =>
-                        month.totalVisits > max.totalVisits ? month : max
-                      )?.totalVisits?.toLocaleString() || '0'} visits
+                      {reportData.monthlyBreakdown && reportData.monthlyBreakdown.length > 0
+                        ? reportData.monthlyBreakdown.reduce((max, month) =>
+                            month.totalVisits > max.totalVisits ? month : max,
+                            { totalVisits: 0, monthName: 'N/A' }
+                          ).totalVisits.toLocaleString()
+                        : '0'} visits
                     </Text>
                   </View>
 
@@ -590,14 +596,20 @@ const AnalyticalReportPDF = ({ reportData, userRole, chartImages = {} }) => {
                   <View style={[styles.grid4ColItem, styles.metricCard, styles.metricCardGreen]}>
                     <Text style={[styles.metricLabel, styles.metricLabelGreen]}>Best Turnaround</Text>
                     <Text style={styles.metricValue}>
-                      {reportData.monthlyBreakdown?.reduce((min, month) =>
-                        month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min
-                      )?.monthName || 'N/A'}
+                      {reportData.monthlyBreakdown && reportData.monthlyBreakdown.length > 0
+                        ? reportData.monthlyBreakdown.reduce((min, month) =>
+                            month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min,
+                            { avgTurnaroundMinutes: Infinity, monthName: 'N/A' }
+                          ).monthName
+                        : 'N/A'}
                     </Text>
                     <Text style={styles.metricSubtext}>
-                      {reportData.monthlyBreakdown?.reduce((min, month) =>
-                        month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min
-                      )?.avgTurnaroundMinutes || '0'} mins avg
+                      {reportData.monthlyBreakdown && reportData.monthlyBreakdown.length > 0
+                        ? reportData.monthlyBreakdown.reduce((min, month) =>
+                            month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min,
+                            { avgTurnaroundMinutes: Infinity, monthName: 'N/A' }
+                          ).avgTurnaroundMinutes
+                        : '0'} mins avg
                     </Text>
                   </View>
 

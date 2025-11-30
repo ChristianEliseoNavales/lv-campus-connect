@@ -1253,13 +1253,16 @@ async function getAnalyticalReport(req, res, next) {
       console.log('📊 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
 
       const serviceIds = serviceDistribution.map(s => s._id);
-      const services = await Service.find({ _id: { $in: serviceIds } }).select('name').lean();
+      // Ensure we have serviceIds before querying (avoid querying with empty array)
+      const services = serviceIds.length > 0
+        ? await Service.find({ _id: { $in: serviceIds } }).select('name').lean()
+        : [];
       const serviceMap = services.reduce((map, s) => {
         map[s._id.toString()] = s.name;
         return map;
       }, {});
 
-      reportData.serviceDistribution = serviceDistribution.map(s => ({
+      reportData.serviceDistribution = (serviceDistribution || []).map(s => ({
         service: serviceMap[s._id] || 'Unknown',
         count: s.count
       }));
@@ -1340,7 +1343,7 @@ async function getAnalyticalReport(req, res, next) {
 
       console.log('📊 Role Breakdown Result:', JSON.stringify(roleBreakdown, null, 2));
 
-      reportData.visitorsByRole = roleBreakdown.map(r => ({
+      reportData.visitorsByRole = (roleBreakdown || []).map(r => ({
         role: r._id,
         count: r.count
       }));
@@ -1498,13 +1501,16 @@ async function getAnalyticalReport(req, res, next) {
       console.log('📋 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
 
       const serviceIds = serviceDistribution.map(s => s._id);
-      const services = await Service.find({ _id: { $in: serviceIds } }).select('name').lean();
+      // Ensure we have serviceIds before querying (avoid querying with empty array)
+      const services = serviceIds.length > 0
+        ? await Service.find({ _id: { $in: serviceIds } }).select('name').lean()
+        : [];
       const serviceMap = services.reduce((map, s) => {
         map[s._id.toString()] = s.name;
         return map;
       }, {});
 
-      reportData.serviceDistribution = serviceDistribution.map(s => ({
+      reportData.serviceDistribution = (serviceDistribution || []).map(s => ({
         service: serviceMap[s._id] || 'Unknown',
         count: s.count
       }));
@@ -1524,7 +1530,7 @@ async function getAnalyticalReport(req, res, next) {
 
       console.log('👤 Role Breakdown Result:', JSON.stringify(roleBreakdown, null, 2));
 
-      reportData.visitorsByRole = roleBreakdown.map(r => ({
+      reportData.visitorsByRole = (roleBreakdown || []).map(r => ({
         role: r._id,
         count: r.count
       }));
@@ -1548,7 +1554,7 @@ async function getAnalyticalReport(req, res, next) {
 
       console.log('⏰ Peak Hours Result:', JSON.stringify(peakHours, null, 2));
 
-      reportData.peakHours = peakHours.map(h => ({
+      reportData.peakHours = (peakHours || []).map(h => ({
         hour: h._id,
         count: h.count
       }));
@@ -1569,7 +1575,7 @@ async function getAnalyticalReport(req, res, next) {
       console.log('📅 Peak Days Result:', JSON.stringify(peakDays, null, 2));
 
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      reportData.peakDays = peakDays.map(d => ({
+      reportData.peakDays = (peakDays || []).map(d => ({
         day: dayNames[d._id - 1],
         count: d.count
       }));
@@ -1624,13 +1630,16 @@ async function getAnalyticalReport(req, res, next) {
       console.log('🪟 Window Performance Result:', JSON.stringify(windowPerformance, null, 2));
 
       const windowIds = windowPerformance.map(w => w._id);
-      const windows = await Window.find({ _id: { $in: windowIds } }).select('name').lean();
+      // Ensure we have windowIds before querying (avoid querying with empty array)
+      const windows = windowIds.length > 0
+        ? await Window.find({ _id: { $in: windowIds } }).select('name').lean()
+        : [];
       const windowMap = windows.reduce((map, w) => {
         map[w._id.toString()] = w.name;
         return map;
       }, {});
 
-      reportData.windowPerformance = windowPerformance.map(w => ({
+      reportData.windowPerformance = (windowPerformance || []).map(w => ({
         window: windowMap[w._id] || 'Unknown',
         totalServed: w.totalServed,
         avgTurnaroundMinutes: Math.round(w.avgTurnaround / 60000)
@@ -1744,10 +1753,13 @@ async function getAnalyticalReport(req, res, next) {
       const monthlyBreakdown = [];
       // dayNames is already declared earlier in this function scope
 
+      // Ensure monthlyMetricsAggregation is an array (handle empty results)
+      const safeMonthlyMetrics = monthlyMetricsAggregation || [];
+
       // Get all unique serviceIds and windowIds for batch fetching
       const allServiceIds = new Set();
       const allWindowIds = new Set();
-      monthlyMetricsAggregation.forEach(month => {
+      safeMonthlyMetrics.forEach(month => {
         month.serviceDistribution?.forEach(sid => {
           if (sid) allServiceIds.add(sid);
         });
@@ -1773,7 +1785,7 @@ async function getAnalyticalReport(req, res, next) {
       });
 
       // Process each month's data
-      for (const monthData of monthlyMetricsAggregation) {
+      for (const monthData of safeMonthlyMetrics) {
         const year = monthData._id.year;
         const month = monthData._id.month;
         const monthStart = new Date(year, month - 1, 1);
@@ -1803,12 +1815,14 @@ async function getAnalyticalReport(req, res, next) {
             serviceCounts.set(sid.toString(), count + 1);
           }
         });
-        processedMonth.serviceDistribution = Array.from(serviceCounts.entries())
-          .map(([sid, count]) => ({
-            service: monthlyServiceMap.get(sid) || 'Unknown',
-            count
-          }))
-          .sort((a, b) => b.count - a.count);
+        processedMonth.serviceDistribution = serviceCounts.size > 0
+          ? Array.from(serviceCounts.entries())
+              .map(([sid, count]) => ({
+                service: monthlyServiceMap.get(sid) || 'Unknown',
+                count
+              }))
+              .sort((a, b) => b.count - a.count)
+          : [];
 
         // Process role breakdown
         const roleCounts = new Map();
@@ -1818,9 +1832,11 @@ async function getAnalyticalReport(req, res, next) {
             roleCounts.set(role, count + 1);
           }
         });
-        processedMonth.visitorsByRole = Array.from(roleCounts.entries())
-          .map(([role, count]) => ({ role, count }))
-          .sort((a, b) => b.count - a.count);
+        processedMonth.visitorsByRole = roleCounts.size > 0
+          ? Array.from(roleCounts.entries())
+              .map(([role, count]) => ({ role, count }))
+              .sort((a, b) => b.count - a.count)
+          : [];
 
         // Process peak hours
         const hourCounts = new Map();
@@ -1830,10 +1846,12 @@ async function getAnalyticalReport(req, res, next) {
             hourCounts.set(h.hour, count + 1);
           }
         });
-        processedMonth.peakHours = Array.from(hourCounts.entries())
-          .map(([hour, count]) => ({ hour: parseInt(hour), count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
+        processedMonth.peakHours = hourCounts.size > 0
+          ? Array.from(hourCounts.entries())
+              .map(([hour, count]) => ({ hour: parseInt(hour), count }))
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 5)
+          : [];
 
         // Process peak days
         const dayCounts = new Map();
@@ -1843,12 +1861,14 @@ async function getAnalyticalReport(req, res, next) {
             dayCounts.set(d.dayOfWeek, count + 1);
           }
         });
-        processedMonth.peakDays = Array.from(dayCounts.entries())
-          .map(([dayOfWeek, count]) => ({
-            day: dayNames[parseInt(dayOfWeek) - 1],
-            count
-          }))
-          .sort((a, b) => b.count - a.count);
+        processedMonth.peakDays = dayCounts.size > 0
+          ? Array.from(dayCounts.entries())
+              .map(([dayOfWeek, count]) => ({
+                day: dayNames[parseInt(dayOfWeek) - 1],
+                count
+              }))
+              .sort((a, b) => b.count - a.count)
+          : [];
 
         // Process window performance
         const windowStats = new Map();
@@ -1861,19 +1881,22 @@ async function getAnalyticalReport(req, res, next) {
             windowStats.set(wid, existing);
           }
         });
-        processedMonth.windowPerformance = Array.from(windowStats.entries())
-          .map(([wid, stats]) => ({
-            window: monthlyWindowMap.get(wid) || 'Unknown',
-            totalServed: stats.totalServed,
-            avgTurnaroundMinutes: Math.round((stats.totalTurnaround / stats.totalServed) / 60000)
-          }))
-          .sort((a, b) => b.totalServed - a.totalServed);
+        processedMonth.windowPerformance = windowStats.size > 0
+          ? Array.from(windowStats.entries())
+              .map(([wid, stats]) => ({
+                window: monthlyWindowMap.get(wid) || 'Unknown',
+                totalServed: stats.totalServed,
+                avgTurnaroundMinutes: Math.round((stats.totalTurnaround / stats.totalServed) / 60000)
+              }))
+              .sort((a, b) => b.totalServed - a.totalServed)
+          : [];
 
         monthlyBreakdown.push(processedMonth);
       }
 
-      reportData.monthlyBreakdown = monthlyBreakdown;
-      console.log('✅ Monthly Breakdown Generated:', monthlyBreakdown.length, 'months');
+      // Ensure monthlyBreakdown is always an array (even if empty)
+      reportData.monthlyBreakdown = monthlyBreakdown || [];
+      console.log('✅ Monthly Breakdown Generated:', reportData.monthlyBreakdown.length, 'months');
     }
 
     // Add metadata with Philippine timezone formatting

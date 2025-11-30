@@ -17,6 +17,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   const [error, setError] = useState(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [noRecordsFound, setNoRecordsFound] = useState(false);
   const reportRef = useRef(null);
   const chartContainerRef = useRef(null);
 
@@ -33,6 +34,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       setIsLoading(true);
       setIsComplete(false);
       setProgress(0);
+      setNoRecordsFound(false);
     }
   }, [isOpen, userRole, dateRange]);
 
@@ -93,6 +95,19 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       const data = result.data;
       setReportData(data);
 
+      // Check if there are any records in the selected date range
+      if (!hasRecords(data)) {
+        setNoRecordsFound(true);
+        setIsLoading(false);
+        setIsComplete(false);
+        setProgress(0);
+        setError(null); // Clear any previous errors
+        return;
+      }
+
+      // Reset noRecordsFound if we have records
+      setNoRecordsFound(false);
+
       // Report data fetched from API with intermediate steps
       setProgress(25);
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -113,6 +128,57 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       setIsComplete(false);
       setProgress(0);
     }
+  };
+
+  // Check if report data has any records
+  const hasRecords = (data) => {
+    if (!data) return false;
+
+    // Check totalVisits (primary indicator)
+    if (data.totalVisits && data.totalVisits > 0) {
+      return true;
+    }
+
+    // Check departmentComparison for MIS Super Admin
+    if (data.departmentComparison) {
+      const registrarTotal = data.departmentComparison.registrar?.totalCompleted || 0;
+      const admissionsTotal = data.departmentComparison.admissions?.totalCompleted || 0;
+      if (registrarTotal > 0 || admissionsTotal > 0) {
+        return true;
+      }
+    }
+
+    // Check monthlyBreakdown - if any month has visits > 0
+    if (data.monthlyBreakdown && Array.isArray(data.monthlyBreakdown)) {
+      const hasMonthlyData = data.monthlyBreakdown.some(month =>
+        month.totalVisits && month.totalVisits > 0
+      );
+      if (hasMonthlyData) {
+        return true;
+      }
+    }
+
+    // Check serviceDistribution
+    if (data.serviceDistribution && Array.isArray(data.serviceDistribution) && data.serviceDistribution.length > 0) {
+      const hasServiceData = data.serviceDistribution.some(service =>
+        service.count && service.count > 0
+      );
+      if (hasServiceData) {
+        return true;
+      }
+    }
+
+    // Check visitorsByRole
+    if (data.visitorsByRole && Array.isArray(data.visitorsByRole) && data.visitorsByRole.length > 0) {
+      const hasRoleData = data.visitorsByRole.some(role =>
+        role.count && role.count > 0
+      );
+      if (hasRoleData) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   // Generate PDF for preview
@@ -430,7 +496,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                 <button
                   onClick={handleDownloadPDF}
                   data-download-button
-                  disabled={isLoading || error}
+                  disabled={isLoading || error || noRecordsFound}
                   className="flex items-center gap-2 px-4 py-2 bg-[#1F3463] text-white rounded-lg hover:bg-[#152847] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <MdDownload className="w-5 h-5" />
@@ -441,7 +507,73 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
 
             {/* Content - PDF Preview */}
             <div className="p-6 rounded-b-lg">
-            {isLoading && !isComplete ? (
+            {noRecordsFound ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full max-w-md text-center"
+                >
+                  {/* Icon */}
+                  <div className="mb-6 flex justify-center">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-10 h-10 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Message */}
+                  <h3 className="text-2xl font-bold text-[#1F3463] mb-3">
+                    No Records Found
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    There are no records available for the selected date range.
+                    <br />
+                    Please try selecting a different date range.
+                  </p>
+
+                  {/* Date Range Display */}
+                  {dateRange?.startDate && dateRange?.endDate && (
+                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                      <p className="text-sm text-gray-500 mb-1">Selected Date Range:</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        {new Date(dateRange.startDate).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}{' '}
+                        -{' '}
+                        {new Date(dateRange.endDate).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Close Button */}
+                  <button
+                    onClick={onClose}
+                    className="px-6 py-2.5 bg-[#1F3463] text-white rounded-lg hover:bg-[#152847] transition-colors font-medium"
+                  >
+                    Close
+                  </button>
+                </motion.div>
+              </div>
+            ) : isLoading && !isComplete ? (
               <div className="flex items-center justify-center py-20">
                 <div className="w-full max-w-md">
                   {/* Percentage Counter */}
@@ -545,7 +677,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
             ) : null}
 
             {/* Hidden chart container for PDF generation - positioned off-screen but visible for Recharts to render */}
-            {reportData && (
+            {reportData && !noRecordsFound && (
               <div
                 ref={chartContainerRef}
                 className="fixed pointer-events-none"
@@ -697,14 +829,20 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl border-2 border-blue-200 shadow-sm">
                               <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-1.5">Busiest Month</p>
                               <p className="text-lg font-bold text-[#1F3463] leading-tight">
-                                {reportData.monthlyBreakdown?.reduce((max, month) =>
-                                  month.totalVisits > max.totalVisits ? month : max
-                                )?.monthName || 'N/A'}
+                                {reportData.monthlyBreakdown && reportData.monthlyBreakdown.length > 0
+                                  ? reportData.monthlyBreakdown.reduce((max, month) =>
+                                      month.totalVisits > max.totalVisits ? month : max,
+                                      { totalVisits: 0, monthName: 'N/A' }
+                                    ).monthName
+                                  : 'N/A'}
                               </p>
                               <p className="text-xs font-semibold text-gray-700 mt-1.5">
-                                {reportData.monthlyBreakdown?.reduce((max, month) =>
-                                  month.totalVisits > max.totalVisits ? month : max
-                                )?.totalVisits?.toLocaleString() || '0'} visits
+                                {reportData.monthlyBreakdown && reportData.monthlyBreakdown.length > 0
+                                  ? reportData.monthlyBreakdown.reduce((max, month) =>
+                                      month.totalVisits > max.totalVisits ? month : max,
+                                      { totalVisits: 0, monthName: 'N/A' }
+                                    ).totalVisits.toLocaleString()
+                                  : '0'} visits
                               </p>
                             </div>
 
@@ -723,14 +861,20 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                             <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-xl border-2 border-green-200 shadow-sm">
                               <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-1.5">Best Turnaround</p>
                               <p className="text-lg font-bold text-[#1F3463] leading-tight">
-                                {reportData.monthlyBreakdown?.reduce((min, month) =>
-                                  month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min
-                                )?.monthName || 'N/A'}
+                                {reportData.monthlyBreakdown && reportData.monthlyBreakdown.length > 0
+                                  ? reportData.monthlyBreakdown.reduce((min, month) =>
+                                      month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min,
+                                      { avgTurnaroundMinutes: Infinity, monthName: 'N/A' }
+                                    ).monthName
+                                  : 'N/A'}
                               </p>
                               <p className="text-xs font-semibold text-gray-700 mt-1.5">
-                                {reportData.monthlyBreakdown?.reduce((min, month) =>
-                                  month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min
-                                )?.avgTurnaroundMinutes || '0'} mins avg
+                                {reportData.monthlyBreakdown && reportData.monthlyBreakdown.length > 0
+                                  ? reportData.monthlyBreakdown.reduce((min, month) =>
+                                      month.avgTurnaroundMinutes < min.avgTurnaroundMinutes ? month : min,
+                                      { avgTurnaroundMinutes: Infinity, monthName: 'N/A' }
+                                    ).avgTurnaroundMinutes
+                                  : '0'} mins avg
                               </p>
                             </div>
 
