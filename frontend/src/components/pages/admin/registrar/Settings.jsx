@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MdAdd, MdLocationOn, MdClose, MdKeyboardArrowDown, MdMonitor } from 'react-icons/md';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
@@ -626,6 +626,10 @@ const Settings = () => {
   // Location update state management
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
 
+  // Scroll detection for windows container
+  const [isWindowsScrollable, setIsWindowsScrollable] = useState(false);
+  const windowsContainerRef = useRef(null);
+
   // Initial state tracking for change detection
   const [initialState, setInitialState] = useState({
     isQueueingEnabled: false,
@@ -695,6 +699,34 @@ const Settings = () => {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Check if windows container is scrollable
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (windowsContainerRef.current) {
+        const container = windowsContainerRef.current;
+        const isScrollable = container.scrollHeight > container.clientHeight;
+        setIsWindowsScrollable(isScrollable);
+      }
+    };
+
+    // Check initially and after windows/loading changes
+    checkScrollable();
+
+    // Use ResizeObserver to detect size changes
+    const resizeObserver = new ResizeObserver(checkScrollable);
+    if (windowsContainerRef.current) {
+      resizeObserver.observe(windowsContainerRef.current);
+    }
+
+    // Also check on window resize
+    window.addEventListener('resize', checkScrollable);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', checkScrollable);
+    };
+  }, [windows, loading]);
 
   // API functions
   const fetchAllData = async () => {
@@ -1379,17 +1411,17 @@ const Settings = () => {
 
 
       {/* Settings Management Grid Container - with visible background, rounded corners, and padding */}
-      <div className="flex flex-col lg:grid gap-3 sm:gap-4 md:gap-5 lg:h-[calc(100vh-10rem)] bg-white p-3 sm:p-4 md:p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
+      <div className="flex flex-col lg:grid gap-2 sm:gap-2.5 md:gap-3 min-h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] bg-white p-3 sm:p-4 md:p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
         {/* First div: Row 1, spanning both columns */}
-        <div className="lg:col-span-2 lg:row-span-1 bg-white rounded-xl p-3 sm:p-4 md:p-5">
-          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-3 sm:gap-4 items-stretch lg:items-center">
+        <div className="lg:col-span-2 lg:row-span-1 bg-white rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 md:py-2">
+          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 items-start lg:items-center">
             {/* Column 1: Settings Management heading */}
             <div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Settings Management</h1>
             </div>
 
             {/* Column 2: Queue Monitor Button */}
-            <div className="flex justify-start lg:justify-center">
+            <div className="flex justify-start lg:justify-center w-full lg:w-auto">
               <motion.button
                 onClick={() => window.open('/admin/registrar/queue-monitor', '_blank')}
                 className="bg-[#1F3463] hover:bg-[#2F4573] text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 flex items-center space-x-1 sm:space-x-1.5"
@@ -1402,17 +1434,17 @@ const Settings = () => {
             </div>
 
             {/* Column 3: Warning banner when queueing is enabled */}
-            <div className="flex justify-start lg:justify-end">
+            <div className="flex justify-start lg:justify-end w-full lg:w-auto">
               {isQueueingEnabled && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 sm:p-2.5 flex items-center space-x-1 sm:space-x-1.5 max-w-md w-full lg:w-auto">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 sm:p-2.5 flex items-center space-x-1 sm:space-x-1.5 max-w-md">
                   <div className="flex-shrink-0">
-                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-[10px] sm:text-xs font-semibold text-yellow-800">Settings Locked</h3>
-                    <p className="text-[10px] sm:text-xs text-yellow-700">
+                    <h3 className="text-[9px] sm:text-[10px] font-medium text-yellow-800">Settings Locked</h3>
+                    <p className="text-[9px] sm:text-[10px] text-yellow-700">
                       Management disabled while queueing is active.
                     </p>
                   </div>
@@ -1423,11 +1455,11 @@ const Settings = () => {
         </div>
 
         {/* Second div: Row 2, Column 1 only - Toggle Section */}
-        <div className="lg:col-span-1 lg:row-span-1 bg-white rounded-xl border border-gray-300 shadow-md shadow-[#1F3463]/10 p-3 sm:p-4 md:p-5 flex items-center justify-between hover:shadow-lg hover:shadow-[#1F3463]/15 transition-shadow duration-300">
+        <div className="lg:col-span-1 lg:row-span-1 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-base sm:text-lg font-semibold text-gray-900">Tap to Enable Queueing</span>
+            <span className="text-sm sm:text-base font-medium text-gray-900">Tap to Enable Queueing</span>
             {(isToggling || toggleCooldown > 0) && (
-              <span className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
+              <span className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
                 {isToggling ? 'Processing...' : `Wait ${toggleCooldown}s before next toggle`}
               </span>
             )}
@@ -1457,32 +1489,20 @@ const Settings = () => {
         </div>
 
         {/* Third div: Column 1, spanning rows 3-4 - Services Section */}
-        <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl border border-gray-300 shadow-md shadow-[#1F3463]/10 p-3 sm:p-4 md:p-5 flex flex-col hover:shadow-lg hover:shadow-[#1F3463]/15 transition-shadow duration-300">
+        <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex flex-col">
           {/* Row 1: Header */}
-          <div className="mb-2 sm:mb-3">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Services</h2>
+          <div className="mb-2 sm:mb-2.5 md:mb-3">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900">Services</h2>
           </div>
 
           {/* Row 2: Content Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto mb-2 sm:mb-3 space-y-1 sm:space-y-1.5">
+          <div className="flex-1 overflow-y-auto mb-2 sm:mb-2.5 md:mb-3 space-y-1 sm:space-y-1.5">
             {loading ? (
-              <div className="space-y-1 sm:space-y-1.5">
-                {[...Array(5)].map((_, index) => (
-                  <div key={index} className="p-2 sm:p-2.5 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2 sm:space-x-2.5">
-                        <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-20 sm:w-28"></div>
-                        <div className="h-3.5 sm:h-4 bg-gray-200 rounded-full w-10 sm:w-12"></div>
-                      </div>
-                      <div className="flex items-center space-x-1 sm:space-x-1.5">
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gray-200 rounded-lg"></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-center py-4 sm:py-5 md:py-6">
+                <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-[#1F3463]"></div>
               </div>
             ) : services.length === 0 ? (
-              <div className="text-center py-4 sm:py-6 text-xs sm:text-sm text-gray-400 italic">
+              <div className="text-center py-4 sm:py-5 md:py-6 text-xs sm:text-sm text-gray-500">
                 No services available. Add a service to get started.
               </div>
             ) : (
@@ -1491,10 +1511,10 @@ const Settings = () => {
                   key={service.id}
                   className="p-2 sm:p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
                 >
-                  <div className="flex items-center space-x-2 sm:space-x-2.5">
-                    <span className="text-gray-900 font-semibold text-xs sm:text-sm">{service.name}</span>
+                  <div className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-2.5">
+                    <span className="text-xs sm:text-sm text-gray-900 font-medium">{service.name}</span>
                     {!service.isActive && (
-                      <span className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-gray-200 text-gray-600 rounded-full font-medium">
+                      <span className="px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] bg-gray-200 text-gray-600 rounded-full">
                         Inactive
                       </span>
                     )}
@@ -1516,7 +1536,7 @@ const Settings = () => {
                       whileHover={!isQueueingEnabled ? { scale: 1.1, transition: { duration: 0.2 } } : undefined}
                       whileTap={!isQueueingEnabled ? { scale: 0.9, transition: { duration: 0.15 } } : undefined}
                     >
-                      <FiEdit3 className="text-base sm:text-lg" />
+                      <FiEdit3 className="text-sm sm:text-base" />
                     </motion.button>
                   </div>
                 </div>
@@ -1528,7 +1548,7 @@ const Settings = () => {
           <motion.button
             onClick={handleAddService}
             disabled={isQueueingEnabled}
-            className={`flex items-center justify-center space-x-1 sm:space-x-1.5 p-2 sm:p-2.5 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+            className={`flex items-center justify-center space-x-1 sm:space-x-1.5 p-2 sm:p-2.5 text-xs sm:text-sm text-white rounded-lg transition-colors ${
               isQueueingEnabled
                 ? 'opacity-50 cursor-not-allowed'
                 : 'hover:opacity-90'
@@ -1544,10 +1564,10 @@ const Settings = () => {
         </div>
 
         {/* Fourth div: Column 2, spanning rows 2-4 - Windows Management Section */}
-        <div className="lg:col-start-2 lg:row-start-2 lg:row-span-3 bg-white rounded-xl border border-gray-300 shadow-md shadow-[#1F3463]/10 p-3 sm:p-4 md:p-5 flex flex-col hover:shadow-lg hover:shadow-[#1F3463]/15 transition-shadow duration-300">
+        <div className="lg:col-start-2 lg:row-start-2 lg:row-span-3 bg-white rounded-xl sm:rounded-2xl border border-gray-300 shadow-md p-3 sm:p-4 md:p-5 flex flex-col">
           {/* Row 1: Table Header */}
-          <div className="mb-2 sm:mb-3">
-            <div className="hidden md:grid md:grid-cols-3 gap-2 sm:gap-3 items-center p-2 sm:p-2.5">
+          <div className="mb-2 sm:mb-2.5 md:mb-3">
+            <div className="hidden md:grid md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 items-center p-2 sm:p-2.5">
               <div className="font-bold text-xs sm:text-sm text-gray-900">Window</div>
               <div className="font-bold text-xs sm:text-sm text-gray-900">Service & Admin</div>
               <div className="relative">
@@ -1563,9 +1583,9 @@ const Settings = () => {
                 />
               </div>
             </div>
-            {/* Mobile header */}
-            <div className="md:hidden mb-2">
-              <div className="font-bold text-sm text-gray-900 mb-2">Windows Management</div>
+            {/* Mobile header with location */}
+            <div className="md:hidden space-y-2">
+              <h3 className="font-bold text-sm text-gray-900">Windows</h3>
               <LocationAutocomplete
                 value={locationText}
                 onChange={setLocationText}
@@ -1580,11 +1600,13 @@ const Settings = () => {
           </div>
 
           {/* Rows 2-5: Container for displaying added windows - Fixed height for exactly 4 windows */}
-          <div className="flex-1 flex flex-col space-y-2 sm:space-y-2.5 lg:h-[calc(100%-3.5rem)] overflow-y-auto">
+          <div ref={windowsContainerRef} className="flex-1 flex flex-col space-y-1.5 sm:space-y-2 md:space-y-2.5 overflow-y-auto lg:h-[calc(100%-3.5rem)] min-h-0">
             {(windows || []).slice(0, 4).map((window) => (
               <div
                 key={window.id}
-                className="flex flex-col md:grid md:grid-cols-3 gap-2 sm:gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0"
+                className={`flex flex-col md:grid md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors ${
+                  isWindowsScrollable ? 'flex-shrink-0' : 'flex-1'
+                }`}
               >
                 {/* Column 1: Window name */}
                 <div className="flex items-center justify-between md:justify-start">
@@ -1640,7 +1662,7 @@ const Settings = () => {
                 </div>
 
                 {/* Column 2: Split into 2 rows - Desktop only */}
-                <div className="hidden md:flex flex-col justify-center space-y-0.5 sm:space-y-1">
+                <div className="hidden md:flex flex-col justify-center space-y-0.5">
                   {/* Row 1: Services */}
                   <ServiceDisplay
                     services={window.serviceIds || []}
@@ -1672,7 +1694,7 @@ const Settings = () => {
                 </div>
 
                 {/* Column 3: Two React Icons side-by-side - Desktop only */}
-                <div className="hidden md:flex items-center justify-center space-x-1">
+                <div className="hidden md:flex items-center justify-center space-x-2 sm:space-x-2.5">
                   <motion.button
                     onClick={() => !isQueueingEnabled && handleToggleWindow(window.id)}
                     disabled={isQueueingEnabled}
@@ -1725,7 +1747,9 @@ const Settings = () => {
                 key={`placeholder-${index}`}
                 onClick={openAddWindowModal}
                 disabled={isQueueingEnabled}
-                className={`border-2 border-dashed rounded-lg flex items-center justify-center flex-shrink-0 transition-colors min-h-[60px] sm:min-h-[80px] lg:h-auto ${
+                className={`border-2 border-dashed rounded-lg flex items-center justify-center transition-colors ${
+                  isWindowsScrollable ? 'flex-shrink-0' : 'flex-1'
+                } ${
                   isQueueingEnabled
                     ? 'border-gray-200 text-gray-300 cursor-not-allowed'
                     : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500 hover:bg-gray-50'

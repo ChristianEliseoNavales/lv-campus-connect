@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MdAdd, MdLocationOn, MdClose, MdKeyboardArrowDown, MdMonitor } from 'react-icons/md';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
@@ -628,6 +628,10 @@ const Settings = () => {
   // Location update state management
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
 
+  // Scroll detection for windows container
+  const [isWindowsScrollable, setIsWindowsScrollable] = useState(false);
+  const windowsContainerRef = useRef(null);
+
   // Initial state tracking for change detection
   const [initialState, setInitialState] = useState({
     isQueueingEnabled: false,
@@ -697,6 +701,34 @@ const Settings = () => {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Check if windows container is scrollable
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (windowsContainerRef.current) {
+        const container = windowsContainerRef.current;
+        const isScrollable = container.scrollHeight > container.clientHeight;
+        setIsWindowsScrollable(isScrollable);
+      }
+    };
+
+    // Check initially and after windows/loading changes
+    checkScrollable();
+
+    // Use ResizeObserver to detect size changes
+    const resizeObserver = new ResizeObserver(checkScrollable);
+    if (windowsContainerRef.current) {
+      resizeObserver.observe(windowsContainerRef.current);
+    }
+
+    // Also check on window resize
+    window.addEventListener('resize', checkScrollable);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', checkScrollable);
+    };
+  }, [windows, loading]);
 
   // API functions
   const fetchAllData = async () => {
@@ -1383,7 +1415,7 @@ const Settings = () => {
       {/* Settings Management Grid Container - with visible background, rounded corners, and padding */}
       <div className="flex flex-col lg:grid gap-2 sm:gap-2.5 md:gap-3 min-h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] bg-white p-3 sm:p-4 md:p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
         {/* First div: Row 1, spanning both columns */}
-        <div className="lg:col-span-2 lg:row-span-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5">
+        <div className="lg:col-span-2 lg:row-span-1 bg-white rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 md:py-2">
           <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 items-start lg:items-center">
             {/* Column 1: Settings Management heading */}
             <div>
@@ -1570,11 +1602,13 @@ const Settings = () => {
           </div>
 
           {/* Rows 2-5: Container for displaying added windows - Fixed height for exactly 4 windows */}
-          <div className="flex-1 flex flex-col space-y-1.5 sm:space-y-2 md:space-y-2.5 overflow-y-auto lg:h-[calc(100%-3.5rem)]">
+          <div ref={windowsContainerRef} className="flex-1 flex flex-col space-y-1.5 sm:space-y-2 md:space-y-2.5 overflow-y-auto lg:h-[calc(100%-3.5rem)] min-h-0">
             {(windows || []).slice(0, 4).map((window) => (
               <div
                 key={window.id}
-                className="flex flex-col md:grid md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0"
+                className={`flex flex-col md:grid md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors ${
+                  isWindowsScrollable ? 'flex-shrink-0' : 'flex-1'
+                }`}
               >
                 {/* Desktop view */}
                 <div className="hidden md:flex items-center">
@@ -1699,7 +1733,9 @@ const Settings = () => {
                 key={`placeholder-${index}`}
                 onClick={openAddWindowModal}
                 disabled={isQueueingEnabled}
-                className={`border-2 border-dashed rounded-lg flex items-center justify-center flex-shrink-0 transition-colors min-h-[80px] sm:min-h-[100px] ${
+                className={`border-2 border-dashed rounded-lg flex items-center justify-center transition-colors ${
+                  isWindowsScrollable ? 'flex-shrink-0' : 'flex-1'
+                } ${
                   isQueueingEnabled
                     ? 'border-gray-200 text-gray-300 cursor-not-allowed'
                     : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500 hover:bg-gray-50'
