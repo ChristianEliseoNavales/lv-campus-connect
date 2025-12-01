@@ -379,6 +379,9 @@ const API_PAGE_MAPPING = {
   '/api/transactions': ['/admin/registrar/transaction-logs', '/admin/admissions/transaction-logs'],
   '/api/transactions/registrar': ['/admin/registrar/transaction-logs'],
   '/api/transactions/admissions': ['/admin/admissions/transaction-logs'],
+  '/api/admin/transactions': ['/admin/registrar/transaction-logs', '/admin/admissions/transaction-logs'],
+  '/api/admin/transactions/registrar': ['/admin/registrar/transaction-logs'],
+  '/api/admin/transactions/admissions': ['/admin/admissions/transaction-logs'],
   '/api/transaction-logs/registrar': ['/admin/registrar/transaction-logs'],
   '/api/transaction-logs/admissions': ['/admin/admissions/transaction-logs'],
 

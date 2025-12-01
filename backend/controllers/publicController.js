@@ -674,9 +674,39 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
       serviceMap.set(service._id.toString(), service);
     });
 
+    // Filter out Special Request queues - exclude queues where service has isSpecialRequest: true
+    const filteredWaitingQueues = waitingQueues.filter(queue => {
+      const service = serviceMap.get(queue.serviceId?.toString());
+      return !service || !service.isSpecialRequest;
+    });
+
+    // Filter currently serving if it's a Special Request
+    let filteredCurrentlyServing = currentlyServing;
+    if (currentlyServing) {
+      const currentService = serviceMap.get(currentlyServing.serviceId?.toString());
+      if (currentService && currentService.isSpecialRequest) {
+        filteredCurrentlyServing = null;
+      }
+    }
+
+    // Filter skipped queues
+    const skippedServiceIds = new Set();
+    skippedQueues.forEach(queue => {
+      if (queue.serviceId) skippedServiceIds.add(queue.serviceId);
+    });
+    const skippedServices = await Service.find({ _id: { $in: Array.from(skippedServiceIds) } }).lean();
+    const skippedServiceMap = new Map();
+    skippedServices.forEach(service => {
+      skippedServiceMap.set(service._id.toString(), service);
+    });
+    const filteredSkippedQueues = skippedQueues.filter(queue => {
+      const service = skippedServiceMap.get(queue.serviceId?.toString());
+      return !service || !service.isSpecialRequest;
+    });
+
     // Format queue data for frontend with service lookup using the service map
     const formattedQueues = await Promise.all(
-      waitingQueues.map(async (queue) => {
+      filteredWaitingQueues.map(async (queue) => {
         // Get service from map (O(1) lookup instead of database query)
         const service = serviceMap.get(queue.serviceId?.toString());
 
@@ -699,12 +729,12 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
     );
 
     let currentServingData = null;
-    if (currentlyServing) {
+    if (filteredCurrentlyServing) {
       // Get service from map (O(1) lookup instead of database query)
-      const currentService = serviceMap.get(currentlyServing.serviceId?.toString());
+      const currentService = serviceMap.get(filteredCurrentlyServing.serviceId?.toString());
 
       // Get display customer name using helper function
-      const displayCustomerName = await getDisplayCustomerName(currentlyServing, currentService);
+      const displayCustomerName = await getDisplayCustomerName(filteredCurrentlyServing, currentService);
 
       // Debug logging for idNumber
       logger('🔍 [BACKEND] currentlyServing object:', {
@@ -718,13 +748,13 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
       });
 
       currentServingData = {
-        number: currentlyServing.queueNumber,
+        number: filteredCurrentlyServing.queueNumber,
         name: displayCustomerName,
-        role: currentlyServing.role,
+        role: filteredCurrentlyServing.role,
         purpose: currentService ? currentService.name : 'Unknown Service',
-        windowId: currentlyServing.windowId,
-        serviceId: currentlyServing.serviceId,
-        idNumber: currentlyServing.visitationFormId?.idNumber || currentlyServing.idNumber || ''
+        windowId: filteredCurrentlyServing.windowId,
+        serviceId: filteredCurrentlyServing.serviceId,
+        idNumber: filteredCurrentlyServing.visitationFormId?.idNumber || filteredCurrentlyServing.idNumber || ''
       };
 
       logger('🔍 [BACKEND] currentServingData being sent:', currentServingData);
@@ -733,7 +763,7 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
     logger('📊 Filtered queue results:', {
       waitingCount: formattedQueues.length,
       currentlyServing: currentServingData?.number || 'None',
-      skippedCount: skippedQueues.length,
+      skippedCount: filteredSkippedQueues.length,
       filters: { windowId, serviceId }
     });
 
@@ -742,7 +772,7 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
       data: {
         waitingQueue: formattedQueues,
         currentlyServing: currentServingData,
-        skippedQueue: skippedQueues.map(q => q.queueNumber),
+        skippedQueue: filteredSkippedQueues.map(q => q.queueNumber),
         department,
         filters: { windowId, serviceId },
         timestamp: new Date().toISOString()

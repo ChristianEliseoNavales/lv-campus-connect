@@ -170,6 +170,7 @@ const chartsRoutes = require('./routes/charts');
 const printerRoutes = require('./routes/printer');
 const notificationRoutes = require('./routes/notifications');
 const fixUsersRoutes = require('./routes/fixUsers');
+const adminRoutes = require('./routes/admin');
 
 // Use routes
 app.use('/api/auth', authRoutes); // Authentication routes (no auth required)
@@ -179,6 +180,7 @@ app.use('/api/windows', windowsRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/transactions', transactionsRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/database', databaseRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/audit', auditRoutes);

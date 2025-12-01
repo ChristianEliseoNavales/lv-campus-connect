@@ -99,6 +99,11 @@ const queueSchema = new mongoose.Schema({
     ref: 'User',
     required: false,
     default: null
+  },
+  // Flag to identify admin-created transactions (via Add Transaction button)
+  isAdminCreated: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

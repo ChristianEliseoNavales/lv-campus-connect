@@ -16,6 +16,11 @@ const serviceSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Special Request flag - marks services created as Special Requests
+  isSpecialRequest: {
+    type: Boolean,
+    default: false
+  },
   // Audit fields
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
