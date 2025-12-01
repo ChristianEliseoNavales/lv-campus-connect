@@ -5,13 +5,24 @@ const { CacheHelper } = require('../utils/cache');
 // GET /api/windows - Get all windows
 async function getAllWindows(req, res, next) {
   try {
-    const windows = await Window.find()
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    // Check if pagination is requested
+    const usePagination = req.query.page !== undefined || req.query.limit !== undefined;
+
+    let query = Window.find()
       .populate('serviceIds', 'name')
       .populate('assignedAdmin', 'name email')
-      .sort({ office: 1, name: 1 })
-      .lean();
+      .sort({ office: 1, name: 1 });
 
-    res.json(windows.map(window => ({
+    if (usePagination) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const windows = await query.lean();
+    const windowsData = windows.map(window => ({
       id: window._id,
       name: window.name,
       office: window.office,
@@ -21,7 +32,26 @@ async function getAllWindows(req, res, next) {
       currentQueue: window.currentQueue,
       createdAt: window.createdAt,
       updatedAt: window.updatedAt
-    })));
+    }));
+
+    if (usePagination) {
+      const total = await Window.countDocuments();
+      res.json({
+        data: windowsData,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } else {
+      // Backward compatibility: return array directly if no pagination params
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`⚠️  GET /api/windows called without pagination. Consider using ?page=1&limit=50 for better performance.`);
+      }
+      res.json(windowsData);
+    }
   } catch (error) {
     console.error('Error fetching windows:', error);
     res.status(500).json({ error: error.message });

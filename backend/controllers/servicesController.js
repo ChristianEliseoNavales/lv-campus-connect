@@ -90,7 +90,7 @@ async function getActiveServicesByDepartment(req, res, next) {
     const services = await Service.find({
       office: department,
       isActive: true
-    }).sort({ name: 1 });
+    }).sort({ name: 1 }).lean();
 
     res.json(services.map(service => ({
       id: service._id,

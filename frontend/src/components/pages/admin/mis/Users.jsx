@@ -5,6 +5,8 @@ import { MdPerson } from 'react-icons/md';
 import { FiEdit3 } from 'react-icons/fi';
 import { useToast, ToastContainer, ConfirmModal } from '../../../ui';
 import Portal from '../../../ui/Portal';
+import Pagination from '../../../ui/Pagination';
+import useURLState from '../../../../hooks/useURLState';
 import API_CONFIG from '../../../../config/api';
 import { authFetch } from '../../../../utils/apiClient';
 
@@ -17,17 +19,19 @@ const INITIAL_URL_STATE = {
 };
 
 const Users = () => {
+  // URL-persisted state management
+  const { state: urlState, updateState } = useURLState(INITIAL_URL_STATE);
+
+  // Extract URL state values
+  const { searchTerm, filterBy, usersPerPage, currentPage } = urlState;
+
+  // Non-persisted state (resets on navigation)
   const [users, setUsers] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalCount: 0, limit: 10 });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // URL state management
-  const [searchTerm, setSearchTerm] = useState(INITIAL_URL_STATE.searchTerm);
-  const [filterBy, setFilterBy] = useState(INITIAL_URL_STATE.filterBy);
-  const [usersPerPage, setUsersPerPage] = useState(INITIAL_URL_STATE.usersPerPage);
-  const [currentPage, setCurrentPage] = useState(INITIAL_URL_STATE.currentPage);
 
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -164,9 +168,9 @@ const Users = () => {
       newIndex = Math.max(currentIndex - 1, 0);
     }
 
-    setUsersPerPage(options[newIndex]);
-    setCurrentPage(1); // Reset to first page
-  }, [usersPerPage]);
+    updateState('usersPerPage', options[newIndex]);
+    updateState('currentPage', 1); // Reset to first page
+  }, [usersPerPage, updateState]);
 
   // Fetch users from API
   const fetchUsers = useCallback(async () => {
@@ -182,7 +186,30 @@ const Users = () => {
     setFetchError(null);
 
     try {
-      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/users`, {
+      const params = new URLSearchParams();
+
+      // Add pagination params
+      params.append('page', currentPage.toString());
+      params.append('limit', usersPerPage.toString());
+
+      // Add filters
+      if (searchTerm && searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      if (filterBy && filterBy !== 'all') {
+        if (filterBy === 'active') {
+          params.append('isActive', 'true');
+        } else if (filterBy === 'inactive') {
+          params.append('isActive', 'false');
+        } else {
+          // Filter by role
+          params.append('role', filterBy);
+        }
+      }
+
+      const url = `${API_CONFIG.getAdminUrl()}/api/users?${params.toString()}`;
+
+      const response = await authFetch(url, {
         signal: abortControllerRef.current.signal
       });
 
@@ -193,7 +220,19 @@ const Users = () => {
       const result = await response.json();
 
       if (result.success) {
-        setUsers(result.data);
+        setUsers(result.data || []);
+        // Update pagination metadata if available
+        if (result.pagination) {
+          setPagination(result.pagination);
+        } else {
+          // Fallback for backward compatibility
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: result.count || result.data?.length || 0,
+            limit: usersPerPage
+          });
+        }
         // Update refresh timestamp
         setLastRefreshTime(new Date());
       } else {
@@ -207,10 +246,11 @@ const Users = () => {
       console.error('Error fetching users:', error);
       setFetchError(error.message); // Set error state instead of calling showError directly
       setUsers([]); // Set empty array on error
+      setPagination({ currentPage: 1, totalPages: 1, totalCount: 0, limit: usersPerPage });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, usersPerPage, searchTerm, filterBy]);
 
   // Manual refresh handler
   const handleManualRefresh = useCallback(async () => {
@@ -219,10 +259,17 @@ const Users = () => {
     setIsRefreshing(false);
   }, [fetchUsers]);
 
-  // Initial data fetch
+  // Fetch users on component mount and when filters/pagination change
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      updateState('currentPage', 1);
+    }
+  }, [searchTerm, filterBy]);
 
   // Check if editing user is the only Super Admin
   useEffect(() => {
@@ -250,47 +297,8 @@ const Users = () => {
     checkSuperAdminCount();
   }, [editingUser]);
 
-  // Filter and search logic
-  const filteredUsers = useMemo(() => {
-    let filtered = users;
-
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(user =>
-        user.name.toLowerCase().includes(searchLower) ||
-        user.email.toLowerCase().includes(searchLower) ||
-        user.office?.toLowerCase().includes(searchLower) ||
-        user.role.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply filter by dropdown
-    if (filterBy !== 'all') {
-      if (filterBy === 'active') {
-        filtered = filtered.filter(user => user.isActive === true);
-      } else if (filterBy === 'inactive') {
-        filtered = filtered.filter(user => user.isActive === false);
-      } else {
-        // Filter by role
-        filtered = filtered.filter(user => user.role === filterBy);
-      }
-    }
-
-    return filtered;
-  }, [users, searchTerm, filterBy]);
-
-  // Pagination logic
-  const totalUsers = filteredUsers.length;
-  const totalPages = Math.ceil(totalUsers / usersPerPage);
-  const startIndex = (currentPage - 1) * usersPerPage;
-  const endIndex = startIndex + usersPerPage;
-  const currentUsers = filteredUsers.slice(startIndex, endIndex);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterBy]);
+  // Users are already filtered and paginated by backend
+  const currentUsers = users;
 
   // Form validation
   const validateForm = () => {
@@ -779,7 +787,11 @@ const Users = () => {
               <input
                 type="number"
                 value={usersPerPage}
-                onChange={(e) => setUsersPerPage(Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
+                onChange={(e) => {
+                  const newValue = Math.max(5, Math.min(50, parseInt(e.target.value) || 10));
+                  updateState('usersPerPage', newValue);
+                  updateState('currentPage', 1); // Reset to first page when changing items per page
+                }}
                 className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
                 min="5"
                 max="50"
@@ -811,7 +823,7 @@ const Users = () => {
                 type="text"
                 placeholder="Search users..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => updateState('searchTerm', e.target.value)}
                 className="w-full sm:w-52 pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200"
               />
             </div>
@@ -821,7 +833,7 @@ const Users = () => {
               <label className="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Filter by:</label>
               <select
                 value={filterBy}
-                onChange={(e) => setFilterBy(e.target.value)}
+                onChange={(e) => updateState('filterBy', e.target.value)}
                 className="flex-1 sm:flex-initial px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200 text-xs sm:text-sm"
               >
                 <option value="all">All</option>
@@ -951,34 +963,18 @@ const Users = () => {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {pagination.totalPages > 1 && (
           <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
             <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium order-2 sm:order-1">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+              Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of {pagination.totalCount} users
             </div>
-            <div className="flex items-center space-x-1.5 order-1 sm:order-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
-              >
-                Previous
-              </button>
-
-              {/* Current Page Number */}
-              <button
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-white bg-[#1F3463] border border-[#1F3463] rounded-md shadow-sm shadow-[#1F3463]/20"
-              >
-                {currentPage}
-              </button>
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
-              >
-                Next
-              </button>
+            <div className="order-1 sm:order-2">
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={(page) => updateState('currentPage', page)}
+                size="sm"
+              />
             </div>
           </div>
         )}

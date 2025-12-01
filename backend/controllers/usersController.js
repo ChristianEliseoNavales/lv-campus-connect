@@ -16,7 +16,7 @@ const arraysEqual = (arr1, arr2) => {
 // GET /api/users - Fetch all users
 async function getAllUsers(req, res, next) {
   try {
-    const { role, office, isActive, search } = req.query;
+    const { role, office, isActive, search, page, limit } = req.query;
 
     // RBAC: Check if user has permission to fetch users based on office
     // MIS Super Admin can fetch all users
@@ -67,17 +67,56 @@ async function getAllUsers(req, res, next) {
       ];
     }
 
-    const users = await User.find(query)
-      .select('-password -googleId')
-      .populate('createdBy', 'name email')
-      .populate('assignedWindow', 'name office')
-      .sort({ createdAt: -1 });
+    // Check if pagination is requested
+    const usePagination = page !== undefined || limit !== undefined;
 
-    res.json({
-      success: true,
-      data: users,
-      count: users.length
-    });
+    if (usePagination) {
+      // Validate and parse pagination params
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+      const skip = (pageNum - 1) * limitNum;
+
+      // Get total count for pagination
+      const totalCount = await User.countDocuments(query);
+
+      // Fetch users with pagination
+      const users = await User.find(query)
+        .select('-password -googleId')
+        .populate('createdBy', 'name email')
+        .populate('assignedWindow', 'name office')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean();
+
+      // Calculate pagination metadata
+      const totalPages = Math.ceil(totalCount / limitNum);
+
+      res.json({
+        success: true,
+        data: users,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalCount,
+          limit: limitNum
+        }
+      });
+    } else {
+      // Backward compatibility: return all users if no pagination params
+      const users = await User.find(query)
+        .select('-password -googleId')
+        .populate('createdBy', 'name email')
+        .populate('assignedWindow', 'name office')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      res.json({
+        success: true,
+        data: users,
+        count: users.length
+      });
+    }
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({

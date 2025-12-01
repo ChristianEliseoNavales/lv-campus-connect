@@ -2217,15 +2217,44 @@ exports.getWindowsForTransfer = async (req, res, next) => {
 exports.getBulletins = async (req, res, next) => {
   try {
     const { Bulletin } = require('../models');
-    const bulletins = await Bulletin.find()
-      .sort({ createdAt: -1 })
-      .lean();
 
-    res.json({
-      success: true,
-      records: bulletins,
-      count: bulletins.length
-    });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    // Check if pagination is requested
+    const usePagination = req.query.page !== undefined || req.query.limit !== undefined;
+
+    let query = Bulletin.find().sort({ createdAt: -1 });
+
+    if (usePagination) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const bulletins = await query.lean();
+
+    if (usePagination) {
+      const totalCount = await Bulletin.countDocuments();
+      const totalPages = Math.ceil(totalCount / limit);
+
+      res.json({
+        success: true,
+        records: bulletins,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalCount,
+          limit
+        }
+      });
+    } else {
+      // Backward compatibility: return all bulletins if no pagination params
+      res.json({
+        success: true,
+        records: bulletins,
+        count: bulletins.length
+      });
+    }
   } catch (error) {
     console.error('Error fetching bulletins:', error);
     res.status(500).json({
