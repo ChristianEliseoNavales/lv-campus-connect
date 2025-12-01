@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MdHistory, MdSearch, MdFilterList, MdDownload, MdRefresh, MdPerson, MdSettings, MdSecurity } from 'react-icons/md';
 import { BiSolidNotepad } from 'react-icons/bi';
 import { useToast, ToastContainer } from '../../../ui';
+import { getPhilippineDate, isToday, getPhilippineDayBoundaries, getPhilippineDateString } from '../../../../utils/philippineTimezone';
 
 const AuditTrail = () => {
   const [auditLogs, setAuditLogs] = useState([]);
@@ -233,22 +234,32 @@ const AuditTrail = () => {
       filtered = filtered.filter(log => log.severity === filterSeverity);
     }
 
-    // Apply date filter
-    const now = new Date();
+    // Apply date filter using Philippine timezone
+    const now = getPhilippineDate();
     if (dateFilter === 'today') {
       filtered = filtered.filter(log => {
         const logDate = new Date(log.timestamp);
-        return logDate.toDateString() === now.toDateString();
+        return isToday(logDate);
       });
     } else if (dateFilter === 'week') {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      // Calculate 7 days ago in Philippine timezone
+      const weekAgoDate = new Date(now);
+      weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+      const weekAgoString = getPhilippineDateString(weekAgoDate);
+      const { startOfDay: weekAgoStart } = getPhilippineDayBoundaries(weekAgoString);
+
       filtered = filtered.filter(log =>
-        new Date(log.timestamp) >= weekAgo
+        new Date(log.timestamp) >= weekAgoStart
       );
     } else if (dateFilter === 'month') {
-      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // Calculate 30 days ago in Philippine timezone
+      const monthAgoDate = new Date(now);
+      monthAgoDate.setDate(monthAgoDate.getDate() - 30);
+      const monthAgoString = getPhilippineDateString(monthAgoDate);
+      const { startOfDay: monthAgoStart } = getPhilippineDayBoundaries(monthAgoString);
+
       filtered = filtered.filter(log =>
-        new Date(log.timestamp) >= monthAgo
+        new Date(log.timestamp) >= monthAgoStart
       );
     }
 
@@ -316,7 +327,7 @@ const AuditTrail = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `admissions-audit-trail-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `admissions-audit-trail-${getPhilippineDateString(new Date())}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
 

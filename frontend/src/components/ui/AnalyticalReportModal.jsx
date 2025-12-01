@@ -8,7 +8,7 @@ import { pdf } from '@react-pdf/renderer';
 import AnalyticalReportPDF from './AnalyticalReportPDF';
 import API_CONFIG from '../../config/api';
 import { authFetch } from '../../utils/apiClient';
-import { getPhilippineStartOfDayISO, getPhilippineEndOfDayISO } from '../../utils/philippineTimezone';
+import { getPhilippineStartOfDayISO, getPhilippineEndOfDayISO, getPhilippineDateString, formatPhilippineDate } from '../../utils/philippineTimezone';
 
 const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   const [reportData, setReportData] = useState(null);
@@ -427,8 +427,8 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       const link = document.createElement('a');
       link.href = url;
 
-      // Generate filename with current date
-      const date = new Date().toISOString().split('T')[0];
+      // Generate filename with current date in Philippine timezone
+      const date = getPhilippineDateString(new Date());
       const roleSlug = userRole.replace(/\s+/g, '_');
       link.download = `LVCampusConnect_${roleSlug}_Analytics_Report_${date}.pdf`;
 
@@ -549,13 +549,13 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
                     <div className="bg-gray-50 rounded-lg p-4 mb-6">
                       <p className="text-sm text-gray-500 mb-1">Selected Date Range:</p>
                       <p className="text-sm font-medium text-gray-700">
-                        {new Date(dateRange.startDate).toLocaleDateString('en-US', {
+                        {formatPhilippineDate(dateRange.startDate, {
                           month: 'long',
                           day: 'numeric',
                           year: 'numeric'
                         })}{' '}
                         -{' '}
-                        {new Date(dateRange.endDate).toLocaleDateString('en-US', {
+                        {formatPhilippineDate(dateRange.endDate, {
                           month: 'long',
                           day: 'numeric',
                           year: 'numeric'

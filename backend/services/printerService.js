@@ -6,17 +6,17 @@ const os = require('os');
 /**
  * Printer Service for LVCampusConnect System
  * Handles thermal receipt printing for queue tickets
- * 
+ *
  * CONFIGURATION:
  * - TEST_MODE: Set to true to prevent actual printing (saves thermal paper during testing)
  * - PRINTER_PORT: The Windows port name for the thermal printer (e.g., 'USB001', 'COM1')
- * 
+ *
  * To find your printer port:
  * 1. Open Control Panel > Devices and Printers
  * 2. Right-click on POS-58 printer > Printer Properties
  * 3. Go to Ports tab
  * 4. Look for the checked port (e.g., USB001, COM1, etc.)
- * 
+ *
  * TROUBLESHOOTING:
  * - If receipt prints with only 3 characters per line, the Windows Print Spooler is applying
  *   document formatting. This service uses RAW printing mode to bypass that.
@@ -83,7 +83,7 @@ class PrinterService {
       const timestamp = Date.now();
       const filename = `receipt_${formattedQueueNumber}_${timestamp}.txt`;
       const filepath = path.join(this.tempDir, filename);
-      
+
       fs.writeFileSync(filepath, receiptText, 'utf8');
       console.log('Receipt file created:', filepath);
 
@@ -105,10 +105,10 @@ class PrinterService {
 
       // Use notepad for printing (simple and reliable)
       await this.printWithNotepad(filepath);
-      
+
       console.log('Receipt printed successfully');
       console.log('Queue Number:', formattedQueueNumber);
-      
+
       setTimeout(() => {
         try {
           if (fs.existsSync(filepath)) {
@@ -118,9 +118,9 @@ class PrinterService {
           console.error('Failed to delete temp file:', err.message);
         }
       }, 5000);
-      
-      return { 
-        success: true, 
+
+      return {
+        success: true,
         message: 'Receipt printed successfully',
         queueNumber: formattedQueueNumber,
         testMode: false
@@ -128,9 +128,9 @@ class PrinterService {
 
     } catch (error) {
       console.error('Print error:', error.message);
-      
+
       let errorMessage = 'Failed to print receipt';
-      
+
       if (error.message.includes('not found') || error.message.includes('ENOENT')) {
         errorMessage = 'Printer not found. Please check connection.';
       } else if (error.message.includes('timeout')) {
@@ -139,10 +139,10 @@ class PrinterService {
         errorMessage = 'Printer access denied. Please check printer permissions.';
       }
 
-      return { 
-        success: false, 
-        message: errorMessage, 
-        error: error.message 
+      return {
+        success: false,
+        message: errorMessage,
+        error: error.message
       };
     }
   }
@@ -331,14 +331,14 @@ Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAc
 
   wrapText(text, maxWidth = 32) {
     if (!text) return [''];
-    
+
     const words = text.split(' ');
     const lines = [];
     let currentLine = '';
 
     words.forEach(word => {
       const testLine = currentLine ? `${currentLine} ${word}` : word;
-      
+
       if (testLine.length <= maxWidth) {
         currentLine = testLine;
       } else {
@@ -348,7 +348,7 @@ Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAc
     });
 
     if (currentLine) lines.push(currentLine);
-    
+
     return lines.length > 0 ? lines : [''];
   }
 
@@ -381,7 +381,7 @@ Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAc
 
       const filename = `test_receipt_${Date.now()}.txt`;
       const filepath = path.join(this.tempDir, filename);
-      
+
       fs.writeFileSync(filepath, testReceipt, 'utf8');
 
       if (this.TEST_MODE) {
@@ -412,7 +412,7 @@ Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAc
         success: true,
         message: 'Printer test successful. Test receipt printed.'
       };
-      
+
     } catch (error) {
       console.error('Printer test failed:', error.message);
       return {

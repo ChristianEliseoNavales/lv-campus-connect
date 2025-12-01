@@ -50,8 +50,21 @@ export const getPhilippineDateString = (date = new Date()) => {
     date = new Date(); // Use current date as fallback
   }
 
-  const phDate = getPhilippineDate(date);
-  return phDate.toISOString().split('T')[0];
+  // Get date components directly from Philippine timezone without UTC conversion
+  const phTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+
+  const year = phTime.find(part => part.type === 'year').value;
+  const month = phTime.find(part => part.type === 'month').value;
+  const day = phTime.find(part => part.type === 'day').value;
+
+  // Return YYYY-MM-DD format directly from Philippine timezone components
+  return `${year}-${month}-${day}`;
 };
 
 /**
@@ -108,7 +121,7 @@ export const isToday = (date) => {
  */
 export const formatDateForAPI = (date) => {
   if (!date) return null;
-  
+
   try {
     // Handle both Date objects and date strings
     if (date instanceof Date) {
@@ -133,7 +146,7 @@ export const formatDateForAPI = (date) => {
   } catch (error) {
     console.error('Error formatting date for API:', error);
   }
-  
+
   return null;
 };
 
@@ -144,13 +157,13 @@ export const formatDateForAPI = (date) => {
  */
 export const getPhilippineDayBoundaries = (date) => {
   const phDate = getPhilippineDate(date);
-  
+
   const startOfDay = new Date(phDate);
   startOfDay.setHours(0, 0, 0, 0);
-  
+
   const endOfDay = new Date(phDate);
   endOfDay.setHours(23, 59, 59, 999);
-  
+
   return { startOfDay, endOfDay };
 };
 

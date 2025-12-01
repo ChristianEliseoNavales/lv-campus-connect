@@ -40,8 +40,21 @@ const getPhilippineDate = (date = new Date()) => {
  * @returns {string} Date string in YYYY-MM-DD format
  */
 const getPhilippineDateString = (date = new Date()) => {
-  const phDate = getPhilippineDate(date);
-  return phDate.toISOString().split('T')[0];
+  // Get date components directly from Philippine timezone without UTC conversion
+  const phTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+
+  const year = phTime.find(part => part.type === 'year').value;
+  const month = phTime.find(part => part.type === 'month').value;
+  const day = phTime.find(part => part.type === 'day').value;
+
+  // Return YYYY-MM-DD format directly from Philippine timezone components
+  return `${year}-${month}-${day}`;
 };
 
 /**
@@ -98,24 +111,24 @@ const validateDateString = (dateString) => {
   if (!dateString) {
     return { isValid: false, error: 'Date is required' };
   }
-  
+
   // Check format
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(dateString)) {
     return { isValid: false, error: 'Date must be in YYYY-MM-DD format' };
   }
-  
+
   // Check if it's a valid date
   const date = new Date(dateString + 'T00:00:00');
   if (isNaN(date.getTime())) {
     return { isValid: false, error: 'Invalid date' };
   }
-  
+
   // Check if it's not in the future
   if (isDateInFuture(dateString)) {
     return { isValid: false, error: 'Date cannot be in the future' };
   }
-  
+
   return { isValid: true };
 };
 
