@@ -149,6 +149,14 @@ async function createWindow(req, res, next) {
       return res.status(400).json({ error: 'All services must belong to the same office as the window' });
     }
 
+    // Check if any services are Special Request services
+    const specialRequestServices = services.filter(service => service.isSpecialRequest === true);
+    if (specialRequestServices.length > 0) {
+      return res.status(400).json({
+        error: 'Special Request services cannot be assigned to windows'
+      });
+    }
+
     // Check for duplicate window names in the office (case-insensitive)
     const existingWindow = await Window.findOne({
       name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
@@ -336,6 +344,14 @@ async function updateWindow(req, res, next) {
         const invalidServices = services.filter(service => service.office !== window.office);
         if (invalidServices.length > 0) {
           return res.status(400).json({ error: 'All services must belong to the same office as the window' });
+        }
+
+        // Check if any services are Special Request services
+        const specialRequestServices = services.filter(service => service.isSpecialRequest === true);
+        if (specialRequestServices.length > 0) {
+          return res.status(400).json({
+            error: 'Special Request services cannot be assigned to windows'
+          });
         }
       }
     }

@@ -62,12 +62,17 @@ async function getServicesByDepartment(req, res, next) {
       return res.status(400).json({ error: 'Invalid office' });
     }
 
-    const services = await Service.find({ office: department }).sort({ name: 1 }).lean();
+    const services = await Service.find({
+      office: department,
+      isSpecialRequest: { $ne: true },
+      name: { $not: { $regex: /special request/i } } // Also filter by name as fallback
+    }).sort({ name: 1 }).lean();
     res.json(services.map(service => ({
       id: service._id,
       name: service.name,
       office: service.office,
       isActive: service.isActive,
+      isSpecialRequest: service.isSpecialRequest || false,
       createdAt: service.createdAt,
       updatedAt: service.updatedAt
     })));
@@ -89,14 +94,17 @@ async function getActiveServicesByDepartment(req, res, next) {
 
     const services = await Service.find({
       office: department,
-      isActive: true
+      isActive: true,
+      isSpecialRequest: { $ne: true },
+      name: { $not: { $regex: /special request/i } } // Also filter by name as fallback
     }).sort({ name: 1 }).lean();
 
     res.json(services.map(service => ({
       id: service._id,
       name: service.name,
       office: service.office,
-      isActive: service.isActive
+      isActive: service.isActive,
+      isSpecialRequest: service.isSpecialRequest || false
     })));
   } catch (error) {
     console.error('Error fetching active services:', error);

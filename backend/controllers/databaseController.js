@@ -216,6 +216,16 @@ async function createModelRecord(req, res, next) {
       console.log('📡 Bulletin created event emitted to kiosk');
     }
 
+    // Emit Socket.io event for chart creation
+    if (req.modelName === 'chart') {
+      const io = req.app.get('io');
+      io.to('kiosk-directory').emit('chart-updated', {
+        type: 'chart-created',
+        data: record
+      });
+      console.log('📡 Chart created event emitted to kiosk-directory');
+    }
+
     res.status(201).json(record);
 
   } catch (error) {
@@ -311,6 +321,16 @@ async function updateModelRecord(req, res, next) {
         data: record
       });
       console.log('📡 Bulletin updated event emitted to kiosk');
+    }
+
+    // Emit Socket.io event for chart update
+    if (req.modelName === 'chart') {
+      const io = req.app.get('io');
+      io.to('kiosk-directory').emit('chart-updated', {
+        type: 'chart-updated',
+        data: record
+      });
+      console.log('📡 Chart updated event emitted to kiosk-directory');
     }
 
     res.json(record);
@@ -496,6 +516,18 @@ async function deleteModelRecord(req, res, next) {
         }
       });
       console.log('📡 Bulletin deleted event emitted to kiosk');
+    }
+
+    // Emit Socket.io event for chart deletion
+    if (req.modelName === 'chart') {
+      const io = req.app.get('io');
+      io.to('kiosk-directory').emit('chart-updated', {
+        type: 'chart-deleted',
+        data: {
+          id: record._id
+        }
+      });
+      console.log('📡 Chart deleted event emitted to kiosk-directory');
     }
 
     console.log(`✅ Successfully deleted ${req.modelName} record with ID: ${req.params.id}`);

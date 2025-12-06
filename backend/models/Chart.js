@@ -1,33 +1,48 @@
 const mongoose = require('mongoose');
 
 const chartSchema = new mongoose.Schema({
-  // Office reference
+  // Office reference (optional for backward compatibility)
   officeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Office',
-    required: true
+    required: false,
+    default: null
   },
   officeName: {
     type: String,
     required: true,
     trim: true
   },
-  // Image information (Cloudinary)
+  // Office email stored directly in chart
+  officeEmail: {
+    type: String,
+    required: false,
+    trim: true,
+    lowercase: true,
+    validate: {
+      validator: function(v) {
+        if (!v) return true; // Allow null/empty
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      },
+      message: 'Email must be valid'
+    }
+  },
+  // Image information (Cloudinary) - now optional
   image: {
     // Cloudinary-specific fields
     public_id: {
       type: String,
-      required: true,
+      required: false,
       trim: true
     },
     secure_url: {
       type: String,
-      required: true,
+      required: false,
       trim: true
     },
     url: {
       type: String,
-      required: true,
+      required: false,
       trim: true
     },
     resource_type: {

@@ -2195,13 +2195,20 @@ exports.getWindowsForTransfer = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: windows.map(window => ({
-        id: window._id,
-        name: window.name,
-        serviceName: window.serviceIds && window.serviceIds.length > 0
-          ? window.serviceIds.map(s => s.name).join(', ')
-          : 'No services assigned'
-      }))
+      data: windows.map(window => {
+        // Filter out Special Request services from serviceName
+        const regularServices = window.serviceIds && window.serviceIds.length > 0
+          ? window.serviceIds.filter(s => !s.isSpecialRequest)
+          : [];
+
+        return {
+          id: window._id,
+          name: window.name,
+          serviceName: regularServices.length > 0
+            ? regularServices.map(s => s.name).join(', ')
+            : 'No services assigned'
+        };
+      })
     });
 
   } catch (error) {

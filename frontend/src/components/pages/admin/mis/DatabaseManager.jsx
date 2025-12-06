@@ -59,7 +59,9 @@ const DatabaseManager = () => {
     { name: 'Settings', label: 'System Settings', description: 'System configuration' },
     { name: 'Rating', label: 'Ratings & Feedback', description: 'Customer ratings and feedback' },
     { name: 'Bulletin', label: 'Bulletins', description: 'News and announcements' },
-    { name: 'AuditTrail', label: 'Audit Trail', description: 'System audit logs' }
+    { name: 'AuditTrail', label: 'Audit Trail', description: 'System audit logs' },
+    { name: 'Office', label: 'Offices', description: 'Office directory information' },
+    { name: 'Chart', label: 'Organizational Charts', description: 'Office organizational charts' }
   ];
 
   const recordsPerPage = 10;
@@ -327,130 +329,165 @@ const DatabaseManager = () => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 sm:space-y-4 md:space-y-5">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center tracking-tight">
-            <MdStorage className="mr-2.5 text-[#1F3463] text-3xl" />
-            Database Manager
-          </h1>
-          <p className="text-sm text-gray-600 mt-1.5">
-            Development tool for direct database record manipulation
-          </p>
-          <div className="mt-2.5 px-3 py-1.5 bg-yellow-100 border border-yellow-300 rounded-lg inline-block">
-            <span className="text-xs font-bold text-yellow-800">⚠️ DEVELOPMENT ONLY</span>
-          </div>
-        </div>
 
-        <div className="flex items-center space-x-2.5">
-          <button
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center space-x-1.5 px-4 py-2 text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100 disabled:hover:shadow-none"
-            style={{ backgroundColor: loading ? undefined : '#1F3463' }}
-          >
-            <MdRefresh className={`w-4 h-4 transition-transform duration-200 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Model Selection */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-        <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
-          <MdTableChart className="mr-1.5 text-[#1F3463] text-lg" />
-          Select Database Model
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {availableModels.map((model) => (
-            <button
-              key={model.name}
-              onClick={() => handleModelChange(model.name)}
-              className={`p-4 rounded-lg border-2 transition-all text-left ${
-                selectedModel === model.name
-                  ? 'border-[#1F3463] bg-[#1F3463] bg-opacity-10'
-                  : 'border-gray-200 hover:border-[#1F3463] hover:bg-gray-50'
-              }`}
-            >
-              <div className="font-bold text-base text-gray-900">{model.label}</div>
-              <div className="text-base text-gray-600 mt-1">{model.description}</div>
-              {selectedModel === model.name && (
-                <div className="text-sm text-[#1F3463] font-semibold mt-2">
-                  ✓ Currently Selected
+      {/* Main Content Container - Modern white background with shadow */}
+      <div className="bg-white p-3 sm:p-4 md:p-5 border border-gray-200 rounded-xl sm:rounded-2xl shadow-lg shadow-[#1F3463]/5">
+        {/* Header Section */}
+        <div className="mb-4 sm:mb-5 md:mb-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="p-2 bg-[#1F3463]/10 rounded-lg">
+                  <MdStorage className="text-[#1F3463] text-xl sm:text-2xl md:text-3xl" />
                 </div>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Controls and Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex items-center space-x-2">
-            <div className="relative">
-              <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
-              <input
-                type="text"
-                placeholder={`Search ${selectedModel} records...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200 w-64"
-              />
+                <div>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3463] tracking-tight">
+                    Database Manager
+                  </h1>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                    Direct database record manipulation tool
+                  </p>
+                </div>
+              </div>
+              <div className="mt-2 sm:mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
+                <MdWarning className="text-amber-600 text-sm" />
+                <span className="text-xs font-semibold text-amber-800">DEVELOPMENT ONLY</span>
+              </div>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-lg shadow-[#1F3463]/20 hover:shadow-[#1F3463]/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100 disabled:hover:shadow-none"
-              style={{ backgroundColor: loading ? undefined : '#1F3463' }}
-            >
-              Search
-            </button>
-          </form>
 
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => openEditModal()}
-              className="flex items-center space-x-2 px-5 py-2.5 bg-green-600 text-white rounded-lg text-base font-semibold hover:bg-green-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-lg shadow-green-600/20 hover:shadow-green-600/30"
-            >
-              <MdAdd className="w-5 h-5 transition-transform duration-200" />
-              <span>Add Record</span>
-            </button>
-
-            <button
-              onClick={openDeleteAllModal}
-              disabled={records.length === 0}
-              className="flex items-center space-x-2 px-5 py-2.5 bg-red-600 text-white rounded-lg text-base font-semibold hover:bg-red-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:shadow-none"
-            >
-              <MdDeleteSweep className="w-5 h-5 transition-transform duration-200" />
-              <span>Delete All</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-[#1F3463]/90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-md shadow-[#1F3463]/20 hover:shadow-lg hover:shadow-[#1F3463]/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:shadow-md"
+              >
+                <MdRefresh className={`w-4 h-4 transition-transform duration-200 ${loading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Record Count */}
-        <div className="mt-4 text-base text-gray-600 font-medium">
-          {loading ? (
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1F3463]"></div>
-              <span>Loading {selectedModel} records...</span>
+        {/* Model Selection - Modern Card Grid */}
+        <div className="mb-4 sm:mb-5 md:mb-6">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <div className="p-1.5 bg-[#1F3463]/10 rounded-lg">
+              <MdTableChart className="text-[#1F3463] text-base sm:text-lg" />
             </div>
-          ) : (
-            <span>
-              Showing {records.length} of {totalRecords} {selectedModel} records
-              {searchTerm && ` (filtered by "${searchTerm}")`}
-            </span>
-          )}
-        </div>
-      </div>
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
+              Select Database Model
+            </h2>
+          </div>
 
-      {/* Records Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            {availableModels.map((model) => (
+              <button
+                key={model.name}
+                onClick={() => handleModelChange(model.name)}
+                className={`group relative p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 text-left hover:shadow-md ${
+                  selectedModel === model.name
+                    ? 'border-[#1F3463] bg-gradient-to-br from-[#1F3463]/10 to-[#1F3463]/5 shadow-md shadow-[#1F3463]/20'
+                    : 'border-gray-200 bg-white hover:border-[#1F3463]/50 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="font-bold text-sm sm:text-base text-gray-900 group-hover:text-[#1F3463] transition-colors">
+                    {model.label}
+                  </div>
+                  {selectedModel === model.name && (
+                    <div className="flex-shrink-0 w-5 h-5 bg-[#1F3463] rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">✓</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                  {model.description}
+                </div>
+                {selectedModel === model.name && (
+                  <div className="absolute bottom-3 right-3">
+                    <div className="px-2 py-0.5 bg-[#1F3463] text-white text-xs font-semibold rounded-full">
+                      Active
+                    </div>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Controls and Search - Modern Card Design */}
+        <div className="mb-4 sm:mb-5 md:mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
+            {/* Search Section */}
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+              <div className="relative flex-1 sm:flex-initial sm:min-w-[280px]">
+                <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder={`Search ${selectedModel} records...`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent transition-all duration-200 shadow-sm"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2.5 bg-[#1F3463] text-white rounded-lg hover:bg-[#1F3463]/90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-md shadow-[#1F3463]/20 hover:shadow-lg hover:shadow-[#1F3463]/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:shadow-md text-sm font-semibold"
+              >
+                Search
+              </button>
+            </form>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => openEditModal()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-md shadow-green-600/20 hover:shadow-lg hover:shadow-green-600/30"
+              >
+                <MdAdd className="w-5 h-5" />
+                <span className="hidden sm:inline">Add Record</span>
+                <span className="sm:hidden">Add</span>
+              </button>
+
+              <button
+                onClick={openDeleteAllModal}
+                disabled={records.length === 0}
+                className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-md shadow-red-600/20 hover:shadow-lg hover:shadow-red-600/30 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:shadow-md"
+              >
+                <MdDeleteSweep className="w-5 h-5" />
+                <span className="hidden sm:inline">Delete All</span>
+                <span className="sm:hidden">Delete</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Record Count - Modern Badge Style */}
+          <div className="mt-3 sm:mt-4 flex items-center gap-2">
+            {loading ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#1F3463]"></div>
+                <span className="text-sm text-blue-700 font-medium">Loading {selectedModel} records...</span>
+              </div>
+            ) : (
+              <div className="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-lg">
+                <span className="text-sm text-gray-700 font-medium">
+                  Showing <span className="font-bold text-[#1F3463]">{records.length}</span> of <span className="font-bold text-[#1F3463]">{totalRecords}</span> {selectedModel} records
+                  {searchTerm && (
+                    <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-medium">
+                      Filtered: "{searchTerm}"
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Records Table - Modern Design */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         {loading ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -486,18 +523,20 @@ const DatabaseManager = () => {
             </table>
           </div>
         ) : records.length === 0 ? (
-          <div className="p-8 text-center">
-            <MdStorage className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Records Found</h3>
-            <p className="text-base text-gray-600">
+          <div className="p-8 sm:p-12 text-center">
+            <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <MdStorage className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">No Records Found</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-md mx-auto">
               {searchTerm
-                ? `No ${selectedModel} records match your search criteria.`
-                : `No ${selectedModel} records exist in the database.`
+                ? `No ${selectedModel} records match your search criteria. Try adjusting your search terms.`
+                : `No ${selectedModel} records exist in the database. Create your first record to get started.`
               }
             </p>
             <button
               onClick={() => openEditModal()}
-              className="mt-4 flex items-center space-x-2 px-5 py-2.5 bg-[#1F3463] text-white rounded-lg text-base font-semibold hover:bg-opacity-90 transition-colors mx-auto"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1F3463] text-white rounded-lg text-sm font-semibold hover:bg-[#1F3463]/90 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-2 shadow-md shadow-[#1F3463]/20 hover:shadow-lg hover:shadow-[#1F3463]/30"
             >
               <MdAdd className="w-5 h-5" />
               <span>Add First Record</span>
@@ -506,46 +545,49 @@ const DatabaseManager = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 shadow-sm">
+              <thead className="bg-gradient-to-r from-[#1F3463] to-[#1F3463]/95">
                 <tr>
                   {records[0] && getDisplayFields(records[0]).slice(0, 6).map((field) => (
                     <th
                       key={field}
-                      className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
+                      className="px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider"
                     >
-                      {field}
+                      {field.replace(/([A-Z])/g, ' $1').trim()}
                     </th>
                   ))}
-                  <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-4 sm:px-5 md:px-6 py-3 sm:py-3.5 text-right text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {records.map((record, index) => (
-                  <tr key={record._id || index} className={`hover:bg-gray-50 transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
+                  <tr
+                    key={record._id || index}
+                    className={`hover:bg-blue-50 transition-all duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                  >
                     {getDisplayFields(record).slice(0, 6).map((field) => (
-                      <td key={field} className="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900">
-                        <div className="max-w-xs truncate" title={formatFieldValue(record[field], field)}>
+                      <td key={field} className="px-4 sm:px-5 md:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="max-w-xs truncate font-medium" title={formatFieldValue(record[field], field)}>
                           {formatFieldValue(record[field], field)}
                         </div>
                       </td>
                     ))}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-base font-medium">
-                      <div className="flex justify-end space-x-2">
+                    <td className="px-4 sm:px-5 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right">
+                      <div className="flex justify-end gap-2">
                         <button
                           onClick={() => openEditModal(record)}
-                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+                          className="p-2 text-[#1F3463] hover:bg-[#1F3463]/10 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
                           title="Edit record"
                         >
-                          <MdEdit className="h-5 w-5 transition-transform duration-200" />
+                          <MdEdit className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => openDeleteModal(record)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                           title="Delete record"
                         >
-                          <MdDelete className="h-5 w-5 transition-transform duration-200" />
+                          <MdDelete className="h-5 w-5" />
                         </button>
                       </div>
                     </td>
@@ -557,18 +599,20 @@ const DatabaseManager = () => {
         )}
       </div>
 
-      {/* Pagination */}
+      {/* Pagination - Modern Design */}
       {totalPages > 1 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div className="text-base text-gray-700 font-medium">
-              Page {currentPage} of {totalPages}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-lg">
+              <span className="text-sm text-gray-700 font-medium">
+                Page <span className="font-bold text-[#1F3463]">{currentPage}</span> of <span className="font-bold text-[#1F3463]">{totalPages}</span>
+              </span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-4 py-2 text-base font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400"
+                className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-[#1F3463] transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
               >
                 Previous
               </button>
@@ -582,10 +626,10 @@ const DatabaseManager = () => {
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`px-4 py-2 text-base font-medium border rounded ${
+                    className={`px-4 py-2 text-sm font-medium border rounded-lg transition-all duration-200 ${
                       pageNum === currentPage
-                        ? 'bg-[#1F3463] text-white border-[#1F3463]'
-                        : 'border-gray-300 hover:bg-gray-50'
+                        ? 'bg-[#1F3463] text-white border-[#1F3463] shadow-md shadow-[#1F3463]/20'
+                        : 'border-gray-300 hover:bg-gray-50 hover:border-[#1F3463]/50'
                     }`}
                   >
                     {pageNum}
@@ -596,7 +640,7 @@ const DatabaseManager = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 text-base font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400"
+                className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-[#1F3463] transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
               >
                 Next
               </button>
@@ -637,13 +681,14 @@ const DatabaseManager = () => {
         recordCount={totalRecords}
       />
 
-      {/* Debug info */}
-      {showDeleteAllModal && console.log('🔍 Modal props:', {
-        isOpen: showDeleteAllModal,
-        selectedModel,
-        recordCount: totalRecords,
-        recordsLength: records.length
-      })}
+        {/* Debug info */}
+        {showDeleteAllModal && console.log('🔍 Modal props:', {
+          isOpen: showDeleteAllModal,
+          selectedModel,
+          recordCount: totalRecords,
+          recordsLength: records.length
+        })}
+      </div>
     </div>
   );
 };

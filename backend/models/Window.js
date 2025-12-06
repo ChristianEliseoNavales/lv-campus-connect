@@ -101,7 +101,8 @@ windowSchema.statics.getVisibleServices = function(office) {
     },
     {
       $match: {
-        'service.office': office
+        'service.office': office,
+        'service.isSpecialRequest': { $ne: true }  // Exclude Special Request services
       }
     },
     {

@@ -1,10 +1,10 @@
 /**
  * Cloudinary image optimization utility
- * Applies automatic format, quality, and size optimizations to Cloudinary URLs
+ * Applies format and size optimizations while preserving original quality
  */
 
 /**
- * Optimize Cloudinary image URL with automatic transformations
+ * Optimize Cloudinary image URL with transformations while maintaining maximum quality
  * @param {string|object} image - Image object with secure_url/url/public_id or direct URL string
  * @param {object} options - Additional transformation options
  * @returns {string} Optimized Cloudinary URL or original URL if not Cloudinary
@@ -42,13 +42,31 @@ export const getOptimizedCloudinaryUrl = (image, options = {}) => {
     }
   }
 
-  // Build optimized URL with transformations (Cloudinary format: w_800,q_auto,f_auto,c_limit)
-  const transformations = [
-    'f_auto',      // Automatic format selection (WebP when supported)
-    'q_auto',      // Automatic quality optimization
-    'w_800',       // Limit width for performance
-    'c_limit'      // Maintain aspect ratio
-  ];
+  // Check if this is a video resource
+  const isVideo = imageUrl.includes('/video/') ||
+                  (image && (image.resource_type === 'video' ||
+                            image.mimeType?.startsWith('video/')));
+
+  // Build optimized URL with transformations (preserving maximum quality)
+  // For images: w_800,q_100,f_auto,c_limit
+  // For videos: w_800,q_100 (videos don't use f_auto or c_limit)
+  const transformations = [];
+
+  if (isVideo) {
+    // Video transformations - preserve maximum quality
+    transformations.push('q_100');  // Maximum quality (100%) - preserves original quality
+    if (!options.width) {
+      transformations.push('w_800'); // Limit width for performance (maintains aspect ratio)
+    }
+  } else {
+    // Image transformations - preserve maximum quality
+    transformations.push('f_auto');  // Automatic format selection (WebP when supported) - doesn't affect quality
+    transformations.push('q_100');   // Maximum quality (100%) - preserves original quality, no compression
+    if (!options.width) {
+      transformations.push('w_800'); // Limit width for performance (maintains aspect ratio)
+    }
+    transformations.push('c_limit');  // Maintain aspect ratio
+  }
 
   // Add custom transformations if provided
   if (options.width) {
@@ -57,7 +75,7 @@ export const getOptimizedCloudinaryUrl = (image, options = {}) => {
   if (options.height) {
     transformations.push(`h_${options.height}`);
   }
-  if (options.crop) {
+  if (options.crop && !isVideo) {
     transformations.push(`c_${options.crop}`);
   }
 
@@ -67,6 +85,7 @@ export const getOptimizedCloudinaryUrl = (image, options = {}) => {
   if (imageUrl.includes('cloudinary.com') && imageUrl.includes('/upload/')) {
     // Insert transformations after /upload/
     // Format: https://res.cloudinary.com/{cloud_name}/image/upload/{transformations}/...
+    // or: https://res.cloudinary.com/{cloud_name}/video/upload/{transformations}/...
     return imageUrl.replace('/upload/', `/upload/${transformationString}/`);
   }
 

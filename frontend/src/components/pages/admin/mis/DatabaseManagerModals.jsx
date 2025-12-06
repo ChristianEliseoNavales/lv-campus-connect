@@ -47,7 +47,7 @@ export const EditRecordModal = ({
       ],
       Queue: [
         { name: 'queueNumber', label: 'Queue Number', type: 'number', required: true },
-        { name: 'department', label: 'Department', type: 'select', required: true, options: [
+        { name: 'office', label: 'Office', type: 'select', required: true, options: [
           'registrar', 'admissions'
         ]},
         { name: 'serviceId', label: 'Service ID', type: 'text', required: true },
@@ -73,7 +73,7 @@ export const EditRecordModal = ({
       ],
       Window: [
         { name: 'name', label: 'Window Name', type: 'text', required: true },
-        { name: 'department', label: 'Department', type: 'select', required: true, options: [
+        { name: 'office', label: 'Office', type: 'select', required: true, options: [
           'registrar', 'admissions'
         ]},
         { name: 'isOpen', label: 'Open', type: 'checkbox' },
@@ -81,7 +81,7 @@ export const EditRecordModal = ({
       ],
       Service: [
         { name: 'name', label: 'Service Name', type: 'text', required: true },
-        { name: 'department', label: 'Department', type: 'select', required: true, options: [
+        { name: 'office', label: 'Office', type: 'select', required: true, options: [
           'registrar', 'admissions'
         ]},
         { name: 'isActive', label: 'Active', type: 'checkbox' }
@@ -97,7 +97,7 @@ export const EditRecordModal = ({
         { name: 'customerRole', label: 'Customer Role', type: 'select', required: true, options: [
           'Visitor', 'Student', 'Teacher', 'Alumni'
         ]},
-        { name: 'department', label: 'Department', type: 'select', required: true, options: [
+        { name: 'office', label: 'Office', type: 'select', required: true, options: [
           'registrar', 'admissions'
         ]}
       ],
@@ -134,6 +134,16 @@ export const EditRecordModal = ({
       Settings: [
         { name: 'systemName', label: 'System Name', type: 'text' },
         { name: 'systemVersion', label: 'System Version', type: 'text' }
+      ],
+      Office: [
+        { name: 'officeName', label: 'Office Name', type: 'text', required: true },
+        { name: 'officeEmail', label: 'Office Email', type: 'email', required: false }
+      ],
+      Chart: [
+        { name: 'officeId', label: 'Office ID (ObjectId)', type: 'text', required: false, note: 'MongoDB ObjectId reference to Office model' },
+        { name: 'officeName', label: 'Office Name', type: 'text', required: true },
+        { name: 'officeEmail', label: 'Office Email', type: 'email', required: false },
+        { name: 'image', label: 'Image (JSON)', type: 'textarea', required: false, note: 'Complex object - use JSON format for image data' }
       ]
     };
 
@@ -247,6 +257,9 @@ export const EditRecordModal = ({
                   {field.label}
                   {field.required && <span className="text-red-500 ml-0.5">*</span>}
                 </label>
+                {field.note && (
+                  <p className="text-xs text-gray-500 mb-1 italic">{field.note}</p>
+                )}
                 {renderField(field)}
                 {formErrors[field.name] && (
                   <p className="text-red-500 text-xs mt-0.5">{formErrors[field.name]}</p>

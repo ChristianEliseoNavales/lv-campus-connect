@@ -13,12 +13,11 @@ const Charts = () => {
   const { socket, isConnected, joinRoom, leaveRoom } = useSocket();
   const [loading, setLoading] = useState(true);
   const [charts, setCharts] = useState([]);
-  const [offices, setOffices] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedChartId, setSelectedChartId] = useState(null);
-  const [selectedOfficeId, setSelectedOfficeId] = useState('');
+  const [officeName, setOfficeName] = useState('');
   const [officeEmail, setOfficeEmail] = useState('');
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -41,27 +40,10 @@ const Charts = () => {
     };
   }, [socket, isConnected]);
 
-  // Fetch offices and charts on component mount
+  // Fetch charts on component mount
   useEffect(() => {
-    fetchOffices();
     fetchCharts();
   }, []);
-
-  const fetchOffices = async () => {
-    try {
-      const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/office`);
-      if (response.ok) {
-        const data = await response.json();
-        const officeList = Array.isArray(data) ? data : (data.records || []);
-        setOffices(officeList);
-      } else {
-        showError('Error', 'Failed to fetch offices');
-      }
-    } catch (error) {
-      console.error('Error fetching offices:', error);
-      showError('Error', 'Failed to fetch offices');
-    }
-  };
 
   const fetchCharts = async () => {
     try {
@@ -82,18 +64,22 @@ const Charts = () => {
     }
   };
 
-  // Handle office selection change
-  const handleOfficeChange = (e) => {
-    const officeId = e.target.value;
-    setSelectedOfficeId(officeId);
-
-    // Find the selected office and populate email
-    const selectedOffice = offices.find(o => o._id === officeId);
-    if (selectedOffice) {
-      setOfficeEmail(selectedOffice.officeEmail || '');
-    } else {
-      setOfficeEmail('');
-    }
+  // Generate placeholder image SVG data URI
+  const generatePlaceholderImage = (officeName) => {
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+        <rect fill="#1F3463" width="800" height="600"/>
+        <text x="400" y="280" font-family="Arial, sans-serif" font-size="32"
+              fill="#FFFFFF" text-anchor="middle" dy=".3em" font-weight="bold">
+          ${officeName || 'Office Chart'}
+        </text>
+        <text x="400" y="320" font-family="Arial, sans-serif" font-size="18"
+              fill="#FFE251" text-anchor="middle" dy=".3em">
+          Chart Coming Soon
+        </text>
+      </svg>
+    `;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
   };
 
   const validateFile = (file) => {
@@ -151,36 +137,33 @@ const Charts = () => {
   };
 
   const handleUploadChart = async () => {
-    if (!uploadFile || !selectedOfficeId) {
-      showError('Missing Information', 'Please select an office and upload a file');
+    if (!officeName || !officeName.trim()) {
+      showError('Missing Information', 'Please enter a department/office name');
       return;
     }
 
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append('file', uploadFile);
 
-      // Upload file to backend (Cloudinary) with authentication
-      const uploadResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/charts/upload`, {
-        method: 'POST',
-        body: formData
-      });
+      let imageData = null;
 
-      if (!uploadResponse.ok) {
-        throw new Error('Upload failed');
-      }
+      // Upload file if provided
+      if (uploadFile) {
+        const formData = new FormData();
+        formData.append('file', uploadFile);
 
-      const uploadData = await uploadResponse.json();
+        // Upload file to backend (Cloudinary) with authentication
+        const uploadResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/charts/upload`, {
+          method: 'POST',
+          body: formData
+        });
 
-      // Find the selected office
-      const selectedOffice = offices.find(o => o._id === selectedOfficeId);
+        if (!uploadResponse.ok) {
+          throw new Error('Upload failed');
+        }
 
-      // Create chart record in database with Cloudinary data
-      const chartData = {
-        officeId: selectedOfficeId,
-        officeName: selectedOffice.officeName,
-        image: {
+        const uploadData = await uploadResponse.json();
+        imageData = {
           public_id: uploadData.public_id,
           secure_url: uploadData.secure_url,
           url: uploadData.url,
@@ -189,7 +172,14 @@ const Charts = () => {
           originalName: uploadFile.name,
           size: uploadFile.size,
           mimeType: uploadFile.type
-        }
+        };
+      }
+
+      // Create chart record in database
+      const chartData = {
+        officeName: officeName.trim(),
+        officeEmail: officeEmail.trim() || null,
+        image: imageData
       };
 
       const createResponse = await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/chart`, {
@@ -199,24 +189,15 @@ const Charts = () => {
       });
 
       if (createResponse.ok) {
-        // Update office email if provided
-        if (officeEmail && officeEmail !== selectedOffice.officeEmail) {
-          await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/office/${selectedOfficeId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ officeEmail })
-          });
-        }
-
-        showSuccess('Success', 'Chart uploaded successfully');
+        showSuccess('Success', 'Chart created successfully');
         setUploadFile(null);
-        setSelectedOfficeId('');
+        setOfficeName('');
         setOfficeEmail('');
         setShowUploadModal(false);
         fetchCharts();
-        fetchOffices(); // Refresh offices to get updated email
       } else {
-        showError('Error', 'Failed to create chart record');
+        const errorData = await createResponse.json();
+        showError('Error', errorData.error || 'Failed to create chart record');
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -227,8 +208,8 @@ const Charts = () => {
   };
 
   const handleEditChart = async () => {
-    if (!selectedChartId || !selectedOfficeId) {
-      showError('Missing Information', 'Please select an office');
+    if (!selectedChartId || !officeName || !officeName.trim()) {
+      showError('Missing Information', 'Please enter a department/office name');
       return;
     }
 
@@ -239,7 +220,7 @@ const Charts = () => {
       // If a new file is uploaded, handle file upload first
       let imageData = chartToEdit.image;
       if (uploadFile) {
-        // Delete old image from Cloudinary
+        // Delete old image from Cloudinary if it exists
         if (chartToEdit?.image?.public_id) {
           const publicIdEncoded = encodeURIComponent(chartToEdit.image.public_id);
           await authFetch(`${API_CONFIG.getAdminUrl()}/api/charts/delete/${publicIdEncoded}`, {
@@ -273,13 +254,10 @@ const Charts = () => {
         };
       }
 
-      // Find the selected office
-      const selectedOffice = offices.find(o => o._id === selectedOfficeId);
-
       // Update chart record in database
       const chartData = {
-        officeId: selectedOfficeId,
-        officeName: selectedOffice.officeName,
+        officeName: officeName.trim(),
+        officeEmail: officeEmail.trim() || null,
         image: imageData
       };
 
@@ -290,25 +268,16 @@ const Charts = () => {
       });
 
       if (updateResponse.ok) {
-        // Update office email if provided and changed
-        if (officeEmail && officeEmail !== selectedOffice.officeEmail) {
-          await authFetch(`${API_CONFIG.getAdminUrl()}/api/database/office/${selectedOfficeId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ officeEmail })
-          });
-        }
-
         showSuccess('Success', 'Chart updated successfully');
         setUploadFile(null);
-        setSelectedOfficeId('');
+        setOfficeName('');
         setOfficeEmail('');
         setSelectedChartId(null);
         setShowEditModal(false);
         fetchCharts();
-        fetchOffices(); // Refresh offices to get updated email
       } else {
-        showError('Error', 'Failed to update chart record');
+        const errorData = await updateResponse.json();
+        showError('Error', errorData.error || 'Failed to update chart record');
       }
     } catch (error) {
       console.error('Update error:', error);
@@ -354,14 +323,19 @@ const Charts = () => {
     }
   };
 
-  // Helper function to get media URL with Cloudinary optimization
+  // Helper function to get media URL with Cloudinary optimization or placeholder
   const getMediaUrl = (chart) => {
-    const optimizedUrl = getOptimizedCloudinaryUrl(chart.image);
-    if (optimizedUrl) {
-      return optimizedUrl;
+    // If chart has an image, use Cloudinary optimization
+    if (chart.image?.secure_url || chart.image?.url) {
+      const optimizedUrl = getOptimizedCloudinaryUrl(chart.image);
+      if (optimizedUrl) {
+        return optimizedUrl;
+      }
+      // Fallback to direct URL
+      return chart.image.secure_url || chart.image.url;
     }
-    // Fallback to local image path
-    return `${API_CONFIG.getAdminUrl()}/${chart.image?.path}`;
+    // Generate placeholder if no image
+    return generatePlaceholderImage(chart.officeName);
   };
 
   const openFullscreen = (chart) => {
@@ -415,21 +389,15 @@ const Charts = () => {
                 <div key={chart._id} className="rounded-lg sm:rounded-xl border border-gray-200 shadow-sm overflow-hidden h-40 sm:h-48 md:h-52 bg-white hover:shadow-lg transition-shadow relative group">
                   {/* Media Preview - Clickable for fullscreen */}
                   <div onClick={() => openFullscreen(chart)} className="cursor-pointer w-full h-full">
-                    {(chart.image?.secure_url || chart.image?.url || chart.image?.path) ? (
-                      <img
-                        src={mediaUrl}
-                        alt={chart.officeName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          console.error('Failed to load image:', mediaUrl);
-                          e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="12" fill="%239ca3af" text-anchor="middle" dy=".3em"%3EImage not found%3C/text%3E%3C/svg%3E';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <span className="text-gray-400 text-xs">No media</span>
-                      </div>
-                    )}
+                    <img
+                      src={mediaUrl}
+                      alt={chart.officeName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Failed to load image:', mediaUrl);
+                        e.target.src = generatePlaceholderImage(chart.officeName);
+                      }}
+                    />
                   </div>
 
                   {/* Action Buttons - Bottom Right */}
@@ -437,9 +405,8 @@ const Charts = () => {
                     <button
                       onClick={() => {
                         setSelectedChartId(chart._id);
-                        setSelectedOfficeId(chart.officeId);
-                        const office = offices.find(o => o._id === chart.officeId);
-                        setOfficeEmail(office?.officeEmail || '');
+                        setOfficeName(chart.officeName || '');
+                        setOfficeEmail(chart.officeEmail || '');
                         setUploadFile(null);
                         setShowEditModal(true);
                       }}
@@ -480,7 +447,7 @@ const Charts = () => {
               onClick={() => {
                 setShowUploadModal(false);
                 setUploadFile(null);
-                setSelectedOfficeId('');
+                setOfficeName('');
                 setOfficeEmail('');
                 setIsDragging(false);
               }}
@@ -496,23 +463,18 @@ const Charts = () => {
 
             {/* Modal Body */}
             <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-4">
-              {/* Office Dropdown */}
+              {/* Office Name Input */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                  Department/Office
+                  Department/Office <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={selectedOfficeId}
-                  onChange={handleOfficeChange}
+                <input
+                  type="text"
+                  value={officeName}
+                  onChange={(e) => setOfficeName(e.target.value)}
+                  placeholder="Enter department/office name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
-                >
-                  <option value="">Select an office...</option>
-                  {offices.map((office) => (
-                    <option key={office._id} value={office._id}>
-                      {office.officeName}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               {/* Office Email Input */}
@@ -532,7 +494,7 @@ const Charts = () => {
               {/* File Upload Area with Drag & Drop */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                  Chart Image (JPG/PNG only)
+                  Chart Image (JPG/PNG only) - Optional
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
@@ -578,10 +540,10 @@ const Charts = () => {
             <div className="border-t border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5">
               <button
                 onClick={handleUploadChart}
-                disabled={uploading || !uploadFile || !selectedOfficeId}
+                disabled={uploading || !officeName || !officeName.trim()}
                 className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100"
               >
-                {uploading ? 'Uploading...' : 'Upload Chart'}
+                {uploading ? 'Creating...' : 'Create Chart'}
               </button>
             </div>
           </div>
@@ -597,7 +559,7 @@ const Charts = () => {
               onClick={() => {
                 setShowEditModal(false);
                 setUploadFile(null);
-                setSelectedOfficeId('');
+                setOfficeName('');
                 setOfficeEmail('');
                 setSelectedChartId(null);
                 setIsDragging(false);
@@ -614,23 +576,18 @@ const Charts = () => {
 
             {/* Modal Body */}
             <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-4">
-              {/* Office Dropdown */}
+              {/* Office Name Input */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                  Department/Office
+                  Department/Office <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={selectedOfficeId}
-                  onChange={handleOfficeChange}
+                <input
+                  type="text"
+                  value={officeName}
+                  onChange={(e) => setOfficeName(e.target.value)}
+                  placeholder="Enter department/office name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463]"
-                >
-                  <option value="">Select an office...</option>
-                  {offices.map((office) => (
-                    <option key={office._id} value={office._id}>
-                      {office.officeName}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               {/* Office Email Input */}
@@ -697,7 +654,7 @@ const Charts = () => {
             <div className="border-t border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5">
               <button
                 onClick={handleEditChart}
-                disabled={updating || !selectedOfficeId}
+                disabled={updating || !officeName || !officeName.trim()}
                 className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-[#1F3463] text-white rounded-lg font-semibold text-[10px] sm:text-xs hover:bg-opacity-90 transition-colors disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:opacity-100"
               >
                 {updating ? 'Updating...' : 'Update Chart'}

@@ -395,7 +395,11 @@ const AddEditWindowModal = ({
                   <p className="text-gray-500 text-xs">No services available</p>
                 ) : (
                   <div className="space-y-1.5">
-                    {(services || []).map((service) => {
+                    {(services || []).filter(service => {
+                      const isSpecialRequest = service.isSpecialRequest === true ||
+                                               service.name?.toLowerCase().includes('special request');
+                      return !isSpecialRequest;
+                    }).map((service) => {
                       // Check if service is assigned to another window (excluding current window being edited)
                       const assignedToOtherWindow = (windows || []).find(window => {
                         // Skip the current window being edited
@@ -765,8 +769,15 @@ const Settings = () => {
       const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/services/admissions`);
       if (response.ok) {
         const data = await response.json();
-        setServices(data);
-        return data; // Return data for initial state capture
+        // Filter out Special Request services as a safety measure (backend should already filter, but this ensures it)
+        // Also filter by name as a fallback in case isSpecialRequest field is not set
+        const filteredData = data.filter(service => {
+          const isSpecialRequest = service.isSpecialRequest === true ||
+                                   service.name?.toLowerCase().includes('special request');
+          return !isSpecialRequest;
+        });
+        setServices(filteredData);
+        return filteredData; // Return data for initial state capture
       }
     } catch (error) {
       console.error('Error fetching services:', error);
@@ -1233,7 +1244,12 @@ const Settings = () => {
 
         if (response.ok) {
           const newService = await response.json();
-          setServices(prev => [...prev, newService]);
+          // Only add if it's not a Special Request service
+          const isSpecialRequest = newService.isSpecialRequest === true ||
+                                   newService.name?.toLowerCase().includes('special request');
+          if (!isSpecialRequest) {
+            setServices(prev => [...prev, newService]);
+          }
           closeAddServiceModal();
           showSuccess('Service Added', `${newService.name} has been added successfully`);
         } else {
@@ -1266,9 +1282,16 @@ const Settings = () => {
 
       if (response.ok) {
         const updatedService = await response.json();
-        setServices(prev => prev.map(service =>
-          service.id === serviceId ? updatedService : service
-        ));
+        // If updated service is Special Request, remove it; otherwise update it
+        const isSpecialRequest = updatedService.isSpecialRequest === true ||
+                                 updatedService.name?.toLowerCase().includes('special request');
+        if (isSpecialRequest) {
+          setServices(prev => prev.filter(service => service.id !== serviceId));
+        } else {
+          setServices(prev => prev.map(service =>
+            service.id === serviceId ? updatedService : service
+          ));
+        }
         showSuccess(
           'Service Updated',
           `${updatedService.name} is now ${updatedService.isActive ? 'active' : 'inactive'}`
@@ -1496,7 +1519,11 @@ const Settings = () => {
                 No services available. Add a service to get started.
               </div>
             ) : (
-              (services || []).map((service) => (
+              (services || []).filter(service => {
+                const isSpecialRequest = service.isSpecialRequest === true ||
+                                         service.name?.toLowerCase().includes('special request');
+                return !isSpecialRequest;
+              }).map((service) => (
                 <div
                   key={service.id}
                   className="p-2 sm:p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
