@@ -16,6 +16,9 @@ try {
   console.warn('⚠️  googleapis or google-auth-library not available:', error.message);
 }
 
+// OAuth2 redirect URI - must match the one used in generateGmailRefreshToken.js
+const GMAIL_OAUTH2_REDIRECT_URI = 'http://localhost:3000/oauth2callback';
+
 /**
  * Email Service for sending system emails
  * Supports Gmail API (OAuth2) for cloud deployments and SMTP for local development
@@ -129,10 +132,16 @@ class EmailService {
         return false;
       }
 
+      // Validate redirect URI consistency
+      const expectedRedirectUri = GMAIL_OAUTH2_REDIRECT_URI;
+      console.log(`[EMAIL_DEBUG] ${timestamp} - Using redirect URI: ${expectedRedirectUri}`);
+      console.log(`[EMAIL_DEBUG] ${timestamp} - ⚠️  IMPORTANT: Ensure this redirect URI matches the one used in generateGmailRefreshToken.js`);
+      console.log(`[EMAIL_DEBUG] ${timestamp} - ⚠️  IMPORTANT: Ensure this redirect URI is added to Google Cloud Console OAuth2 credentials`);
+
       const oauth2Client = new OAuth2Client(
         gmailClientId,
         gmailClientSecret,
-        'urn:ietf:wg:oauth:2.0:oob' // Redirect URI for installed apps
+        expectedRedirectUri // Must match redirect URI used during token generation
       );
 
       // Set refresh token with error handling
@@ -188,13 +197,58 @@ class EmailService {
       return true;
     } catch (error) {
       console.error(`❌ Gmail API verification failed: ${error.message}`);
+
       if (error.response) {
-        if (error.response.status === 401) {
-          console.error('   Refresh token may be invalid. Regenerate using scripts/generateGmailRefreshToken.js');
-        } else if (error.response.status === 403) {
-          console.error('   Check Gmail API is enabled and OAuth2 scopes are correct');
+        const status = error.response.status;
+        const errorData = error.response.data;
+        const errorMessage = errorData?.error?.message || error.message;
+        const errorCode = errorData?.error?.code;
+
+        if (status === 401) {
+          console.error('   Authentication failed (401 Unauthorized)');
+
+          // Check for specific OAuth2 errors
+          if (errorMessage.includes('invalid_grant')) {
+            console.error('   ❌ Invalid grant error detected. Common causes:');
+            console.error('      1. Redirect URI mismatch - ensure emailService.js uses the same redirect URI as generateGmailRefreshToken.js');
+            console.error('      2. Refresh token was generated with different OAuth2 credentials (Client ID/Secret)');
+            console.error('      3. Refresh token has been revoked or expired');
+            console.error('      4. OAuth2 client credentials were regenerated in Google Cloud Console');
+            console.error('   💡 Solution: Regenerate refresh token using scripts/generateGmailRefreshToken.js');
+            console.error(`   📋 Current redirect URI: http://localhost:3000/oauth2callback`);
+          } else if (errorMessage.includes('invalid_token')) {
+            console.error('   ❌ Invalid token - refresh token may be corrupted or revoked');
+            console.error('   💡 Solution: Regenerate refresh token using scripts/generateGmailRefreshToken.js');
+          } else {
+            console.error('   ❌ Refresh token may be invalid or expired');
+            console.error('   💡 Solution: Regenerate refresh token using scripts/generateGmailRefreshToken.js');
+          }
+
+          if (errorCode) {
+            console.error(`   📋 Error code: ${errorCode}`);
+          }
+        } else if (status === 403) {
+          console.error('   ❌ Access denied (403 Forbidden)');
+          console.error('   Common causes:');
+          console.error('      1. Gmail API is not enabled in Google Cloud Console');
+          console.error('      2. OAuth2 scopes do not include: https://www.googleapis.com/auth/gmail.send');
+          console.error('      3. OAuth consent screen is not properly configured');
+          console.error('   💡 Solution: Check Google Cloud Console API settings and OAuth2 scopes');
+        } else if (status === 400) {
+          console.error(`   ❌ Bad request (400): ${errorMessage}`);
+          console.error('   💡 Check that all OAuth2 credentials are correctly configured');
+        } else {
+          console.error(`   ❌ HTTP ${status}: ${errorMessage}`);
+        }
+      } else {
+        // Network or other errors
+        console.error('   ❌ Network or connection error');
+        console.error(`   📋 Error details: ${error.message}`);
+        if (error.code) {
+          console.error(`   📋 Error code: ${error.code}`);
         }
       }
+
       return false;
     }
   }
@@ -616,6 +670,29 @@ class EmailService {
             continue; // Retry the send
           } catch (refreshError) {
             console.error(`❌ Token refresh failed: ${refreshError.message}`);
+
+            // Provide detailed diagnostics for refresh errors
+            if (refreshError.response) {
+              const refreshStatus = refreshError.response.status;
+              const refreshData = refreshError.response.data;
+              const refreshMessage = refreshData?.error?.message || refreshError.message;
+              const refreshCode = refreshData?.error?.code;
+
+              if (refreshMessage.includes('invalid_grant')) {
+                console.error('   ❌ Invalid grant error during token refresh:');
+                console.error('      This usually means:');
+                console.error('      1. Redirect URI mismatch - ensure emailService.js uses: http://localhost:3000/oauth2callback');
+                console.error('      2. Refresh token was generated with different OAuth2 credentials');
+                console.error('      3. Refresh token has been revoked or expired');
+                console.error('      4. OAuth2 client credentials were regenerated in Google Cloud Console');
+                console.error('   💡 Solution: Regenerate refresh token using scripts/generateGmailRefreshToken.js');
+              } else {
+                console.error(`   📋 Refresh error details: ${refreshMessage}`);
+                if (refreshCode) {
+                  console.error(`   📋 Error code: ${refreshCode}`);
+                }
+              }
+            }
             // Fall through to error handling
           }
         }
@@ -623,12 +700,26 @@ class EmailService {
         // Log error information
         console.error(`❌ Gmail API send failed: ${error.message}`);
         if (error.response) {
-          if (error.response.status === 401) {
-            throw new Error('Gmail API authentication failed. Refresh token may be invalid. Regenerate using scripts/generateGmailRefreshToken.js');
-          } else if (error.response.status === 403) {
+          const status = error.response.status;
+          const errorData = error.response.data;
+          const errorMessage = errorData?.error?.message || error.message;
+          const errorCode = errorData?.error?.code;
+
+          if (status === 401) {
+            let errorMsg = 'Gmail API authentication failed. ';
+            if (errorMessage.includes('invalid_grant')) {
+              errorMsg += 'Invalid grant error - redirect URI mismatch or refresh token issue. ';
+              errorMsg += 'Ensure emailService.js uses redirect URI: http://localhost:3000/oauth2callback. ';
+            }
+            errorMsg += 'Regenerate refresh token using scripts/generateGmailRefreshToken.js';
+            throw new Error(errorMsg);
+          } else if (status === 403) {
             throw new Error('Gmail API access denied. Check Gmail API is enabled and OAuth2 scopes include gmail.send');
-          } else if (error.response.status === 400) {
-            throw new Error(`Gmail API request invalid: ${error.response.data?.error?.message || error.message}`);
+          } else if (status === 400) {
+            const detailedMsg = errorMessage || error.message;
+            throw new Error(`Gmail API request invalid: ${detailedMsg}`);
+          } else {
+            throw new Error(`Gmail API error (${status}): ${errorMessage || error.message}`);
           }
         }
 
