@@ -2191,7 +2191,7 @@ exports.getWindowsForTransfer = async (req, res, next) => {
     const windows = await Window.find({
       office: department,
       isOpen: true
-    }).select('_id name serviceIds').populate('serviceIds', 'name').lean();
+    }).select('_id name serviceIds').populate('serviceIds', 'name isSpecialRequest').lean();
 
     res.json({
       success: true,

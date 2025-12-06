@@ -7,7 +7,6 @@ import { FaLocationDot } from 'react-icons/fa6';
 import { useSocket } from '../../contexts/SocketContext';
 import API_CONFIG from '../../config/api';
 import NavigationLoadingOverlay from '../ui/NavigationLoadingOverlay';
-import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const Directory = () => {
   const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
@@ -128,122 +127,31 @@ const Directory = () => {
     }
   };
 
-  // Generate placeholder image SVG data URI
-  const generatePlaceholderImage = (officeName) => {
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
-        <rect fill="#1F3463" width="800" height="600"/>
-        <text x="400" y="280" font-family="Arial, sans-serif" font-size="32"
-              fill="#FFFFFF" text-anchor="middle" dy=".3em" font-weight="bold">
-          ${officeName || 'Office Chart'}
-        </text>
-        <text x="400" y="320" font-family="Arial, sans-serif" font-size="18"
-              fill="#FFE251" text-anchor="middle" dy=".3em">
-          Chart Coming Soon
-        </text>
-      </svg>
-    `;
-    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-  };
-
-  // Get offices that have charts - includes both existing offices and virtual offices from charts
-  const getOfficesWithCharts = () => {
-    if (!charts || charts.length === 0) return [];
-
-    const officesWithCharts = [];
-    const matchedOfficeIds = new Set();
-
-    // First, find existing offices that have matching charts
-    offices.forEach(office => {
-      // Check if there's a chart matching this office by officeName (case-insensitive)
-      const hasChartByName = charts.some(chart =>
-        chart.officeName &&
-        chart.officeName.toLowerCase() === office.officeName.toLowerCase()
-      );
-
-      // Check if there's a chart matching this office by officeId (backward compatibility)
-      const hasChartById = charts.some(chart =>
-        chart.officeId &&
-        chart.officeId.toString() === office._id.toString()
-      );
-
-      if (hasChartByName || hasChartById) {
-        officesWithCharts.push(office);
-        if (office._id) {
-          matchedOfficeIds.add(office._id.toString());
-        }
-        // Also mark officeName as matched
-        if (office.officeName) {
-          matchedOfficeIds.add(office.officeName.toLowerCase());
-        }
-      }
-    });
-
-    // Then, create virtual office entries for charts with officeNames that don't match existing offices
-    charts.forEach(chart => {
-      if (!chart.officeName) return;
-
-      const chartOfficeNameLower = chart.officeName.toLowerCase();
-      const isMatched = offices.some(office =>
-        office.officeName &&
-        office.officeName.toLowerCase() === chartOfficeNameLower
-      ) || matchedOfficeIds.has(chartOfficeNameLower);
-
-      // If this chart's officeName doesn't match any existing office, create a virtual office
-      if (!isMatched && !matchedOfficeIds.has(chartOfficeNameLower)) {
-        officesWithCharts.push({
-          _id: chart._id || `chart-${chart.officeName}`, // Use chart ID or generate one
-          officeName: chart.officeName,
-          officeEmail: chart.officeEmail || null,
-          isVirtual: true // Flag to indicate this is a virtual office from chart
-        });
-        matchedOfficeIds.add(chartOfficeNameLower);
-      }
-    });
-
-    return officesWithCharts;
-  };
-
-  // Get chart for selected office - match by officeName first, fallback to officeId
-  const getCurrentChart = (officesList) => {
+  // Get chart for selected office
+  const getCurrentChart = () => {
     if (!selectedDepartment) return null;
-
-    // Find the selected office (could be from offices or virtual from charts)
-    const selectedOffice = officesList.find(o =>
-      o._id && o._id.toString() === selectedDepartment.toString()
-    );
-
-    if (!selectedOffice) return null;
-
-    // Try matching by officeName (case-insensitive) first
-    let chart = charts.find(c =>
-      c.officeName &&
-      selectedOffice.officeName &&
-      c.officeName.toLowerCase() === selectedOffice.officeName.toLowerCase()
-    );
-
-    // Fallback to officeId for backward compatibility (only if not a virtual office)
-    if (!chart && selectedOffice._id && !selectedOffice.isVirtual) {
-      chart = charts.find(c =>
-        c.officeId &&
-        c.officeId.toString() === selectedOffice._id.toString()
-      );
+    const selectedOffice = offices.find(o => o._id === selectedDepartment);
+    if (!selectedOffice) {
+      // Check if there's a chart with officeId matching selectedDepartment (virtual office)
+      return charts.find(c => c.officeId?.toString() === selectedDepartment);
     }
-
-    // If it's a virtual office, try matching by the chart ID we used
-    if (!chart && selectedOffice.isVirtual) {
-      chart = charts.find(c =>
-        (c._id && c._id.toString() === selectedDepartment.toString()) ||
-        (c.officeName && selectedOffice.officeName &&
-         c.officeName.toLowerCase() === selectedOffice.officeName.toLowerCase())
-      );
-    }
-
-    return chart || null;
+    // Use toString() for consistent type conversion across all chart lookups
+    return charts.find(c => c.officeId?.toString() === selectedOffice._id?.toString());
   };
 
-  const officesWithCharts = getOfficesWithCharts();
-  const currentChart = getCurrentChart(officesWithCharts);
+  // Helper function to get office name, checking both offices and charts
+  const getOfficeName = () => {
+    if (!selectedDepartment) return null;
+    const selectedOffice = offices.find(o => o._id === selectedDepartment);
+    if (selectedOffice) {
+      return selectedOffice.officeName;
+    }
+    // Fallback to chart's officeName if office not found (virtual office)
+    const chart = charts.find(c => c.officeId?.toString() === selectedDepartment);
+    return chart?.officeName || null;
+  };
+
+  const currentChart = getCurrentChart();
 
   // Legacy organizational chart data for each office (kept for reference, not currently used)
   const organizationalData = {
@@ -692,13 +600,9 @@ const Directory = () => {
                   <div className="h-52 flex items-center justify-center">
                     <NavigationLoadingOverlay />
                   </div>
-                ) : officesWithCharts.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-xl text-gray-600">No office charts available yet.</p>
-                  </div>
                 ) : (
                   <ResponsiveGrid
-                    items={officesWithCharts}
+                    items={offices}
                     onItemClick={(office) => setSelectedDepartment(office._id)}
                     renderItem={(office) => (
                       <div className="text-center">
@@ -707,7 +611,7 @@ const Directory = () => {
                         </h3>
                       </div>
                     )}
-                    showPagination={officesWithCharts.length > 6}
+                    showPagination={offices.length > 6}
                     isDirectoryPage={true}
                   />
                 )}
@@ -738,9 +642,12 @@ const Directory = () => {
                 {/* Office Email Display - Positioned above office content */}
                 {(() => {
                   const selectedOffice = offices.find(o => o._id === selectedDepartment);
-                  // Use chart email if available, otherwise use office email
-                  const displayEmail = currentChart?.officeEmail || selectedOffice?.officeEmail;
-                  return displayEmail && (
+                  // Also check chart for email if office not found (virtual office)
+                  const chartEmail = !selectedOffice
+                    ? charts.find(c => c.officeId?.toString() === selectedDepartment)?.officeEmail
+                    : null;
+                  const officeEmail = selectedOffice?.officeEmail || chartEmail;
+                  return officeEmail && (
                     <div className="mb-5 text-center">
                       <div className="bg-white bg-opacity-95 rounded-lg shadow-lg drop-shadow-md px-5 py-3 inline-block">
                         <div className="flex items-center justify-center space-x-2.5">
@@ -757,7 +664,7 @@ const Directory = () => {
                             className="text-xl font-semibold"
                             style={{ color: '#1F3463' }}
                           >
-                            {displayEmail}
+                            {officeEmail}
                           </span>
                         </div>
                       </div>
@@ -768,23 +675,19 @@ const Directory = () => {
                 {/* Display Chart Image or Placeholder */}
                 {currentChart ? (
                   <img
-                    src={
-                      (currentChart.image?.secure_url || currentChart.image?.url)
-                        ? (getOptimizedCloudinaryUrl(currentChart.image) || currentChart.image?.secure_url || currentChart.image?.url)
-                        : generatePlaceholderImage(currentChart.officeName)
-                    }
+                    src={currentChart.image?.secure_url || currentChart.image?.url}
                     alt={`${currentChart.officeName} Directory`}
                     className="w-full h-auto object-contain rounded-lg shadow-lg"
                     onError={(e) => {
                       console.error('Failed to load chart image');
-                      e.target.src = generatePlaceholderImage(currentChart.officeName);
+                      e.target.style.display = 'none';
                     }}
                   />
                 ) : (
                   /* Placeholder for offices without charts */
                   <div className="bg-white bg-opacity-90 rounded-lg shadow-xl drop-shadow-lg p-10 text-center">
                     <h2 className="text-4xl font-bold mb-5" style={{ color: '#1F3463' }}>
-                      {offices.find(o => o._id === selectedDepartment)?.officeName}
+                      {getOfficeName() || 'Unknown Office'}
                     </h2>
                     <p className="text-xl text-gray-600 mb-6">
                       Directory chart coming soon
@@ -798,10 +701,11 @@ const Directory = () => {
             <div className="fixed bottom-5 left-5 flex flex-col space-y-3 z-50">
               {/* Location Button */}
               <button
-                className="w-16 h-16 bg-[#FFE251] text-[#1A2E56] border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-md active:drop-shadow-sm active:bg-[#1A2E56] active:scale-95 transition-all duration-150 flex items-center justify-center focus:outline-none focus:ring-3 focus:ring-blue-200"
+                className="w-16 h-16 bg-[#FFE251] text-[#1A2E56] border-2 border-white rounded-full shadow-lg active:shadow-md drop-shadow-md active:drop-shadow-sm active:bg-[#1A2E56] active:scale-95 transition-all duration-150 flex flex-col items-center justify-center focus:outline-none focus:ring-3 focus:ring-blue-200"
                 aria-label="Find office location"
               >
-                <FaLocationDot className="w-6 h-6" />
+                <FaLocationDot className="w-5 h-5 mb-0.5" />
+                <span className="text-base font-semibold">Location</span>
               </button>
 
               {/* Back Button */}
