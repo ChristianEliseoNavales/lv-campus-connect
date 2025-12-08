@@ -10,7 +10,12 @@
 
 // Backend URLs from environment variables
 const CLOUD_BACKEND_URL = import.meta.env.VITE_CLOUD_BACKEND_URL || 'https://lvcampusconnect-backend.onrender.com';
-const LOCAL_BACKEND_URL = import.meta.env.VITE_LOCAL_BACKEND_URL || 'http://localhost:5000';
+
+// Support both full URL override and port-only configuration
+// VITE_LOCAL_BACKEND_URL takes precedence if provided (e.g., http://localhost:5001)
+// Otherwise, construct URL from VITE_LOCAL_BACKEND_PORT (defaults to 5000)
+const LOCAL_BACKEND_PORT = import.meta.env.VITE_LOCAL_BACKEND_PORT || '5000';
+const LOCAL_BACKEND_URL = import.meta.env.VITE_LOCAL_BACKEND_URL || `http://localhost:${LOCAL_BACKEND_PORT}`;
 
 // Environment mode - determines which backend to use
 const NODE_ENV = import.meta.env.VITE_NODE_ENV || import.meta.env.MODE || 'development';
@@ -57,8 +62,8 @@ const getBackendUrl = (operation = 'default') => {
   // PRINT operations ALWAYS use localhost (for thermal printer access)
   // This is critical for kiosk machines with physical printers
   if (operation === 'print') {
-    console.log('🖨️ FORCING LOCAL backend for PRINTING (localhost:5000)');
-    return 'http://localhost:5000'; // Hardcoded for printing reliability
+    console.log(`🖨️ FORCING LOCAL backend for PRINTING (${LOCAL_BACKEND_URL})`);
+    return LOCAL_BACKEND_URL; // Use configured local backend URL for printing
   }
 
   // DEVELOPMENT MODE: Use local backend for EVERYTHING (except explicit cloud requests)
@@ -119,9 +124,11 @@ const getSocketUrl = () => {
 };
 
 // Get API base URL (dynamic based on context)
+// Note: This is evaluated at module load time, but getBackendUrl() is called dynamically when needed
 export const API_BASE_URL = getBackendUrl();
 
 // Socket.io connection URL (dynamic based on context)
+// Note: This is evaluated at module load time, but getSocketUrl() is called dynamically when needed
 export const SOCKET_URL = getSocketUrl();
 
 // API endpoints
@@ -133,19 +140,19 @@ export const API_ENDPOINTS = {
     submitQueue: `${API_BASE_URL}/api/public/queue`,
     submitRating: `${API_BASE_URL}/api/ratings`,
   },
-  
+
   // Database endpoints
   database: {
     bulletin: `${API_BASE_URL}/api/database/bulletin`,
     office: `${API_BASE_URL}/api/database/office`,
     chart: `${API_BASE_URL}/api/database/chart`,
   },
-  
+
   // Settings endpoints
   settings: {
     location: (department) => `${API_BASE_URL}/api/settings/location/${department}`,
   },
-  
+
   // Analytics endpoints
   analytics: {
     pieChart: {
@@ -153,7 +160,7 @@ export const API_ENDPOINTS = {
       department: (department, timeRange) => `${API_BASE_URL}/api/analytics/pie-chart/${department}?timeRange=${timeRange}`,
     },
   },
-  
+
   // Admin endpoints
   admin: {
     users: `${API_BASE_URL}/api/users`,
@@ -202,7 +209,7 @@ const API_CONFIG = {
   getKioskUrl: () => LOCAL_BACKEND_URL,
   getAdminUrl: () => IS_DEVELOPMENT ? LOCAL_BACKEND_URL : CLOUD_BACKEND_URL,
   // CRITICAL: Printing ALWAYS uses localhost for thermal printer access
-  getPrintUrl: () => 'http://localhost:5000',
+  getPrintUrl: () => LOCAL_BACKEND_URL,
 
   // Environment info
   isDevelopment: () => IS_DEVELOPMENT,
@@ -223,7 +230,7 @@ console.log('  - Is Kiosk Page:', isKioskPage());
 console.log('  - Is Admin Page:', isAdminPage());
 console.log('  - Active Backend:', getBackendUrl());
 if (IS_DEVELOPMENT) {
-  console.log('  ⚠️ DEVELOPMENT MODE: All API calls will use LOCAL backend (localhost:5000)');
+  console.log(`  ⚠️ DEVELOPMENT MODE: All API calls will use LOCAL backend (${LOCAL_BACKEND_URL})`);
   console.log('  ⚠️ Make sure your local backend is running!');
 }
 
