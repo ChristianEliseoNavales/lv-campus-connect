@@ -299,6 +299,85 @@ const Queue = () => {
     }
     return '';
   };
+
+  const validateProgramGradeStrand = (value) => {
+    if (!value.trim()) {
+      return 'Program/Grade/Strand is required';
+    }
+    if (value.trim().length > 200) {
+      return 'Program/Grade/Strand must be 200 characters or less';
+    }
+    return '';
+  };
+
+  const validateTransactionNoRealTime = (value) => {
+    const trimmed = value.trim().toUpperCase();
+    if (!trimmed) {
+      return 'Transaction number is required';
+    }
+
+    // Must start with TR
+    if (!trimmed.startsWith('TR')) {
+      if (trimmed.length > 0 && trimmed[0] !== 'T') {
+        return 'Must start with TR';
+      }
+      return ''; // Still typing, no error yet
+    }
+
+    // Check if dash is present
+    if (!trimmed.includes('-')) {
+      // Before dash: TR + up to 6 digits
+      const beforeDash = trimmed;
+      if (beforeDash.length > 2) {
+        if (!/^TR\d+$/.test(beforeDash)) {
+          return 'Invalid format. Expected: TR######-###';
+        }
+        if (beforeDash.length > 8) {
+          return 'Too many digits. Expected: TR######-###';
+        }
+      }
+      return ''; // Valid partial input before dash
+    }
+
+    // After dash: validate both parts
+    const parts = trimmed.split('-');
+    if (parts.length !== 2) {
+      return 'Invalid format. Expected: TR######-###';
+    }
+
+    const firstPart = parts[0];
+    const secondPart = parts[1];
+
+    // Validate first part: TR + exactly 6 digits
+    if (!/^TR\d{6}$/.test(firstPart)) {
+      if (firstPart.length < 8) {
+        return ''; // Still typing digits in first part
+      }
+      return 'First part must be TR followed by 6 digits. Expected: TR######-###';
+    }
+
+    // Validate second part: exactly 3 digits
+    if (secondPart.length === 0) {
+      return ''; // Waiting for second part
+    }
+    if (!/^\d+$/.test(secondPart)) {
+      return 'Second part must be digits only. Expected: TR######-###';
+    }
+    if (secondPart.length > 3) {
+      return 'Second part must be exactly 3 digits. Expected: TR######-###';
+    }
+    if (secondPart.length < 3) {
+      return ''; // Still typing second part
+    }
+
+    // Complete format validation
+    if (/^TR\d{6}-\d{3}$/.test(trimmed)) {
+      return ''; // Valid complete format
+    }
+
+    return ''; // Partial input is valid
+  };
+
   // Service options for the queue process - now dynamic
   const [serviceOptions, setServiceOptions] = useState([]);
 
@@ -362,9 +441,9 @@ const Queue = () => {
     } else if (activeField === 'transactionNo') {
       const newValue = (transactionNo + key).toUpperCase();
       setTransactionNo(newValue);
-      if (transactionNoError) {
-        setTransactionNoError('');
-      }
+      // Real-time validation
+      const error = validateTransactionNoRealTime(newValue);
+      setTransactionNoError(error);
     } else {
       setFormData(prev => {
         const newValue = prev[activeField] + key;
@@ -404,7 +483,11 @@ const Queue = () => {
     } else if (activeField === 'documentRequestEmail') {
       handleDocumentRequestFieldChange('emailAddress', documentRequestForm.emailAddress.slice(0, -1));
     } else if (activeField === 'transactionNo') {
-      setTransactionNo(prev => prev.slice(0, -1));
+      const newValue = transactionNo.slice(0, -1);
+      setTransactionNo(newValue);
+      // Real-time validation after deletion
+      const error = validateTransactionNoRealTime(newValue);
+      setTransactionNoError(error);
     } else {
       setFormData(prev => {
         const newValue = prev[activeField].slice(0, -1);
@@ -1150,14 +1233,24 @@ const Queue = () => {
       ...prev,
       [field]: value
     }));
-    // Clear error for this field
-    if (documentRequestErrors[field]) {
-      setDocumentRequestErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+
+    // Real-time validation after value change
+    let error = '';
+    if (field === 'name') {
+      error = validateName(value);
+    } else if (field === 'programGradeStrand') {
+      error = validateProgramGradeStrand(value);
+    } else if (field === 'contactNumber') {
+      error = validateContactNumber(value);
+    } else if (field === 'emailAddress') {
+      error = validateEmail(value);
     }
+
+    // Update errors state
+    setDocumentRequestErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
   };
 
   const handleDocumentRequestCheckboxChange = (requestType) => {
@@ -1794,18 +1887,27 @@ const Queue = () => {
         break;
 
       case 'documentRequestForm':
-        // Go back to service selection
-        setCurrentStep('service');
-        setDocumentRequestForm({
-          name: '',
-          lastSYAttended: '',
-          programGradeStrand: '',
-          contactNumber: '',
-          emailAddress: '',
-          request: []
-        });
-        setDocumentRequestErrors({});
-        setDocumentRequestFormStep(1);
+        // Go back based on current step
+        if (documentRequestFormStep === 1) {
+          // Step 1: Go back to service selection
+          setCurrentStep('service');
+          setDocumentRequestForm({
+            name: '',
+            lastSYAttended: '',
+            programGradeStrand: '',
+            contactNumber: '',
+            emailAddress: '',
+            request: []
+          });
+          setDocumentRequestErrors({});
+          setDocumentRequestFormStep(1);
+        } else if (documentRequestFormStep === 2) {
+          // Step 2: Go back to step 1
+          handleDocumentRequestStep2Previous();
+        } else if (documentRequestFormStep === 3) {
+          // Step 3: Go back to step 2
+          handleDocumentRequestStep3Previous();
+        }
         break;
 
       case 'documentClaim':
@@ -2864,7 +2966,7 @@ const Queue = () => {
                       {/* Name */}
                       <div>
                         <label className="block text-lg font-semibold text-gray-700 mb-2">
-                          Name <span className="text-red-500">*</span>
+                          Name <span className="text-gray-700">(REQUIRED)</span>
                         </label>
                         <input
                           type="text"
@@ -2888,34 +2990,10 @@ const Queue = () => {
                         )}
                       </div>
 
-                      {/* Last S.Y. Attended */}
-                      <div>
-                        <label className="block text-lg font-semibold text-gray-700 mb-2">
-                          Last S.Y. Attended <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={documentRequestForm.lastSYAttended}
-                          onChange={(e) => handleDocumentRequestFieldChange('lastSYAttended', e.target.value)}
-                          className={`w-full px-3 py-2 border-2 rounded-lg text-lg focus:outline-none ${
-                            documentRequestErrors.lastSYAttended
-                              ? 'border-red-500 bg-red-50'
-                              : 'border-gray-300 bg-gray-50'
-                          }`}
-                        >
-                          <option value="">Select School Year</option>
-                          {yearOptions.map(year => (
-                            <option key={year} value={year}>{year}</option>
-                          ))}
-                        </select>
-                        {documentRequestErrors.lastSYAttended && (
-                          <p className="text-red-600 text-sm mt-1">{documentRequestErrors.lastSYAttended}</p>
-                        )}
-                      </div>
-
                       {/* Program/Grade/Strand */}
                       <div>
                         <label className="block text-lg font-semibold text-gray-700 mb-2">
-                          Program/Grade/Strand <span className="text-red-500">*</span>
+                          Program/Grade/Strand <span className="text-gray-700">(REQUIRED)</span>
                         </label>
                         <input
                           type="text"
@@ -2936,6 +3014,30 @@ const Queue = () => {
                         />
                         {documentRequestErrors.programGradeStrand && (
                           <p className="text-red-600 text-sm mt-1">{documentRequestErrors.programGradeStrand}</p>
+                        )}
+                      </div>
+
+                      {/* Last S.Y. Attended */}
+                      <div>
+                        <label className="block text-lg font-semibold text-gray-700 mb-2">
+                          Last S.Y. Attended <span className="text-gray-700">(REQUIRED)</span>
+                        </label>
+                        <select
+                          value={documentRequestForm.lastSYAttended}
+                          onChange={(e) => handleDocumentRequestFieldChange('lastSYAttended', e.target.value)}
+                          className={`w-full px-3 py-2 border-2 rounded-lg text-lg focus:outline-none ${
+                            documentRequestErrors.lastSYAttended
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-gray-300 bg-gray-50'
+                          }`}
+                        >
+                          <option value="">Select School Year</option>
+                          {yearOptions.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                        {documentRequestErrors.lastSYAttended && (
+                          <p className="text-red-600 text-sm mt-1">{documentRequestErrors.lastSYAttended}</p>
                         )}
                       </div>
                     </div>
@@ -3003,7 +3105,10 @@ const Queue = () => {
             ]}
             activeFieldName={activeField}
             onFieldFocus={handleFieldFocus}
-            formErrors={documentRequestErrors}
+            formErrors={{
+              documentRequestName: documentRequestErrors.name,
+              documentRequestProgram: documentRequestErrors.programGradeStrand
+            }}
             showNavigationButtons={true}
             navigationButtons={[
               {
@@ -3057,7 +3162,7 @@ const Queue = () => {
                       {/* Contact Number */}
                       <div>
                         <label className="block text-lg font-semibold text-gray-700 mb-2">
-                          Contact No. <span className="text-red-500">*</span>
+                          Contact No. <span className="text-gray-700">(REQUIRED)</span>
                         </label>
                         <input
                           type="text"
@@ -3084,7 +3189,7 @@ const Queue = () => {
                       {/* Email Address */}
                       <div>
                         <label className="block text-lg font-semibold text-gray-700 mb-2">
-                          Email Address <span className="text-red-500">*</span>
+                          Email Address <span className="text-gray-700">(REQUIRED)</span>
                         </label>
                         <input
                           type="email"
@@ -3160,7 +3265,10 @@ const Queue = () => {
             ]}
             activeFieldName={activeField}
             onFieldFocus={handleFieldFocus}
-            formErrors={documentRequestErrors}
+            formErrors={{
+              documentRequestContact: documentRequestErrors.contactNumber,
+              documentRequestEmail: documentRequestErrors.emailAddress
+            }}
             showNavigationButtons={true}
             navigationButtons={[
               {
@@ -3202,7 +3310,7 @@ const Queue = () => {
                       {/* Request Types - Checkboxes */}
                       <div>
                         <label className="block text-lg font-semibold text-gray-700 mb-2">
-                          Request <span className="text-red-500">*</span>
+                          Request <span className="text-gray-700">(REQUIRED)</span>
                         </label>
                         <div className="space-y-2 border-2 border-gray-300 rounded-lg p-3 bg-gray-50">
                           {requestTypes.map((requestType) => (
@@ -3315,7 +3423,7 @@ const Queue = () => {
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="transactionNo" className="block text-xl font-semibold text-gray-700 mb-2">
-                        Transaction No. <span className="text-red-500">*</span>
+                        Transaction No. <span className="text-gray-700">(REQUIRED)</span>
                       </label>
                       <input
                         id="transactionNo"
@@ -3328,13 +3436,15 @@ const Queue = () => {
                         onChange={(e) => {
                           const value = e.target.value.toUpperCase();
                           setTransactionNo(value);
-                          if (transactionNoError) {
-                            setTransactionNoError('');
-                          }
+                          // Real-time validation
+                          const error = validateTransactionNoRealTime(value);
+                          setTransactionNoError(error);
                         }}
                         className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
                           activeField === 'transactionNo'
                             ? 'border-blue-500 bg-blue-50'
+                            : transactionNoError
+                            ? 'border-red-500 bg-red-50'
                             : 'border-gray-300 bg-gray-50'
                         }`}
                         placeholder="TR######-###"
@@ -3387,6 +3497,7 @@ const Queue = () => {
           activeInputValue={transactionNo}
           activeInputLabel="Transaction No. (REQUIRED)"
           activeInputPlaceholder="TR######-###"
+          activeInputError={transactionNoError}
           showNavigationButtons={true}
           navigationButtons={[
             {

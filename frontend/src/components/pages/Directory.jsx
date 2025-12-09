@@ -11,7 +11,6 @@ import NavigationLoadingOverlay from '../ui/NavigationLoadingOverlay';
 const Directory = () => {
   const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
   const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [offices, setOffices] = useState([]);
   const [charts, setCharts] = useState([]);
   const [loading, setLoading] = useState(true);
   // Fixed layout structure
@@ -89,31 +88,14 @@ const Directory = () => {
     };
   }, [socket, isConnected]);
 
-  // Fetch offices and charts on component mount
+  // Fetch charts on component mount (charts are now the source of truth)
   useEffect(() => {
-    fetchOffices();
     fetchCharts();
   }, []);
 
-  const fetchOffices = async () => {
-    try {
-      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/office`);
-      if (response.ok) {
-        const data = await response.json();
-        const officeList = Array.isArray(data) ? data : (data.records || []);
-        setOffices(officeList);
-      } else {
-        console.error('Failed to fetch offices');
-      }
-    } catch (error) {
-      console.error('Error fetching offices:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchCharts = async () => {
     try {
+      setLoading(true);
       const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/chart`);
       if (response.ok) {
         const data = await response.json();
@@ -124,30 +106,21 @@ const Directory = () => {
       }
     } catch (error) {
       console.error('Error fetching charts:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Get chart for selected office
+  // Get chart for selected department (selectedDepartment is now chart._id)
   const getCurrentChart = () => {
     if (!selectedDepartment) return null;
-    const selectedOffice = offices.find(o => o._id === selectedDepartment);
-    if (!selectedOffice) {
-      // Check if there's a chart with officeId matching selectedDepartment (virtual office)
-      return charts.find(c => c.officeId?.toString() === selectedDepartment);
-    }
-    // Use toString() for consistent type conversion across all chart lookups
-    return charts.find(c => c.officeId?.toString() === selectedOffice._id?.toString());
+    return charts.find(c => c._id?.toString() === selectedDepartment?.toString());
   };
 
-  // Helper function to get office name, checking both offices and charts
+  // Helper function to get office name from chart
   const getOfficeName = () => {
     if (!selectedDepartment) return null;
-    const selectedOffice = offices.find(o => o._id === selectedDepartment);
-    if (selectedOffice) {
-      return selectedOffice.officeName;
-    }
-    // Fallback to chart's officeName if office not found (virtual office)
-    const chart = charts.find(c => c.officeId?.toString() === selectedDepartment);
+    const chart = charts.find(c => c._id?.toString() === selectedDepartment?.toString());
     return chart?.officeName || null;
   };
 
@@ -602,16 +575,16 @@ const Directory = () => {
                   </div>
                 ) : (
                   <ResponsiveGrid
-                    items={offices}
-                    onItemClick={(office) => setSelectedDepartment(office._id)}
-                    renderItem={(office) => (
+                    items={charts}
+                    onItemClick={(chart) => setSelectedDepartment(chart._id)}
+                    renderItem={(chart) => (
                       <div className="text-center">
                         <h3 className="text-xl font-semibold text-white">
-                          {office.officeName}
+                          {chart.officeName}
                         </h3>
                       </div>
                     )}
-                    showPagination={offices.length > 6}
+                    showPagination={charts.length > 6}
                     isDirectoryPage={true}
                   />
                 )}
@@ -641,12 +614,8 @@ const Directory = () => {
               >
                 {/* Office Email Display - Positioned above office content */}
                 {(() => {
-                  const selectedOffice = offices.find(o => o._id === selectedDepartment);
-                  // Also check chart for email if office not found (virtual office)
-                  const chartEmail = !selectedOffice
-                    ? charts.find(c => c.officeId?.toString() === selectedDepartment)?.officeEmail
-                    : null;
-                  const officeEmail = selectedOffice?.officeEmail || chartEmail;
+                  const selectedChart = charts.find(c => c._id?.toString() === selectedDepartment?.toString());
+                  const officeEmail = selectedChart?.officeEmail;
                   return officeEmail && (
                     <div className="mb-5 text-center">
                       <div className="bg-white bg-opacity-95 rounded-lg shadow-lg drop-shadow-md px-5 py-3 inline-block">
@@ -673,9 +642,9 @@ const Directory = () => {
                 })()}
 
                 {/* Display Chart Image or Placeholder */}
-                {currentChart ? (
+                {currentChart && (currentChart.image?.secure_url || currentChart.image?.url) ? (
                   <img
-                    src={currentChart.image?.secure_url || currentChart.image?.url}
+                    src={currentChart.image.secure_url || currentChart.image.url}
                     alt={`${currentChart.officeName} Directory`}
                     className="w-full h-auto object-contain rounded-lg shadow-lg"
                     onError={(e) => {
@@ -684,7 +653,7 @@ const Directory = () => {
                     }}
                   />
                 ) : (
-                  /* Placeholder for offices without charts */
+                  /* Placeholder for charts without images */
                   <div className="bg-white bg-opacity-90 rounded-lg shadow-xl drop-shadow-lg p-10 text-center">
                     <h2 className="text-4xl font-bold mb-5" style={{ color: '#1F3463' }}>
                       {getOfficeName() || 'Unknown Office'}

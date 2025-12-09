@@ -182,12 +182,23 @@ class AuditService {
    * Log CRUD operations
    */
   static async logCRUD({ user, action, resourceType, resourceId, resourceName, req, success, oldValues, newValues, errorMessage = null }) {
-    const actionMap = {
-      'CREATE': `${resourceType.toUpperCase()}_CREATE`,
-      'READ': `${resourceType.toUpperCase()}_READ`,
-      'UPDATE': `${resourceType.toUpperCase()}_UPDATE`,
-      'DELETE': `${resourceType.toUpperCase()}_DELETE`
-    };
+    // For 'Other' resourceType, use 'OTHER' action directly (not OTHER_CREATE, etc.)
+    // since the AuditTrail enum only has 'OTHER' as a valid value
+    const isOtherResourceType = resourceType === 'Other';
+
+    const actionMap = isOtherResourceType
+      ? {
+          'CREATE': 'OTHER',
+          'READ': 'OTHER',
+          'UPDATE': 'OTHER',
+          'DELETE': 'OTHER'
+        }
+      : {
+          'CREATE': `${resourceType.toUpperCase()}_CREATE`,
+          'READ': `${resourceType.toUpperCase()}_READ`,
+          'UPDATE': `${resourceType.toUpperCase()}_UPDATE`,
+          'DELETE': `${resourceType.toUpperCase()}_DELETE`
+        };
 
     const actionDescriptions = {
       'CREATE': `Created ${resourceType}`,
