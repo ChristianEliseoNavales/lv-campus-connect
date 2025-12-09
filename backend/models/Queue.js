@@ -104,6 +104,12 @@ const queueSchema = new mongoose.Schema({
   isAdminCreated: {
     type: Boolean,
     default: false
+  },
+  // Transaction number reference for Document Claim service
+  transactionNo: {
+    type: String,
+    trim: true,
+    index: true
   }
 }, {
   timestamps: true
@@ -129,6 +135,8 @@ queueSchema.index({ serviceId: 1, status: 1 }); // For service filtering by stat
 queueSchema.index({ office: 1, status: 1, isPriority: 1 }); // For priority filtering
 queueSchema.index({ queuedAt: 1 }); // For date range queries without office filter
 queueSchema.index({ windowId: 1, status: 1, isCurrentlyServing: 1 }); // For window serving queries
+// Compound index for transactionNo + status queries (used in Document Claim duplicate check)
+queueSchema.index({ transactionNo: 1, status: 1 });
 
 // Static method to get next queue number for an office
 queueSchema.statics.getNextQueueNumber = async function(office) {

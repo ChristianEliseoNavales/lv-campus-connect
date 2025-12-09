@@ -161,35 +161,66 @@ async function getTransactionsByDepartment(req, res, next) {
         }
       },
 
+      // Lookup document request if transactionNo exists
+      {
+        $lookup: {
+          from: 'documentrequests',
+          localField: 'transactionNo',
+          foreignField: 'transactionNo',
+          as: 'documentRequest'
+        }
+      },
+
       // Unwind arrays
       { $unwind: { path: '$visitationForm', preserveNullAndEmptyArrays: true } },
       { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$documentRequest', preserveNullAndEmptyArrays: true } },
 
       // Add computed fields for search
       {
         $addFields: {
+          // Customer name: prioritize documentRequest, then visitationForm, then Enroll service fallback
           customerName: {
             $ifNull: [
-              '$visitationForm.customerName',
+              '$documentRequest.name',
               {
-                $cond: {
-                  if: { $eq: ['$service.name', 'Enroll'] },
-                  then: {
+                $ifNull: [
+                  '$visitationForm.customerName',
+                  {
                     $cond: {
-                      if: { $eq: ['$office', 'registrar'] },
-                      then: 'Enrollee',
-                      else: {
+                      if: { $eq: ['$service.name', 'Enroll'] },
+                      then: {
                         $cond: {
-                          if: { $eq: ['$office', 'admissions'] },
-                          then: 'New Student',
-                          else: 'Anonymous Customer'
+                          if: { $eq: ['$office', 'registrar'] },
+                          then: 'Enrollee',
+                          else: {
+                            $cond: {
+                              if: { $eq: ['$office', 'admissions'] },
+                              then: 'New Student',
+                              else: 'Anonymous Customer'
+                            }
+                          }
                         }
-                      }
+                      },
+                      else: 'Anonymous Customer'
                     }
-                  },
-                  else: 'Anonymous Customer'
-                }
+                  }
+                ]
               }
+            ]
+          },
+          // Contact number: prioritize documentRequest, then visitationForm
+          contactNumber: {
+            $ifNull: [
+              '$documentRequest.contactNumber',
+              '$visitationForm.contactNumber'
+            ]
+          },
+          // Email: prioritize documentRequest, then visitationForm
+          email: {
+            $ifNull: [
+              '$documentRequest.emailAddress',
+              '$visitationForm.email'
             ]
           },
           purposeOfVisit: { $ifNull: ['$service.name', 'Unknown Service'] },
@@ -226,7 +257,8 @@ async function getTransactionsByDepartment(req, res, next) {
             { purposeOfVisit: searchRegex },
             { queueNumber: { $regex: search.trim(), $options: 'i' } },
             { role: searchRegex },
-            { remarks: searchRegex }
+            { remarks: searchRegex },
+            { transactionNo: searchRegex }
           ]
         }
       });
@@ -261,6 +293,7 @@ async function getTransactionsByDepartment(req, res, next) {
       return {
         id: transaction._id,
         queueNumber: transaction.queueNumber,
+        transactionNo: transaction.transactionNo || null,
         customerName: transaction.customerName,
         purposeOfVisit: transaction.purposeOfVisit,
         priority: transaction.priorityDisplay,

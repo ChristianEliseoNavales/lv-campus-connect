@@ -16,7 +16,8 @@ const {
   Bulletin,
   AuditTrail,
   Office,
-  Chart
+  Chart,
+  DocumentRequest
 } = require('../models');
 
 // Model mapping for dynamic access (used by getModel middleware)
@@ -29,21 +30,23 @@ const modelMap = {
   settings: Settings,
   rating: Rating,
   bulletin: Bulletin,
+  audittrail: AuditTrail,
   office: Office,
-  chart: Chart
+  chart: Chart,
+  documentrequest: DocumentRequest
 };
 
 // Middleware to get model from params
 const getModel = (req, res, next) => {
   const modelName = req.params.model?.toLowerCase();
   const Model = modelMap[modelName];
-  
+
   if (!Model) {
-    return res.status(400).json({ 
-      error: `Invalid model: ${modelName}. Available models: ${Object.keys(modelMap).join(', ')}` 
+    return res.status(400).json({
+      error: `Invalid model: ${modelName}. Available models: ${Object.keys(modelMap).join(', ')}`
     });
   }
-  
+
   req.Model = Model;
   req.modelName = modelName;
   next();

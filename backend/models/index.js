@@ -11,6 +11,7 @@ const VisitationForm = require('./VisitationForm');
 const Office = require('./Office');
 const Chart = require('./Chart');
 const Notification = require('./Notification');
+const DocumentRequest = require('./DocumentRequest');
 
 module.exports = {
   User,
@@ -24,5 +25,6 @@ module.exports = {
   VisitationForm,
   Office,
   Chart,
-  Notification
+  Notification,
+  DocumentRequest
 };

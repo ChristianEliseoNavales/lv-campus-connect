@@ -240,7 +240,7 @@ const HolographicKeyboard = ({
                       type="text"
                       value={field.value}
                       placeholder={field.placeholder}
-                      // TEMPORARY: readOnly removed for testing - restore for production
+                      readOnly
                       onClick={() => onFieldFocus && onFieldFocus(field.name)}
                       className={`w-full px-3 py-3 border-2 rounded-lg text-lg bg-white focus:outline-none shadow-inner cursor-pointer transition-all duration-150 ${
                         activeFieldName === field.name
@@ -284,7 +284,7 @@ const HolographicKeyboard = ({
                   type="text"
                   value={activeInputValue}
                   placeholder={activeInputPlaceholder}
-                  // TEMPORARY: readOnly removed for testing - restore for production
+                  readOnly
                   className={`w-full px-3 py-3 border-2 rounded-lg text-lg bg-white focus:outline-none shadow-inner ${
                     activeInputError
                       ? 'border-red-500 bg-red-50'

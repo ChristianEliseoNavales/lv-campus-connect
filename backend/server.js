@@ -171,6 +171,7 @@ const printerRoutes = require('./routes/printer');
 const notificationRoutes = require('./routes/notifications');
 const fixUsersRoutes = require('./routes/fixUsers');
 const adminRoutes = require('./routes/admin');
+const documentRequestRoutes = require('./routes/documentRequests');
 
 // Use routes
 app.use('/api/auth', authRoutes); // Authentication routes (no auth required)
@@ -192,6 +193,7 @@ app.use('/api/charts', chartsRoutes);
 app.use('/api/printer', printerRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/fix-users', fixUsersRoutes); // Temporary route to fix user pageAccess
+app.use('/api', documentRequestRoutes); // Document request routes
 
 // Basic API routes
 app.get('/', (req, res) => {

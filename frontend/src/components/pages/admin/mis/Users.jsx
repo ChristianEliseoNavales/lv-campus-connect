@@ -107,6 +107,7 @@ const Users = () => {
     { id: 'registrar_dashboard', label: 'Registrar Dashboard', category: 'Registrar', path: '/admin/registrar' },
     { id: 'registrar_queue', label: 'Registrar Queue Management', category: 'Registrar', path: '/admin/registrar/queue' },
     { id: 'registrar_transaction_logs', label: 'Registrar Transaction Logs', category: 'Registrar', path: '/admin/registrar/transaction-logs' },
+    { id: 'registrar_document_request', label: 'Document Request', category: 'Registrar', path: '/admin/registrar/document-request' },
     { id: 'registrar_settings', label: 'Registrar Settings', category: 'Registrar', path: '/admin/registrar/settings' },
     { id: 'registrar_faq', label: 'FAQ Management', category: 'Registrar', path: '/admin/registrar/faq' },
 

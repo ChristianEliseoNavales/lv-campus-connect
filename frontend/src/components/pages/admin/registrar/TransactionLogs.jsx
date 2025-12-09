@@ -282,17 +282,19 @@ const TransactionLogs = () => {
     }
   }, [showError]);
 
-  // Filter services for autocomplete
-  useEffect(() => {
+  // Filter services for autocomplete - memoized for performance
+  const filteredServicesMemo = useMemo(() => {
     if (serviceInput.trim()) {
-      const filtered = services.filter(service =>
+      return services.filter(service =>
         service.name.toLowerCase().includes(serviceInput.toLowerCase())
       );
-      setFilteredServices(filtered);
-    } else {
-      setFilteredServices(services);
     }
+    return services;
   }, [serviceInput, services]);
+
+  useEffect(() => {
+    setFilteredServices(filteredServicesMemo);
+  }, [filteredServicesMemo]);
 
   // Handle service selection from autocomplete
   const handleServiceSelect = (serviceName) => {
@@ -597,16 +599,17 @@ const TransactionLogs = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 border-b border-[#1F3463] h-10 sm:h-11 md:h-12 flex items-center">
-                <div className="grid grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 text-xs font-medium text-white w-full">
-                  <div>Queue No.</div>
-                  <div>Name</div>
-                  <div>Purpose of Visit</div>
-                  <div>Priority</div>
-                  <div>Role</div>
-                  <div>Turnaround Time</div>
-                  <div>Status</div>
-                  <div>Remarks</div>
+              <div className="bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 border-b border-[#1F3463] min-h-[2.5rem] sm:min-h-[2.75rem] md:min-h-[3rem] flex items-center">
+                <div className="grid grid-cols-9 gap-2 sm:gap-2.5 md:gap-3 text-xs font-medium text-white w-full">
+                  <div className="whitespace-normal break-words leading-tight">Queue No.</div>
+                  <div className="whitespace-normal break-words leading-tight">Transaction No.</div>
+                  <div className="whitespace-normal break-words leading-tight">Name</div>
+                  <div className="whitespace-normal break-words leading-tight">Purpose of Visit</div>
+                  <div className="whitespace-normal break-words leading-tight">Priority</div>
+                  <div className="whitespace-normal break-words leading-tight">Role</div>
+                  <div className="whitespace-normal break-words leading-tight">Turnaround Time</div>
+                  <div className="whitespace-normal break-words leading-tight">Status</div>
+                  <div className="whitespace-normal break-words leading-tight">Remarks</div>
                 </div>
               </div>
 
@@ -614,9 +617,12 @@ const TransactionLogs = () => {
               <div className="divide-y divide-gray-200">
                 {[...Array(7)].map((_, index) => (
                   <div key={index} className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 md:h-12 flex items-center animate-pulse">
-                    <div className="grid grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 items-center w-full">
+                    <div className="grid grid-cols-9 gap-2 sm:gap-2.5 md:gap-3 items-center w-full">
                       {/* Queue No. Skeleton */}
                       <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-4 sm:w-5 md:w-6"></div>
+
+                      {/* Transaction No. Skeleton */}
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-12 sm:w-14 md:w-16"></div>
 
                       {/* Name Skeleton */}
                       <div className="h-2.5 sm:h-3 bg-gray-200 rounded w-16 sm:w-18 md:w-20"></div>
@@ -655,16 +661,17 @@ const TransactionLogs = () => {
           ) : (
             <>
               {/* Table Header - Desktop only */}
-              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm">
-                <div className="grid grid-cols-8 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
-                  <div>Queue No.</div>
-                  <div>Name</div>
-                  <div>Purpose of Visit</div>
-                  <div>Priority</div>
-                  <div>Role</div>
-                  <div>Turnaround Time</div>
-                  <div>Status</div>
-                  <div>Remarks</div>
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm min-h-[2.5rem] sm:min-h-[2.75rem] md:min-h-[3rem]">
+                <div className="grid grid-cols-9 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
+                  <div className="whitespace-normal break-words leading-tight">Queue No.</div>
+                  <div className="whitespace-normal break-words leading-tight">Transaction No.</div>
+                  <div className="whitespace-normal break-words leading-tight">Name</div>
+                  <div className="whitespace-normal break-words leading-tight">Purpose of Visit</div>
+                  <div className="whitespace-normal break-words leading-tight">Priority</div>
+                  <div className="whitespace-normal break-words leading-tight">Role</div>
+                  <div className="whitespace-normal break-words leading-tight">Turnaround Time</div>
+                  <div className="whitespace-normal break-words leading-tight">Status</div>
+                  <div className="whitespace-normal break-words leading-tight">Remarks</div>
                 </div>
               </div>
 
@@ -673,10 +680,15 @@ const TransactionLogs = () => {
                 {currentLogs.map((log, index) => (
                   <div key={log.id} className={`px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 hover:bg-gray-50 transition-colors duration-200 md:h-12 flex items-center ${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}`}>
                     {/* Desktop view */}
-                    <div className="hidden md:grid md:grid-cols-8 gap-2 sm:gap-3 items-center w-full">
+                    <div className="hidden md:grid md:grid-cols-9 gap-2 sm:gap-3 items-center w-full">
                       {/* Queue No. */}
                       <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
                         #{log.queueNumber.toString().padStart(2, '0')}
+                      </div>
+
+                      {/* Transaction No. */}
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={log.transactionNo || 'N/A'}>
+                        {log.transactionNo || '-'}
                       </div>
 
                       {/* Name */}

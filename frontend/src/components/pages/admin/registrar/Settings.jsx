@@ -645,11 +645,10 @@ const Settings = () => {
     // Subscribe to settings updates
     const unsubscribeSettings = subscribe('settings-updated', (data) => {
       if (data.department === 'registrar' && data.type === 'queue-toggle') {
+        // Only update state - don't show notification here
+        // The user who toggled already got notification from API response
+        // This is for syncing state across multiple admin sessions
         setIsQueueingEnabled(data.data.isEnabled);
-        showSuccess(
-          'Queue System Updated',
-          `Queue system has been ${data.data.isEnabled ? 'enabled' : 'disabled'}`
-        );
       }
     });
 

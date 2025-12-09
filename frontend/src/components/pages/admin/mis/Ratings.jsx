@@ -303,12 +303,12 @@ const Ratings = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 border-b border-[#1F3463] h-10 sm:h-11 md:h-12 flex items-center">
+              <div className="bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 border-b border-[#1F3463] min-h-[2.5rem] sm:min-h-[2.75rem] md:min-h-[3rem] flex items-center">
                 <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
-                  <div>Time</div>
-                  <div>Date</div>
-                  <div>Role</div>
-                  <div>Rate</div>
+                  <div className="whitespace-normal break-words leading-tight">Time</div>
+                  <div className="whitespace-normal break-words leading-tight">Date</div>
+                  <div className="whitespace-normal break-words leading-tight">Role</div>
+                  <div className="whitespace-normal break-words leading-tight">Rate</div>
                 </div>
               </div>
 
@@ -339,12 +339,12 @@ const Ratings = () => {
           ) : (
             <>
               {/* Table Header - Hidden on mobile, shown on md+ */}
-              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm min-h-[2.5rem] sm:min-h-[2.75rem] md:min-h-[3rem]">
                 <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
-                  <div>Time</div>
-                  <div>Date</div>
-                  <div>Role</div>
-                  <div>Rate</div>
+                  <div className="whitespace-normal break-words leading-tight">Time</div>
+                  <div className="whitespace-normal break-words leading-tight">Date</div>
+                  <div className="whitespace-normal break-words leading-tight">Role</div>
+                  <div className="whitespace-normal break-words leading-tight">Rate</div>
                 </div>
               </div>
 

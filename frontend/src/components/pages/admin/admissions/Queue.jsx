@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { IoMdRefresh } from 'react-icons/io';
@@ -871,14 +871,14 @@ const Queue = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 min-h-[20rem] lg:h-[29rem]">
         {/* Current Serving */}
         <div className="bg-white rounded-lg shadow-lg p-3 sm:p-4 md:p-5">
-          <div className={`h-full flex flex-col justify-center ${windowData?.name === 'Priority' && currentServingPerson?.idNumber ? 'space-y-2 sm:space-y-2.5 md:space-y-3' : 'space-y-4 sm:space-y-5 md:space-y-6'}`}>
+          <div className="h-full flex flex-col justify-center space-y-2 sm:space-y-2.5 md:space-y-3">
             <div className="text-center">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#1F3463] tracking-wide">CURRENT SERVING</h2>
             </div>
-            <div className="text-center space-y-1.5 sm:space-y-2 md:space-y-2.5">
+            <div className="text-center space-y-1 sm:space-y-1.5 md:space-y-2">
               <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Queue Number</p>
               <div className="flex justify-center">
-                <div className="bg-[#3930A8] text-white rounded-2xl sm:rounded-3xl px-12 sm:px-16 md:px-[72px] py-6 sm:py-8 md:py-[32px] shadow-md">
+                <div className="bg-[#1F3463] text-white rounded-2xl sm:rounded-3xl px-12 sm:px-16 md:px-[72px] py-6 sm:py-8 md:py-[32px] shadow-md">
                   <span className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider">
                     {String(currentServing).padStart(2, '0')}
                   </span>
@@ -890,17 +890,24 @@ const Queue = () => {
                 <div className="text-center">
                   <p className="text-base sm:text-lg font-extrabold text-[#1F3463] tracking-wide">{currentServingPerson.role}</p>
                 </div>
-                <div className="text-center space-y-0.5">
+                <div className="text-center space-y-0">
                   <p className="text-[9px] sm:text-[10px] font-medium text-gray-500 uppercase tracking-widest">Name</p>
                   <p className="text-base sm:text-lg font-bold text-[#1F3463]">{currentServingPerson.name}</p>
                 </div>
-                <div className="text-center space-y-0.5">
+                <div className="text-center space-y-0">
                   <p className="text-[9px] sm:text-[10px] font-medium text-gray-500 uppercase tracking-widest">Purpose</p>
                   <p className="text-base sm:text-lg font-semibold text-gray-800">{currentServingPerson.purpose}</p>
                 </div>
+                {/* Display Transaction No. for all windows */}
+                {currentServingPerson.transactionNo && (
+                  <div className="text-center space-y-0">
+                    <p className="text-[9px] sm:text-[10px] font-medium text-gray-500 uppercase tracking-widest">Transaction No.</p>
+                    <p className="text-base sm:text-lg font-bold text-[#1F3463] tracking-wide">{currentServingPerson.transactionNo}</p>
+                  </div>
+                )}
                 {/* Display ID Number for Priority windows */}
                 {windowData?.name === 'Priority' && currentServingPerson.idNumber && (
-                  <div className="text-center space-y-0.5">
+                  <div className="text-center space-y-0">
                     <p className="text-[9px] sm:text-[10px] font-medium text-gray-500 uppercase tracking-widest">ID Number</p>
                     <p className="text-base sm:text-lg font-bold text-[#1F3463] tracking-wide">{currentServingPerson.idNumber}</p>
                   </div>
@@ -948,7 +955,7 @@ const Queue = () => {
                 {queueData.slice(0, 8).map((item) => (
                   <div key={item.id} className="flex gap-2 sm:gap-2.5 p-2 sm:p-2.5 bg-gray-50 rounded-lg shadow-sm">
                     <div className="flex-shrink-0">
-                      <div className="bg-[#3930A8] text-white rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 text-center min-w-[40px] sm:min-w-[48px]">
+                      <div className="bg-[#1F3463] text-white rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 text-center min-w-[40px] sm:min-w-[48px]">
                         <span className="text-base sm:text-lg font-bold tracking-wide">
                           {String(item.number).padStart(2, '0')}
                         </span>
@@ -985,7 +992,7 @@ const Queue = () => {
             disabled={actionLoading.stop}
             className={`flex-1 rounded-full border-2 font-bold text-sm sm:text-base md:text-lg tracking-wide transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               isWindowServing
-                ? 'border-[#3930A8] text-[#3930A8] hover:bg-[#3930A8] hover:text-white'
+                ? 'border-[#1F3463] text-[#1F3463] hover:bg-[#1F3463] hover:text-white'
                 : 'border-green-500 text-green-500 hover:bg-green-500 hover:text-white'
             } ${actionLoading.stop ? 'bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600 disabled:hover:border-gray-400' : ''}`}
             data-testid="stop-button"
@@ -997,7 +1004,7 @@ const Queue = () => {
           <motion.button
             onClick={handleNext}
             disabled={actionLoading.next || !isQueueingEnabled}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#1F3463] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#1A2E56] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.next || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             data-testid="call-next-button"
@@ -1009,7 +1016,7 @@ const Queue = () => {
           <motion.button
             onClick={handleRecall}
             disabled={actionLoading.recall || !isQueueingEnabled}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#1F3463] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#1A2E56] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.recall || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             whileHover={!(actionLoading.recall || !isQueueingEnabled) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
@@ -1020,7 +1027,7 @@ const Queue = () => {
           <motion.button
             onClick={handlePrevious}
             disabled={actionLoading.previous || !isQueueingEnabled}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#1F3463] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#1A2E56] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.previous || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             whileHover={!(actionLoading.previous || !isQueueingEnabled) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
@@ -1031,7 +1038,7 @@ const Queue = () => {
           <motion.button
             onClick={handleTransfer}
             disabled={actionLoading.transfer || transferLoading || !isQueueingEnabled}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#1F3463] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#1A2E56] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.transfer || transferLoading || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             whileHover={!(actionLoading.transfer || transferLoading || !isQueueingEnabled) ? { scale: 1.05, transition: { duration: 0.2 } } : undefined}
@@ -1042,7 +1049,7 @@ const Queue = () => {
           <motion.button
             onClick={handleSkip}
             disabled={actionLoading.skip || !isQueueingEnabled}
-            className={`flex-1 rounded-full bg-[#3930A8] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#2F2580] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
+            className={`flex-1 rounded-full bg-[#1F3463] text-white font-bold text-sm sm:text-base md:text-lg tracking-wide hover:bg-[#1A2E56] transition-colors duration-200 min-h-[36px] sm:min-h-[40px] flex items-center justify-center ${
               (actionLoading.skip || !isQueueingEnabled) ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
             }`}
             data-testid="skip-button"
@@ -1071,7 +1078,7 @@ const Queue = () => {
                     className={`rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 shadow-md transition-all duration-200 ${
                       isSelected
                         ? 'bg-[#FFE251] text-[#1F3463] ring-2 ring-[#1F3463] ring-offset-2'
-                        : 'bg-[#3930A8] text-white hover:bg-[#2F2580]'
+                        : 'bg-[#1F3463] text-white hover:bg-[#1A2E56]'
                     }`}
                   >
                     <span className="text-base sm:text-lg font-bold tracking-wide">
@@ -1091,7 +1098,7 @@ const Queue = () => {
             <button
               onClick={handleRequeue}
               disabled={actionLoading.requeueAll}
-              className={`rounded-full bg-[#3930A8] text-white font-bold text-xs sm:text-sm tracking-wide px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 hover:bg-[#2F2580] transition-colors duration-200 flex items-center justify-center min-w-[120px] sm:min-w-[140px] ${
+              className={`rounded-full bg-[#1F3463] text-white font-bold text-xs sm:text-sm tracking-wide px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 hover:bg-[#1A2E56] transition-colors duration-200 flex items-center justify-center min-w-[120px] sm:min-w-[140px] ${
                 actionLoading.requeueAll ? 'bg-gray-400 text-gray-600 cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600' : ''
               }`}
             >
@@ -1150,8 +1157,8 @@ const Queue = () => {
                 disabled={actionLoading.transfer}
                 className={`w-full p-2.5 sm:p-3 text-left border-2 rounded-lg transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-600 disabled:border-gray-400 disabled:cursor-not-allowed ${
                   selectedWindow?.id === window.id
-                    ? 'border-[#3930A8] bg-[#3930A8]/10'
-                    : 'border-gray-300 hover:bg-gray-50 hover:border-[#3930A8]'
+                    ? 'border-[#1F3463] bg-[#1F3463]/10'
+                    : 'border-gray-300 hover:bg-gray-50 hover:border-[#1F3463]'
                 }`}
               >
                 <div className="font-bold text-sm sm:text-base text-gray-900">{window.name}</div>
@@ -1174,7 +1181,7 @@ const Queue = () => {
             <button
               onClick={handleTransferConfirm}
               disabled={actionLoading.transfer || !selectedWindow}
-              className="w-full sm:flex-1 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#3930A8] text-white font-semibold text-xs sm:text-sm rounded-lg hover:bg-[#2F2580] transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600 order-1 sm:order-2"
+              className="w-full sm:flex-1 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1F3463] text-white font-semibold text-xs sm:text-sm rounded-lg hover:bg-[#1A2E56] transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-gray-400 disabled:hover:text-gray-600 order-1 sm:order-2"
             >
               {actionLoading.transfer ? 'Transferring...' : 'Transfer'}
             </button>

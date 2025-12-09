@@ -41,6 +41,7 @@ const DatabaseManager = () => {
   // Helper function to get record identifier for delete confirmation
   const getRecordIdentifier = (record) => {
     if (!record) return 'this record';
+    if (record.transactionNo) return record.transactionNo; // DocumentRequest
     if (record.name) return record.name;
     if (record.title) return record.title;
     if (record.customerName) return record.customerName;
@@ -61,7 +62,8 @@ const DatabaseManager = () => {
     { name: 'Bulletin', label: 'Bulletins', description: 'News and announcements' },
     { name: 'AuditTrail', label: 'Audit Trail', description: 'System audit logs' },
     { name: 'Office', label: 'Offices', description: 'Office directory information' },
-    { name: 'Chart', label: 'Organizational Charts', description: 'Office organizational charts' }
+    { name: 'Chart', label: 'Organizational Charts', description: 'Office organizational charts' },
+    { name: 'DocumentRequest', label: 'Document Requests', description: 'Document request submissions and claims' }
   ];
 
   const recordsPerPage = 10;
@@ -309,12 +311,22 @@ const DatabaseManager = () => {
   const formatFieldValue = (value, field) => {
     if (value === null || value === undefined) return 'N/A';
 
-    if (field === 'createdAt' || field === 'updatedAt') {
+    if (field === 'createdAt' || field === 'updatedAt' || field === 'dateOfRequest' || field === 'approvedAt' || field === 'rejectedAt' || field === 'claimDate' || field === 'claimedAt') {
       return new Date(value).toLocaleString();
     }
 
     if (typeof value === 'boolean') {
       return value ? 'Yes' : 'No';
+    }
+
+    // Handle array fields (e.g., DocumentRequest.request)
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '[]';
+      // For arrays of strings, join them nicely
+      if (value.every(item => typeof item === 'string')) {
+        return value.join(', ');
+      }
+      return `[${value.length} items]`;
     }
 
     if (typeof value === 'object') {

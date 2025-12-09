@@ -1,58 +1,68 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import SocketProvider from './contexts/SocketContext';
 import { KioskLayout, AdminLayout } from './components/layouts';
 import { ProtectedRoute, Login, Unauthorized } from './components/auth';
 import SessionManager from './components/auth/SessionManager';
-import {
-  MISAdminDashboard,
-  RegistrarAdminDashboard,
-  AdmissionsAdminDashboard,
-  QueueMonitor
-} from './components/pages/admin';
 
-// MIS Admin Pages
-import MISUsers from './components/pages/admin/mis/Users';
-import FixUsers from './components/pages/admin/mis/FixUsers';
-import DatabaseManager from './components/pages/admin/mis/DatabaseManager';
-import MISAuditTrail from './components/pages/admin/mis/AuditTrail';
-import MISBulletin from './components/pages/admin/mis/Bulletin';
-import MISFAQ from './components/pages/admin/mis/FAQ';
-import MISRatings from './components/pages/admin/mis/Ratings';
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3463] mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading...</p>
+    </div>
+  </div>
+);
 
-// Registrar Admin Pages
-import RegistrarQueue from './components/pages/admin/registrar/Queue';
-import RegistrarQueueRedirect from './components/pages/admin/registrar/QueueRedirect';
-import RegistrarQueueMonitor from './components/pages/admin/registrar/QueueMonitor';
-import RegistrarTransactionLogs from './components/pages/admin/registrar/TransactionLogs';
-import RegistrarAuditTrail from './components/pages/admin/registrar/AuditTrail';
-import RegistrarSettings from './components/pages/admin/registrar/Settings';
+// Lazy load admin dashboard components
+const MISAdminDashboard = lazy(() => import('./components/pages/admin').then(module => ({ default: module.MISAdminDashboard })));
+const RegistrarAdminDashboard = lazy(() => import('./components/pages/admin').then(module => ({ default: module.RegistrarAdminDashboard })));
+const AdmissionsAdminDashboard = lazy(() => import('./components/pages/admin').then(module => ({ default: module.AdmissionsAdminDashboard })));
+const QueueMonitor = lazy(() => import('./components/pages/admin').then(module => ({ default: module.QueueMonitor })));
 
-// Admissions Admin Pages
-import AdmissionsQueue from './components/pages/admin/admissions/Queue';
-import AdmissionsQueueRedirect from './components/pages/admin/admissions/QueueRedirect';
-import AdmissionsQueueMonitor from './components/pages/admin/admissions/QueueMonitor';
-import AdmissionsTransactionLogs from './components/pages/admin/admissions/TransactionLogs';
-import AdmissionsAuditTrail from './components/pages/admin/admissions/AuditTrail';
-import AdmissionsSettings from './components/pages/admin/admissions/Settings';
+// Lazy load MIS Admin Pages
+const MISUsers = lazy(() => import('./components/pages/admin/mis/Users'));
+const FixUsers = lazy(() => import('./components/pages/admin/mis/FixUsers'));
+const DatabaseManager = lazy(() => import('./components/pages/admin/mis/DatabaseManager'));
+const MISAuditTrail = lazy(() => import('./components/pages/admin/mis/AuditTrail'));
+const MISBulletin = lazy(() => import('./components/pages/admin/mis/Bulletin'));
+const MISFAQ = lazy(() => import('./components/pages/admin/mis/FAQ'));
+const MISRatings = lazy(() => import('./components/pages/admin/mis/Ratings'));
 
-// Senior Management Admin Pages
-import SeniorManagementCharts from './components/pages/admin/seniormanagement/Charts';
+// Lazy load Registrar Admin Pages
+const RegistrarQueue = lazy(() => import('./components/pages/admin/registrar/Queue'));
+const RegistrarQueueRedirect = lazy(() => import('./components/pages/admin/registrar/QueueRedirect'));
+const RegistrarQueueMonitor = lazy(() => import('./components/pages/admin/registrar/QueueMonitor'));
+const RegistrarTransactionLogs = lazy(() => import('./components/pages/admin/registrar/TransactionLogs'));
+const RegistrarDocumentRequest = lazy(() => import('./components/pages/admin/registrar/DocumentRequest'));
+const RegistrarAuditTrail = lazy(() => import('./components/pages/admin/registrar/AuditTrail'));
+const RegistrarSettings = lazy(() => import('./components/pages/admin/registrar/Settings'));
 
-// Shared Admin Pages
-import SharedFAQ from './components/pages/admin/shared/FAQ';
+// Lazy load Admissions Admin Pages
+const AdmissionsQueue = lazy(() => import('./components/pages/admin/admissions/Queue'));
+const AdmissionsQueueRedirect = lazy(() => import('./components/pages/admin/admissions/QueueRedirect'));
+const AdmissionsQueueMonitor = lazy(() => import('./components/pages/admin/admissions/QueueMonitor'));
+const AdmissionsTransactionLogs = lazy(() => import('./components/pages/admin/admissions/TransactionLogs'));
+const AdmissionsAuditTrail = lazy(() => import('./components/pages/admin/admissions/AuditTrail'));
+const AdmissionsSettings = lazy(() => import('./components/pages/admin/admissions/Settings'));
 
-import {
-  Home,
-  Bulletin,
-  Map,
-  Directory,
-  Queue,
-  FAQ,
-  IdlePage,
-  PortalQueue
-} from './components/pages';
+// Lazy load Senior Management Admin Pages
+const SeniorManagementCharts = lazy(() => import('./components/pages/admin/seniormanagement/Charts'));
+
+// Lazy load Shared Admin Pages
+const SharedFAQ = lazy(() => import('./components/pages/admin/shared/FAQ'));
+
+// Lazy load Public Pages
+const Home = lazy(() => import('./components/pages').then(module => ({ default: module.Home })));
+const Bulletin = lazy(() => import('./components/pages').then(module => ({ default: module.Bulletin })));
+const Map = lazy(() => import('./components/pages').then(module => ({ default: module.Map })));
+const Directory = lazy(() => import('./components/pages').then(module => ({ default: module.Directory })));
+const Queue = lazy(() => import('./components/pages').then(module => ({ default: module.Queue })));
+const FAQ = lazy(() => import('./components/pages').then(module => ({ default: module.FAQ })));
+const IdlePage = lazy(() => import('./components/pages').then(module => ({ default: module.IdlePage })));
+const PortalQueue = lazy(() => import('./components/pages').then(module => ({ default: module.PortalQueue })));
 
 function App() {
   return (
@@ -60,37 +70,38 @@ function App() {
       <SocketProvider>
         <SessionManager />
         <Router future={{ v7_relativeSplatPath: true }}>
-          <Routes>
-          {/* Public Kiosk Routes - No Authentication Required */}
-          {/* Idle Page - Default Landing Page - No Layout Wrapper */}
-          <Route path="/" element={<IdlePage />} />
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+            {/* Public Kiosk Routes - No Authentication Required */}
+            {/* Idle Page - Default Landing Page - No Layout Wrapper */}
+            <Route path="/" element={<IdlePage />} />
 
-          <Route path="/home" element={
-            <KioskLayout>
-              <Home />
-            </KioskLayout>
-          } />
-          <Route path="/bulletin" element={
-            <KioskLayout>
-              <Bulletin />
-            </KioskLayout>
-          } />
+            <Route path="/home" element={
+              <KioskLayout>
+                <Home />
+              </KioskLayout>
+            } />
+            <Route path="/bulletin" element={
+              <KioskLayout>
+                <Bulletin />
+              </KioskLayout>
+            } />
 
-          <Route path="/map" element={<Map />} />
-          <Route path="/directory" element={<Directory />} />
-          <Route path="/queue" element={<Queue />} />
-          <Route path="/portalqueue" element={<PortalQueue />} />
-          <Route path="/faq" element={
-            <KioskLayout>
-              <FAQ />
-            </KioskLayout>
-          } />
+            <Route path="/map" element={<Map />} />
+            <Route path="/directory" element={<Directory />} />
+            <Route path="/queue" element={<Queue />} />
+            <Route path="/portalqueue" element={<PortalQueue />} />
+            <Route path="/faq" element={
+              <KioskLayout>
+                <FAQ />
+              </KioskLayout>
+            } />
 
-          {/* Idle Page - Also accessible at /idle */}
-          <Route path="/idle" element={<IdlePage />} />
+            {/* Idle Page - Also accessible at /idle */}
+            <Route path="/idle" element={<IdlePage />} />
 
-          {/* Queue Monitor - Public Display, No Layout Wrapper */}
-          <Route path="/queue-monitor" element={<QueueMonitor />} />
+            {/* Queue Monitor - Public Display, No Layout Wrapper */}
+            <Route path="/queue-monitor" element={<QueueMonitor />} />
 
           {/* Authentication Routes */}
           <Route path="/login" element={<Login />} />
@@ -194,6 +205,13 @@ function App() {
               </AdminLayout>
             </ProtectedRoute>
           } />
+          <Route path="/admin/registrar/document-request" element={
+            <ProtectedRoute requiredRoles={['super_admin', 'registrar_admin']}>
+              <AdminLayout>
+                <RegistrarDocumentRequest />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
           <Route path="/admin/registrar/audit-trail" element={
             <ProtectedRoute requiredRoles={['super_admin', 'registrar_admin']}>
               <AdminLayout>
@@ -288,9 +306,10 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* Unauthorized Access */}
-          <Route path="/admin/unauthorized" element={<Unauthorized />} />
-          </Routes>
+            {/* Unauthorized Access */}
+            <Route path="/admin/unauthorized" element={<Unauthorized />} />
+            </Routes>
+          </Suspense>
         </Router>
       </SocketProvider>
     </AuthProvider>

@@ -462,12 +462,12 @@ const FAQ = () => {
           {loading ? (
             <>
               {/* Table Header */}
-              <div className="bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 border-b border-[#1F3463] h-10 sm:h-11 md:h-12 flex items-center">
+              <div className="bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3 border-b border-[#1F3463] min-h-[2.5rem] sm:min-h-[2.75rem] md:min-h-[3rem] flex items-center">
                 <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
-                  <div>Category</div>
-                  <div>Question</div>
-                  <div>Status</div>
-                  <div>Actions</div>
+                  <div className="whitespace-normal break-words leading-tight">Category</div>
+                  <div className="whitespace-normal break-words leading-tight">Question</div>
+                  <div className="whitespace-normal break-words leading-tight">Status</div>
+                  <div className="whitespace-normal break-words leading-tight">Actions</div>
                 </div>
               </div>
 
@@ -497,12 +497,12 @@ const FAQ = () => {
           ) : (
             <>
               {/* Table Header - Hidden on mobile, shown on md+ */}
-              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm">
+              <div className="hidden md:flex bg-[#1F3463] px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-b border-[#1F3463] items-center shadow-sm min-h-[2.5rem] sm:min-h-[2.75rem] md:min-h-[3rem]">
                 <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-white w-full">
-                  <div>Category</div>
-                  <div>Question</div>
-                  <div>Status</div>
-                  <div>Actions</div>
+                  <div className="whitespace-normal break-words leading-tight">Category</div>
+                  <div className="whitespace-normal break-words leading-tight">Question</div>
+                  <div className="whitespace-normal break-words leading-tight">Status</div>
+                  <div className="whitespace-normal break-words leading-tight">Actions</div>
                 </div>
               </div>
 

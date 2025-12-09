@@ -492,6 +492,15 @@ const PortalQueue = () => {
           >
             Queue Number
           </h2>
+          {/* Transaction Number */}
+          {queueData?.transactionNo && (
+            <div className="mb-2 sm:mb-3">
+              <span className="text-base sm:text-lg md:text-xl text-gray-700">Transaction No:<br /></span>
+              <span className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800">
+                {queueData.transactionNo}
+              </span>
+            </div>
+          )}
           <p className="text-base sm:text-lg md:text-xl text-gray-700">
             <span className="font-semibold">
               Location: <br />

@@ -6,13 +6,13 @@ import { authFetch } from '../utils/apiClient';
 
 /**
  * Custom hook that extends useToast to automatically save notifications to the database
- * 
+ *
  * This hook wraps the standard toast notification system and persists all notifications
  * to the database so users can review them later through the notification bell.
- * 
+ *
  * Usage:
  * const { showSuccess, showError, showWarning, showInfo, toasts, removeToast } = useNotification();
- * 
+ *
  * showSuccess('Success!', 'Your changes have been saved.');
  */
 export const useNotification = () => {
@@ -44,8 +44,19 @@ export const useNotification = () => {
       });
     } catch (error) {
       // Silently fail - don't show error toast for notification save failures
-      // to avoid infinite loops
-      console.error('Failed to save notification to database:', error);
+      // to avoid infinite loops. Connection errors are expected if backend is down.
+      // Only log non-connection errors in development mode to reduce console noise.
+      const isConnectionError =
+        error.message?.includes('Failed to fetch') ||
+        error.message?.includes('ERR_CONNECTION_REFUSED') ||
+        error.message?.includes('NetworkError') ||
+        error.name === 'TypeError';
+
+      // Completely suppress connection errors (backend may be down, which is fine)
+      // Only log other errors in development
+      if (!isConnectionError && import.meta.env.DEV) {
+        console.warn('Failed to save notification to database (this is non-critical):', error.message);
+      }
     }
   }, [isAuthenticated, user]);
 
@@ -55,7 +66,7 @@ export const useNotification = () => {
   const showSuccess = useCallback((title, message, options = {}) => {
     // Save to database
     saveNotificationToDatabase('success', title, message, options.metadata);
-    
+
     // Show toast
     return toast.showSuccess(title, message, options);
   }, [toast, saveNotificationToDatabase]);
@@ -66,7 +77,7 @@ export const useNotification = () => {
   const showError = useCallback((title, message, options = {}) => {
     // Save to database
     saveNotificationToDatabase('error', title, message, options.metadata);
-    
+
     // Show toast
     return toast.showError(title, message, options);
   }, [toast, saveNotificationToDatabase]);
@@ -77,7 +88,7 @@ export const useNotification = () => {
   const showWarning = useCallback((title, message, options = {}) => {
     // Save to database
     saveNotificationToDatabase('warning', title, message, options.metadata);
-    
+
     // Show toast
     return toast.showWarning(title, message, options);
   }, [toast, saveNotificationToDatabase]);
@@ -88,7 +99,7 @@ export const useNotification = () => {
   const showInfo = useCallback((title, message, options = {}) => {
     // Save to database
     saveNotificationToDatabase('info', title, message, options.metadata);
-    
+
     // Show toast
     return toast.showInfo(title, message, options);
   }, [toast, saveNotificationToDatabase]);

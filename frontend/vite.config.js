@@ -30,6 +30,13 @@ export default defineConfig({
     // Ensure case-sensitive imports are enforced
     rollupOptions: {
       external: [],
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['framer-motion', 'react-icons'],
+          'vendor-qrcode': ['qrcode']
+        }
+      }
     }
   },
   // Optimize dependencies for better HMR

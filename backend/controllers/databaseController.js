@@ -13,7 +13,8 @@ const resourceTypeMap = {
   rating: 'Rating',
   bulletin: 'Bulletin',
   office: 'Other', // Office is not in enum, use 'Other'
-  chart: 'Other' // Chart is not in enum, use 'Other'
+  chart: 'Other', // Chart is not in enum, use 'Other'
+  documentrequest: 'Other' // DocumentRequest is not in enum, use 'Other'
 };
 
 // Helper function to build search query
@@ -29,7 +30,8 @@ const buildSearchQuery = (searchTerm, modelName) => {
     rating: ['customerName', 'feedback', 'ratingType'],
     bulletin: ['title', 'content', 'category'],
     audittrail: ['action', 'actionDescription', 'resourceType'],
-    settings: ['systemName', 'systemVersion']
+    settings: ['systemName', 'systemVersion'],
+    documentrequest: ['transactionNo', 'name', 'emailAddress', 'contactNumber', 'programGradeStrand']
   };
 
   const fields = searchFields[modelName] || [];
@@ -168,7 +170,8 @@ async function getModelRecords(req, res, next) {
 // GET /api/database/:model/:id - Get single record by ID
 async function getModelRecordById(req, res, next) {
   try {
-    const record = await req.Model.findById(req.params.id);
+    // Use .lean() for read-only operation to improve performance
+    const record = await req.Model.findById(req.params.id).lean();
 
     if (!record) {
       return res.status(404).json({

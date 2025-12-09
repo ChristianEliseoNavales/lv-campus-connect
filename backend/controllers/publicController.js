@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
-const { Queue, VisitationForm, Service, Window, Settings, Rating } = require('../models');
+const { Queue, VisitationForm, Service, Window, Settings, Rating, DocumentRequest } = require('../models');
 const { AuditService } = require('../middleware/auditMiddleware');
 const { log: logger } = require('../utils/logger');
+const { generateTransactionNo } = require('../utils/transactionNoGenerator');
 
 /**
  * Helper function to get display customer name for queue entries
@@ -322,7 +323,7 @@ exports.submitQueue = async (req, res, next) => {
       logger('🎓 [BACKEND] Address:', address);
     }
 
-    // Validate required fields - special handling for Enroll service
+    // Validate required fields - special handling for Enroll and Document Claim services
     logger('🔍 [BACKEND] Validating required fields...');
     logger('🔍 [BACKEND] Field check:', {
       office: !!office,
@@ -330,7 +331,8 @@ exports.submitQueue = async (req, res, next) => {
       role: !!role,
       customerName: !!customerName,
       contactNumber: !!contactNumber,
-      email: !!email
+      email: !!email,
+      transactionNo: !!req.body.transactionNo
     });
 
     // For Enroll service, only validate core fields (not visitation form fields)
@@ -349,6 +351,24 @@ exports.submitQueue = async (req, res, next) => {
         });
       }
       logger('✅ [BACKEND] Enroll service core fields validated');
+    } else if (service === 'Document Claim') {
+      // For Document Claim service, only validate core fields + transactionNo (not visitation form fields)
+      logger('📋 [BACKEND] DOCUMENT CLAIM SERVICE - Using relaxed validation (no form fields required)');
+      const { transactionNo } = req.body;
+      if (!office || !service || !role || !transactionNo) {
+        logger('❌ [BACKEND] DOCUMENT CLAIM VALIDATION FAILED - Missing core fields!');
+        logger('❌ [BACKEND] Missing fields:', {
+          office: !office ? 'MISSING' : 'OK',
+          service: !service ? 'MISSING' : 'OK',
+          role: !role ? 'MISSING' : 'OK',
+          transactionNo: !transactionNo ? 'MISSING' : 'OK'
+        });
+        return res.status(400).json({
+          error: 'Missing required fields for Document Claim service',
+          required: ['office', 'service', 'role', 'transactionNo']
+        });
+      }
+      logger('✅ [BACKEND] Document Claim service core fields validated');
     } else {
       // For all other services, require full visitation form fields
       logger('📋 [BACKEND] REGULAR SERVICE - Using full validation (form fields required)');
@@ -414,6 +434,128 @@ exports.submitQueue = async (req, res, next) => {
 
     logger('🔍 Found service:', serviceObj.name, serviceObj._id);
 
+    // Special handling for Document Request service
+    if (service === 'Document Request') {
+      logger('📄 [BACKEND] DOCUMENT REQUEST SERVICE DETECTED!');
+
+      // Validate required fields for Document Request
+      const {
+        name,
+        lastSYAttended,
+        programGradeStrand,
+        contactNumber,
+        emailAddress,
+        request
+      } = req.body;
+
+      if (!name || !lastSYAttended || !programGradeStrand || !contactNumber || !emailAddress || !request) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields for Document Request',
+          required: ['name', 'lastSYAttended', 'programGradeStrand', 'contactNumber', 'emailAddress', 'request']
+        });
+      }
+
+      // Validate request is an array with at least one item
+      if (!Array.isArray(request) || request.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'At least one request type must be selected'
+        });
+      }
+
+      // Generate unique transaction number
+      const transactionNo = await generateTransactionNo();
+
+      // Create document request
+      const documentRequest = new DocumentRequest({
+        transactionNo,
+        name: name.trim(),
+        lastSYAttended: lastSYAttended.trim(),
+        programGradeStrand: programGradeStrand.trim(),
+        contactNumber: contactNumber.trim(),
+        emailAddress: emailAddress.trim().toLowerCase(),
+        request: request,
+        status: 'pending'
+      });
+
+      await documentRequest.save();
+
+      logger('✅ [BACKEND] Document Request created successfully:', documentRequest.transactionNo);
+
+      // Return success response (no queue entry created)
+      return res.json({
+        success: true,
+        data: {
+          transactionNo: documentRequest.transactionNo,
+          message: 'Document request submitted successfully. Please wait for email notification regarding the status of your request.'
+        }
+      });
+    }
+
+    // Special handling for Document Claim service
+    if (service === 'Document Claim') {
+      logger('📋 [BACKEND] DOCUMENT CLAIM SERVICE DETECTED!');
+
+      const { transactionNo } = req.body;
+
+      if (!transactionNo) {
+        return res.status(400).json({
+          success: false,
+          error: 'Transaction number is required for Document Claim service'
+        });
+      }
+
+      // Validate transaction number format
+      if (!/^TR\d{6}-\d{3}$/.test(transactionNo.trim().toUpperCase())) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid transaction number format. Expected format: TR######-###'
+        });
+      }
+
+      // Lookup document request
+      const documentRequest = await DocumentRequest.findByTransactionNo(transactionNo.trim().toUpperCase());
+
+      if (!documentRequest || documentRequest.status !== 'approved') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Transaction Number. The Transaction Number you entered may be rejected or does not exist.'
+        });
+      }
+
+      // Check if this transaction number is already queued (prevent duplicates)
+      // Use .select('_id').lean() to minimize data transfer for existence check
+      const existingQueue = await Queue.findOne({
+        transactionNo: transactionNo.trim().toUpperCase(),
+        status: { $in: ['waiting', 'serving', 'completed'] } // Check active and completed queues
+      }).select('_id').lean();
+
+      if (existingQueue) {
+        return res.status(400).json({
+          success: false,
+          error: 'Transaction Number is already in queue or has been completed. Please wait for your turn or contact the office if you need assistance.'
+        });
+      }
+
+      logger('✅ [BACKEND] Document Request found and approved:', documentRequest.transactionNo);
+      logger('✅ [BACKEND] No duplicate queue found for transaction number:', transactionNo.trim().toUpperCase());
+
+      // Use customer info from DocumentRequest
+      const customerName = documentRequest.name;
+      const contactNumberFromRequest = documentRequest.contactNumber;
+      const emailFromRequest = documentRequest.emailAddress;
+
+      // Override the request body with DocumentRequest data for queue creation
+      req.body.customerName = customerName;
+      req.body.contactNumber = contactNumberFromRequest;
+      req.body.email = emailFromRequest;
+      req.body.address = ''; // No address for Document Claim
+
+      // Continue with normal queue creation flow, but we'll add transactionNo reference
+      logger('📋 [BACKEND] Proceeding with queue creation for Document Claim');
+    }
+
     // Find window assigned to this queue
     let assignedWindow;
 
@@ -460,19 +602,26 @@ exports.submitQueue = async (req, res, next) => {
       logger('🎓 [BACKEND] ENROLL SERVICE - Skipping VisitationForm creation');
       logger('🎓 [BACKEND] Enroll service does not require visitation form data');
     } else {
+      // For Document Claim, customer info is populated from DocumentRequest in req.body
+      // Re-extract from req.body to get the populated values
+      const formCustomerName = service === 'Document Claim' ? req.body.customerName : customerName;
+      const formContactNumber = service === 'Document Claim' ? req.body.contactNumber : contactNumber;
+      const formEmail = service === 'Document Claim' ? req.body.email : email;
+      const formAddress = service === 'Document Claim' ? (req.body.address || '') : (address || '');
+
       logger('📝 [BACKEND] Creating VisitationForm with data:', {
-        customerName,
-        contactNumber,
-        email,
-        address: address || '',
+        customerName: formCustomerName,
+        contactNumber: formContactNumber,
+        email: formEmail,
+        address: formAddress,
         idNumber: isPriority ? (idNumber || '') : ''
       });
 
       visitationForm = await VisitationForm.createForm({
-        customerName,
-        contactNumber,
-        email,
-        address: address || '',
+        customerName: formCustomerName,
+        contactNumber: formContactNumber,
+        email: formEmail,
+        address: formAddress,
         idNumber: isPriority ? (idNumber || '') : ''
       });
 
@@ -496,12 +645,37 @@ exports.submitQueue = async (req, res, next) => {
       isPriority: Boolean(isPriority)
     };
 
-    // Only add visitationFormId if visitationForm was created (not for Enroll service)
+    // Generate transaction number for all queue entries
+    // For Document Claim, use the provided transactionNo from DocumentRequest
+    // For all other services, generate a new unique transaction number
+    if (service === 'Document Claim') {
+      const { transactionNo } = req.body;
+      if (transactionNo) {
+        queueData.transactionNo = transactionNo.trim().toUpperCase();
+        logger('📋 [BACKEND] Using DocumentRequest transactionNo in queue entry:', queueData.transactionNo);
+      }
+    } else {
+      // Generate unique transaction number for all other services
+      try {
+        const transactionNo = await generateTransactionNo();
+        queueData.transactionNo = transactionNo;
+        logger('📋 [BACKEND] Generated transactionNo for queue entry:', queueData.transactionNo);
+      } catch (error) {
+        logger('⚠️ [BACKEND] Failed to generate transaction number:', error.message);
+        // Continue without transaction number if generation fails (non-critical)
+      }
+    }
+
+    // Only add visitationFormId if visitationForm was created (not for Enroll or Document Claim services)
     if (visitationForm) {
       queueData.visitationFormId = visitationForm._id;
       logger('📋 [BACKEND] Including visitationFormId in queue entry:', visitationForm._id);
     } else {
-      logger('🎓 [BACKEND] No visitationFormId for Enroll service - creating queue without form reference');
+      if (service === 'Enroll') {
+        logger('🎓 [BACKEND] No visitationFormId for Enroll service - creating queue without form reference');
+      } else if (service === 'Document Claim') {
+        logger('📋 [BACKEND] No visitationFormId for Document Claim service - using DocumentRequest data');
+      }
     }
 
     const queueEntry = new Queue(queueData);
@@ -572,6 +746,7 @@ exports.submitQueue = async (req, res, next) => {
       data: {
         queueId: queueEntry._id, // Add queue ID for rating submission
         queueNumber: queueEntry.queueNumber,
+        transactionNo: queueEntry.transactionNo, // Include transaction number
         office: queueEntry.office,
         service: serviceObj.name,
         role: queueEntry.role,
@@ -754,6 +929,7 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
         purpose: currentService ? currentService.name : 'Unknown Service',
         windowId: filteredCurrentlyServing.windowId,
         serviceId: filteredCurrentlyServing.serviceId,
+        transactionNo: filteredCurrentlyServing.transactionNo || '',
         idNumber: filteredCurrentlyServing.visitationFormId?.idNumber || filteredCurrentlyServing.idNumber || ''
       };
 
@@ -849,6 +1025,7 @@ exports.getQueueLookup = async (req, res, next) => {
       data: {
         queueId: queueEntry._id,
         queueNumber: queueEntry.queueNumber,
+        transactionNo: queueEntry.transactionNo, // Include transaction number
         department: queueEntry.office, // Keep 'department' key for backward compatibility with frontend
         service: queueEntry.serviceId?.name || 'Unknown Service',
         windowName: queueEntry.windowId?.name || 'Unknown Window',
@@ -2225,43 +2402,26 @@ exports.getBulletins = async (req, res, next) => {
   try {
     const { Bulletin } = require('../models');
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
+    // Always enforce pagination with safe defaults and maximum limit
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 100)); // Default 100, max 100
     const skip = (page - 1) * limit;
 
-    // Check if pagination is requested
-    const usePagination = req.query.page !== undefined || req.query.limit !== undefined;
-
-    let query = Bulletin.find().sort({ createdAt: -1 });
-
-    if (usePagination) {
-      query = query.skip(skip).limit(limit);
-    }
-
+    const query = Bulletin.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
     const bulletins = await query.lean();
+    const totalCount = await Bulletin.countDocuments();
+    const totalPages = Math.ceil(totalCount / limit);
 
-    if (usePagination) {
-      const totalCount = await Bulletin.countDocuments();
-      const totalPages = Math.ceil(totalCount / limit);
-
-      res.json({
-        success: true,
-        records: bulletins,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalCount,
-          limit
-        }
-      });
-    } else {
-      // Backward compatibility: return all bulletins if no pagination params
-      res.json({
-        success: true,
-        records: bulletins,
-        count: bulletins.length
-      });
-    }
+    res.json({
+      success: true,
+      records: bulletins,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit
+      }
+    });
   } catch (error) {
     console.error('Error fetching bulletins:', error);
     res.status(500).json({
@@ -2271,58 +2431,42 @@ exports.getBulletins = async (req, res, next) => {
   }
 };
 
-// GET /api/public/faq - Get all active FAQs for kiosk display (with optional pagination)
+// GET /api/public/faq - Get all active FAQs for kiosk display (with enforced pagination)
 exports.getFAQs = async (req, res, next) => {
   try {
     const FAQ = require('../models/FAQ');
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
+    // Always enforce pagination with safe defaults and maximum limit
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 100)); // Default 100, max 100
     const skip = (page - 1) * limit;
 
-    // Check if pagination is requested
-    const usePagination = req.query.page !== undefined || req.query.limit !== undefined;
-
-    let query = FAQ.find({
+    const query = FAQ.find({
       status: 'active',
       isActive: true
     })
       .select('question answer category order')
-      .sort({ category: 1, order: 1, createdAt: 1 });
-
-    if (usePagination) {
-      query = query.skip(skip).limit(limit);
-    }
+      .sort({ category: 1, order: 1, createdAt: 1 })
+      .skip(skip)
+      .limit(limit);
 
     const faqs = await query.lean();
+    const total = await FAQ.countDocuments({
+      status: 'active',
+      isActive: true
+    });
 
-    if (usePagination) {
-      const total = await FAQ.countDocuments({
-        status: 'active',
-        isActive: true
-      });
-      res.json({
-        success: true,
-        data: faqs,
-        count: faqs.length,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      });
-    } else {
-      // Backward compatibility: return all FAQs if no pagination params
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️  GET /api/public/faq called without pagination. Consider using ?page=1&limit=50 for better performance.');
+    res.json({
+      success: true,
+      data: faqs,
+      count: faqs.length,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
       }
-      res.json({
-        success: true,
-        data: faqs,
-        count: faqs.length
-      });
-    }
+    });
   } catch (error) {
     console.error('Error fetching FAQs:', error);
     res.status(500).json({

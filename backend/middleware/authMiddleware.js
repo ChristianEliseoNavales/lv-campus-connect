@@ -179,6 +179,7 @@ const getRequiredPagesForApi = (req) => {
     '/api/settings': ['/admin/registrar/settings', '/admin/admissions/settings', '/admin/registrar/queue', '/admin/admissions/queue'],
     '/api/queue': ['/admin/registrar/queue', '/admin/admissions/queue'],
     '/api/transactions': ['/admin/registrar/transaction-logs', '/admin/admissions/transaction-logs'],
+    '/api/document-requests': ['/admin/registrar/document-request'],
     '/api/analytics': ['/admin/seniormanagement/charts', '/admin/registrar', '/admin/admissions'],
     '/api/bulletin': ['/admin/mis/bulletin'],
     '/api/ratings': ['/admin/mis/ratings'],
@@ -384,6 +385,10 @@ const API_PAGE_MAPPING = {
   '/api/admin/transactions/admissions': ['/admin/admissions/transaction-logs'],
   '/api/transaction-logs/registrar': ['/admin/registrar/transaction-logs'],
   '/api/transaction-logs/admissions': ['/admin/admissions/transaction-logs'],
+
+  // Document Requests API - used by Document Request page
+  '/api/document-requests': ['/admin/registrar/document-request'],
+  '/api/document-requests/registrar': ['/admin/registrar/document-request'],
 
   // Bulletin API - used by MIS Bulletin page
   '/api/bulletin': ['/admin/mis/bulletin'],

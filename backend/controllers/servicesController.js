@@ -2,22 +2,15 @@ const { Service } = require('../models');
 const { AuditService } = require('../middleware/auditMiddleware');
 const { CacheHelper } = require('../utils/cache');
 
-// GET /api/services - Get all services (with optional pagination)
+// GET /api/services - Get all services (with enforced pagination)
 async function getAllServices(req, res, next) {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
+    // Always enforce pagination with safe defaults and maximum limit
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 100)); // Default 100, max 100
     const skip = (page - 1) * limit;
 
-    // Check if pagination is requested
-    const usePagination = req.query.page !== undefined || req.query.limit !== undefined;
-
-    let query = Service.find().sort({ office: 1, name: 1 });
-
-    if (usePagination) {
-      query = query.skip(skip).limit(limit);
-    }
-
+    const query = Service.find().sort({ office: 1, name: 1 }).skip(skip).limit(limit);
     const services = await query.lean();
     const servicesData = services.map(service => ({
       id: service._id,
@@ -28,24 +21,16 @@ async function getAllServices(req, res, next) {
       updatedAt: service.updatedAt
     }));
 
-    if (usePagination) {
-      const total = await Service.countDocuments();
-      res.json({
-        data: servicesData,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      });
-    } else {
-      // Backward compatibility: return all services if no pagination params
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️  GET /api/services called without pagination. Consider using ?page=1&limit=50 for better performance.');
+    const total = await Service.countDocuments();
+    res.json({
+      data: servicesData,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
       }
-      res.json(servicesData);
-    }
+    });
   } catch (error) {
     console.error('Error fetching services:', error);
     res.status(500).json({ error: error.message });

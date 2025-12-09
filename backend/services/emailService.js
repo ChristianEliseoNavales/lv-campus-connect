@@ -598,6 +598,779 @@ class EmailService {
   }
 
   /**
+   * Generate HTML email template for document request approval
+   * @param {Object} documentRequestData - Document request data object
+   * @returns {string} HTML email template
+   */
+  generateDocumentRequestApprovalEmailTemplate(documentRequestData) {
+    const {
+      transactionNo,
+      name,
+      request,
+      businessDays,
+      formattedClaimDate,
+      lastSYAttended,
+      programGradeStrand,
+      contactNumber
+    } = documentRequestData;
+    const fromName = process.env.EMAIL_FROM_NAME || 'LVCampusConnect System';
+
+    // Format request types as a list
+    const requestList = request.map(req => `<li>${req}</li>`).join('');
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Request Approved - LVCampusConnect</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333333;
+      background-color: #f5f5f5;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .email-header {
+      background: linear-gradient(135deg, #1F3463 0%, #3044BB 100%);
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .email-header h1 {
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+    .email-body {
+      padding: 40px 30px;
+    }
+    .approval-message {
+      font-size: 18px;
+      color: #1F3463;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .intro-text {
+      font-size: 16px;
+      color: #555555;
+      margin-bottom: 30px;
+      line-height: 1.8;
+    }
+    .highlight-box {
+      background-color: #FFE251;
+      border-left: 4px solid #1F3463;
+      padding: 25px;
+      margin: 30px 0;
+      border-radius: 8px;
+    }
+    .highlight-box h3 {
+      color: #1F3463;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+    .highlight-box p {
+      color: #333333;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .highlight-box .transaction-no {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1F3463;
+      letter-spacing: 1px;
+    }
+    .request-details {
+      background-color: #f8f9fa;
+      border-left: 4px solid #1F3463;
+      padding: 25px;
+      margin: 30px 0;
+      border-radius: 8px;
+    }
+    .detail-row {
+      display: flex;
+      margin-bottom: 15px;
+      align-items: flex-start;
+    }
+    .detail-row:last-child {
+      margin-bottom: 0;
+    }
+    .detail-label {
+      font-weight: 600;
+      color: #1F3463;
+      min-width: 150px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .detail-value {
+      color: #333333;
+      font-size: 15px;
+      flex: 1;
+    }
+    .request-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .request-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .request-list li:last-child {
+      border-bottom: none;
+    }
+    .footer {
+      background-color: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e0e0e0;
+    }
+    .footer-text {
+      font-size: 13px;
+      color: #666666;
+      line-height: 1.6;
+    }
+    .footer-text a {
+      color: #1F3463;
+      text-decoration: none;
+    }
+    .divider {
+      height: 1px;
+      background-color: #e0e0e0;
+      margin: 30px 0;
+    }
+    @media only screen and (max-width: 600px) {
+      .email-body {
+        padding: 30px 20px;
+      }
+      .email-header {
+        padding: 30px 20px;
+      }
+      .email-header h1 {
+        font-size: 24px;
+      }
+      .detail-row {
+        flex-direction: column;
+      }
+      .detail-label {
+        margin-bottom: 5px;
+        min-width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <!-- Header -->
+    <div class="email-header">
+      <h1>LVCampusConnect</h1>
+    </div>
+
+    <!-- Body -->
+    <div class="email-body">
+      <div class="approval-message">
+        Document Request Approved
+      </div>
+
+      <div class="intro-text">
+        Dear ${name},
+      </div>
+
+      <div class="intro-text">
+        Your document request has been approved. Please find the details below.
+      </div>
+
+      <!-- Transaction Number Highlight -->
+      <div class="highlight-box">
+        <h3>Transaction Number</h3>
+        <p class="transaction-no">${transactionNo}</p>
+        <p style="margin-top: 15px; font-size: 14px; color: #666666;">
+          Please keep this transaction number for your records. You will need it when claiming your documents.
+        </p>
+      </div>
+
+      <!-- Business Days and Claim Date Highlight -->
+      <div class="highlight-box">
+        <h3>Processing Information</h3>
+        <p><strong>Processing Time:</strong> ${businessDays} business days</p>
+        <p style="margin-top: 10px;"><strong>Claim Date:</strong> ${formattedClaimDate}</p>
+        <p style="margin-top: 15px; font-size: 14px; color: #666666;">
+          Your documents will be ready for pickup on the claim date specified above. Please bring a valid ID and your transaction number when claiming.
+        </p>
+      </div>
+
+      <!-- Request Details -->
+      <div class="request-details">
+        <h3 style="color: #1F3463; font-size: 16px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+          Request Details
+        </h3>
+        <div class="detail-row">
+          <div class="detail-label">Name:</div>
+          <div class="detail-value">${name}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Last S.Y. Attended:</div>
+          <div class="detail-value">${lastSYAttended}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Program/Grade/Strand:</div>
+          <div class="detail-value">${programGradeStrand}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Contact Number:</div>
+          <div class="detail-value">${contactNumber}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Requested Documents:</div>
+          <div class="detail-value">
+            <ul class="request-list">
+              ${requestList}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="intro-text" style="margin-top: 30px; font-size: 14px; color: #666666;">
+        <strong>Important:</strong> Please arrive on or after the claim date specified above. If you have any questions or concerns, please contact the Registrar's Office.
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-text">
+        <p>This is an automated message from <strong>${fromName}</strong>.</p>
+        <p style="margin-top: 10px;">
+          Please do not reply to this email. For support, contact the Registrar's Office.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+    `.trim();
+  }
+
+  /**
+   * Generate HTML email template for document request rejection
+   * @param {Object} documentRequestData - Document request data object
+   * @returns {string} HTML email template
+   */
+  generateDocumentRequestRejectionEmailTemplate(documentRequestData) {
+    const {
+      transactionNo,
+      name,
+      request,
+      rejectionReasons,
+      lastSYAttended,
+      programGradeStrand,
+      contactNumber
+    } = documentRequestData;
+    const fromName = process.env.EMAIL_FROM_NAME || 'LVCampusConnect System';
+
+    // Format request types as a list
+    const requestList = request.map(req => `<li>${req}</li>`).join('');
+
+    // Format rejection reasons as a list
+    const rejectionList = rejectionReasons.map(reason => `<li>${reason}</li>`).join('');
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Request Rejected - LVCampusConnect</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333333;
+      background-color: #f5f5f5;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .email-header {
+      background: linear-gradient(135deg, #1F3463 0%, #3044BB 100%);
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .email-header h1 {
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+    .email-body {
+      padding: 40px 30px;
+    }
+    .rejection-message {
+      font-size: 18px;
+      color: #dc2626;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .intro-text {
+      font-size: 16px;
+      color: #555555;
+      margin-bottom: 30px;
+      line-height: 1.8;
+    }
+    .highlight-box {
+      background-color: #fee2e2;
+      border-left: 4px solid #dc2626;
+      padding: 25px;
+      margin: 30px 0;
+      border-radius: 8px;
+    }
+    .highlight-box h3 {
+      color: #dc2626;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+    .highlight-box p {
+      color: #333333;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .highlight-box .transaction-no {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1F3463;
+      letter-spacing: 1px;
+    }
+    .rejection-reasons {
+      background-color: #fef2f2;
+      border-left: 4px solid #dc2626;
+      padding: 25px;
+      margin: 30px 0;
+      border-radius: 8px;
+    }
+    .rejection-reasons h3 {
+      color: #dc2626;
+      font-size: 16px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .rejection-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .rejection-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid #fecaca;
+      color: #333333;
+      font-size: 15px;
+    }
+    .rejection-list li:last-child {
+      border-bottom: none;
+    }
+    .rejection-list li::before {
+      content: "• ";
+      color: #dc2626;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    .request-details {
+      background-color: #f8f9fa;
+      border-left: 4px solid #1F3463;
+      padding: 25px;
+      margin: 30px 0;
+      border-radius: 8px;
+    }
+    .detail-row {
+      display: flex;
+      margin-bottom: 15px;
+      align-items: flex-start;
+    }
+    .detail-row:last-child {
+      margin-bottom: 0;
+    }
+    .detail-label {
+      font-weight: 600;
+      color: #1F3463;
+      min-width: 150px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .detail-value {
+      color: #333333;
+      font-size: 15px;
+      flex: 1;
+    }
+    .request-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .request-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .request-list li:last-child {
+      border-bottom: none;
+    }
+    .footer {
+      background-color: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e0e0e0;
+    }
+    .footer-text {
+      font-size: 13px;
+      color: #666666;
+      line-height: 1.6;
+    }
+    .footer-text a {
+      color: #1F3463;
+      text-decoration: none;
+    }
+    .divider {
+      height: 1px;
+      background-color: #e0e0e0;
+      margin: 30px 0;
+    }
+    .action-text {
+      background-color: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #333333;
+      line-height: 1.8;
+    }
+    @media only screen and (max-width: 600px) {
+      .email-body {
+        padding: 30px 20px;
+      }
+      .email-header {
+        padding: 30px 20px;
+      }
+      .email-header h1 {
+        font-size: 24px;
+      }
+      .detail-row {
+        flex-direction: column;
+      }
+      .detail-label {
+        margin-bottom: 5px;
+        min-width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <!-- Header -->
+    <div class="email-header">
+      <h1>LVCampusConnect</h1>
+    </div>
+
+    <!-- Body -->
+    <div class="email-body">
+      <div class="rejection-message">
+        Document Request Rejected
+      </div>
+
+      <div class="intro-text">
+        Dear ${name},
+      </div>
+
+      <div class="intro-text">
+        We regret to inform you that your document request has been rejected. Please review the rejection reasons below.
+      </div>
+
+      <!-- Transaction Number Highlight -->
+      <div class="highlight-box">
+        <h3>Transaction Number</h3>
+        <p class="transaction-no">${transactionNo}</p>
+        <p style="margin-top: 15px; font-size: 14px; color: #666666;">
+          Please keep this transaction number for your records.
+        </p>
+      </div>
+
+      <!-- Rejection Reasons -->
+      <div class="rejection-reasons">
+        <h3>Rejection Reason(s)</h3>
+        <ul class="rejection-list">
+          ${rejectionList}
+        </ul>
+      </div>
+
+      <!-- Request Details -->
+      <div class="request-details">
+        <h3 style="color: #1F3463; font-size: 16px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+          Request Details
+        </h3>
+        <div class="detail-row">
+          <div class="detail-label">Name:</div>
+          <div class="detail-value">${name}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Last S.Y. Attended:</div>
+          <div class="detail-value">${lastSYAttended}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Program/Grade/Strand:</div>
+          <div class="detail-value">${programGradeStrand}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Contact Number:</div>
+          <div class="detail-value">${contactNumber}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Requested Documents:</div>
+          <div class="detail-value">
+            <ul class="request-list">
+              ${requestList}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="action-text">
+        <strong>Next Steps:</strong> If you believe this rejection was made in error, or if you would like to resubmit your request with the necessary corrections, please contact the Registrar's Office for assistance. You may also submit a new document request through the kiosk system.
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-text">
+        <p>This is an automated message from <strong>${fromName}</strong>.</p>
+        <p style="margin-top: 10px;">
+          Please do not reply to this email. For support, contact the Registrar's Office.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`;
+  }
+
+  /**
+   * Send document request rejection email
+   * Uses Gmail API if available, falls back to SMTP
+   * @param {Object} documentRequestData - Document request data object
+   * @returns {Promise<Object>} Email sending result
+   */
+  async sendDocumentRequestRejectionEmail(documentRequestData) {
+    const startTime = Date.now();
+
+    // Check if email service is configured
+    if (!this.isConfigured) {
+      console.warn('⚠️  Email service not configured. Skipping rejection email.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    try {
+      const {
+        transactionNo,
+        name,
+        emailAddress,
+        request,
+        rejectionReasons
+      } = documentRequestData;
+
+      // Validate required data
+      if (!transactionNo || !name || !emailAddress || !request || !rejectionReasons || !Array.isArray(rejectionReasons) || rejectionReasons.length === 0) {
+        const missingFields = [];
+        if (!transactionNo) missingFields.push('transactionNo');
+        if (!name) missingFields.push('name');
+        if (!emailAddress) missingFields.push('emailAddress');
+        if (!request) missingFields.push('request');
+        if (!rejectionReasons || !Array.isArray(rejectionReasons) || rejectionReasons.length === 0) missingFields.push('rejectionReasons');
+        throw new Error(`Missing required data for rejection email: ${missingFields.join(', ')}`);
+      }
+
+      const fromName = process.env.EMAIL_FROM_NAME || 'LVCampusConnect System';
+      const fromEmail = process.env.EMAIL_USER;
+
+      // Generate HTML email template
+      const htmlContent = this.generateDocumentRequestRejectionEmailTemplate(documentRequestData);
+
+      // Generate plain text version
+      const requestText = Array.isArray(request) ? request.join(', ') : request;
+      const rejectionText = rejectionReasons.join('\n- ');
+      const textContent = `Document Request Rejected - LVCampusConnect System
+
+Dear ${name},
+
+We regret to inform you that your document request has been rejected.
+
+Transaction Number: ${transactionNo}
+
+Rejection Reason(s):
+- ${rejectionText}
+
+Request Details:
+- Name: ${name}
+- Last S.Y. Attended: ${documentRequestData.lastSYAttended || 'N/A'}
+- Program/Grade/Strand: ${documentRequestData.programGradeStrand || 'N/A'}
+- Contact Number: ${documentRequestData.contactNumber || 'N/A'}
+- Requested Documents: ${requestText}
+
+Next Steps: If you believe this rejection was made in error, or if you would like to resubmit your request with the necessary corrections, please contact the Registrar's Office for assistance. You may also submit a new document request through the kiosk system.
+
+This is an automated message from ${fromName}. Please do not reply to this email. For support, contact the Registrar's Office.`;
+
+      // Use Gmail API if available, otherwise use SMTP
+      if (this.emailMethod === 'gmail-api' && this.gmailClient) {
+        return await this.sendViaGmailAPI({
+          from: fromEmail,
+          fromName,
+          to: emailAddress,
+          subject: `Document Request Rejected - Transaction No. ${transactionNo}`,
+          html: htmlContent,
+          text: textContent
+        }, startTime);
+      } else if (this.emailMethod === 'smtp' && this.transporter) {
+        return await this.sendViaSMTP({
+          from: `"${fromName}" <${fromEmail}>`,
+          to: emailAddress,
+          subject: `Document Request Rejected - Transaction No. ${transactionNo}`,
+          html: htmlContent,
+          text: textContent
+        }, startTime);
+      } else {
+        throw new Error(`Email method "${this.emailMethod}" not properly initialized`);
+      }
+    } catch (error) {
+      console.error(`❌ Error sending document request rejection email: ${error.message}`);
+      if (error.stack) {
+        console.error(`   Stack: ${error.stack}`);
+      }
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Send document request approval email
+   * Uses Gmail API if available, falls back to SMTP
+   * @param {Object} documentRequestData - Document request data object
+   * @returns {Promise<Object>} Email sending result
+   */
+  async sendDocumentRequestApprovalEmail(documentRequestData) {
+    const startTime = Date.now();
+
+    // Check if email service is configured
+    if (!this.isConfigured) {
+      console.warn('⚠️  Email service not configured. Skipping approval email.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    try {
+      const {
+        transactionNo,
+        name,
+        emailAddress,
+        request,
+        businessDays,
+        formattedClaimDate
+      } = documentRequestData;
+
+      // Validate required data
+      if (!transactionNo || !name || !emailAddress || !request || !businessDays || !formattedClaimDate) {
+        const missingFields = [];
+        if (!transactionNo) missingFields.push('transactionNo');
+        if (!name) missingFields.push('name');
+        if (!emailAddress) missingFields.push('emailAddress');
+        if (!request) missingFields.push('request');
+        if (!businessDays) missingFields.push('businessDays');
+        if (!formattedClaimDate) missingFields.push('formattedClaimDate');
+        throw new Error(`Missing required data for approval email: ${missingFields.join(', ')}`);
+      }
+
+      const fromName = process.env.EMAIL_FROM_NAME || 'LVCampusConnect System';
+      const fromEmail = process.env.EMAIL_USER;
+
+      // Generate HTML email template
+      const htmlContent = this.generateDocumentRequestApprovalEmailTemplate(documentRequestData);
+
+      // Generate plain text version
+      const requestText = Array.isArray(request) ? request.join(', ') : request;
+      const textContent = `Document Request Approved - LVCampusConnect System
+
+Dear ${name},
+
+Your document request has been approved.
+
+Transaction Number: ${transactionNo}
+
+Processing Information:
+- Processing Time: ${businessDays} business days
+- Claim Date: ${formattedClaimDate}
+
+Request Details:
+- Name: ${name}
+- Last S.Y. Attended: ${documentRequestData.lastSYAttended || 'N/A'}
+- Program/Grade/Strand: ${documentRequestData.programGradeStrand || 'N/A'}
+- Contact Number: ${documentRequestData.contactNumber || 'N/A'}
+- Requested Documents: ${requestText}
+
+Important: Please arrive on or after the claim date specified above. Please bring a valid ID and your transaction number when claiming.
+
+This is an automated message from ${fromName}. Please do not reply to this email. For support, contact the Registrar's Office.`;
+
+      // Use Gmail API if available, otherwise use SMTP
+      if (this.emailMethod === 'gmail-api' && this.gmailClient) {
+        return await this.sendViaGmailAPI({
+          from: fromEmail,
+          fromName,
+          to: emailAddress,
+          subject: `Document Request Approved - Transaction No. ${transactionNo}`,
+          html: htmlContent,
+          text: textContent
+        }, startTime);
+      } else if (this.emailMethod === 'smtp' && this.transporter) {
+        return await this.sendViaSMTP({
+          from: `"${fromName}" <${fromEmail}>`,
+          to: emailAddress,
+          subject: `Document Request Approved - Transaction No. ${transactionNo}`,
+          html: htmlContent,
+          text: textContent
+        }, startTime);
+      } else {
+        throw new Error(`Email method "${this.emailMethod}" not properly initialized`);
+      }
+    } catch (error) {
+      console.error(`❌ Error sending document request approval email: ${error.message}`);
+      if (error.stack) {
+        console.error(`   Stack: ${error.stack}`);
+      }
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Send email via Gmail API (works on Render)
    * Includes automatic token refresh retry logic
    */

@@ -18,7 +18,8 @@ import {
   MdSwapHoriz,
   MdStorage,
   MdMonitor,
-  MdQuestionAnswer
+  MdQuestionAnswer,
+  MdDescription
 } from 'react-icons/md';
 import { BiSolidNotepad } from 'react-icons/bi';
 import { useSocket } from '../../contexts/SocketContext';
@@ -409,6 +410,7 @@ const AdminLayout = ({ children }) => {
         requiresWindows: true
       },
       '/admin/registrar/transaction-logs': { name: 'Transaction Logs', path: '/admin/registrar/transaction-logs', icon: BiSolidNotepad, office: 'registrar' },
+      '/admin/registrar/document-request': { name: 'Document Request', path: '/admin/registrar/document-request', icon: MdDescription, office: 'registrar' },
       '/admin/registrar/settings': { name: 'Settings', path: '/admin/registrar/settings', icon: MdSettings, office: 'registrar' },
       '/admin/registrar/faq': { name: 'FAQs', path: '/admin/registrar/faq', icon: MdQuestionAnswer, office: 'registrar' },
 

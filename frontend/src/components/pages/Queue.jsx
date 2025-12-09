@@ -11,271 +11,16 @@ import { useOptimizedFetch } from '../../hooks/useOptimizedFetch';
 import { useToast, ToastContainer } from '../ui/Toast';
 import QRCode from 'qrcode';
 import API_CONFIG from '../../config/api';
-
-
-
-// Data Privacy Modal Component
-const DataPrivacyModal = ({ isOpen, onNext, onPrevious, consent, setConsent }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* Black background with 80% opacity */}
-      <div className="absolute inset-0 bg-black bg-opacity-80" />
-
-      {/* Modal Container - Centered with buttons positioned relative to it */}
-      <div className="relative flex items-center">
-        {/* Modal Content - Perfectly centered */}
-        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-8 mx-3 max-w-4xl w-full">
-          {/* Modal Header */}
-          <h2 className="text-4xl font-bold text-gray-800 mb-6 text-center">
-            PRIVACY NOTICE
-          </h2>
-
-          {/* Privacy Notice Text */}
-          <div className="mb-6 text-gray-700 leading-relaxed">
-            <p className="mb-5 text-lg">
-              Please be informed that we are collecting your personal information for the purpose of
-              recording and monitoring as we follow the Data Privacy Act of 2012. The storage, use,
-              and disposal of your personal information will be governed by LVCC's Data Privacy Policies.
-            </p>
-          </div>
-
-          {/* Consent Checkbox */}
-          <div className="mb-8">
-            <label className="flex items-center space-x-5 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-                className="mt-1 h-8 w-8 text-[#1F3463] border-3 border-gray-400 rounded-lg focus:ring-[#1F3463] focus:ring-3 focus:border-[#1F3463] transition-all duration-200 touch-target-lg shadow-lg hover:shadow-xl active:scale-95 cursor-pointer"
-                style={{
-                  accentColor: '#1F3463'
-                }}
-              />
-              <span className="text-gray-700 leading-relaxed text-lg flex-1 pt-1.5">
-                I voluntarily give my consent to LVCC in collecting, processing, recording, using,
-                and retaining my personal information for the above-mentioned purpose in accordance
-                with this Privacy Notice.
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* Buttons positioned adjacent to modal's right edge */}
-        <div className="absolute left-full ml-3 top-1/2 transform -translate-y-1/2 flex flex-col space-y-3 z-[10000]">
-          {/* Next Button (top) */}
-          <button
-            onClick={onNext}
-            disabled={!consent}
-            className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
-              consent
-                ? 'bg-[#FFE251] text-[#1A2E56] active:shadow-md active:scale-95'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            NEXT
-          </button>
-
-          {/* Previous Button (bottom) */}
-          <button
-            onClick={onPrevious}
-            className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
-          >
-            PREVIOUS
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Confirmation Modal Component
-const ConfirmationModal = ({ isOpen, onYes, onNo }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center font-kiosk-public">
-      {/* Black background with 80% opacity */}
-      <div className="absolute inset-0 bg-black bg-opacity-80" />
-
-      {/* Modal Container - Centered with buttons positioned below */}
-      <div className="relative flex flex-col items-center">
-        {/* Modal Content - Perfectly centered */}
-        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-6 mx-3 max-w-lg w-full">
-          {/* Modal Message */}
-          <h2 className="text-2xl font-bold text-gray-800 text-center">
-            Are you ready to submit your information?
-          </h2>
-        </div>
-
-        {/* Buttons positioned below modal */}
-        <div className="flex space-x-6 mt-6">
-          {/* Yes Button */}
-          <button
-            onClick={onYes}
-            className="w-20 h-20 rounded-full border-2 border-white bg-[#FFE251] text-[#1F3463] font-bold text-xs active:bg-[#FFD700] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
-          >
-            YES
-          </button>
-
-          {/* No Button */}
-          <button
-            onClick={onNo}
-            className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-gray-600 transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
-          >
-            NO
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Service Unavailable Modal Component
-const ServiceUnavailableModal = ({ isOpen, onClose, officeName, serviceName }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
-      <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-2xl mx-3 text-center relative">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full border-2 flex items-center justify-center hover:bg-gray-100 transition-colors"
-          style={{ borderColor: '#1F3463', color: '#1F3463' }}
-        >
-          <span className="text-xl font-bold">×</span>
-        </button>
-
-        {/* Header */}
-        <h2 className="text-3xl font-semibold mb-3" style={{ color: '#1F3463' }}>
-          Service Unavailable
-        </h2>
-
-        {/* Message */}
-        <p className="text-lg text-gray-600 mb-6">
-          The "{serviceName}" service is not currently available in the {officeName}.
-          <br />
-          <br />
-          Please check if the office is open or try again later.
-        </p>
-
-        {/* OK Button */}
-        <button
-          onClick={onClose}
-          className="w-38 text-white rounded-3xl shadow-lg drop-shadow-md py-3 px-6 active:shadow-md active:scale-95 transition-all duration-150 border-2 border-transparent focus:outline-none focus:ring-3 focus:ring-blue-200"
-          style={{ backgroundColor: '#1F3463' }}
-          onTouchStart={(e) => e.target.style.backgroundColor = '#1A2E56'}
-          onTouchEnd={(e) => e.target.style.backgroundColor = '#1F3463'}
-          onMouseDown={(e) => e.target.style.backgroundColor = '#1A2E56'}
-          onMouseUp={(e) => e.target.style.backgroundColor = '#1F3463'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#1F3463'}
-        >
-          <span className="text-lg font-semibold">OK</span>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Office Mismatch Modal Component
-const OfficeMismatchModal = ({ isOpen, onConfirm, onClose, currentOffice, suggestedOffice }) => {
-  if (!isOpen || !suggestedOffice) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
-      <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-2xl mx-3 text-center">
-        {/* Header */}
-        <h2 className="text-3xl font-semibold mb-3" style={{ color: '#1F3463' }}>
-          You Selected {currentOffice}'s Office
-        </h2>
-
-        {/* Subtext */}
-        <p className="text-lg text-gray-600 mb-6">
-          Please switch to
-        </p>
-
-        {/* Suggested Office Button */}
-        <button
-          onClick={onConfirm}
-          className="w-64 text-white rounded-3xl shadow-lg drop-shadow-md p-5 active:shadow-md active:scale-95 transition-all duration-150 border-2 border-transparent focus:outline-none focus:ring-3 focus:ring-blue-200 mb-5"
-          style={{ backgroundColor: '#1F3463' }}
-          onTouchStart={(e) => e.target.style.backgroundColor = '#1A2E56'}
-          onTouchEnd={(e) => e.target.style.backgroundColor = '#1F3463'}
-          onMouseDown={(e) => e.target.style.backgroundColor = '#1A2E56'}
-          onMouseUp={(e) => e.target.style.backgroundColor = '#1F3463'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#1F3463'}
-        >
-          <div className="text-center flex flex-col items-center">
-            {/* Office Image */}
-            <div className="mb-3">
-              <img
-                src={`/queue/${suggestedOffice.key}.png`}
-                alt={`${suggestedOffice.name} Icon`}
-                className="w-27 h-27 object-contain rounded-xl mx-auto"
-              />
-            </div>
-            {/* Office Name */}
-            <h3 className="text-lg font-semibold text-white">
-              {suggestedOffice.name}
-            </h3>
-          </div>
-        </button>
-
-        {/* Close button (optional - user can also click suggested office) */}
-        <div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 active:text-gray-700 text-xs underline transition-colors duration-150"
-          >
-            Continue with current selection
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Print Error Modal Component
-const PrintErrorModal = ({ isOpen, onClose, message }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* Black background with 80% opacity */}
-      <div className="absolute inset-0 bg-black bg-opacity-80" />
-
-      {/* Modal Container - Centered */}
-      <div className="relative flex flex-col items-center">
-        {/* Modal Content */}
-        <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-8 mx-3 max-w-2xl w-full text-center">
-          {/* Error Icon */}
-          <div className="mb-5">
-            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Error Message */}
-          <p className="text-lg font-semibold text-gray-800 mb-6">
-            {message}
-          </p>
-
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="px-10 py-3 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-lg active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
-          >
-            OK
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import {
+  DataPrivacyModal,
+  ConfirmationModal,
+  ServiceUnavailableModal,
+  OfficeMismatchModal,
+  PrintErrorModal,
+  TransactionNoErrorModal
+} from './queue/QueueModals';
+import RoleSelection from './queue/RoleSelection';
+import PrioritySelection from './queue/PrioritySelection';
 
 const Queue = () => {
   // Multi-step queue state management
@@ -324,6 +69,8 @@ const Queue = () => {
   const [printAttempts, setPrintAttempts] = useState(0); // Track number of print attempts
   const [showPrintErrorModal, setShowPrintErrorModal] = useState(false); // Show print error modal
   const [printErrorMessage, setPrintErrorMessage] = useState(''); // Print error message
+  const [showTransactionNoErrorModal, setShowTransactionNoErrorModal] = useState(false); // Show transaction no error modal
+  const [transactionNoErrorMessage, setTransactionNoErrorMessage] = useState(''); // Transaction no error message
   const [formData, setFormData] = useState({
     name: '',
     contactNumber: '',
@@ -338,6 +85,24 @@ const Queue = () => {
     email: '',
     address: ''
   });
+
+  // Document Request form state
+  const [documentRequestForm, setDocumentRequestForm] = useState({
+    name: '',
+    lastSYAttended: '',
+    programGradeStrand: '',
+    contactNumber: '',
+    emailAddress: '',
+    request: []
+  });
+
+  const [documentRequestErrors, setDocumentRequestErrors] = useState({});
+  const [showDocumentRequestThankYou, setShowDocumentRequestThankYou] = useState(false);
+  const [documentRequestFormStep, setDocumentRequestFormStep] = useState(1); // 1: Basic Info, 2: Contact Info, 3: Request Selection
+
+  // Document Claim state
+  const [transactionNo, setTransactionNo] = useState('');
+  const [transactionNoError, setTransactionNoError] = useState('');
 
   // Animation variants for staggered effects
   const containerVariants = {
@@ -542,6 +307,20 @@ const Queue = () => {
   const handlePhysicalInputChange = (fieldName, value) => {
     if (fieldName === 'idNumber') {
       setIdNumber(value);
+    } else if (fieldName === 'documentRequestName') {
+      handleDocumentRequestFieldChange('name', value);
+    } else if (fieldName === 'documentRequestProgram') {
+      handleDocumentRequestFieldChange('programGradeStrand', value);
+    } else if (fieldName === 'documentRequestContact') {
+      handleDocumentRequestFieldChange('contactNumber', value);
+    } else if (fieldName === 'documentRequestEmail') {
+      handleDocumentRequestFieldChange('emailAddress', value);
+    } else if (fieldName === 'transactionNo') {
+      const upperValue = value.toUpperCase();
+      setTransactionNo(upperValue);
+      if (transactionNoError) {
+        setTransactionNoError('');
+      }
     } else {
       setFormData(prev => {
         const updatedData = { ...prev, [fieldName]: value };
@@ -572,6 +351,20 @@ const Queue = () => {
   const handleKeyPress = (key) => {
     if (activeField === 'idNumber') {
       setIdNumber(prev => prev + key);
+    } else if (activeField === 'documentRequestName') {
+      handleDocumentRequestFieldChange('name', documentRequestForm.name + key);
+    } else if (activeField === 'documentRequestProgram') {
+      handleDocumentRequestFieldChange('programGradeStrand', documentRequestForm.programGradeStrand + key);
+    } else if (activeField === 'documentRequestContact') {
+      handleDocumentRequestFieldChange('contactNumber', documentRequestForm.contactNumber + key);
+    } else if (activeField === 'documentRequestEmail') {
+      handleDocumentRequestFieldChange('emailAddress', documentRequestForm.emailAddress + key);
+    } else if (activeField === 'transactionNo') {
+      const newValue = (transactionNo + key).toUpperCase();
+      setTransactionNo(newValue);
+      if (transactionNoError) {
+        setTransactionNoError('');
+      }
     } else {
       setFormData(prev => {
         const newValue = prev[activeField] + key;
@@ -602,6 +395,16 @@ const Queue = () => {
   const handleBackspace = () => {
     if (activeField === 'idNumber') {
       setIdNumber(prev => prev.slice(0, -1));
+    } else if (activeField === 'documentRequestName') {
+      handleDocumentRequestFieldChange('name', documentRequestForm.name.slice(0, -1));
+    } else if (activeField === 'documentRequestProgram') {
+      handleDocumentRequestFieldChange('programGradeStrand', documentRequestForm.programGradeStrand.slice(0, -1));
+    } else if (activeField === 'documentRequestContact') {
+      handleDocumentRequestFieldChange('contactNumber', documentRequestForm.contactNumber.slice(0, -1));
+    } else if (activeField === 'documentRequestEmail') {
+      handleDocumentRequestFieldChange('emailAddress', documentRequestForm.emailAddress.slice(0, -1));
+    } else if (activeField === 'transactionNo') {
+      setTransactionNo(prev => prev.slice(0, -1));
     } else {
       setFormData(prev => {
         const newValue = prev[activeField].slice(0, -1);
@@ -632,6 +435,17 @@ const Queue = () => {
   const handleSpace = () => {
     if (activeField === 'idNumber') {
       setIdNumber(prev => prev + ' ');
+    } else if (activeField === 'documentRequestName') {
+      handleDocumentRequestFieldChange('name', documentRequestForm.name + ' ');
+    } else if (activeField === 'documentRequestProgram') {
+      handleDocumentRequestFieldChange('programGradeStrand', documentRequestForm.programGradeStrand + ' ');
+    } else if (activeField === 'documentRequestContact') {
+      handleDocumentRequestFieldChange('contactNumber', documentRequestForm.contactNumber + ' ');
+    } else if (activeField === 'documentRequestEmail') {
+      handleDocumentRequestFieldChange('emailAddress', documentRequestForm.emailAddress + ' ');
+    } else if (activeField === 'transactionNo') {
+      // Transaction numbers don't have spaces, but handle it gracefully
+      setTransactionNo(prev => prev);
     } else {
       setFormData(prev => {
         const newValue = prev[activeField] + ' ';
@@ -941,8 +755,31 @@ const Queue = () => {
   const handleServiceSelect = (service) => {
     console.log('🎯 Service selected:', service, 'Type:', typeof service);
     setSelectedService(service);
-    // If "Enroll" is selected, go to student status check, otherwise go to role
-    if (service === 'Enroll') {
+    // Special handling for Document Request and Document Claim services
+    if (service === 'Document Request') {
+      console.log('➡️ Going to documentRequestForm step');
+      setCurrentStep('documentRequestForm');
+      // Reset form and step
+      setDocumentRequestForm({
+        name: '',
+        lastSYAttended: '',
+        programGradeStrand: '',
+        contactNumber: '',
+        emailAddress: '',
+        request: []
+      });
+      setDocumentRequestErrors({});
+      setDocumentRequestFormStep(1);
+      setShowKeyboard(true);
+      setActiveField('documentRequestName');
+    } else if (service === 'Document Claim') {
+      console.log('➡️ Going to documentClaim step');
+      setCurrentStep('documentClaim');
+      setTransactionNo('');
+      setTransactionNoError('');
+      setShowKeyboard(true);
+      setActiveField('transactionNo');
+    } else if (service === 'Enroll') {
       console.log('➡️ Going to studentStatus step');
       setCurrentStep('studentStatus');
     } else {
@@ -1307,6 +1144,263 @@ const Queue = () => {
     // Stay on Step 2
   };
 
+  // Document Request handlers
+  const handleDocumentRequestFieldChange = (field, value) => {
+    setDocumentRequestForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    // Clear error for this field
+    if (documentRequestErrors[field]) {
+      setDocumentRequestErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleDocumentRequestCheckboxChange = (requestType) => {
+    setDocumentRequestForm(prev => {
+      const currentRequests = prev.request || [];
+      const isSelected = currentRequests.includes(requestType);
+      return {
+        ...prev,
+        request: isSelected
+          ? currentRequests.filter(r => r !== requestType)
+          : [...currentRequests, requestType]
+      };
+    });
+  };
+
+  // Step-specific validation functions
+  const validateDocumentRequestStep1 = () => {
+    const errors = {};
+
+    if (!documentRequestForm.name.trim()) {
+      errors.name = 'Name is required';
+    }
+
+    if (!documentRequestForm.lastSYAttended) {
+      errors.lastSYAttended = 'Last S.Y. Attended is required';
+    }
+
+    if (!documentRequestForm.programGradeStrand.trim()) {
+      errors.programGradeStrand = 'Program/Grade/Strand is required';
+    }
+
+    setDocumentRequestErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateDocumentRequestStep2 = () => {
+    const errors = {};
+
+    if (!documentRequestForm.contactNumber.trim()) {
+      errors.contactNumber = 'Contact number is required';
+    } else if (!/^(\+63|0)[0-9]{10}$/.test(documentRequestForm.contactNumber.trim())) {
+      errors.contactNumber = 'Contact number must be a valid Philippine phone number';
+    }
+
+    if (!documentRequestForm.emailAddress.trim()) {
+      errors.emailAddress = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(documentRequestForm.emailAddress.trim())) {
+      errors.emailAddress = 'Email must be valid';
+    }
+
+    setDocumentRequestErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateDocumentRequestStep3 = () => {
+    const errors = {};
+
+    if (!documentRequestForm.request || documentRequestForm.request.length === 0) {
+      errors.request = 'At least one request type must be selected';
+    }
+
+    setDocumentRequestErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateDocumentRequestForm = () => {
+    // Validate all steps
+    const step1Valid = validateDocumentRequestStep1();
+    const step2Valid = validateDocumentRequestStep2();
+    const step3Valid = validateDocumentRequestStep3();
+    return step1Valid && step2Valid && step3Valid;
+  };
+
+  // Step navigation handlers
+  const handleDocumentRequestStep1Next = () => {
+    if (validateDocumentRequestStep1()) {
+      setDocumentRequestFormStep(2);
+      setActiveField('documentRequestContact');
+      setShowKeyboard(true);
+    }
+  };
+
+  const handleDocumentRequestStep2Next = () => {
+    if (validateDocumentRequestStep2()) {
+      setDocumentRequestFormStep(3);
+      setShowKeyboard(false); // Step 3 doesn't need keyboard
+    }
+  };
+
+  const handleDocumentRequestStep2Previous = () => {
+    setDocumentRequestFormStep(1);
+    setActiveField('documentRequestName');
+    setShowKeyboard(true);
+  };
+
+  const handleDocumentRequestStep3Previous = () => {
+    setDocumentRequestFormStep(2);
+    setActiveField('documentRequestContact');
+    setShowKeyboard(true);
+  };
+
+  const handleDocumentRequestStep3Next = () => {
+    if (validateDocumentRequestStep3()) {
+      setShowConfirmationModal(true);
+    }
+  };
+
+  const handleDocumentRequestSubmit = async () => {
+    // This is now only called from step 3
+    if (!validateDocumentRequestStep3()) {
+      return;
+    }
+
+    setShowConfirmationModal(true);
+  };
+
+  const handleDocumentRequestConfirm = async () => {
+    setShowConfirmationModal(false);
+
+    try {
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/document-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: documentRequestForm.name.trim(),
+          lastSYAttended: documentRequestForm.lastSYAttended,
+          programGradeStrand: documentRequestForm.programGradeStrand.trim(),
+          contactNumber: documentRequestForm.contactNumber.trim(),
+          emailAddress: documentRequestForm.emailAddress.trim().toLowerCase(),
+          request: documentRequestForm.request
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setShowDocumentRequestThankYou(true);
+      } else {
+        showError('Submission Failed', result.error || 'Failed to submit document request');
+      }
+    } catch (error) {
+      console.error('Error submitting document request:', error);
+      showError('Network Error', 'Please check your connection and try again.');
+    }
+  };
+
+  const handleDocumentRequestThankYouClose = () => {
+    setShowDocumentRequestThankYou(false);
+    // Proceed to ratings step
+    setCurrentStep('feedback');
+  };
+
+  // Document Claim handlers
+  const validateTransactionNo = () => {
+    const trimmed = transactionNo.trim().toUpperCase();
+    if (!trimmed) {
+      setTransactionNoError('Transaction number is required');
+      return false;
+    }
+    if (!/^TR\d{6}-\d{3}$/.test(trimmed)) {
+      setTransactionNoError('Invalid format. Expected: TR######-###');
+      return false;
+    }
+    setTransactionNoError('');
+    return true;
+  };
+
+  const handleDocumentClaimSubmit = async () => {
+    if (!validateTransactionNo()) {
+      return;
+    }
+
+    try {
+      // Validate transaction number exists and is approved
+      const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/queue`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          office: 'registrar',
+          service: 'Document Claim',
+          role: 'Visitor', // Default role for Document Claim
+          transactionNo: transactionNo.trim().toUpperCase()
+        })
+      });
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        // If response is not JSON, create a result object with error
+        result = {
+          success: false,
+          error: response.statusText || 'An error occurred'
+        };
+      }
+
+      if (response.ok && result.success) {
+        // Store queue data
+        setQueueResult({
+          queueId: result.data.queueId,
+          queueNumber: result.data.queueNumber,
+          office: result.data.office,
+          service: result.data.service,
+          qrCodeUrl: result.data.qrCodeUrl,
+          estimatedWaitTime: result.data.estimatedWaitTime,
+          windowName: result.data.windowName
+        });
+
+        // Generate QR code
+        if (result.data.qrCodeUrl) {
+          await generateQRCode(result.data.qrCodeUrl);
+        }
+
+        // Move to result step
+        setCurrentStep('result');
+      } else {
+        // Show error modal instead of toast
+        const errorMessage = result?.error || result?.message || 'Invalid transaction number or request not approved';
+        console.log('❌ [FRONTEND] Document Claim Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          result,
+          errorMessage
+        });
+        setTransactionNoErrorMessage(errorMessage);
+        setShowTransactionNoErrorModal(true);
+        console.log('✅ [FRONTEND] Modal state set:', {
+          showTransactionNoErrorModal: true,
+          transactionNoErrorMessage: errorMessage
+        });
+      }
+    } catch (error) {
+      console.error('Error validating transaction number:', error);
+      // Show error modal instead of toast
+      setTransactionNoErrorMessage('Please check your connection and try again.');
+      setShowTransactionNoErrorModal(true);
+    }
+  };
+
   // Special handler for Enroll service submission with explicit values
   // Accepts optional officeKey parameter to override selectedDepartment (for office switching)
   const handleEnrollSubmission = async (officeKey = null) => {
@@ -1381,6 +1475,7 @@ const Queue = () => {
         setQueueResult({
           queueId: result.data.queueId,
           queueNumber: result.data.queueNumber,
+          transactionNo: result.data.transactionNo, // Store transaction number
           office: result.data.office,
           service: result.data.service,
           qrCodeUrl: result.data.qrCodeUrl,
@@ -1646,6 +1741,26 @@ const Queue = () => {
     !formErrors.name &&
     !formErrors.contactNumber;
 
+  // Document Request form step validation (computed values to avoid setting errors on every render)
+  const isDocumentRequestStep1Valid =
+    documentRequestForm.name.trim() &&
+    documentRequestForm.lastSYAttended &&
+    documentRequestForm.programGradeStrand.trim() &&
+    !documentRequestErrors.name &&
+    !documentRequestErrors.lastSYAttended &&
+    !documentRequestErrors.programGradeStrand;
+
+  const isDocumentRequestStep2Valid =
+    documentRequestForm.contactNumber.trim() &&
+    documentRequestForm.emailAddress.trim() &&
+    !documentRequestErrors.contactNumber &&
+    !documentRequestErrors.emailAddress &&
+    /^(\+63|0)[0-9]{10}$/.test(documentRequestForm.contactNumber.trim()) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(documentRequestForm.emailAddress.trim());
+
+  const isDocumentRequestStep3Valid =
+    documentRequestForm.request && documentRequestForm.request.length > 0;
+
   const isFormStep2Valid =
     formData.email.trim() &&
     !formErrors.email &&
@@ -1676,6 +1791,28 @@ const Queue = () => {
         // Go back to service selection
         setCurrentStep('service');
         setStudentStatus(null);
+        break;
+
+      case 'documentRequestForm':
+        // Go back to service selection
+        setCurrentStep('service');
+        setDocumentRequestForm({
+          name: '',
+          lastSYAttended: '',
+          programGradeStrand: '',
+          contactNumber: '',
+          emailAddress: '',
+          request: []
+        });
+        setDocumentRequestErrors({});
+        setDocumentRequestFormStep(1);
+        break;
+
+      case 'documentClaim':
+        // Go back to service selection
+        setCurrentStep('service');
+        setTransactionNo('');
+        setTransactionNoError('');
         break;
 
       case 'role':
@@ -2229,25 +2366,38 @@ const Queue = () => {
             </div>
 
             {/* Second Div - Queue Information */}
-            <div className="bg-white rounded-3xl shadow-xl drop-shadow-lg p-2 flex flex-col items-center justify-center min-h-0 overflow-hidden w-[500px] h-[500px]">
+            <div className="bg-white rounded-3xl shadow-xl drop-shadow-lg p-4 flex flex-col items-center justify-center min-h-0 overflow-hidden w-[500px] h-[500px]">
+              {/* Spacer for top balance */}
+              <div className="flex-shrink-0 h-4"></div>
+
               {/* Large Queue Number with Circular Border */}
-              <div className="flex items-center justify-center mb-4 flex-shrink-0">
+              <div className="flex items-center justify-center mb-2 flex-shrink-0">
                 <div className="w-32 h-32 border-4 border-[#1F3463] rounded-full flex items-center justify-center">
-                  <span className="text-5xl font-bold text-[#1F3463]">
+                  <span className="text-4xl font-bold text-[#1F3463] leading-none">
                     {queueNumber.toString().padStart(2, '0')}
                   </span>
                 </div>
               </div>
 
               {/* Queue Number Label */}
-              <h3 className="text-3xl font-bold text-center text-gray-800 mb-4 flex-shrink-0">
+              <h3 className="text-2xl font-bold text-center text-gray-800 mb-1.5 flex-shrink-0 px-4">
                 Queue Number
               </h3>
 
+              {/* Transaction Number */}
+              {queueResult?.transactionNo && (
+                <div className="mb-1.5 text-center flex-shrink-0 px-4">
+                  <span className="text-base text-gray-700">Transaction No:<br /></span>
+                  <span className="text-lg font-semibold text-gray-800 break-all">
+                    {queueResult.transactionNo}
+                  </span>
+                </div>
+              )}
+
               {/* Location Text */}
-              <div className="mb-4 text-center flex-shrink-0">
-                <span className="text-lg text-gray-700">Location:<br /></span>
-                <span className="text-2xl font-semibold text-gray-700">
+              <div className="mb-1.5 text-center flex-shrink-0 px-4">
+                <span className="text-base text-gray-700">Location:<br /></span>
+                <span className="text-xl font-semibold text-gray-700 break-words">
                   {(() => {
                     if (!selectedDepartment) return 'Location not set';
                     const departmentKey = selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions';
@@ -2257,14 +2407,14 @@ const Queue = () => {
               </div>
 
               {/* Instruction Text */}
-              <div className="mb-4 text-center flex-shrink-0">
-                <span className="text-lg text-gray-700">Please Proceed to <br /></span>
-                <span className="text-2xl font-semibold text-gray-700">{windowName}</span>
+              <div className="mb-1.5 text-center flex-shrink-0 px-4">
+                <span className="text-base text-gray-700">Please Proceed to <br /></span>
+                <span className="text-xl font-semibold text-gray-700 break-words">{windowName}</span>
               </div>
 
               {/* Validity Notice */}
-              <div className="mb-4 text-center flex-shrink-0">
-                <p className="text-base font-semibold text-[#1F3463]">
+              <div className="mb-2 text-center flex-shrink-0 px-4">
+                <p className="text-xs font-semibold text-[#1F3463] break-words">
                   This ticket is only valid on {formatCurrentDate()}
                 </p>
               </div>
@@ -2273,7 +2423,7 @@ const Queue = () => {
               <button
                 onClick={handlePrintClick}
                 disabled={isPrinting || !printerAvailable || printerChecking || printAttempts >= 3}
-                className={`px-16 py-3 rounded-full font-bold text-lg transition-all duration-150 shadow-lg flex-shrink-0 ${
+                className={`px-12 py-2 rounded-full font-bold text-base transition-all duration-150 shadow-lg flex-shrink-0 mb-1 ${
                   isPrinting
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : !printerAvailable || printAttempts >= 3
@@ -2294,15 +2444,18 @@ const Queue = () => {
 
               {/* Printer Status Message */}
               {!printerAvailable && !printerChecking && (
-                <p className="text-sm text-red-600 mt-2 text-center">
+                <p className="text-xs text-red-600 text-center px-4">
                   Printer offline. Please use QR code.
                 </p>
               )}
               {printAttempts >= 3 && (
-                <p className="text-sm text-red-600 mt-2 text-center">
+                <p className="text-xs text-red-600 text-center px-4">
                   Max attempts reached. Please use QR code.
                 </p>
               )}
+
+              {/* Spacer for bottom balance */}
+              <div className="flex-shrink-0 h-4"></div>
             </div>
           </div>
         </div>
@@ -2672,91 +2825,625 @@ const Queue = () => {
     );
   }
 
+  // Document Request Form Step
+  if (currentStep === 'documentRequestForm') {
+    // Generate year options from 2025-2026 backwards
+    const currentYear = new Date().getFullYear();
+    const yearOptions = [];
+    for (let year = currentYear + 1; year >= 2000; year--) {
+      yearOptions.push(`${year}-${year + 1}`);
+    }
+
+    const requestTypes = [
+      'Certificate of Enrollment',
+      'Form 137',
+      'Transcript of Records',
+      'Good Moral Certificate',
+      'Certified True Copy of Documents',
+      'Education Service Contracting Certificate (ESC)'
+    ];
+
+    // Step 1: Name, Last S.Y. Attended, Program/Grade/Strand
+    if (documentRequestFormStep === 1) {
+      return (
+        <>
+          <QueueLayout>
+            <style>{`
+              .kiosk-container header { display: none !important; }
+            `}</style>
+
+            <div className="h-full flex flex-col justify-center overflow-y-auto">
+              <div className="flex items-center justify-center w-full px-8 py-8">
+                <div className="flex items-center gap-3 relative">
+                  <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+                      Document Request Form
+                    </h2>
+
+                    <div className="space-y-4">
+                      {/* Name */}
+                      <div>
+                        <label className="block text-lg font-semibold text-gray-700 mb-2">
+                          Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={documentRequestForm.name}
+                          onFocus={() => {
+                            setActiveField('documentRequestName');
+                            setShowKeyboard(true);
+                          }}
+                          onChange={(e) => handleDocumentRequestFieldChange('name', e.target.value)}
+                          className={`w-full px-3 py-2 border-2 rounded-lg text-lg focus:outline-none ${
+                            activeField === 'documentRequestName'
+                              ? 'border-blue-500 bg-blue-50'
+                              : documentRequestErrors.name
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-gray-300 bg-gray-50'
+                          }`}
+                          placeholder="Enter your full name"
+                        />
+                        {documentRequestErrors.name && (
+                          <p className="text-red-600 text-sm mt-1">{documentRequestErrors.name}</p>
+                        )}
+                      </div>
+
+                      {/* Last S.Y. Attended */}
+                      <div>
+                        <label className="block text-lg font-semibold text-gray-700 mb-2">
+                          Last S.Y. Attended <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={documentRequestForm.lastSYAttended}
+                          onChange={(e) => handleDocumentRequestFieldChange('lastSYAttended', e.target.value)}
+                          className={`w-full px-3 py-2 border-2 rounded-lg text-lg focus:outline-none ${
+                            documentRequestErrors.lastSYAttended
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-gray-300 bg-gray-50'
+                          }`}
+                        >
+                          <option value="">Select School Year</option>
+                          {yearOptions.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                        {documentRequestErrors.lastSYAttended && (
+                          <p className="text-red-600 text-sm mt-1">{documentRequestErrors.lastSYAttended}</p>
+                        )}
+                      </div>
+
+                      {/* Program/Grade/Strand */}
+                      <div>
+                        <label className="block text-lg font-semibold text-gray-700 mb-2">
+                          Program/Grade/Strand <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={documentRequestForm.programGradeStrand}
+                          onFocus={() => {
+                            setActiveField('documentRequestProgram');
+                            setShowKeyboard(true);
+                          }}
+                          onChange={(e) => handleDocumentRequestFieldChange('programGradeStrand', e.target.value)}
+                          className={`w-full px-3 py-2 border-2 rounded-lg text-lg focus:outline-none ${
+                            activeField === 'documentRequestProgram'
+                              ? 'border-blue-500 bg-blue-50'
+                              : documentRequestErrors.programGradeStrand
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-gray-300 bg-gray-50'
+                          }`}
+                          placeholder="Enter program, grade, or strand"
+                        />
+                        {documentRequestErrors.programGradeStrand && (
+                          <p className="text-red-600 text-sm mt-1">{documentRequestErrors.programGradeStrand}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation buttons */}
+                  <div className="flex flex-col space-y-3">
+                    <button
+                      onClick={handleDocumentRequestStep1Next}
+                      disabled={!isDocumentRequestStep1Valid}
+                      className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
+                        !isDocumentRequestStep1Valid
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-[#FFE251] text-[#1F3463] active:bg-[#FFD700] active:shadow-md active:scale-95'
+                      }`}
+                    >
+                      NEXT
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrentStep('service');
+                        setDocumentRequestForm({
+                          name: '',
+                          lastSYAttended: '',
+                          programGradeStrand: '',
+                          contactNumber: '',
+                          emailAddress: '',
+                          request: []
+                        });
+                        setDocumentRequestErrors({});
+                        setDocumentRequestFormStep(1);
+                      }}
+                      className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+                    >
+                      PREVIOUS
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <BackButton />
+          </QueueLayout>
+
+          <HolographicKeyboard
+            onKeyPress={handleKeyPress}
+            onBackspace={handleBackspace}
+            onSpace={handleSpace}
+            onHide={hideKeyboard}
+            isVisible={showKeyboard}
+            showAllFields={true}
+            allFieldsData={[
+              {
+                name: 'documentRequestName',
+                label: 'Name (REQUIRED)',
+                value: documentRequestForm.name,
+                placeholder: 'Enter your full name'
+              },
+              {
+                name: 'documentRequestProgram',
+                label: 'Program/Grade/Strand (REQUIRED)',
+                value: documentRequestForm.programGradeStrand,
+                placeholder: 'Enter program, grade, or strand'
+              }
+            ]}
+            activeFieldName={activeField}
+            onFieldFocus={handleFieldFocus}
+            formErrors={documentRequestErrors}
+            showNavigationButtons={true}
+            navigationButtons={[
+              {
+                label: 'NEXT',
+                onClick: handleDocumentRequestStep1Next,
+                disabled: !isDocumentRequestStep1Valid,
+                variant: 'next'
+              },
+              {
+                label: 'PREVIOUS',
+                onClick: () => {
+                  setCurrentStep('service');
+                  setDocumentRequestForm({
+                    name: '',
+                    lastSYAttended: '',
+                    programGradeStrand: '',
+                    contactNumber: '',
+                    emailAddress: '',
+                    request: []
+                  });
+                  setDocumentRequestErrors({});
+                  setDocumentRequestFormStep(1);
+                },
+                disabled: false,
+                variant: 'previous'
+              }
+            ]}
+          />
+        </>
+      );
+    }
+
+    // Step 2: Contact No., Email Address
+    if (documentRequestFormStep === 2) {
+      return (
+        <>
+          <QueueLayout>
+            <style>{`
+              .kiosk-container header { display: none !important; }
+            `}</style>
+
+            <div className="h-full flex flex-col justify-center overflow-y-auto">
+              <div className="flex items-center justify-center w-full px-8 py-8">
+                <div className="flex items-center gap-3 relative">
+                  <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+                      Document Request Form
+                    </h2>
+
+                    <div className="space-y-4">
+                      {/* Contact Number */}
+                      <div>
+                        <label className="block text-lg font-semibold text-gray-700 mb-2">
+                          Contact No. <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={documentRequestForm.contactNumber}
+                          onFocus={() => {
+                            setActiveField('documentRequestContact');
+                            setShowKeyboard(true);
+                          }}
+                          onChange={(e) => handleDocumentRequestFieldChange('contactNumber', e.target.value)}
+                          className={`w-full px-3 py-2 border-2 rounded-lg text-lg focus:outline-none ${
+                            activeField === 'documentRequestContact'
+                              ? 'border-blue-500 bg-blue-50'
+                              : documentRequestErrors.contactNumber
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-gray-300 bg-gray-50'
+                          }`}
+                          placeholder="+63XXXXXXXXXX or 0XXXXXXXXXX"
+                        />
+                        {documentRequestErrors.contactNumber && (
+                          <p className="text-red-600 text-sm mt-1">{documentRequestErrors.contactNumber}</p>
+                        )}
+                      </div>
+
+                      {/* Email Address */}
+                      <div>
+                        <label className="block text-lg font-semibold text-gray-700 mb-2">
+                          Email Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={documentRequestForm.emailAddress}
+                          onFocus={() => {
+                            setActiveField('documentRequestEmail');
+                            setShowKeyboard(true);
+                          }}
+                          onChange={(e) => handleDocumentRequestFieldChange('emailAddress', e.target.value)}
+                          className={`w-full px-3 py-2 border-2 rounded-lg text-lg focus:outline-none ${
+                            activeField === 'documentRequestEmail'
+                              ? 'border-blue-500 bg-blue-50'
+                              : documentRequestErrors.emailAddress
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-gray-300 bg-gray-50'
+                          }`}
+                          placeholder="your.email@example.com"
+                        />
+                        {documentRequestErrors.emailAddress && (
+                          <p className="text-red-600 text-sm mt-1">{documentRequestErrors.emailAddress}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation buttons */}
+                  <div className="flex flex-col space-y-3">
+                    <button
+                      onClick={handleDocumentRequestStep2Next}
+                      disabled={!isDocumentRequestStep2Valid}
+                      className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
+                        !isDocumentRequestStep2Valid
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-[#FFE251] text-[#1F3463] active:bg-[#FFD700] active:shadow-md active:scale-95'
+                      }`}
+                    >
+                      NEXT
+                    </button>
+                    <button
+                      onClick={handleDocumentRequestStep2Previous}
+                      className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+                    >
+                      PREVIOUS
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <BackButton />
+          </QueueLayout>
+
+          <HolographicKeyboard
+            onKeyPress={handleKeyPress}
+            onBackspace={handleBackspace}
+            onSpace={handleSpace}
+            onHide={hideKeyboard}
+            isVisible={showKeyboard}
+            showAllFields={true}
+            allFieldsData={[
+              {
+                name: 'documentRequestContact',
+                label: 'Contact No. (REQUIRED)',
+                value: documentRequestForm.contactNumber,
+                placeholder: '+63XXXXXXXXXX or 0XXXXXXXXXX'
+              },
+              {
+                name: 'documentRequestEmail',
+                label: 'Email Address (REQUIRED)',
+                value: documentRequestForm.emailAddress,
+                placeholder: 'your.email@example.com'
+              }
+            ]}
+            activeFieldName={activeField}
+            onFieldFocus={handleFieldFocus}
+            formErrors={documentRequestErrors}
+            showNavigationButtons={true}
+            navigationButtons={[
+              {
+                label: 'NEXT',
+                onClick: handleDocumentRequestStep2Next,
+                disabled: !isDocumentRequestStep2Valid,
+                variant: 'next'
+              },
+              {
+                label: 'PREVIOUS',
+                onClick: handleDocumentRequestStep2Previous,
+                disabled: false,
+                variant: 'previous'
+              }
+            ]}
+          />
+        </>
+      );
+    }
+
+    // Step 3: Request checkboxes
+    if (documentRequestFormStep === 3) {
+      return (
+        <>
+          <QueueLayout>
+            <style>{`
+              .kiosk-container header { display: none !important; }
+            `}</style>
+
+            <div className="h-full flex flex-col justify-center overflow-y-auto">
+              <div className="flex items-center justify-center w-full px-8 py-8">
+                <div className="flex items-center gap-3 relative">
+                  <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+                      Document Request Form
+                    </h2>
+
+                    <div className="space-y-4">
+                      {/* Request Types - Checkboxes */}
+                      <div>
+                        <label className="block text-lg font-semibold text-gray-700 mb-2">
+                          Request <span className="text-red-500">*</span>
+                        </label>
+                        <div className="space-y-2 border-2 border-gray-300 rounded-lg p-3 bg-gray-50">
+                          {requestTypes.map((requestType) => (
+                            <label key={requestType} className="flex items-center space-x-3 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={documentRequestForm.request.includes(requestType)}
+                                onChange={() => handleDocumentRequestCheckboxChange(requestType)}
+                                className="w-5 h-5 text-[#1F3463] border-gray-300 rounded focus:ring-[#1F3463]"
+                              />
+                              <span className="text-lg text-gray-700">{requestType}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {documentRequestErrors.request && (
+                          <p className="text-red-600 text-sm mt-1">{documentRequestErrors.request}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation buttons */}
+                  <div className="flex flex-col space-y-3">
+                    <button
+                      onClick={handleDocumentRequestStep3Next}
+                      disabled={!isDocumentRequestStep3Valid}
+                      className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
+                        !isDocumentRequestStep3Valid
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-[#FFE251] text-[#1F3463] active:bg-[#FFD700] active:shadow-md active:scale-95'
+                      }`}
+                    >
+                      NEXT
+                    </button>
+                    <button
+                      onClick={handleDocumentRequestStep3Previous}
+                      className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+                    >
+                      PREVIOUS
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <BackButton />
+          </QueueLayout>
+
+          {/* Confirmation Modal */}
+          <ConfirmationModal
+            isOpen={showConfirmationModal}
+            onYes={handleDocumentRequestConfirm}
+            onNo={handleConfirmationNo}
+          />
+
+          {/* Thank You Modal */}
+          {showDocumentRequestThankYou && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center font-kiosk-public">
+              {/* Black background with 80% opacity */}
+              <div className="absolute inset-0 bg-black bg-opacity-80" />
+
+              {/* Modal Container - Centered with buttons positioned below */}
+              <div className="relative flex flex-col items-center">
+                {/* Modal Content - Perfectly centered */}
+                <div className="bg-white rounded-2xl shadow-3xl drop-shadow-2xl p-6 mx-3 max-w-lg w-full">
+                  {/* Modal Message */}
+                  <h2 className="text-2xl font-bold text-gray-800 text-center mb-4">
+                    Thank you for completing the form.
+                  </h2>
+                  <p className="text-lg text-gray-600 text-center">
+                    Please wait for the email notification regarding the status of your document request.
+                  </p>
+                </div>
+
+                {/* Buttons positioned below modal */}
+                <div className="flex space-x-6 mt-6">
+                  {/* OK Button */}
+                  <button
+                    onClick={handleDocumentRequestThankYouClose}
+                    className="w-20 h-20 rounded-full border-2 border-white bg-[#FFE251] text-[#1F3463] font-bold text-xs active:bg-[#FFD700] transition-all duration-150 shadow-lg active:shadow-md active:scale-95"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+  }
+
+  // Document Claim Step
+  if (currentStep === 'documentClaim') {
+    return (
+      <>
+        <QueueLayout>
+          <style>{`
+            .kiosk-container header { display: none !important; }
+          `}</style>
+
+          <div className="h-full flex flex-col justify-center">
+            <div className="flex items-center justify-center w-full px-8">
+              <div className="flex items-center gap-3 relative">
+                <div className="bg-white rounded-lg shadow-xl drop-shadow-lg p-8 w-[500px]">
+                  <h2 className="text-4xl font-bold text-gray-800 mb-4 text-center">
+                    Enter Transaction No.
+                  </h2>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="transactionNo" className="block text-xl font-semibold text-gray-700 mb-2">
+                        Transaction No. <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="transactionNo"
+                        type="text"
+                        value={transactionNo}
+                        onFocus={() => {
+                          setActiveField('transactionNo');
+                          setShowKeyboard(true);
+                        }}
+                        onChange={(e) => {
+                          const value = e.target.value.toUpperCase();
+                          setTransactionNo(value);
+                          if (transactionNoError) {
+                            setTransactionNoError('');
+                          }
+                        }}
+                        className={`w-full px-3 py-3 border-2 rounded-lg text-xl focus:outline-none ${
+                          activeField === 'transactionNo'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 bg-gray-50'
+                        }`}
+                        placeholder="TR######-###"
+                        maxLength={12}
+                      />
+                      {transactionNoError && (
+                        <p className="text-red-600 text-sm mt-1">{transactionNoError}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col space-y-3">
+                  <button
+                    onClick={handleDocumentClaimSubmit}
+                    disabled={!transactionNo.trim()}
+                    className={`w-20 h-20 rounded-full border-2 border-white font-bold text-xs transition-all duration-150 shadow-lg ${
+                      !transactionNo.trim()
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-[#FFE251] text-[#1F3463] active:bg-[#FFD700] active:shadow-md active:scale-95'
+                    }`}
+                  >
+                    NEXT
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCurrentStep('service');
+                      setTransactionNo('');
+                      setTransactionNoError('');
+                    }}
+                    className="w-20 h-20 rounded-full border-2 border-white bg-[#1F3463] text-white font-bold text-xs active:bg-[#1A2E56] active:shadow-md active:scale-95 transition-all duration-150 shadow-lg"
+                  >
+                    PREVIOUS
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <BackButton />
+        </QueueLayout>
+
+        <HolographicKeyboard
+          onKeyPress={handleKeyPress}
+          onBackspace={handleBackspace}
+          onSpace={handleSpace}
+          onEnter={handleEnter}
+          onHide={hideKeyboard}
+          isVisible={showKeyboard}
+          activeInputValue={transactionNo}
+          activeInputLabel="Transaction No. (REQUIRED)"
+          activeInputPlaceholder="TR######-###"
+          showNavigationButtons={true}
+          navigationButtons={[
+            {
+              label: 'NEXT',
+              onClick: handleDocumentClaimSubmit,
+              disabled: !transactionNo.trim(),
+              variant: 'next'
+            },
+            {
+              label: 'PREVIOUS',
+              onClick: () => {
+                setCurrentStep('service');
+                setTransactionNo('');
+                setTransactionNoError('');
+              },
+              disabled: false,
+              variant: 'previous'
+            }
+          ]}
+        />
+
+        {/* Transaction No. Error Modal - Inside Document Claim step */}
+        <TransactionNoErrorModal
+          isOpen={showTransactionNoErrorModal}
+          onClose={() => setShowTransactionNoErrorModal(false)}
+          message={transactionNoErrorMessage}
+        />
+      </>
+    );
+  }
+
   // Role Selection Step
   if (currentStep === 'role') {
     console.log('🎭 ROLE STEP - Rendering with roleOptions:', roleOptions);
     return (
-      <QueueLayout>
-        <div className="h-full flex flex-col items-center justify-center">
-          {/* Header */}
-          <div className="mb-10">
-            <h2 className="text-4xl font-semibold text-center drop-shadow-lg whitespace-nowrap" style={{ color: '#1F3463' }}>
-              SELECT ROLE
-            </h2>
-          </div>
-
-          {/* Responsive Grid Container */}
-          <div className="w-full flex justify-center">
-            <ResponsiveGrid
-              items={roleOptions}
-              onItemClick={(role) => handleRoleSelect(role)}
-              renderItem={(role) => (
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-white">
-                    {role}
-                  </h3>
-                </div>
-              )}
-              showPagination={roleOptions.length > 6}
-            />
-          </div>
-        </div>
-
-        <BackButton />
-      </QueueLayout>
+      <RoleSelection
+        roleOptions={roleOptions}
+        onRoleSelect={handleRoleSelect}
+        onBack={() => {
+          if (selectedService === 'Enroll') {
+            setCurrentStep('studentStatus');
+          } else {
+            setCurrentStep('service');
+          }
+        }}
+      />
     );
   }
 
   // Priority Status Step
   if (currentStep === 'priority') {
     return (
-      <QueueLayout>
-        <div className="h-full flex flex-col items-center justify-center">
-          {/* Header */}
-          <div className="mb-10">
-            <h2 className="text-4xl font-semibold text-center drop-shadow-lg whitespace-nowrap mb-3" style={{ color: '#1F3463' }}>
-              DO YOU BELONG TO THE FOLLOWING?
-            </h2>
-            {/* Subheader with side-by-side layout and images */}
-            <div className="flex items-start justify-center gap-8 text-2xl font-semibold text-center drop-shadow-lg mt-8" style={{ color: '#1F3463' }}>
-              <div className="flex flex-col items-center">
-                <img
-                  src="/queue/pwd.png"
-                  alt="Person with Disabilities"
-                  className="mb-2 h-16 w-auto object-contain"
-                />
-                <div>PERSON WITH <br></br>DISABILITIES (PWD)</div>
-              </div>
-              <div className="flex flex-col items-center">
-                <img
-                  src="/queue/senior.png"
-                  alt="Senior Citizen"
-                  className="mb-2 h-16 w-auto object-contain"
-                />
-                <div>SENIOR CITIZEN</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Responsive Grid Container */}
-          <div className="w-full flex justify-center">
-            <ResponsiveGrid
-              items={priorityOptions}
-              onItemClick={(option) => handlePrioritySelect(option.key)}
-              renderItem={(option) => (
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-white">
-                    {option.label}
-                  </h3>
-                </div>
-              )}
-              showPagination={priorityOptions.length > 6}
-            />
-          </div>
-        </div>
-
-        <BackButton />
-      </QueueLayout>
+      <PrioritySelection
+        priorityOptions={priorityOptions}
+        onPrioritySelect={handlePrioritySelect}
+        onBack={() => setCurrentStep('role')}
+      />
     );
   }
 
@@ -2786,6 +3473,13 @@ const Queue = () => {
         isOpen={showPrintErrorModal}
         onClose={() => setShowPrintErrorModal(false)}
         message={printErrorMessage}
+      />
+
+      {/* Transaction No. Error Modal */}
+      <TransactionNoErrorModal
+        isOpen={showTransactionNoErrorModal}
+        onClose={() => setShowTransactionNoErrorModal(false)}
+        message={transactionNoErrorMessage}
       />
 
       {/* Printing Animation Overlay */}
