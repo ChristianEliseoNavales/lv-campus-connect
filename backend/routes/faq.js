@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator');
 const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 const faqController = require('../controllers/faqController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Validation rules for FAQ
 const faqValidation = [
@@ -28,19 +29,19 @@ const faqValidation = [
 ];
 
 // GET /api/faq - Get all FAQs (with optional filtering)
-router.get('/', verifyToken, checkApiAccess, faqController.getFAQs);
+router.get('/', verifyToken, checkApiAccess, asyncHandler(faqController.getFAQs));
 
 // GET /api/faq/:id - Get single FAQ by ID
-router.get('/:id', verifyToken, checkApiAccess, faqController.getFAQById);
+router.get('/:id', verifyToken, checkApiAccess, asyncHandler(faqController.getFAQById));
 
 // POST /api/faq - Create new FAQ
-router.post('/', verifyToken, checkApiAccess, faqValidation, faqController.createFAQ);
+router.post('/', verifyToken, checkApiAccess, faqValidation, asyncHandler(faqController.createFAQ));
 
 // PUT /api/faq/:id - Update FAQ
-router.put('/:id', verifyToken, checkApiAccess, faqValidation, faqController.updateFAQ);
+router.put('/:id', verifyToken, checkApiAccess, faqValidation, asyncHandler(faqController.updateFAQ));
 
 // DELETE /api/faq/:id - Delete FAQ
-router.delete('/:id', verifyToken, checkApiAccess, faqController.deleteFAQ);
+router.delete('/:id', verifyToken, checkApiAccess, asyncHandler(faqController.deleteFAQ));
 
 module.exports = router;
 

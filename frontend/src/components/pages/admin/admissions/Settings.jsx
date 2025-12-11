@@ -1423,7 +1423,7 @@ const Settings = () => {
 
 
       {/* Settings Management Grid Container - with visible background, rounded corners, and padding */}
-      <div className="flex flex-col lg:grid gap-2 sm:gap-2.5 md:gap-3 min-h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] bg-white p-3 sm:p-4 md:p-5 border border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
+      <div className="flex flex-col lg:grid gap-2 sm:gap-2.5 md:gap-3 min-h-[calc(100vh-10rem)] lg:h-[calc(100vh-10rem)] bg-white p-3 sm:p-4 md:p-5 border rounded-xl sm:rounded-2xl border-gray-200" style={{ gridTemplateColumns: '1fr 2fr', gridTemplateRows: 'auto auto 1fr 1fr' }}>
         {/* First div: Row 1, spanning both columns */}
         <div className="lg:col-span-2 lg:row-span-1 bg-white rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 md:py-2">
           <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 items-start lg:items-center">
@@ -1525,7 +1525,7 @@ const Settings = () => {
               }).map((service) => (
                 <div
                   key={service.id}
-                  className="p-2 sm:p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                  className="p-2 sm:p-2.5 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 hover:bg-gray-50 flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-2.5">
                     <span className="text-xs sm:text-sm text-gray-900 font-medium">{service.name}</span>
@@ -1620,7 +1620,7 @@ const Settings = () => {
             {(windows || []).slice(0, 4).map((window) => (
               <div
                 key={window.id}
-                className={`flex flex-col md:grid md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors ${
+                className={`flex flex-col md:grid md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 hover:bg-gray-50 ${
                   isWindowsScrollable ? 'flex-shrink-0' : 'flex-1'
                 }`}
               >

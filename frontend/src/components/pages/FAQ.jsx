@@ -5,6 +5,27 @@ import { FaSearch } from 'react-icons/fa';
 import API_CONFIG from '../../config/api';
 import HolographicKeyboard from '../ui/HolographicKeyboard';
 
+// Styles for formatted FAQ content
+const faqAnswerStyles = `
+  .faq-answer-content b,
+  .faq-answer-content strong {
+    font-weight: 700;
+  }
+  .faq-answer-content i,
+  .faq-answer-content em {
+    font-style: italic;
+  }
+  .faq-answer-content u {
+    text-decoration: underline;
+  }
+  .faq-answer-content span[style*="font-size"] {
+    display: inline;
+  }
+  .faq-answer-content {
+    line-height: 1.6;
+  }
+`;
+
 const FAQ = () => {
   const { socket, isConnected, joinRoom, leaveRoom, subscribe } = useSocket();
   const [openFAQ, setOpenFAQ] = useState(null);
@@ -153,6 +174,7 @@ const FAQ = () => {
 
   return (
     <>
+      <style>{faqAnswerStyles}</style>
       <motion.div
         className="h-full flex flex-col"
         variants={containerVariants}
@@ -239,16 +261,16 @@ const FAQ = () => {
                   // Only animate first 10 items for performance
                   const shouldAnimate = index < 10;
                   const Component = shouldAnimate ? motion.div : 'div';
-                  const animationProps = shouldAnimate 
-                    ? { 
-                        variants: faqItemVariants, 
+                  const animationProps = shouldAnimate
+                    ? {
+                        variants: faqItemVariants,
                         custom: index,
                         className: "bg-gray-50 rounded-lg shadow-lg drop-shadow-sm border border-gray-200 overflow-hidden"
                       }
-                    : { 
+                    : {
                         className: "bg-gray-50 rounded-lg shadow-lg drop-shadow-sm border border-gray-200 overflow-hidden fade-in"
                       };
-                  
+
                   return (
                     <Component
                       key={faq.id}
@@ -288,9 +310,14 @@ const FAQ = () => {
 
                       {openFAQ === faq.id && (
                         <div className="px-5 pb-3 border-t border-gray-100 animate-fadeIn bg-white">
-                          <p className="text-base text-gray-700 leading-relaxed pt-3">
-                            {faq.answer}
-                          </p>
+                          <div
+                            className="text-base text-gray-700 leading-relaxed pt-3 faq-answer-content"
+                            dangerouslySetInnerHTML={{ __html: faq.answer }}
+                            style={{
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word'
+                            }}
+                          />
                         </div>
                       )}
                     </Component>

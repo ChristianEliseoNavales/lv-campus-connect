@@ -5,6 +5,7 @@ import SocketProvider from './contexts/SocketContext';
 import { KioskLayout, AdminLayout } from './components/layouts';
 import { ProtectedRoute, Login, Unauthorized } from './components/auth';
 import SessionManager from './components/auth/SessionManager';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -66,12 +67,13 @@ const PortalQueue = lazy(() => import('./components/pages').then(module => ({ de
 
 function App() {
   return (
-    <AuthProvider>
-      <SocketProvider>
-        <SessionManager />
-        <Router future={{ v7_relativeSplatPath: true }}>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
+    <ErrorBoundary>
+      <AuthProvider>
+        <SocketProvider>
+          <SessionManager />
+          <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
             {/* Public Kiosk Routes - No Authentication Required */}
             {/* Idle Page - Default Landing Page - No Layout Wrapper */}
             <Route path="/" element={<IdlePage />} />
@@ -308,11 +310,12 @@ function App() {
 
             {/* Unauthorized Access */}
             <Route path="/admin/unauthorized" element={<Unauthorized />} />
-            </Routes>
-          </Suspense>
-        </Router>
-      </SocketProvider>
-    </AuthProvider>
+              </Routes>
+            </Suspense>
+          </Router>
+        </SocketProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

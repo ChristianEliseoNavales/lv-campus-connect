@@ -3,6 +3,7 @@ const { OAuth2Client } = require('google-auth-library');
 const { User } = require('../models');
 const { AuditService } = require('../middleware/auditMiddleware');
 const { getDefaultPageAccess, getOfficeForRole } = require('../utils/rolePermissions');
+const { ValidationError, AuthenticationError, AuthorizationError, NotFoundError } = require('../utils/errorHandler');
 
 // Initialize Google OAuth2 Client
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -11,24 +12,20 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
  * POST /api/auth/google
  * Verify Google OAuth token and authenticate user
  */
-async function googleAuth(req, res, next) {
-  try {
-    const { credential } = req.body;
+async function googleAuth(req, res) {
+  const { credential } = req.body;
 
-    if (!credential) {
-      await AuditService.logAuth({
-        action: 'LOGIN_FAILED',
-        email: 'unknown',
-        req,
-        success: false,
-        errorMessage: 'No credential provided'
-      });
+  if (!credential) {
+    await AuditService.logAuth({
+      action: 'LOGIN_FAILED',
+      email: 'unknown',
+      req,
+      success: false,
+      errorMessage: 'No credential provided'
+    });
 
-      return res.status(400).json({
-        success: false,
-        error: 'No credential provided'
-      });
-    }
+    throw new ValidationError('No credential provided');
+  }
 
     // Verify Google ID token
     let ticket;
@@ -48,11 +45,7 @@ async function googleAuth(req, res, next) {
         errorMessage: 'Invalid Google token'
       });
 
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid Google token',
-        message: 'Failed to verify your Google account. Please try again.'
-      });
+      throw new AuthenticationError('Failed to verify your Google account. Please try again.');
     }
 
     // Extract user information from verified token
@@ -78,11 +71,7 @@ async function googleAuth(req, res, next) {
         errorMessage: 'User not registered in system'
       });
 
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied',
-        message: 'Your email is not registered in the system. Please contact the administrator.'
-      });
+      throw new AuthorizationError('Your email is not registered in the system. Please contact the administrator.');
     }
 
     // Check if user is active
@@ -98,11 +87,7 @@ async function googleAuth(req, res, next) {
         errorMessage: 'User account is inactive'
       });
 
-      return res.status(403).json({
-        success: false,
-        error: 'Account inactive',
-        message: 'Your account has been deactivated. Please contact the administrator.'
-      });
+      throw new AuthorizationError('Your account has been deactivated. Please contact the administrator.');
     }
 
     // Update user's Google ID and profile picture if not set
@@ -201,77 +186,44 @@ async function googleAuth(req, res, next) {
       token,
       user: userData
     });
-
-  } catch (error) {
-    console.error('Authentication error:', error);
-
-    await AuditService.logAuth({
-      action: 'LOGIN_FAILED',
-      email: req.body.email || 'unknown',
-      req,
-      success: false,
-      errorMessage: error.message
-    });
-
-    res.status(500).json({
-      success: false,
-      error: 'Authentication failed',
-      message: 'An error occurred during authentication. Please try again.'
-    });
-  }
 }
 
 /**
  * GET /api/auth/verify
  * Verify JWT token and return user data
  */
-async function verifyToken(req, res, next) {
+async function verifyToken(req, res) {
+  // Extract token from Authorization header
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new AuthenticationError('No token provided');
+  }
+
+  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+  // Verify JWT token
+  let decoded;
   try {
-    // Extract token from Authorization header
-    const authHeader = req.headers.authorization;
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (jwtError) {
+    console.error('JWT verification failed:', jwtError.message);
+    throw new AuthenticationError('Your session has expired. Please sign in again.');
+  }
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        error: 'No token provided'
-      });
-    }
+  // Fetch fresh user data from database with assignedWindows populated
+  const user = await User.findById(decoded.id)
+    .select('-password -googleId')
+    .populate('assignedWindows', 'name office')
+    .populate('assignedWindow', 'name office'); // Keep for backward compatibility
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+  if (!user) {
+    throw new NotFoundError('User');
+  }
 
-    // Verify JWT token
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (jwtError) {
-      console.error('JWT verification failed:', jwtError.message);
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid or expired token',
-        message: 'Your session has expired. Please sign in again.'
-      });
-    }
-
-    // Fetch fresh user data from database with assignedWindows populated
-    const user = await User.findById(decoded.id)
-      .select('-password -googleId')
-      .populate('assignedWindows', 'name office')
-      .populate('assignedWindow', 'name office'); // Keep for backward compatibility
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
-
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        error: 'Account inactive',
-        message: 'Your account has been deactivated.'
-      });
-    }
+  if (!user.isActive) {
+    throw new AuthorizationError('Your account has been deactivated.');
+  }
 
     // Ensure pageAccess is populated (in case user was created before this was implemented)
     let pageAccess = user.pageAccess || [];
@@ -320,59 +272,40 @@ async function verifyToken(req, res, next) {
       success: true,
       user: userData
     });
-
-  } catch (error) {
-    console.error('Token verification error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Verification failed',
-      message: 'An error occurred during token verification.'
-    });
-  }
 }
 
 /**
  * POST /api/auth/logout
  * Logout user (mainly for audit trail)
  */
-async function logout(req, res, next) {
-  try {
-    // Extract token to get user info for audit trail
-    const authHeader = req.headers.authorization;
+async function logout(req, res) {
+  // Extract token to get user info for audit trail
+  const authHeader = req.headers.authorization;
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
 
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Log logout event
-        await AuditService.logAuth({
-          action: 'LOGOUT',
-          userId: decoded.id,
-          email: decoded.email,
-          req,
-          success: true
-        });
-      } catch (jwtError) {
-        // Token invalid or expired, but still allow logout
-        console.log('Logout with invalid/expired token');
-      }
+      // Log logout event
+      await AuditService.logAuth({
+        action: 'LOGOUT',
+        userId: decoded.id,
+        email: decoded.email,
+        req,
+        success: true
+      });
+    } catch (jwtError) {
+      // Token invalid or expired, but still allow logout
+      console.log('Logout with invalid/expired token');
     }
-
-    res.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
-
-  } catch (error) {
-    console.error('Logout error:', error);
-    // Still return success even if audit logging fails
-    res.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
   }
+
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
+  });
 }
 
 /**
@@ -380,45 +313,35 @@ async function logout(req, res, next) {
  * Debug endpoint to check current user's permissions
  * Only available in development mode
  */
-async function debugPermissions(req, res, next) {
+async function debugPermissions(req, res) {
+  // Only allow in development
+  if (process.env.NODE_ENV === 'production' && process.env.LOG_LEVEL !== 'debug') {
+    throw new AuthorizationError('Debug endpoints are disabled in production');
+  }
+
+  // Get token from Authorization header
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new AuthenticationError('No token provided');
+  }
+
+  const token = authHeader.substring(7);
+
+  // Verify JWT token
+  let decoded;
   try {
-    // Only allow in development
-    if (process.env.NODE_ENV === 'production' && process.env.LOG_LEVEL !== 'debug') {
-      return res.status(403).json({
-        error: 'Debug endpoints are disabled in production'
-      });
-    }
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (jwtError) {
+    throw new AuthenticationError(`Invalid or expired token: ${jwtError.message}`);
+  }
 
-    // Get token from Authorization header
-    const authHeader = req.headers.authorization;
+  // Fetch user from database
+  const user = await User.findById(decoded.id).select('-password');
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'No token provided'
-      });
-    }
-
-    const token = authHeader.substring(7);
-
-    // Verify JWT token
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (jwtError) {
-      return res.status(401).json({
-        error: 'Invalid or expired token',
-        details: jwtError.message
-      });
-    }
-
-    // Fetch user from database
-    const user = await User.findById(decoded.id).select('-password');
-
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
-    }
+  if (!user) {
+    throw new NotFoundError('User');
+  }
 
     // Get expected pageAccess for this role
     const expectedPageAccess = getDefaultPageAccess(user.role);
@@ -441,13 +364,6 @@ async function debugPermissions(req, res, next) {
       },
       tokenPayload: decoded
     });
-  } catch (error) {
-    console.error('Debug permissions error:', error);
-    res.status(500).json({
-      error: 'Server error',
-      details: error.message
-    });
-  }
 }
 
 module.exports = {

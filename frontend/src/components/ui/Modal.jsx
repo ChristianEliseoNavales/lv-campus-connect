@@ -160,10 +160,7 @@ export const ConfirmModal = ({
             {cancelText}
           </button>
           <button
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={onConfirm}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${style.confirmButton}`}
           >
             {confirmText}

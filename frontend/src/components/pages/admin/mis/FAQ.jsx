@@ -5,6 +5,7 @@ import { FiEdit3 } from 'react-icons/fi';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { ToastContainer, ConfirmModal } from '../../../ui';
 import Pagination from '../../../ui/Pagination';
+import RichTextEditor from '../../../ui/RichTextEditor';
 import { useNotification } from '../../../../hooks/useNotification';
 import useURLState from '../../../../hooks/useURLState';
 import Portal from '../../../ui/Portal';
@@ -196,11 +197,14 @@ const FAQ = () => {
       errors.question = 'Question cannot exceed 500 characters';
     }
 
-    if (!formData.answer.trim()) {
+    // Strip HTML tags for length validation
+    const answerText = formData.answer.replace(/<[^>]*>/g, '').trim();
+
+    if (!answerText) {
       errors.answer = 'Answer is required';
-    } else if (formData.answer.length < 10) {
+    } else if (answerText.length < 10) {
       errors.answer = 'Answer must be at least 10 characters';
-    } else if (formData.answer.length > 2000) {
+    } else if (answerText.length > 2000) {
       errors.answer = 'Answer cannot exceed 2000 characters';
     }
 
@@ -381,7 +385,7 @@ const FAQ = () => {
                 type="number"
                 value={faqsPerPage}
                 onChange={(e) => updateState('faqsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] text-center"
                 min="5"
                 max="50"
               />
@@ -642,28 +646,23 @@ const FAQ = () => {
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       Answer <span className="text-red-500">*</span>
                     </label>
-                    <textarea
+                    <RichTextEditor
                       value={formData.answer}
-                      onChange={(e) => {
-                        setFormData({ ...formData, answer: e.target.value });
+                      onChange={(html, textLength) => {
+                        setFormData({ ...formData, answer: html });
                         if (formErrors.answer) {
                           setFormErrors({ ...formErrors, answer: '' });
                         }
                       }}
-                      rows={5}
-                      maxLength={2000}
-                      className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] ${
-                        formErrors.answer ? 'border-red-500' : 'border-gray-300'
-                      }`}
                       placeholder="Enter the answer..."
+                      error={!!formErrors.answer}
+                      maxLength={2000}
+                      rows={5}
                     />
                     <div className="flex justify-between mt-1">
                       {formErrors.answer && (
                         <p className="text-[10px] sm:text-xs text-red-500">{formErrors.answer}</p>
                       )}
-                      <p className="text-[10px] sm:text-xs text-gray-500 ml-auto">
-                        {formData.answer.length}/2000 characters
-                      </p>
                     </div>
                   </div>
 

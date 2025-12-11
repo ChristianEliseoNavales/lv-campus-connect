@@ -3,6 +3,7 @@ const router = express.Router();
 const { query } = require('express-validator');
 const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 const queueRatingsController = require('../controllers/queueRatingsController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // GET /api/queue-ratings - Get ratings from Queue collection with pagination, filtering, and search
 router.get('/', verifyToken, checkApiAccess, [
@@ -13,7 +14,7 @@ router.get('/', verifyToken, checkApiAccess, [
   query('rating').optional().isInt({ min: 1, max: 5 }).withMessage('Rating must be between 1 and 5'),
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date')
-], queueRatingsController.getQueueRatings);
+], asyncHandler(queueRatingsController.getQueueRatings));
 
 module.exports = router;
 

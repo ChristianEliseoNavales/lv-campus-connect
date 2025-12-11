@@ -474,22 +474,29 @@ async function getDashboardTableData(req, res, next) {
       queuedAt: { $gte: today }
     });
 
-    // Calculate average turnaround time for completed queues
-    const completedQueues = await Queue.find({
-      office: department, // Use 'office' field in database, value comes from route parameter
-      status: 'completed',
-      queuedAt: { $exists: true },
-      completedAt: { $exists: true }
-    }).select('queuedAt completedAt').lean();
+    // Calculate average turnaround time for completed queues using aggregation (optimized)
+    const turnaroundStats = await Queue.aggregate([
+      {
+        $match: {
+          office: department, // Use 'office' field in database, value comes from route parameter
+          status: 'completed',
+          queuedAt: { $exists: true },
+          completedAt: { $exists: true }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgTurnaroundMs: {
+            $avg: { $subtract: ['$completedAt', '$queuedAt'] }
+          }
+        }
+      }
+    ]);
 
     let averageTurnaroundTime = '0 mins';
-    if (completedQueues.length > 0) {
-      const totalTurnaroundMs = completedQueues.reduce((total, queue) => {
-        const turnaroundMs = new Date(queue.completedAt) - new Date(queue.queuedAt);
-        return total + turnaroundMs;
-      }, 0);
-
-      const averageTurnaroundMs = totalTurnaroundMs / completedQueues.length;
+    if (turnaroundStats.length > 0 && turnaroundStats[0].avgTurnaroundMs !== null && turnaroundStats[0].avgTurnaroundMs !== undefined) {
+      const averageTurnaroundMs = turnaroundStats[0].avgTurnaroundMs;
       const averageTurnaroundMins = Math.round(averageTurnaroundMs / (1000 * 60));
 
       // Format time in human-readable format
@@ -589,7 +596,7 @@ async function getCompleteDashboardData(req, res, next) {
       totalQueuesCount,
       queueDataByWindow,
       todayVisitsCount,
-      completedQueuesForTurnaround
+      turnaroundStatsResult
     ] = await Promise.all([
       // Today's stats aggregation
       Queue.aggregate([
@@ -671,13 +678,25 @@ async function getCompleteDashboardData(req, res, next) {
         office: department,
         queuedAt: { $gte: today }
       }),
-      // Completed queues for turnaround time calculation
-      Queue.find({
-        office: department,
-        status: 'completed',
-        queuedAt: { $exists: true },
-        completedAt: { $exists: true }
-      }).select('queuedAt completedAt').lean()
+      // Completed queues for turnaround time calculation (using aggregation for performance)
+      Queue.aggregate([
+        {
+          $match: {
+            office: department,
+            status: 'completed',
+            queuedAt: { $exists: true },
+            completedAt: { $exists: true }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            avgTurnaroundMs: {
+              $avg: { $subtract: ['$completedAt', '$queuedAt'] }
+            }
+          }
+        }
+      ])
     ]);
 
     // Process stats
@@ -708,15 +727,10 @@ async function getCompleteDashboardData(req, res, next) {
       };
     });
 
-    // Calculate average turnaround time
+    // Calculate average turnaround time from aggregation result
     let averageTurnaroundTime = '0 mins';
-    if (completedQueuesForTurnaround.length > 0) {
-      const totalTurnaroundMs = completedQueuesForTurnaround.reduce((total, queue) => {
-        const turnaroundMs = new Date(queue.completedAt) - new Date(queue.queuedAt);
-        return total + turnaroundMs;
-      }, 0);
-
-      const averageTurnaroundMs = totalTurnaroundMs / completedQueuesForTurnaround.length;
+    if (turnaroundStatsResult.length > 0 && turnaroundStatsResult[0].avgTurnaroundMs !== null && turnaroundStatsResult[0].avgTurnaroundMs !== undefined) {
+      const averageTurnaroundMs = turnaroundStatsResult[0].avgTurnaroundMs;
       const averageTurnaroundMins = Math.round(averageTurnaroundMs / (1000 * 60));
 
       if (averageTurnaroundMins < 60) {
@@ -1211,49 +1225,118 @@ async function getAnalyticalReport(req, res, next) {
     if (role === 'MIS Super Admin') {
       // MIS Super Admin: Combined data from both departments
 
-      // 1. Most Visited Office
-      console.log('🏢 Most Visited Office Query - Date Range:', {
+      // Parallelize independent queries for better performance
+      console.log('🚀 Starting parallel queries for MIS Super Admin report - Date Range:', {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString()
       });
 
-      const departmentStats = await Queue.aggregate([
-        { $match: {
+      const [
+        departmentStats,
+        serviceDistribution,
+        ratingStats,
+        totalVisitors,
+        roleBreakdown,
+        priorityStats,
+        temporalTrends
+      ] = await Promise.all([
+        // 1. Most Visited Office
+        Queue.aggregate([
+          { $match: {
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          } },
+          { $group: { _id: '$office', count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+        ]),
+        // 2. Service Distribution Overall (combined)
+        Queue.aggregate([
+          { $match: {
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          } },
+          { $group: { _id: '$serviceId', count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+          { $limit: 10 }
+        ]),
+        // 3. Kiosk Total Ratings
+        Rating.aggregate([
+          { $match: {
+            createdAt: { $gte: startDate, $lte: endDate }
+          } },
+          { $group: {
+            _id: null,
+            averageRating: { $avg: '$rating' },
+            totalRatings: { $sum: 1 },
+            rating1: { $sum: { $cond: [{ $eq: ['$rating', 1] }, 1, 0] } },
+            rating2: { $sum: { $cond: [{ $eq: ['$rating', 2] }, 1, 0] } },
+            rating3: { $sum: { $cond: [{ $eq: ['$rating', 3] }, 1, 0] } },
+            rating4: { $sum: { $cond: [{ $eq: ['$rating', 4] }, 1, 0] } },
+            rating5: { $sum: { $cond: [{ $eq: ['$rating', 5] }, 1, 0] } }
+          }}
+        ]),
+        // 4. Total Number of Visitors Overall
+        Queue.countDocuments({
           status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
           queuedAt: { $gte: startDate, $lte: endDate }
-        } },
-        { $group: { _id: '$office', count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
+        }),
+        // 5. Visitor Breakdown by Role
+        Queue.aggregate([
+          { $match: {
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          } },
+          { $group: { _id: '$role', count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+        ]),
+        // 6. Priority Status Distribution
+        Queue.aggregate([
+          { $match: {
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            isPriority: true,
+            queuedAt: { $gte: startDate, $lte: endDate }
+          }},
+          { $lookup: {
+            from: 'visitationforms',
+            localField: 'visitationFormId',
+            foreignField: '_id',
+            as: 'visitationForm'
+          }},
+          { $unwind: { path: '$visitationForm', preserveNullAndEmptyArrays: true } },
+          { $group: {
+            _id: null,
+            totalPriority: { $sum: 1 }
+          }}
+        ]),
+        // 7. Temporal Trends (monthly aggregation for the selected date range)
+        Queue.aggregate([
+          { $match: {
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          }},
+          { $group: {
+            _id: {
+              year: { $year: '$queuedAt' },
+              month: { $month: '$queuedAt' },
+              office: '$office'
+            },
+            count: { $sum: 1 }
+          }},
+          { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ])
       ]);
 
-      console.log('📊 Department Stats Result:', JSON.stringify(departmentStats, null, 2));
+      console.log('✅ Parallel queries completed');
 
+      // Process results
       reportData.mostVisitedOffice = departmentStats.map(stat => ({
         department: stat._id === 'registrar' ? "Registrar's Office" : 'Admissions Office',
         departmentKey: stat._id,
         count: stat.count
       }));
 
-      // 2. Service Distribution Overall (combined)
-      console.log('📋 Service Distribution Query - Date Range:', {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
-      });
-
-      const serviceDistribution = await Queue.aggregate([
-        { $match: {
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: startDate, $lte: endDate }
-        } },
-        { $group: { _id: '$serviceId', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-        { $limit: 10 }
-      ]);
-
-      console.log('📊 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
-
+      // Service Distribution - need to fetch service names
       const serviceIds = serviceDistribution.map(s => s._id);
-      // Ensure we have serviceIds before querying (avoid querying with empty array)
       const services = serviceIds.length > 0
         ? await Service.find({ _id: { $in: serviceIds } }).select('name').lean()
         : [];
@@ -1267,40 +1350,6 @@ async function getAnalyticalReport(req, res, next) {
         count: s.count
       }));
 
-      // 3. Kiosk Total Ratings
-      console.log('🔍 Rating Query - Date Range:', {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        startDateLocal: startDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' }),
-        endDateLocal: endDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
-      });
-
-      // First, let's check total ratings without date filter for comparison
-      const totalRatingsCount = await Rating.countDocuments({});
-      console.log('📊 Total Ratings in DB (no filter):', totalRatingsCount);
-
-      // Check sample rating documents to verify createdAt field
-      const sampleRatings = await Rating.find({}).limit(3).select('rating createdAt');
-      console.log('📝 Sample Rating Documents:', JSON.stringify(sampleRatings, null, 2));
-
-      const ratingStats = await Rating.aggregate([
-        { $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
-        } },
-        { $group: {
-          _id: null,
-          averageRating: { $avg: '$rating' },
-          totalRatings: { $sum: 1 },
-          rating1: { $sum: { $cond: [{ $eq: ['$rating', 1] }, 1, 0] } },
-          rating2: { $sum: { $cond: [{ $eq: ['$rating', 2] }, 1, 0] } },
-          rating3: { $sum: { $cond: [{ $eq: ['$rating', 3] }, 1, 0] } },
-          rating4: { $sum: { $cond: [{ $eq: ['$rating', 4] }, 1, 0] } },
-          rating5: { $sum: { $cond: [{ $eq: ['$rating', 5] }, 1, 0] } }
-        }}
-      ]);
-
-      console.log('📈 Rating Stats Result:', JSON.stringify(ratingStats, null, 2));
-
       reportData.kioskRatings = ratingStats.length > 0 ? ratingStats[0] : {
         averageRating: 0,
         totalRatings: 0,
@@ -1311,90 +1360,14 @@ async function getAnalyticalReport(req, res, next) {
         rating5: 0
       };
 
-      console.log('✅ Final Kiosk Ratings Data:', reportData.kioskRatings);
-
-      // 4. Total Number of Visitors Overall
-      console.log('👥 Total Visitors Query - Date Range:', {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
-      });
-
-      reportData.totalVisitors = await Queue.countDocuments({
-        status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-        queuedAt: { $gte: startDate, $lte: endDate }
-      });
-
-      console.log('📊 Total Visitors Result:', reportData.totalVisitors);
-
-      // 5. Visitor Breakdown by Role
-      console.log('👤 Visitor Breakdown by Role Query - Date Range:', {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
-      });
-
-      const roleBreakdown = await Queue.aggregate([
-        { $match: {
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: startDate, $lte: endDate }
-        } },
-        { $group: { _id: '$role', count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
-      ]);
-
-      console.log('📊 Role Breakdown Result:', JSON.stringify(roleBreakdown, null, 2));
+      reportData.totalVisitors = totalVisitors;
 
       reportData.visitorsByRole = (roleBreakdown || []).map(r => ({
         role: r._id,
         count: r.count
       }));
 
-      // 6. Priority Status Distribution
-      console.log('⭐ Priority Visitors Query - Date Range:', {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
-      });
-
-      const priorityStats = await Queue.aggregate([
-        { $match: {
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          isPriority: true,
-          queuedAt: { $gte: startDate, $lte: endDate }
-        }},
-        { $lookup: {
-          from: 'visitationforms',
-          localField: 'visitationFormId',
-          foreignField: '_id',
-          as: 'visitationForm'
-        }},
-        { $unwind: { path: '$visitationForm', preserveNullAndEmptyArrays: true } },
-        { $group: {
-          _id: null,
-          totalPriority: { $sum: 1 }
-        }}
-      ]);
-
-      console.log('📊 Priority Stats Result:', JSON.stringify(priorityStats, null, 2));
-
       reportData.priorityVisitors = priorityStats.length > 0 ? priorityStats[0].totalPriority : 0;
-
-      console.log('✅ Priority Visitors Count:', reportData.priorityVisitors);
-
-      // 7. Temporal Trends (monthly aggregation for the selected date range)
-      const temporalTrends = await Queue.aggregate([
-        { $match: {
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: startDate, $lte: endDate }
-        }},
-        { $group: {
-          _id: {
-            year: { $year: '$queuedAt' },
-            month: { $month: '$queuedAt' },
-            office: '$office'
-          },
-          count: { $sum: 1 }
-        }},
-        { $sort: { '_id.year': 1, '_id.month': 1 } }
-      ]);
 
       reportData.temporalTrends = temporalTrends;
 
@@ -1453,55 +1426,119 @@ async function getAnalyticalReport(req, res, next) {
         endDate: endDate.toISOString()
       });
 
-      // 1. Total Visits
-      reportData.totalVisits = await Queue.countDocuments({
-        office: departmentFilter,
-        status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-        queuedAt: { $gte: startDate, $lte: endDate }
+      // Parallelize independent queries for better performance
+      console.log('🚀 Starting parallel queries for department admin report - Date Range:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
       });
 
-      console.log('✅ Total Visits:', reportData.totalVisits);
-
-      // 2. Average Turnaround Time
-      const turnaroundStats = await Queue.aggregate([
-        { $match: {
+      const [
+        totalVisits,
+        turnaroundStats,
+        serviceDistribution,
+        roleBreakdown,
+        peakHours,
+        peakDays,
+        monthlyTrends
+      ] = await Promise.all([
+        // 1. Total Visits
+        Queue.countDocuments({
           office: departmentFilter,
-          status: 'completed',
-          completedAt: { $exists: true },
-          queuedAt: { $exists: true, $gte: startDate, $lte: endDate }
-        }},
-        { $group: {
-          _id: null,
-          avgTurnaround: {
-            $avg: {
-              $subtract: ['$completedAt', '$queuedAt']
+          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+          queuedAt: { $gte: startDate, $lte: endDate }
+        }),
+        // 2. Average Turnaround Time
+        Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: 'completed',
+            completedAt: { $exists: true },
+            queuedAt: { $exists: true, $gte: startDate, $lte: endDate }
+          }},
+          { $group: {
+            _id: null,
+            avgTurnaround: {
+              $avg: {
+                $subtract: ['$completedAt', '$queuedAt']
+              }
             }
-          }
-        }}
+          }}
+        ]),
+        // 3. Service Distribution
+        Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          }},
+          { $group: { _id: '$serviceId', count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+        ]),
+        // 4. Visitor Breakdown by Role
+        Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          }},
+          { $group: { _id: '$role', count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+        ]),
+        // 5. Peak Hours Analysis
+        Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          }},
+          { $group: {
+            _id: { $hour: '$queuedAt' },
+            count: { $sum: 1 }
+          }},
+          { $sort: { count: -1 } },
+          { $limit: 5 }
+        ]),
+        // 6. Peak Days Analysis
+        Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          }},
+          { $group: {
+            _id: { $dayOfWeek: '$queuedAt' },
+            count: { $sum: 1 }
+          }},
+          { $sort: { count: -1 } }
+        ]),
+        // 7. Monthly Trends
+        Queue.aggregate([
+          { $match: {
+            office: departmentFilter,
+            status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
+            queuedAt: { $gte: startDate, $lte: endDate }
+          }},
+          { $group: {
+            _id: {
+              year: { $year: '$queuedAt' },
+              month: { $month: '$queuedAt' }
+            },
+            count: { $sum: 1 }
+          }},
+          { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ])
       ]);
 
-      console.log('⏱️ Turnaround Stats Result:', JSON.stringify(turnaroundStats, null, 2));
+      console.log('✅ Parallel queries completed');
+
+      // Process results
+      reportData.totalVisits = totalVisits;
 
       reportData.avgTurnaroundMinutes = turnaroundStats.length > 0 ?
         Math.round(turnaroundStats[0].avgTurnaround / 60000) : 0;
 
-      console.log('✅ Avg Turnaround Minutes:', reportData.avgTurnaroundMinutes);
-
-      // 3. Service Distribution
-      const serviceDistribution = await Queue.aggregate([
-        { $match: {
-          office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: startDate, $lte: endDate }
-        }},
-        { $group: { _id: '$serviceId', count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
-      ]);
-
-      console.log('📋 Service Distribution Result:', JSON.stringify(serviceDistribution, null, 2));
-
+      // Service Distribution - need to fetch service names
       const serviceIds = serviceDistribution.map(s => s._id);
-      // Ensure we have serviceIds before querying (avoid querying with empty array)
       const services = serviceIds.length > 0
         ? await Service.find({ _id: { $in: serviceIds } }).select('name').lean()
         : [];
@@ -1515,94 +1552,21 @@ async function getAnalyticalReport(req, res, next) {
         count: s.count
       }));
 
-      console.log('✅ Service Distribution Mapped:', reportData.serviceDistribution);
-
-      // 4. Visitor Breakdown by Role
-      const roleBreakdown = await Queue.aggregate([
-        { $match: {
-          office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: startDate, $lte: endDate }
-        }},
-        { $group: { _id: '$role', count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
-      ]);
-
-      console.log('👤 Role Breakdown Result:', JSON.stringify(roleBreakdown, null, 2));
-
       reportData.visitorsByRole = (roleBreakdown || []).map(r => ({
         role: r._id,
         count: r.count
       }));
 
-      console.log('✅ Visitors by Role Mapped:', reportData.visitorsByRole);
-
-      // 5. Peak Hours/Days Analysis
-      const peakHours = await Queue.aggregate([
-        { $match: {
-          office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: startDate, $lte: endDate }
-        }},
-        { $group: {
-          _id: { $hour: '$queuedAt' },
-          count: { $sum: 1 }
-        }},
-        { $sort: { count: -1 } },
-        { $limit: 5 }
-      ]);
-
-      console.log('⏰ Peak Hours Result:', JSON.stringify(peakHours, null, 2));
-
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       reportData.peakHours = (peakHours || []).map(h => ({
         hour: h._id,
         count: h.count
       }));
 
-      const peakDays = await Queue.aggregate([
-        { $match: {
-          office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: startDate, $lte: endDate }
-        }},
-        { $group: {
-          _id: { $dayOfWeek: '$queuedAt' },
-          count: { $sum: 1 }
-        }},
-        { $sort: { count: -1 } }
-      ]);
-
-      console.log('📅 Peak Days Result:', JSON.stringify(peakDays, null, 2));
-
-      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       reportData.peakDays = (peakDays || []).map(d => ({
         day: dayNames[d._id - 1],
         count: d.count
       }));
-
-      console.log('✅ Peak Hours/Days Mapped:', {
-        peakHours: reportData.peakHours,
-        peakDays: reportData.peakDays
-      });
-
-      // 6. Monthly Trends
-      const monthlyTrends = await Queue.aggregate([
-        { $match: {
-          office: departmentFilter,
-          status: { $in: ['completed', 'cancelled', 'skipped', 'no-show'] },
-          queuedAt: { $gte: startDate, $lte: endDate }
-        }},
-        { $group: {
-          _id: {
-            year: { $year: '$queuedAt' },
-            month: { $month: '$queuedAt' }
-          },
-          count: { $sum: 1 }
-        }},
-        { $sort: { '_id.year': 1, '_id.month': 1 } }
-      ]);
-
-      console.log('📈 Monthly Trends Result:', JSON.stringify(monthlyTrends, null, 2));
 
       reportData.monthlyTrends = monthlyTrends;
 

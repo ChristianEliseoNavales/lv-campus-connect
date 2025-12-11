@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, query } = require('express-validator');
 const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
 const auditController = require('../controllers/auditController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
@@ -46,21 +47,21 @@ router.get('/', verifyToken, checkApiAccess, [
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date'),
   query('userId').optional().isMongoId().withMessage('User ID must be a valid MongoDB ObjectId')
-], auditController.getAuditTrail);
+], asyncHandler(auditController.getAuditTrail));
 
 // POST /api/audit - Create new audit log entry
-router.post('/', validateAuditLog, auditController.createAuditLog);
+router.post('/', validateAuditLog, asyncHandler(auditController.createAuditLog));
 
 // GET /api/audit/stats - Get audit trail statistics
 router.get('/stats', verifyToken, checkApiAccess, [
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date')
-], auditController.getAuditStats);
+], asyncHandler(auditController.getAuditStats));
 
 // GET /api/audit/user/:userId - Get audit trail for specific user
 router.get('/user/:userId', verifyToken, checkApiAccess, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100')
-], auditController.getUserAuditTrail);
+], asyncHandler(auditController.getUserAuditTrail));
 
 module.exports = router;

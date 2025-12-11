@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, checkApiAccess } = require('../middleware/authMiddleware');
 const chartsController = require('../controllers/chartsController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Middleware to require super admin or senior management admin
 const requireSeniorManagementAccess = (req, res, next) => {
@@ -20,10 +21,10 @@ const requireSeniorManagementAccess = (req, res, next) => {
 };
 
 // POST /api/charts/upload - Upload chart file to Cloudinary
-router.post('/upload', verifyToken, checkApiAccess, chartsController.upload.single('file'), chartsController.uploadChart);
+router.post('/upload', verifyToken, checkApiAccess, chartsController.upload.single('file'), asyncHandler(chartsController.uploadChart));
 
 // DELETE /api/charts/delete/:publicId - Delete file from Cloudinary
-router.delete('/delete/:publicId', verifyToken, checkApiAccess, chartsController.deleteChart);
+router.delete('/delete/:publicId', verifyToken, checkApiAccess, asyncHandler(chartsController.deleteChart));
 
 // Apply error handling middleware
 router.use(chartsController.handleMulterError);

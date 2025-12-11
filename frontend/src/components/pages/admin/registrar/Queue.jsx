@@ -55,15 +55,7 @@ const Queue = () => {
 
   // Debug: Log currentServingPerson changes
   useEffect(() => {
-    if (windowData?.name === 'Priority') {
-      // console.log('🔍 [RENDER] Priority Window - currentServingPerson state:', currentServingPerson);
-      // console.log('🔍 [RENDER] Has idNumber?', currentServingPerson?.idNumber);
-      // console.log('🔍 [RENDER] Condition check:', {
-      //   isWindowPriority: windowData?.name === 'Priority',
-      //   hasIdNumber: !!currentServingPerson?.idNumber,
-      //   shouldDisplay: windowData?.name === 'Priority' && currentServingPerson?.idNumber
-      // });
-    }
+    // Priority window handling
   }, [currentServingPerson, windowData]);
 
   // Fetch queue enabled status
@@ -111,25 +103,12 @@ const Queue = () => {
       if (windowData?.id) {
         // Filter by windowId to ensure each window only sees queues assigned to it
         url += `?windowId=${encodeURIComponent(windowData.id)}`;
-        // console.log('🔍 Fetching queues filtered by windowId:', windowData.id);
-        // console.log('🪟 Window name:', windowData.name);
       }
 
       const response = await authFetch(url);
       const result = await response.json();
 
-      // DEBUG: Log the RAW response
-      // console.log('🔍 [RAW RESPONSE] Full result object:', result);
-      // console.log('🔍 [RAW RESPONSE] result.data:', result.data);
-      // console.log('🔍 [RAW RESPONSE] result.data.currentlyServing:', result.data.currentlyServing);
-      // console.log('🔍 [RAW RESPONSE] Has idNumber in response?', 'idNumber' in (result.data.currentlyServing || {}));
-
       if (result.success) {
-        // console.log('📊 Queue data received:', {
-        //   waitingCount: result.data.waitingQueue.length,
-        //   currentlyServing: result.data.currentlyServing?.number || 'None',
-        //   filters: result.data.filters
-        // });
 
         // Data is already filtered by the backend, so use it directly
         setQueueData(result.data.waitingQueue);
@@ -140,18 +119,6 @@ const Queue = () => {
         setSelectedSkippedQueues(prev =>
           prev.filter(num => result.data.skippedQueue.includes(num))
         );
-
-        // Debug logging for Priority window ID Number
-        // if (windowData?.name === 'Priority' && result.data.currentlyServing) {
-        //   console.log('🔍 [PRIORITY WINDOW] Current Serving Person:', result.data.currentlyServing);
-        //   console.log('🔍 [PRIORITY WINDOW] Has idNumber?', !!result.data.currentlyServing.idNumber);
-        //   console.log('🔍 [PRIORITY WINDOW] idNumber value:', result.data.currentlyServing.idNumber);
-        //   console.log('🔍 [PRIORITY WINDOW] Window name:', windowData.name);
-        // }
-
-        // Debug logging for all windows
-        // console.log('📊 [FETCH QUEUE DATA] Window:', windowData?.name);
-        // console.log('📊 [FETCH QUEUE DATA] Currently Serving:', result.data.currentlyServing);
 
         if (result.data.currentlyServing) {
           setCurrentServing(result.data.currentlyServing.number);
@@ -196,13 +163,11 @@ const Queue = () => {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    console.log('🔌 Registrar Queue: Joining admin-registrar room');
     joinRoom('admin-registrar');
 
     // Subscribe to queue updates
     const unsubscribeQueue = subscribe('queue-updated', (data) => {
       if (data.department === 'registrar') {
-        // console.log('📡 Real-time queue update received:', data);
 
         // Handle specific queue update types
         switch (data.type) {
@@ -283,7 +248,6 @@ const Queue = () => {
     // Subscribe to window status updates
     const unsubscribeWindow = subscribe('window-status-updated', (data) => {
       if (data.department === 'registrar' && data.windowId === windowData?.id) {
-        // console.log('📡 Window status update received:', data);
         setIsWindowServing(data.data.isServing);
       }
     });
@@ -351,12 +315,11 @@ const Queue = () => {
           'Window Status Updated',
           `${windowData.name} has been ${action === 'pause' ? 'paused' : 'resumed'}`
         );
-        // console.log(`✅ Window ${action}d:`, windowData.name);
       } else {
         throw new Error(result.error || 'Failed to update window status');
       }
     } catch (error) {
-      console.error('❌ Stop/Resume error:', error);
+      console.error('Stop/Resume error:', error);
       showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, stop: false }));
@@ -416,8 +379,6 @@ const Queue = () => {
             'No More Queues',
             'All queues have been served. Window is ready for new queues.'
           );
-
-          // console.log('✅ No more queues waiting');
         } else {
           // Fetch updated queue data to get complete information including idNumber
           await fetchQueueData();
@@ -437,14 +398,12 @@ const Queue = () => {
             'Queue Called',
             `Queue ${String(result.data.queueNumber).padStart(2, '0')} called to ${result.data.windowName}`
           );
-
-          // console.log('✅ Next queue called:', result.data);
         }
       } else {
         throw new Error(result.error || 'Failed to call next queue');
       }
     } catch (error) {
-      console.error('❌ Next queue error:', error);
+      console.error('Next queue error:', error);
       showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, next: false }));
@@ -495,13 +454,11 @@ const Queue = () => {
           'Queue Recalled',
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} recalled to ${result.data.windowName}`
         );
-
-        // console.log('✅ Queue recalled:', result.data);
       } else {
         throw new Error(result.error || 'Failed to recall queue');
       }
     } catch (error) {
-      console.error('❌ Recall queue error:', error);
+      console.error('Recall queue error:', error);
       showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, recall: false }));
@@ -559,13 +516,11 @@ const Queue = () => {
           'Previous Queue Recalled',
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} recalled to ${result.data.windowName}`
         );
-
-        // console.log('✅ Previous queue recalled:', result.data);
       } else {
         throw new Error(result.error || 'Failed to recall previous queue');
       }
     } catch (error) {
-      console.error('❌ Previous queue error:', error);
+      console.error('Previous queue error:', error);
       // Check if it's specifically about no previous queues (not an actual error)
       if (error.message && error.message.includes('No previously served queue')) {
         showWarning('No Previous Queue', 'There are no previously served queues to recall.');
@@ -615,7 +570,7 @@ const Queue = () => {
         throw new Error(result.error || 'Failed to fetch available windows');
       }
     } catch (error) {
-      console.error('❌ Transfer fetch error:', error);
+      console.error('Transfer fetch error:', error);
       showError('Error', error.message);
     } finally {
       setTransferLoading(false);
@@ -656,13 +611,11 @@ const Queue = () => {
           'Queue Transferred',
           `Queue ${String(result.data.queueNumber).padStart(2, '0')} transferred to ${result.data.toWindowName} and placed in waiting queue`
         );
-
-        // console.log('✅ Queue transferred:', result.data);
       } else {
         throw new Error(result.error || 'Failed to transfer queue');
       }
     } catch (error) {
-      console.error('❌ Transfer queue error:', error);
+      console.error('Transfer queue error:', error);
       showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, transfer: false }));
@@ -733,13 +686,11 @@ const Queue = () => {
             result.data.nextQueue ? `, calling queue ${String(result.data.nextQueue.queueNumber).padStart(2, '0')}` : ''
           }`
         );
-
-        // console.log('✅ Queue skipped:', result.data);
       } else {
         throw new Error(result.error || 'Failed to skip queue');
       }
     } catch (error) {
-      console.error('❌ Skip queue error:', error);
+      console.error('Skip queue error:', error);
       showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, skip: false }));
@@ -808,13 +759,11 @@ const Queue = () => {
           'Queues Re-queued',
           `${result.data.requeuedCount} queue${result.data.requeuedCount > 1 ? 's' : ''} re-queued successfully`
         );
-
-        // console.log('✅ Queues re-queued:', result.data);
       } else {
         throw new Error(result.error || 'Failed to re-queue queues');
       }
     } catch (error) {
-      console.error('❌ Re-queue error:', error);
+      console.error('Re-queue error:', error);
       showError('Error', error.message);
     } finally {
       setActionLoading(prev => ({ ...prev, requeueAll: false }));

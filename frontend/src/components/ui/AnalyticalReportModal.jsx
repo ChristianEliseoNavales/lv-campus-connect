@@ -463,7 +463,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
   const LVCampusConnectColors = ['#1F3463', '#3930A8', '#3762D0', '#78CFFF', '#FFE251'];
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-y-auto">
+    <div className="fixed inset-0 z-[60]">
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
@@ -471,7 +471,7 @@ const AnalyticalReportModal = ({ isOpen, onClose, userRole, dateRange }) => {
       />
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex h-full items-center justify-center p-4">
         <div
           className="relative bg-gray-100 rounded-xl shadow-2xl w-full max-w-[230mm] max-h-[90vh] transform transition-all duration-300 scale-100"
           onClick={(e) => e.stopPropagation()}

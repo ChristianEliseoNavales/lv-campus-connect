@@ -241,7 +241,6 @@ const Users = () => {
       }
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.log('Fetch aborted');
         return;
       }
       console.error('Error fetching users:', error);
@@ -547,13 +546,6 @@ const Users = () => {
 
     setIsSubmitting(true);
 
-    // [EMAIL_DEBUG] Log request start
-    const requestStartTime = Date.now();
-    const requestTimestamp = new Date().toISOString();
-    const isCreating = !editingUser;
-
-    console.log(`[EMAIL_DEBUG] ${requestTimestamp} - User ${isCreating ? 'creation' : 'update'} request started`);
-
     try {
       // Compute the role from office and accessLevel
       const computedRole = computeRole(formData.office, formData.accessLevel);
@@ -568,24 +560,9 @@ const Users = () => {
         pageAccess: formData.pageAccess
       };
 
-      // [EMAIL_DEBUG] Log request payload (sanitized)
-      console.log(`[EMAIL_DEBUG] ${requestTimestamp} - Request payload:`, {
-        name: submitData.name,
-        email: submitData.email,
-        accessLevel: submitData.accessLevel,
-        role: submitData.role,
-        office: submitData.office,
-        isActive: submitData.isActive,
-        pageAccess: submitData.pageAccess,
-        isEdit: !!editingUser
-      });
-
       const apiUrl = editingUser
         ? `${API_CONFIG.getAdminUrl()}/api/users/${editingUser._id}`
         : `${API_CONFIG.getAdminUrl()}/api/users`;
-      const method = editingUser ? 'PUT' : 'POST';
-
-      console.log(`[EMAIL_DEBUG] ${requestTimestamp} - Making ${method} request to: ${apiUrl}`);
 
       let response;
       if (editingUser) {
@@ -608,33 +585,8 @@ const Users = () => {
         });
       }
 
-      const requestEndTime = Date.now();
-      const requestDuration = requestEndTime - requestStartTime;
-      const responseTimestamp = new Date().toISOString();
-
-      // [EMAIL_DEBUG] Log response timing and status
-      console.log(`[EMAIL_DEBUG] ${responseTimestamp} - Response received`);
-      console.log(`[EMAIL_DEBUG]   - Status: ${response.status} ${response.statusText}`);
-      console.log(`[EMAIL_DEBUG]   - Request duration: ${requestDuration}ms`);
-      console.log(`[EMAIL_DEBUG]   - Timestamp difference: ${Date.now() - requestStartTime}ms`);
-
       if (response.ok) {
         const userData = await response.json();
-        const parseEndTime = Date.now();
-        const totalDuration = parseEndTime - requestStartTime;
-
-        // [EMAIL_DEBUG] Log response data preview
-        console.log(`[EMAIL_DEBUG] ${responseTimestamp} - Response parsed successfully`);
-        console.log(`[EMAIL_DEBUG]   - Total duration (including parse): ${totalDuration}ms`);
-        console.log(`[EMAIL_DEBUG]   - Parse duration: ${parseEndTime - requestEndTime}ms`);
-        console.log(`[EMAIL_DEBUG]   - User data:`, {
-          _id: userData._id,
-          name: userData.name,
-          email: userData.email,
-          role: userData.role,
-          office: userData.office,
-          accessLevel: userData.accessLevel
-        });
 
         if (editingUser) {
           // Update user in state
@@ -651,40 +603,12 @@ const Users = () => {
         closeModal();
       } else {
         const errorData = await response.json();
-        const errorTimestamp = new Date().toISOString();
-        const totalDuration = Date.now() - requestStartTime;
-
-        // [EMAIL_DEBUG] Log error response
-        console.error(`[EMAIL_DEBUG] ${errorTimestamp} - Response error`);
-        console.error(`[EMAIL_DEBUG]   - Status: ${response.status} ${response.statusText}`);
-        console.error(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
-        console.error(`[EMAIL_DEBUG]   - Error data:`, errorData);
-
         throw new Error(errorData.error || 'Failed to save user');
       }
     } catch (error) {
-      const errorTimestamp = new Date().toISOString();
-      const totalDuration = Date.now() - requestStartTime;
-
-      // [EMAIL_DEBUG] Log error details
-      console.error(`[EMAIL_DEBUG] ${errorTimestamp} - User ${isCreating ? 'creation' : 'update'} failed`);
-      console.error(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
-      console.error(`[EMAIL_DEBUG]   - Error message: ${error.message}`);
-      console.error(`[EMAIL_DEBUG]   - Error name: ${error.name}`);
-      if (error.stack) {
-        console.error(`[EMAIL_DEBUG]   - Stack trace:`, error.stack);
-      }
-      if (error.cause) {
-        console.error(`[EMAIL_DEBUG]   - Error cause:`, error.cause);
-      }
-
       console.error('Error saving user:', error);
       showError('Error', error.message);
     } finally {
-      const finallyTimestamp = new Date().toISOString();
-      const totalDuration = Date.now() - requestStartTime;
-      console.log(`[EMAIL_DEBUG] ${finallyTimestamp} - Request completed (finally block)`);
-      console.log(`[EMAIL_DEBUG]   - Total duration: ${totalDuration}ms`);
       setIsSubmitting(false);
     }
   };
@@ -793,7 +717,7 @@ const Users = () => {
                   updateState('usersPerPage', newValue);
                   updateState('currentPage', 1); // Reset to first page when changing items per page
                 }}
-                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] text-center"
                 min="5"
                 max="50"
               />

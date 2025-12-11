@@ -29,7 +29,6 @@ const Bulletin = () => {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    console.log('🔌 MIS Bulletin: Joining admin-mis room');
     joinRoom('admin-mis');
 
     return () => {

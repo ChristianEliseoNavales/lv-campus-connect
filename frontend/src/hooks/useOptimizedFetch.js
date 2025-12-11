@@ -15,26 +15,26 @@ const CACHE_DURATIONS = {
 // Detect cache type based on URL patterns
 const getCacheType = (url) => {
   if (!url) return 'dynamic'; // Default to dynamic
-  
+
   const urlLower = url.toLowerCase();
-  
+
   // Static data endpoints (services, windows, settings)
-  if (urlLower.includes('/services') || 
-      urlLower.includes('/windows') || 
+  if (urlLower.includes('/services') ||
+      urlLower.includes('/windows') ||
       urlLower.includes('/settings') ||
       urlLower.includes('/office') ||
       urlLower.includes('/faq') ||
       urlLower.includes('/bulletin')) {
     return 'static';
   }
-  
+
   // Realtime data (currently serving)
-  if (urlLower.includes('currently-serving') || 
+  if (urlLower.includes('currently-serving') ||
       urlLower.includes('current-serving') ||
       urlLower.includes('realtime')) {
     return 'realtime';
   }
-  
+
   // Default to dynamic (queue data, etc.)
   return 'dynamic';
 };
@@ -78,15 +78,15 @@ export const useOptimizedFetch = (url, options = {}) => {
   // Check if cached data is still valid
   const getCachedData = useCallback((key, url) => {
     if (!enableCache) return null;
-    
+
     const cached = apiCache.get(key);
     const timestamp = cacheTimestamps.get(key);
     const cacheDuration = cacheDurations.get(key) || getCacheDuration(url);
-    
+
     if (cached && timestamp && (Date.now() - timestamp < cacheDuration)) {
       return cached;
     }
-    
+
     // Clean up expired cache
     apiCache.delete(key);
     cacheTimestamps.delete(key);
@@ -161,7 +161,6 @@ export const useOptimizedFetch = (url, options = {}) => {
       return result;
     } catch (err) {
       if (err.name === 'AbortError') {
-        console.log('Fetch aborted');
         return;
       }
 

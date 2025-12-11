@@ -146,7 +146,8 @@ async function getUsersByAccessLevel(req, res, next) {
       isActive: true
     })
       .select('_id name email role accessLevel office')
-      .sort({ name: 1 });
+      .sort({ name: 1 })
+      .lean();
 
     res.json(users);
   } catch (error) {
@@ -163,7 +164,8 @@ async function getUserById(req, res, next) {
   try {
     const user = await User.findById(req.params.id)
       .select('-password -googleId')
-      .populate('createdBy', 'name email');
+      .populate('createdBy', 'name email')
+      .lean();
 
     if (!user) {
       return res.status(404).json({

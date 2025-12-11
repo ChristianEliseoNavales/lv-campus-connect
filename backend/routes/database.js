@@ -3,6 +3,7 @@ const router = express.Router();
 const { query } = require('express-validator');
 const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
 const databaseController = require('../controllers/databaseController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Import all models for getModel middleware
 const {
@@ -62,7 +63,7 @@ router.get('/:model',
     query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
     query('search').optional().isString().withMessage('Search must be a string')
   ],
-  databaseController.getModelRecords
+  asyncHandler(databaseController.getModelRecords)
 );
 
 // GET /api/database/:model/:id - Get single record by ID
@@ -70,7 +71,7 @@ router.get('/:model/:id',
   verifyToken,
   checkApiAccess,
   getModel,
-  databaseController.getModelRecordById
+  asyncHandler(databaseController.getModelRecordById)
 );
 
 // POST /api/database/:model - Create new record
@@ -78,7 +79,7 @@ router.post('/:model',
   verifyToken,
   checkApiAccess,
   getModel,
-  databaseController.createModelRecord
+  asyncHandler(databaseController.createModelRecord)
 );
 
 // PUT /api/database/:model/:id - Update record by ID
@@ -86,7 +87,7 @@ router.put('/:model/:id',
   verifyToken,
   checkApiAccess,
   getModel,
-  databaseController.updateModelRecord
+  asyncHandler(databaseController.updateModelRecord)
 );
 
 // DELETE /api/database/:model/delete-all - Delete all records for a model (MUST BE BEFORE /:model/:id)
@@ -94,7 +95,7 @@ router.delete('/:model/delete-all',
   verifyToken,
   checkApiAccess,
   getModel,
-  databaseController.deleteAllModelRecords
+  asyncHandler(databaseController.deleteAllModelRecords)
 );
 
 // DELETE /api/database/:model/:id - Delete single record by ID
@@ -102,7 +103,7 @@ router.delete('/:model/:id',
   verifyToken,
   checkApiAccess,
   getModel,
-  databaseController.deleteModelRecord
+  asyncHandler(databaseController.deleteModelRecord)
 );
 
 module.exports = router;

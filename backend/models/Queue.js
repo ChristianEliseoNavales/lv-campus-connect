@@ -35,8 +35,9 @@ const queueSchema = new mongoose.Schema({
   // Queue Details
   role: {
     type: String,
-    enum: ['Visitor', 'Student', 'Teacher', 'Alumni'],
-    required: true
+    required: true,
+    trim: true,
+    maxlength: 50
   },
   studentStatus: {
     type: String,

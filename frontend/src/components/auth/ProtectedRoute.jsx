@@ -28,9 +28,11 @@ const ProtectedRoute = ({ children, requiredRoles = [], redirectTo = '/login' })
   // This is the primary access control mechanism - it checks if the user's
   // pageAccess array includes the current route
   if (!canAccessRoute(location.pathname)) {
-    console.log(`❌ Access denied to ${location.pathname} for user:`, user?.email);
-    console.log(`   User role: ${user?.role}`);
-    console.log(`   User pageAccess:`, user?.pageAccess);
+    if (import.meta.env.DEV) {
+      console.log(`❌ Access denied to ${location.pathname} for user:`, user?.email);
+      console.log(`   User role: ${user?.role}`);
+      console.log(`   User pageAccess:`, user?.pageAccess);
+    }
     return <Navigate to="/admin/unauthorized" replace />;
   }
 

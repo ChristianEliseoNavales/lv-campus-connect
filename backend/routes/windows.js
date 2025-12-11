@@ -3,13 +3,14 @@ const { verifyToken, requireRole, checkApiAccess } = require('../middleware/auth
 const { cacheMiddleware, invalidateCache } = require('../middleware/cacheMiddleware');
 const { CacheHelper } = require('../utils/cache');
 const windowsController = require('../controllers/windowsController');
+const asyncHandler = require('../middleware/asyncHandler');
 const router = express.Router();
 
 // GET /api/windows - Get all windows
-router.get('/', verifyToken, checkApiAccess, cacheMiddleware('windows', 'all'), windowsController.getAllWindows);
+router.get('/', verifyToken, checkApiAccess, cacheMiddleware('windows', 'all'), asyncHandler(windowsController.getAllWindows));
 
 // GET /api/windows/:department - Get windows by office (department param for backward compatibility)
-router.get('/:department', verifyToken, checkApiAccess, cacheMiddleware('windows', 'byDepartment'), windowsController.getWindowsByDepartment);
+router.get('/:department', verifyToken, checkApiAccess, cacheMiddleware('windows', 'byDepartment'), asyncHandler(windowsController.getWindowsByDepartment));
 
 // POST /api/windows - Create new window
 router.post('/', verifyToken, checkApiAccess, invalidateCache((req, data) => {
@@ -19,7 +20,7 @@ router.post('/', verifyToken, checkApiAccess, invalidateCache((req, data) => {
   } else {
     CacheHelper.invalidateWindows(); // Invalidate all if office not available
   }
-}), windowsController.createWindow);
+}), asyncHandler(windowsController.createWindow));
 
 // PUT /api/windows/:id - Update window
 router.put('/:id', verifyToken, checkApiAccess, invalidateCache((req, data) => {
@@ -31,7 +32,7 @@ router.put('/:id', verifyToken, checkApiAccess, invalidateCache((req, data) => {
     // This will be handled in the route handler
     CacheHelper.invalidateWindows();
   }
-}), windowsController.updateWindow);
+}), asyncHandler(windowsController.updateWindow));
 
 // PATCH /api/windows/:id/toggle - Toggle window open status
 router.patch('/:id/toggle', verifyToken, checkApiAccess, invalidateCache((req, data) => {
@@ -41,7 +42,7 @@ router.patch('/:id/toggle', verifyToken, checkApiAccess, invalidateCache((req, d
   } else {
     CacheHelper.invalidateWindows(); // Invalidate all if office not available
   }
-}), windowsController.toggleWindow);
+}), asyncHandler(windowsController.toggleWindow));
 
 // DELETE /api/windows/:id - Delete window
 router.delete('/:id', verifyToken, checkApiAccess, invalidateCache((req, data) => {
@@ -51,6 +52,6 @@ router.delete('/:id', verifyToken, checkApiAccess, invalidateCache((req, data) =
   } else {
     CacheHelper.invalidateWindows(); // Invalidate all if office not available
   }
-}), windowsController.deleteWindow);
+}), asyncHandler(windowsController.deleteWindow));
 
 module.exports = router;

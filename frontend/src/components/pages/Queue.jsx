@@ -836,11 +836,9 @@ const Queue = () => {
 
   // Service selection handlers
   const handleServiceSelect = (service) => {
-    console.log('🎯 Service selected:', service, 'Type:', typeof service);
     setSelectedService(service);
     // Special handling for Document Request and Document Claim services
     if (service === 'Document Request') {
-      console.log('➡️ Going to documentRequestForm step');
       setCurrentStep('documentRequestForm');
       // Reset form and step
       setDocumentRequestForm({
@@ -856,36 +854,27 @@ const Queue = () => {
       setShowKeyboard(true);
       setActiveField('documentRequestName');
     } else if (service === 'Document Claim') {
-      console.log('➡️ Going to documentClaim step');
       setCurrentStep('documentClaim');
       setTransactionNo('');
       setTransactionNoError('');
       setShowKeyboard(true);
       setActiveField('transactionNo');
     } else if (service === 'Enroll') {
-      console.log('➡️ Going to studentStatus step');
       setCurrentStep('studentStatus');
     } else {
-      console.log('➡️ Going to role step');
       setCurrentStep('role');
     }
   };
 
   // Student status selection handlers
   const handleStudentStatusSelect = async (status) => {
-    console.log('🎓 [FRONTEND] Student status selected:', status);
-    console.log('🎓 [FRONTEND] Current service:', selectedService);
-    console.log('🎓 [FRONTEND] Current department:', selectedDepartment?.name);
-
     setStudentStatus(status);
 
     // Check for office mismatch scenarios
     const currentOfficeKey = selectedDepartment?.name === "Registrar's Office" ? 'registrar' : 'admissions';
-    console.log('🏢 [FRONTEND] Current office key:', currentOfficeKey);
 
     // Scenario 1: Registrar's Office + Enroll + YES (new student) -> should use Admissions
     if (currentOfficeKey === 'registrar' && selectedService === 'Enroll' && status === 'yes') {
-      console.log('🔄 [FRONTEND] Office mismatch detected: Registrar + Enroll + YES -> suggesting Admissions');
       setSuggestedOffice({ key: 'admissions', name: 'Admissions Office' });
       setShowOfficeMismatchModal(true);
       return;
@@ -893,27 +882,20 @@ const Queue = () => {
 
     // Scenario 2: Admissions Office + Enroll + NO (not new student) -> should use Registrar's
     if (currentOfficeKey === 'admissions' && selectedService === 'Enroll' && status === 'no') {
-      console.log('🔄 [FRONTEND] Office mismatch detected: Admissions + Enroll + NO -> suggesting Registrar');
       setSuggestedOffice({ key: 'registrar', name: "Registrar's Office" });
       setShowOfficeMismatchModal(true);
       return;
     }
 
     // No mismatch - proceed normally
-    console.log('✅ [FRONTEND] No office mismatch - proceeding with Enroll service submission');
-    console.log('🎓 [FRONTEND] Enroll service: Auto-setting required fields and submitting to backend');
-
     // For Enroll service, automatically set role to "Student" since enrollment is for students only
-    console.log('🎓 [FRONTEND] Auto-setting role to "Student" for Enroll service');
     setSelectedRole('Student');
 
     // Set priority status to "no" by default for Enroll service (can be changed if needed)
-    console.log('🎓 [FRONTEND] Auto-setting priority status to "no" for Enroll service');
     setPriorityStatus('no');
 
     // For Enroll service, submit to backend immediately with auto-populated data
     // This ensures the queue entry is actually recorded in the database
-    console.log('🚀 [FRONTEND] Submitting Enroll service to backend...');
 
     // Submit immediately with explicit values to avoid state timing issues
     handleEnrollSubmission();
@@ -1040,7 +1022,6 @@ const Queue = () => {
   const checkPrinterAvailability = async () => {
     try {
       setPrinterChecking(true);
-      console.log('🔍 Checking printer availability...');
 
       // Try to reach the local backend
       const controller = new AbortController();
@@ -1059,17 +1040,14 @@ const Queue = () => {
       const result = await response.json();
 
       if (result.available && result.ready) {
-        console.log('✅ Printer is available and ready');
         setPrinterAvailable(true);
         return true;
       } else {
-        console.log('⚠️ Printer not ready:', result.message);
         setPrinterAvailable(false);
         return false;
       }
 
     } catch (error) {
-      console.log('❌ Printer availability check failed:', error.message);
       // If we can't reach the backend or printer is not available
       setPrinterAvailable(false);
       return false;
@@ -1082,13 +1060,11 @@ const Queue = () => {
   const handlePrintClick = async () => {
     // Prevent multiple clicks while printing
     if (isPrinting) {
-      console.log('⚠️ Print already in progress, ignoring click');
       return;
     }
 
     // Check if we've exceeded max attempts
     if (printAttempts >= 3) {
-      console.log('⚠️ Max print attempts reached');
       setPrintErrorMessage('Printing failed 3/3 times. Please scan the QR code for now. We apologize for the inconvenience.');
       setShowPrintErrorModal(true);
       return;
@@ -1124,8 +1100,6 @@ const Queue = () => {
         department: selectedDepartment?.name || 'Unknown'
       };
 
-      console.log(`🖨️  Sending print request (Attempt ${printAttempts + 1}/3):`, receiptData);
-
       // Call backend print API (always use local backend for printing)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -1144,7 +1118,6 @@ const Queue = () => {
       const result = await response.json();
 
       if (result.success) {
-        console.log('✅ Print successful:', result);
         showSuccess('Receipt printed successfully!');
         // Reset attempts on success
         setPrintAttempts(0);
@@ -1155,7 +1128,7 @@ const Queue = () => {
           setIsPrinting(false);
         }, 1500);
       } else {
-        console.error('❌ Print failed:', result.message);
+        console.error('Print failed:', result.message);
 
         // This is a temporary/recoverable error - show modal and allow retry
         if (printAttempts + 1 >= 3) {
@@ -1168,7 +1141,7 @@ const Queue = () => {
       }
 
     } catch (error) {
-      console.error('❌ Print error:', error);
+      console.error('Print error:', error);
 
       // Check if it's a network/connection error (printer/backend unavailable)
       if (error.name === 'AbortError' || error.message.includes('fetch')) {
@@ -1208,9 +1181,7 @@ const Queue = () => {
           body: JSON.stringify({ rating: starRating })
         });
 
-        if (response.ok) {
-          console.log('Rating submitted successfully');
-        } else {
+        if (!response.ok) {
           console.error('Failed to submit rating');
         }
       } catch (error) {
@@ -1473,18 +1444,8 @@ const Queue = () => {
       } else {
         // Show error modal instead of toast
         const errorMessage = result?.error || result?.message || 'Invalid transaction number or request not approved';
-        console.log('❌ [FRONTEND] Document Claim Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          result,
-          errorMessage
-        });
         setTransactionNoErrorMessage(errorMessage);
         setShowTransactionNoErrorModal(true);
-        console.log('✅ [FRONTEND] Modal state set:', {
-          showTransactionNoErrorModal: true,
-          transactionNoErrorMessage: errorMessage
-        });
       }
     } catch (error) {
       console.error('Error validating transaction number:', error);
@@ -1498,21 +1459,14 @@ const Queue = () => {
   // Accepts optional officeKey parameter to override selectedDepartment (for office switching)
   const handleEnrollSubmission = async (officeKey = null) => {
     try {
-      console.log('🎓 [FRONTEND] Starting handleEnrollSubmission');
-      console.log('🎓 [FRONTEND] Office key parameter:', officeKey);
-
       // Map frontend studentStatus values to backend enum values
       const mapStudentStatus = (status) => {
-        console.log('🔄 [FRONTEND] Mapping studentStatus:', status);
         if (status === 'yes') {
-          console.log('🔄 [FRONTEND] Mapped "yes" to "incoming_new"');
           return 'incoming_new';
         }
         if (status === 'no') {
-          console.log('🔄 [FRONTEND] Mapped "no" to "continuing"');
           return 'continuing';
         }
-        console.log('🔄 [FRONTEND] Returning status as-is:', status);
         return status; // Return as-is if already in correct format
       };
 
@@ -1520,10 +1474,8 @@ const Queue = () => {
       let office;
       if (officeKey) {
         office = officeKey; // Use the explicitly passed office key
-        console.log('🔄 [FRONTEND] Using explicit office key:', office);
       } else {
         office = selectedDepartment.name === "Registrar's Office" ? 'registrar' : 'admissions';
-        console.log('🔄 [FRONTEND] Using selectedDepartment office:', office);
       }
 
       // Prepare submission data with explicit values for Enroll service
@@ -1541,11 +1493,8 @@ const Queue = () => {
         address: ''
       };
 
-      console.log('📤 [FRONTEND] Enroll submission payload:', JSON.stringify(submissionData, null, 2));
-
       // Submit to backend API (use local backend for kiosk operations)
       const apiUrl = `${API_CONFIG.getKioskUrl()}/api/public/queue`;
-      console.log('🌐 [FRONTEND] Making API request to:', apiUrl);
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -1554,15 +1503,9 @@ const Queue = () => {
         body: JSON.stringify(submissionData)
       });
 
-      console.log('📡 [FRONTEND] API Response status:', response.status, response.statusText);
-
       const result = await response.json();
-      console.log('📥 [FRONTEND] API Response body:', JSON.stringify(result, null, 2));
 
       if (response.ok && result.success) {
-        console.log('✅ [FRONTEND] Enroll submission successful!');
-        console.log('✅ [FRONTEND] Queue ID received:', result.data?.queueId);
-        console.log('✅ [FRONTEND] Queue Number received:', result.data?.queueNumber);
 
         // Store queue data for result display and rating submission
         setQueueResult({
@@ -1581,47 +1524,28 @@ const Queue = () => {
           await generateQRCode(result.data.qrCodeUrl);
         }
 
-        console.log('✅ [FRONTEND] Moving to result step');
         // Move to result step
         setCurrentStep('result');
       } else {
-        console.error('❌ [FRONTEND] Enroll submission failed!');
-        console.error('❌ [FRONTEND] Error details:', result);
-        console.error('❌ [FRONTEND] Response status:', response.status);
+        console.error('Enroll submission failed:', result);
         showError('Submission Failed', result.error || 'Unknown error occurred while submitting your queue request.');
       }
     } catch (error) {
-      console.error('💥 [FRONTEND] Enroll submission error:', error);
-      console.error('💥 [FRONTEND] Error stack:', error.stack);
+      console.error('Enroll submission error:', error);
       showError('Network Error', 'Please check your connection and try again.');
     }
   };
 
   const handleFormSubmit = async () => {
     try {
-      console.log('🚀 [FRONTEND] Starting handleFormSubmit for service:', selectedService);
-      console.log('🚀 [FRONTEND] Current state values:', {
-        selectedDepartment: selectedDepartment?.name,
-        selectedService,
-        selectedRole,
-        studentStatus,
-        priorityStatus,
-        idNumber,
-        formData
-      });
-
       // Map frontend studentStatus values to backend enum values
       const mapStudentStatus = (status) => {
-        console.log('🔄 [FRONTEND] Mapping studentStatus:', status);
         if (status === 'yes') {
-          console.log('🔄 [FRONTEND] Mapped "yes" to "incoming_new"');
           return 'incoming_new';
         }
         if (status === 'no') {
-          console.log('🔄 [FRONTEND] Mapped "no" to "continuing"');
           return 'continuing';
         }
-        console.log('🔄 [FRONTEND] Returning status as-is:', status);
         return status; // Return as-is if already in correct format
       };
 
@@ -1640,12 +1564,8 @@ const Queue = () => {
         address: formData.address || ''
       };
 
-      console.log('📤 [FRONTEND] Final submission payload:', JSON.stringify(submissionData, null, 2));
-      console.log('📤 [FRONTEND] Payload size:', JSON.stringify(submissionData).length, 'characters');
-
       // Submit to backend API (use local backend for kiosk operations)
       const apiUrl = `${API_CONFIG.getKioskUrl()}/api/public/queue`;
-      console.log('🌐 [FRONTEND] Making API request to:', apiUrl);
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -1654,16 +1574,9 @@ const Queue = () => {
         body: JSON.stringify(submissionData)
       });
 
-      console.log('📡 [FRONTEND] API Response status:', response.status, response.statusText);
-      console.log('📡 [FRONTEND] API Response headers:', Object.fromEntries(response.headers.entries()));
-
       const result = await response.json();
-      console.log('📥 [FRONTEND] API Response body:', JSON.stringify(result, null, 2));
 
       if (response.ok && result.success) {
-        console.log('✅ [FRONTEND] Queue submission successful!');
-        console.log('✅ [FRONTEND] Queue ID received:', result.data?.queueId);
-        console.log('✅ [FRONTEND] Queue Number received:', result.data?.queueNumber);
 
         // Store queue data for result display and rating submission
         setQueueResult({
@@ -1681,19 +1594,15 @@ const Queue = () => {
           await generateQRCode(result.data.qrCodeUrl);
         }
 
-        console.log('✅ [FRONTEND] Moving to result step');
         // Move to result step
         setCurrentStep('result');
       } else {
-        console.error('❌ [FRONTEND] Queue submission failed!');
-        console.error('❌ [FRONTEND] Error details:', result);
-        console.error('❌ [FRONTEND] Response status:', response.status);
+        console.error('Queue submission failed:', result);
         // Handle error with toast notification
         showError('Submission Failed', result.error || 'Unknown error occurred while submitting your queue request.');
       }
     } catch (error) {
-      console.error('💥 [FRONTEND] Network/Exception error:', error);
-      console.error('💥 [FRONTEND] Error stack:', error.stack);
+      console.error('Queue submission error:', error);
       showError('Network Error', 'Please check your connection and try again.');
     }
   };
@@ -1730,13 +1639,10 @@ const Queue = () => {
   // Office mismatch modal handlers
   const handleOfficeMismatchConfirm = async () => {
     if (suggestedOffice) {
-      console.log('🔄 [FRONTEND] Checking if Enroll service is available in', suggestedOffice.name);
-
       // First, check if the target office is open
       const isOfficeOpen = await checkOfficeStatus(suggestedOffice.key);
 
       if (!isOfficeOpen) {
-        console.log('❌ [FRONTEND] Target office is closed');
         setShowOfficeMismatchModal(false);
         setSuggestedOffice(null);
         setServiceUnavailableInfo({
@@ -1752,10 +1658,7 @@ const Queue = () => {
         const response = await fetch(`${API_CONFIG.getKioskUrl()}/api/public/services/${suggestedOffice.key}`);
         const data = await response.json();
 
-        console.log('📋 [FRONTEND] Services in target office:', data);
-
         if (!data.isEnabled) {
-          console.log('❌ [FRONTEND] Target office is not enabled');
           setShowOfficeMismatchModal(false);
           setSuggestedOffice(null);
           setServiceUnavailableInfo({
@@ -1769,7 +1672,6 @@ const Queue = () => {
         const enrollServiceAvailable = data.services?.some(service => service.name === 'Enroll');
 
         if (!enrollServiceAvailable) {
-          console.log('❌ [FRONTEND] Enroll service not available in target office');
           setShowOfficeMismatchModal(false);
           setSuggestedOffice(null);
           setServiceUnavailableInfo({
@@ -1780,20 +1682,15 @@ const Queue = () => {
           return;
         }
 
-        console.log('✅ [FRONTEND] Enroll service is available in target office');
-
         // Switch to the suggested office and proceed directly to result
         setSelectedDepartment(departmentData[suggestedOffice.key]);
         setShowOfficeMismatchModal(false);
 
         // For Enroll service, set required fields and submit to backend
-        console.log('🔄 [FRONTEND] Office mismatch resolved - setting Enroll service defaults and submitting');
         setSelectedRole('Student'); // Enroll is always for students
         setPriorityStatus('no'); // Default priority status
 
         // Submit to backend to ensure queue entry is recorded in database
-        console.log('🚀 [FRONTEND] Submitting Enroll service after office switch...');
-        console.log('🚀 [FRONTEND] Target office key:', suggestedOffice.key);
 
         // Submit immediately with explicit office key to avoid state timing issues
         // Pass the suggestedOffice.key directly to ensure correct office is used
@@ -1802,7 +1699,7 @@ const Queue = () => {
         // Clear suggestedOffice after submission
         setSuggestedOffice(null);
       } catch (error) {
-        console.error('❌ [FRONTEND] Error checking service availability:', error);
+        console.error('Error checking service availability:', error);
         setShowOfficeMismatchModal(false);
         setSuggestedOffice(null);
         setServiceUnavailableInfo({
@@ -3531,7 +3428,6 @@ const Queue = () => {
 
   // Role Selection Step
   if (currentStep === 'role') {
-    console.log('🎭 ROLE STEP - Rendering with roleOptions:', roleOptions);
     return (
       <RoleSelection
         roleOptions={roleOptions}

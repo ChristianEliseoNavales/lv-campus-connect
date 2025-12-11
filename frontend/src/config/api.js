@@ -62,42 +62,35 @@ const getBackendUrl = (operation = 'default') => {
   // PRINT operations ALWAYS use localhost (for thermal printer access)
   // This is critical for kiosk machines with physical printers
   if (operation === 'print') {
-    console.log(`🖨️ FORCING LOCAL backend for PRINTING (${LOCAL_BACKEND_URL})`);
     return LOCAL_BACKEND_URL; // Use configured local backend URL for printing
   }
 
   // DEVELOPMENT MODE: Use local backend for EVERYTHING (except explicit cloud requests)
   // This allows full local testing before deployment
   if (IS_DEVELOPMENT) {
-    console.log(`🔧 DEVELOPMENT MODE: Using LOCAL backend for ${operation}`);
     return LOCAL_BACKEND_URL;
   }
 
   // PRODUCTION MODE: Use hybrid architecture
   // Explicit operation types
   if (operation === 'kiosk') {
-    console.log('🖥️ Using LOCAL backend for:', operation);
     return LOCAL_BACKEND_URL;
   }
 
   if (operation === 'admin') {
-    console.log('☁️ Using CLOUD backend for:', operation);
     return CLOUD_BACKEND_URL;
   }
 
   // Auto-detect based on current page
   if (isKioskPage()) {
-    console.log('🖥️ Using LOCAL backend (kiosk page detected)');
     return LOCAL_BACKEND_URL;
   }
 
   if (isAdminPage()) {
-    console.log('☁️ Using CLOUD backend (admin page detected)');
     return CLOUD_BACKEND_URL;
   }
 
   // Default: Use cloud backend for general operations
-  console.log('☁️ Using CLOUD backend (default)');
   return CLOUD_BACKEND_URL;
 };
 
@@ -109,17 +102,14 @@ const getBackendUrl = (operation = 'default') => {
 const getSocketUrl = () => {
   // DEVELOPMENT MODE: Always use local backend
   if (IS_DEVELOPMENT) {
-    console.log('🔌 Socket.io: DEVELOPMENT MODE - Connecting to LOCAL backend');
     return LOCAL_BACKEND_URL;
   }
 
   // PRODUCTION MODE: Use hybrid architecture
   if (isKioskPage()) {
-    console.log('🔌 Socket.io: Connecting to LOCAL backend');
     return LOCAL_BACKEND_URL;
   }
 
-  console.log('🔌 Socket.io: Connecting to CLOUD backend');
   return CLOUD_BACKEND_URL;
 };
 
@@ -220,16 +210,16 @@ const API_CONFIG = {
   buildURL,
 };
 
-// Log configuration on load
-console.log('🌐 API Configuration loaded:');
-console.log('  - Environment:', NODE_ENV, IS_DEVELOPMENT ? '(DEVELOPMENT MODE)' : '(PRODUCTION MODE)');
-console.log('  - Cloud Backend:', CLOUD_BACKEND_URL);
-console.log('  - Local Backend:', LOCAL_BACKEND_URL);
-console.log('  - Current Page:', window.location.pathname);
-console.log('  - Is Kiosk Page:', isKioskPage());
-console.log('  - Is Admin Page:', isAdminPage());
-console.log('  - Active Backend:', getBackendUrl());
+// Log configuration on load (development only)
 if (IS_DEVELOPMENT) {
+  console.log('🌐 API Configuration loaded:');
+  console.log('  - Environment:', NODE_ENV, '(DEVELOPMENT MODE)');
+  console.log('  - Cloud Backend:', CLOUD_BACKEND_URL);
+  console.log('  - Local Backend:', LOCAL_BACKEND_URL);
+  console.log('  - Current Page:', window.location.pathname);
+  console.log('  - Is Kiosk Page:', isKioskPage());
+  console.log('  - Is Admin Page:', isAdminPage());
+  console.log('  - Active Backend:', getBackendUrl());
   console.log(`  ⚠️ DEVELOPMENT MODE: All API calls will use LOCAL backend (${LOCAL_BACKEND_URL})`);
   console.log('  ⚠️ Make sure your local backend is running!');
 }

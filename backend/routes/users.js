@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator');
 const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
 const usersController = require('../controllers/usersController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Validation middleware
 const validateUser = [
@@ -87,21 +88,21 @@ const validateUserUpdate = [
 ];
 
 // GET /api/users - Fetch all users
-router.get('/', verifyToken, checkApiAccess, usersController.getAllUsers);
+router.get('/', verifyToken, checkApiAccess, asyncHandler(usersController.getAllUsers));
 
 // GET /api/users/by-access-level/:accessLevel - Fetch users by access level
-router.get('/by-access-level/:accessLevel', verifyToken, requireSuperAdmin, usersController.getUsersByAccessLevel);
+router.get('/by-access-level/:accessLevel', verifyToken, requireSuperAdmin, asyncHandler(usersController.getUsersByAccessLevel));
 
 // GET /api/users/:id - Fetch single user by ID
-router.get('/:id', verifyToken, requireSuperAdmin, usersController.getUserById);
+router.get('/:id', verifyToken, requireSuperAdmin, asyncHandler(usersController.getUserById));
 
 // POST /api/users - Create new user
-router.post('/', verifyToken, requireSuperAdmin, validateUser, usersController.createUser);
+router.post('/', verifyToken, requireSuperAdmin, validateUser, asyncHandler(usersController.createUser));
 
 // PUT /api/users/:id - Update user
-router.put('/:id', verifyToken, requireSuperAdmin, validateUserUpdate, usersController.updateUser);
+router.put('/:id', verifyToken, requireSuperAdmin, validateUserUpdate, asyncHandler(usersController.updateUser));
 
 // DELETE /api/users/:id - Delete user (soft delete by setting isActive to false)
-router.delete('/:id', verifyToken, requireSuperAdmin, usersController.deleteUser);
+router.delete('/:id', verifyToken, requireSuperAdmin, asyncHandler(usersController.deleteUser));
 
 module.exports = router;

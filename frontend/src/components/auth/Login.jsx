@@ -22,9 +22,7 @@ const Login = () => {
 
   // Debug: Log error state changes
   useEffect(() => {
-    if (error) {
-      console.log('Login component received error:', error);
-    }
+    // Error handling is done via error prop display
   }, [error]);
 
   // Redirect if already authenticated

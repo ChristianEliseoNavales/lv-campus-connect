@@ -54,7 +54,6 @@ class NotificationService {
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
 
-      console.log('🔊 Notification Service: Generated beep sound');
       return true;
     } catch (error) {
       console.error('❌ Notification Service: Beep generation failed', error);
@@ -68,19 +67,15 @@ class NotificationService {
    * @returns {Promise<boolean>} Success status
    */
   async initializeWithUserGesture() {
-    console.log('🔔 Initializing notifications with user gesture (iOS compatible)...');
-
     try {
       // Create AudioContext (required for iOS)
       if (!this.audioContext) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('✅ AudioContext created');
       }
 
       // Resume AudioContext (required for iOS)
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
-        console.log('✅ AudioContext resumed');
       }
 
       // Try to load and play audio file
@@ -98,8 +93,6 @@ class NotificationService {
             // Timeout after 3 seconds
             setTimeout(() => reject(new Error('Audio load timeout')), 3000);
           });
-
-          console.log('✅ Audio file loaded successfully');
         } catch (audioError) {
           console.warn('⚠️ Audio file not available, will use generated beep', audioError);
           this.audio = null;
@@ -126,9 +119,6 @@ class NotificationService {
     try {
       // Basic initialization without user gesture
       // On iOS, audio won't work until initializeWithUserGesture() is called
-      console.log('✅ Notification Service: Basic initialization complete');
-      console.log('⚠️ iOS users: Tap "Enable Notifications" button to unlock audio');
-
       this.isInitialized = true;
     } catch (error) {
       console.error('❌ Notification Service: Initialization failed', error);
@@ -173,7 +163,6 @@ class NotificationService {
             this.audioSource.connect(this.gainNode);
             this.gainNode.connect(this.audioContext.destination);
 
-            console.log(`🔊 Volume boost enabled: ${this.volumeBoost}x`);
           }
 
           // Reset audio to start
@@ -181,7 +170,6 @@ class NotificationService {
 
           // Play the sound (will be boosted by gainNode)
           await this.audio.play();
-          console.log('🔊 Notification Service: Audio file played with volume boost');
           return true;
         } catch (playError) {
           console.warn('⚠️ Notification Service: Audio file playback failed, using beep fallback', playError);
@@ -203,8 +191,6 @@ class NotificationService {
    * @returns {Promise<Object>} Status of notification
    */
   async notifyQueueCalled() {
-    console.log('🔔 Notification Service: Queue called - triggering sound notification');
-
     const results = {
       sound: false,
       timestamp: new Date().toISOString()
@@ -213,7 +199,6 @@ class NotificationService {
     // Play sound
     results.sound = await this.playSound();
 
-    console.log('🔔 Notification results:', results);
     return results;
   }
 
@@ -225,7 +210,6 @@ class NotificationService {
     if ('Notification' in window && Notification.permission === 'default') {
       try {
         const permission = await Notification.requestPermission();
-        console.log('🔔 Notification permission:', permission);
         return permission === 'granted';
       } catch (error) {
         console.error('❌ Notification permission request failed', error);
@@ -274,7 +258,6 @@ class NotificationService {
     }
 
     this.isInitialized = false;
-    console.log('🧹 Notification Service: Cleaned up');
   }
 }
 

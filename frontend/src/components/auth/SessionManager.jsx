@@ -19,7 +19,6 @@ const SessionManager = () => {
     if (!subscribe) return;
 
     const unsubscribe = subscribe('force-logout', (data) => {
-      console.log('🚪 Received force-logout event:', data);
       const reason = data.reason || 'Your session has been invalidated. Please log in again.';
       setForceLogoutReason(reason);
       setShowForceLogoutModal(true);

@@ -109,7 +109,6 @@ const AdminLayout = ({ children }) => {
     // Listen for windows updates with cleanup
     const unsubscribeWindows = subscribe('windows-updated', (data) => {
       if (data.department === department) {
-        // console.log(`📡 Windows updated for ${department}:`, data);
         refetchWindows(); // Use optimized refetch
       }
     });
@@ -353,18 +352,6 @@ const AdminLayout = ({ children }) => {
     const currentPath = location.pathname;
     const pageAccess = user?.pageAccess || [];
 
-    // Debug logging for RBAC
-    // console.log('🔍 RBAC Debug - User object:', {
-    //   role: user?.role,
-    //   assignedWindow: user?.assignedWindow,
-    //   assignedWindowType: typeof user?.assignedWindow,
-    //   assignedWindowId: user?.assignedWindow?._id || user?.assignedWindow,
-    //   assignedWindowIdType: typeof (user?.assignedWindow?._id || user?.assignedWindow),
-    //   office: user?.office,
-    //   pageAccess: pageAccess
-    // });
-    // console.log('🔍 RBAC Debug - Current path:', currentPath);
-    // console.log('🔍 RBAC Debug - Windows available:', windows.length, windows.map(w => ({ id: w.id, name: w.name })));
 
     // Determine current office context based on URL for MIS Super Admin
     let currentOffice = null;
@@ -496,15 +483,8 @@ const AdminLayout = ({ children }) => {
       }
     });
 
-    // console.log('📋 RBAC Debug - Navigation items count:', navigationItems.length);
-    // console.log('📋 RBAC Debug - Navigation items:', navigationItems.map(i => i.name));
-
-    // For queue items, log the filtered windows
+    // For queue items, filter windows based on user permissions
     const queueItem = navigationItems.find(item => item.isExpandable);
-    if (queueItem) {
-      // console.log('📋 RBAC Debug - Queue windows:', queueItem.children?.length || 0, 'windows');
-      // console.log('📋 RBAC Debug - Queue window names:', queueItem.children?.map(w => w.name) || []);
-    }
 
     return navigationItems;
   }, [windows, user?.role, user?.assignedWindows, user?.assignedWindow, user?.pageAccess, location.pathname, isDevelopmentMode, user]);
@@ -559,7 +539,7 @@ const AdminLayout = ({ children }) => {
   );
 
   // Create motion-wrapped NavLink component
-  const MotionNavLink = motion(NavLink);
+  const MotionNavLink = motion.create(NavLink);
 
   return (
     <div className="min-h-screen admin-layout" style={{ backgroundColor: '#efefef' }}>

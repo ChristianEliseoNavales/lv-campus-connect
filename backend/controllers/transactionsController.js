@@ -2,6 +2,7 @@ const Queue = require('../models/Queue');
 const VisitationForm = require('../models/VisitationForm');
 const Service = require('../models/Service');
 const Window = require('../models/Window');
+const { generateTransactionNo } = require('../utils/transactionNoGenerator');
 const {
   validateDateString,
   getPhilippineDayBoundaries,
@@ -119,7 +120,8 @@ async function getTransactionsByDepartment(req, res, next) {
       }
     }
 
-    // Add filterBy support (status or priority)
+    // Add filterBy support (status, priority, or special-request)
+    // Note: special-request filter will be handled in aggregation pipeline after service lookup
     if (filterBy) {
       if (filterBy === 'priority') {
         queryFilter.isPriority = true;
@@ -134,6 +136,7 @@ async function getTransactionsByDepartment(req, res, next) {
       } else if (filterBy === 'no-show') {
         queryFilter.status = 'no-show';
       }
+      // special-request filter is handled after service lookup in pipeline
     }
 
     // Build aggregation pipeline for search and pagination
@@ -175,6 +178,13 @@ async function getTransactionsByDepartment(req, res, next) {
       { $unwind: { path: '$visitationForm', preserveNullAndEmptyArrays: true } },
       { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
       { $unwind: { path: '$documentRequest', preserveNullAndEmptyArrays: true } },
+
+      // Add special-request filter after service unwind
+      ...(filterBy === 'special-request' ? [{
+        $match: {
+          'service.isSpecialRequest': true
+        }
+      }] : []),
 
       // Add computed fields for search
       {
@@ -417,26 +427,23 @@ async function createAdminTransaction(req, res, next) {
       });
     }
 
-    // Validate service or special request
-    if (!specialRequest && !service) {
+    // Validate service (all admin-created transactions are special requests)
+    if (!service && !specialRequestName) {
       return res.status(400).json({
         success: false,
-        error: 'Either service or special request must be provided'
+        error: 'Service is required'
       });
     }
 
-    if (specialRequest && !specialRequestName) {
-      return res.status(400).json({
-        success: false,
-        error: 'Special request name is required when special request is selected'
-      });
-    }
+    // All admin-created transactions are automatically special requests
+    // Use service as specialRequestName if service is provided
+    const finalServiceName = specialRequestName || service;
 
-    // Validate role
-    if (!['Visitor', 'Student', 'Teacher', 'Alumni'].includes(role)) {
+    // Validate role (allow custom values, but must be non-empty string)
+    if (!role || typeof role !== 'string' || !role.trim()) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid role. Must be one of: Visitor, Student, Teacher, Alumni'
+        error: 'Role is required and must be a non-empty string'
       });
     }
 
@@ -457,44 +464,38 @@ async function createAdminTransaction(req, res, next) {
       });
     }
 
+
     // Find or create service
+    // All admin-created transactions are automatically special requests
     let serviceObj;
-    if (specialRequest) {
-      // Find existing service with special request name, or create new one
-      serviceObj = await Service.findOne({
-        name: specialRequestName.trim(),
-        office: department
-      });
+    const serviceNameToUse = finalServiceName.trim();
 
-      if (!serviceObj) {
-        // Create new service for special request
-        serviceObj = await Service.create({
-          name: specialRequestName.trim(),
-          office: department,
-          isActive: true,
-          isSpecialRequest: true
-        });
-        console.log(`✅ Created new service for special request: ${serviceObj.name}`);
-      } else {
-        // Update existing service to mark as special request if not already marked
-        if (!serviceObj.isSpecialRequest) {
-          serviceObj.isSpecialRequest = true;
-          await serviceObj.save();
-        }
-      }
-    } else {
-      // Find existing service
-      serviceObj = await Service.findOne({
-        name: service,
+    // Find existing service with the name, or create new one
+    const existingServiceCheck = await Service.findOne({
+      name: serviceNameToUse,
+      office: department
+    }).lean();
+
+    if (!existingServiceCheck) {
+      // Create new service for special request (all admin-created are special)
+      serviceObj = await Service.create({
+        name: serviceNameToUse,
         office: department,
-        isActive: true
+        isActive: true,
+        isSpecialRequest: true
       });
-
-      if (!serviceObj) {
-        return res.status(404).json({
-          success: false,
-          error: 'Service not found or not available'
-        });
+      console.log(`✅ Created new service for admin-created transaction: ${serviceObj.name}`);
+    } else {
+      // Update existing service to mark as special request if not already marked
+      if (!existingServiceCheck.isSpecialRequest) {
+        serviceObj = await Service.findOneAndUpdate(
+          { _id: existingServiceCheck._id },
+          { isSpecialRequest: true },
+          { new: true }
+        );
+      } else {
+        // Service already marked, fetch as document for consistency
+        serviceObj = await Service.findById(existingServiceCheck._id);
       }
     }
 
@@ -550,7 +551,7 @@ async function createAdminTransaction(req, res, next) {
 
     // Create visitation form (skip for Enroll service)
     let visitationForm = null;
-    const serviceName = specialRequest ? specialRequestName : service;
+    const serviceName = finalServiceName;
 
     if (serviceName !== 'Enroll') {
       visitationForm = await VisitationForm.createForm({
@@ -565,6 +566,9 @@ async function createAdminTransaction(req, res, next) {
     // Get next queue number
     const nextQueueNumber = await Queue.getNextQueueNumber(department);
 
+    // Generate unique transaction number
+    const transactionNo = await generateTransactionNo();
+
     // Create queue entry
     const queueData = {
       queueNumber: nextQueueNumber,
@@ -575,7 +579,8 @@ async function createAdminTransaction(req, res, next) {
       isPriority: Boolean(isPriority),
       status: status,
       isAdminCreated: true, // Mark as admin-created transaction
-      processedBy: req.user?.id || req.user?._id || null // Set admin user who created it
+      processedBy: req.user?.id || req.user?._id || null, // Set admin user who created it
+      transactionNo: transactionNo // Add generated transaction number
     };
 
     // Only add visitationFormId if visitationForm was created

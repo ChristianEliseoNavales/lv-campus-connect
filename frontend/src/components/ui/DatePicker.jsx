@@ -150,7 +150,7 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-1.5 px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent text-xs bg-white hover:bg-gray-50 transition-colors"
+        className="flex items-center space-x-1.5 px-2 sm:px-2.5 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-[#1F3463] focus:border-transparent text-xs sm:text-sm bg-white hover:bg-gray-50 transition-all duration-200"
       >
         <HiCalendar className="text-gray-400 text-base" />
         <span className="text-gray-700">{formatDate(value)}</span>

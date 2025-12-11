@@ -150,26 +150,14 @@ export function ChartPieLegend({ userRole }) {
     if (currentPath.startsWith('/admin/registrar')) {
       setIsSuperAdmin(false);
       setDepartment('registrar');
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 PieChart: Super Admin viewing Registrar dashboard - showing Registrar data only');
-      }
     } else if (currentPath.startsWith('/admin/admissions')) {
       setIsSuperAdmin(false);
       setDepartment('admissions');
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 PieChart: Super Admin viewing Admissions dashboard - showing Admissions data only');
-      }
     } else if (currentPath.startsWith('/admin/mis')) {
       // MIS dashboard - show combined data for Super Admin
       const isSuper = userRole === 'super_admin' || userRole === 'MIS Super Admin';
       setIsSuperAdmin(isSuper);
       setDepartment(null);
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 PieChart: MIS dashboard - showing combined data');
-      }
     } else {
       // Priority 2: Fallback to user role if path doesn't match known patterns
       const isSuper = userRole === 'super_admin' || userRole === 'MIS Super Admin';
@@ -178,15 +166,6 @@ export function ChartPieLegend({ userRole }) {
       if (!isSuper) {
         const dept = getDepartmentFromContext(userRole);
         setDepartment(dept);
-
-        // Log for debugging
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 PieChart department detection:', {
-            userRole,
-            detectedDepartment: dept,
-            currentPath
-          });
-        }
       }
     }
   }, [userRole]);
@@ -200,7 +179,6 @@ export function ChartPieLegend({ userRole }) {
 
         // Don't fetch if department is not determined yet (for non-super admins)
         if (!isSuperAdmin && !department) {
-          console.warn('⚠️ PieChart: Department not determined yet, skipping fetch');
           setIsLoading(false);
           return;
         }
@@ -211,15 +189,6 @@ export function ChartPieLegend({ userRole }) {
         const endpoint = isSuperAdmin
           ? `${baseUrl}/api/analytics/pie-chart/combined?timeRange=${timeRange}`
           : `${baseUrl}/api/analytics/pie-chart/${department}?timeRange=${timeRange}`;
-
-        // Log for debugging
-        if (process.env.NODE_ENV === 'development') {
-          console.log('📊 Fetching pie chart data:', {
-            isSuperAdmin,
-            department,
-            endpoint
-          });
-        }
 
         const response = await authFetch(endpoint);
 

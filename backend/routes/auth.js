@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const authController = require('../controllers/authController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Rate limiting for authentication endpoints
 // 5 attempts per 15 minutes per IP address
@@ -20,26 +21,26 @@ const authLimiter = rateLimit({
  * POST /api/auth/google
  * Verify Google OAuth token and authenticate user
  */
-router.post('/google', authLimiter, authController.googleAuth);
+router.post('/google', authLimiter, asyncHandler(authController.googleAuth));
 
 /**
  * GET /api/auth/verify
  * Verify JWT token and return user data
  */
-router.get('/verify', authController.verifyToken);
+router.get('/verify', asyncHandler(authController.verifyToken));
 
 /**
  * POST /api/auth/logout
  * Logout user (mainly for audit trail)
  */
-router.post('/logout', authController.logout);
+router.post('/logout', asyncHandler(authController.logout));
 
 /**
  * GET /api/auth/debug/permissions
  * Debug endpoint to check current user's permissions
  * Only available in development mode
  */
-router.get('/debug/permissions', authController.debugPermissions);
+router.get('/debug/permissions', asyncHandler(authController.debugPermissions));
 
 module.exports = router;
 

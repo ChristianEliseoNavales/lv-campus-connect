@@ -7,6 +7,9 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const { initializeQueueCleanup } = require('./services/queueCleanupService');
 const sessionService = require('./services/sessionService');
+const { errorHandler, notFoundHandler } = require('./middleware/errorMiddleware');
+const timeoutMiddleware = require('./middleware/timeoutMiddleware');
+const { error: logError, fatal: logFatal } = require('./utils/logger');
 
 // Load environment variables
 dotenv.config();
@@ -72,6 +75,38 @@ const startServer = async () => {
   });
 };
 
+// Global Error Handlers - Must be set before starting server
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  logFatal('Unhandled Promise Rejection', {
+    reason: reason instanceof Error ? {
+      message: reason.message,
+      stack: reason.stack,
+      name: reason.name
+    } : reason,
+    promise: promise.toString()
+  });
+
+  // In production, you might want to exit the process
+  // For now, we'll just log it
+  if (process.env.NODE_ENV === 'production') {
+    console.error('⚠️  Unhandled promise rejection detected. Server will continue running.');
+  }
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logFatal('Uncaught Exception', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name
+  });
+
+  // Uncaught exceptions are more serious - exit the process
+  console.error('❌ Uncaught exception detected. Shutting down gracefully...');
+  process.exit(1);
+});
+
 // Start the server
 startServer();
 
@@ -95,33 +130,102 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Request Timeout Middleware (30 seconds default)
+// Apply timeout to all routes except health checks
+app.use((req, res, next) => {
+  // Skip timeout for health check endpoints
+  if (req.path === '/api/health' || req.path === '/api/ping' || req.path === '/') {
+    return next();
+  }
+  timeoutMiddleware(30000)(req, res, next);
+});
+
 // Serve static files from public directory
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Socket.io connection handling
+// Socket.io connection handling with error handling
 io.on('connection', (socket) => {
   console.log('🔌 Client connected:', socket.id);
 
-  // Register user session
+  // Error event handler for this socket
+  socket.on('error', (error) => {
+    logError('Socket error', {
+      socketId: socket.id,
+      error: error.message,
+      stack: error.stack
+    });
+  });
+
+  // Register user session with error handling
   socket.on('register-user-session', (data) => {
-    const { userId } = data;
-    if (userId) {
-      sessionService.registerSession(userId, socket.id);
+    try {
+      const { userId } = data;
+      if (userId) {
+        sessionService.registerSession(userId, socket.id);
+      }
+    } catch (error) {
+      logError('Error registering user session', {
+        socketId: socket.id,
+        error: error.message,
+        data
+      });
     }
   });
 
-  // Join room based on user type (admin or kiosk)
+  // Join room based on user type (admin or kiosk) with error handling
   socket.on('join-room', (room) => {
-    socket.join(room);
-    console.log(`📡 Socket ${socket.id} joined room: ${room}`);
+    try {
+      socket.join(room);
+      console.log(`📡 Socket ${socket.id} joined room: ${room}`);
+    } catch (error) {
+      logError('Error joining room', {
+        socketId: socket.id,
+        room,
+        error: error.message
+      });
+    }
   });
 
-  socket.on('disconnect', () => {
-    console.log('🔌 Client disconnected:', socket.id);
+  // Leave room with error handling
+  socket.on('leave-room', (room) => {
+    try {
+      socket.leave(room);
+      console.log(`📡 Socket ${socket.id} left room: ${room}`);
+    } catch (error) {
+      logError('Error leaving room', {
+        socketId: socket.id,
+        room,
+        error: error.message
+      });
+    }
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('🔌 Client disconnected:', socket.id, 'Reason:', reason);
 
     // Clean up user session tracking
-    sessionService.removeSession(socket.id);
+    try {
+      sessionService.removeSession(socket.id);
+    } catch (error) {
+      logError('Error removing session on disconnect', {
+        socketId: socket.id,
+        error: error.message
+      });
+    }
+  });
+});
+
+// Socket.io server-level error handling
+io.engine.on('connection_error', (error) => {
+  logError('Socket.io connection error', {
+    error: error.message,
+    stack: error.stack,
+    req: error.req ? {
+      method: error.req.method,
+      url: error.req.url,
+      headers: error.req.headers
+    } : null
   });
 });
 
@@ -230,27 +334,11 @@ app.get('/api/ping', (req, res) => {
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('❌ Server Error:', err.message);
-  console.error(err.stack);
+// 404 handler - Must be before error handler
+app.use(notFoundHandler);
 
-  res.status(err.status || 500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl,
-    method: req.method,
-    timestamp: new Date().toISOString()
-  });
-});
+// Error handling middleware - Must be last
+app.use(errorHandler);
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {

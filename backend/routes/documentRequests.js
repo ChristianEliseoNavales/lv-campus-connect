@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const documentRequestController = require('../controllers/documentRequestController');
 const { verifyToken, requireRole, checkApiAccess } = require('../middleware/authMiddleware');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Public route - create document request from kiosk
-router.post('/public/document-request', documentRequestController.createDocumentRequest);
+router.post('/public/document-request', asyncHandler(documentRequestController.createDocumentRequest));
 
 // Admin routes - require authentication and page access (with role fallback)
 router.get(
@@ -12,7 +13,7 @@ router.get(
   verifyToken,
   requireRole(['MIS Super Admin', 'Registrar Admin']),
   checkApiAccess,
-  documentRequestController.getDocumentRequests
+  asyncHandler(documentRequestController.getDocumentRequests)
 );
 
 router.get(
@@ -20,7 +21,7 @@ router.get(
   verifyToken,
   requireRole(['MIS Super Admin', 'Registrar Admin']),
   checkApiAccess,
-  documentRequestController.getDocumentRequestById
+  asyncHandler(documentRequestController.getDocumentRequestById)
 );
 
 router.patch(
@@ -28,7 +29,7 @@ router.patch(
   verifyToken,
   requireRole(['MIS Super Admin', 'Registrar Admin']),
   checkApiAccess,
-  documentRequestController.approveDocumentRequest
+  asyncHandler(documentRequestController.approveDocumentRequest)
 );
 
 router.patch(
@@ -36,7 +37,15 @@ router.patch(
   verifyToken,
   requireRole(['MIS Super Admin', 'Registrar Admin']),
   checkApiAccess,
-  documentRequestController.rejectDocumentRequest
+  asyncHandler(documentRequestController.rejectDocumentRequest)
+);
+
+router.post(
+  '/document-requests/registrar',
+  verifyToken,
+  requireRole(['MIS Super Admin', 'Registrar Admin']),
+  checkApiAccess,
+  asyncHandler(documentRequestController.createAdminDocumentRequest)
 );
 
 module.exports = router;

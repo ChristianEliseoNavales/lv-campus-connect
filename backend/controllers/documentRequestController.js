@@ -413,3 +413,118 @@ exports.rejectDocumentRequest = async (req, res, next) => {
     });
   }
 };
+
+// POST /api/document-requests/registrar - Create document request from admin side (auto-approved)
+exports.createAdminDocumentRequest = async (req, res, next) => {
+  try {
+    const {
+      name,
+      lastSYAttended,
+      programGradeStrand,
+      contactNumber,
+      emailAddress,
+      request,
+      remarks
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !lastSYAttended || !programGradeStrand || !contactNumber || !emailAddress || !request) {
+      return res.status(400).json({
+        success: false,
+        error: 'All fields are required'
+      });
+    }
+
+    // Validate request is an array with at least one item
+    if (!Array.isArray(request) || request.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'At least one request type must be selected'
+      });
+    }
+
+    // Validate document types
+    const validDocumentTypes = [
+      'Certificate of Enrollment',
+      'Form 137',
+      'Transcript of Records',
+      'Good Moral Certificate',
+      'Certified True Copy of Documents',
+      'Education Service Contracting Certificate (ESC)'
+    ];
+    const invalidDocuments = request.filter(doc => !validDocumentTypes.includes(doc));
+    if (invalidDocuments.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid document type(s): ${invalidDocuments.join(', ')}`
+      });
+    }
+
+    // Generate unique transaction number
+    const transactionNo = await generateTransactionNo();
+
+    // Calculate business days and claim date for auto-approved requests
+    const finalBusinessDays = 5; // Default for admin-created requests
+    const approvalDate = new Date();
+    const claimDate = calculateClaimDate(approvalDate, finalBusinessDays);
+
+    // Create document request - auto-approve admin-created requests
+    const documentRequest = new DocumentRequest({
+      transactionNo,
+      name: name.trim(),
+      lastSYAttended: lastSYAttended.trim(),
+      programGradeStrand: programGradeStrand.trim(),
+      contactNumber: contactNumber.trim(),
+      emailAddress: emailAddress.trim().toLowerCase(),
+      request: request,
+      remarks: remarks ? remarks.trim() : '',
+      status: 'approved', // Auto-approve admin-created requests
+      approvedAt: approvalDate,
+      businessDays: finalBusinessDays,
+      claimDate: claimDate
+    });
+
+    await documentRequest.save();
+
+    // Send approval email notification
+    try {
+      await emailService.sendDocumentRequestApprovalEmail({
+        transactionNo: documentRequest.transactionNo,
+        name: documentRequest.name,
+        emailAddress: documentRequest.emailAddress,
+        request: documentRequest.request,
+        claimDate: formatClaimDate(claimDate),
+        lastSYAttended: documentRequest.lastSYAttended,
+        programGradeStrand: documentRequest.programGradeStrand,
+        contactNumber: documentRequest.contactNumber
+      });
+    } catch (emailError) {
+      console.error('Error sending approval email:', emailError);
+      // Don't fail the creation if email fails, but log it
+    }
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: documentRequest._id,
+        transactionNo: documentRequest.transactionNo,
+        message: 'Document request created and approved successfully'
+      }
+    });
+  } catch (error) {
+    console.error('Error creating admin document request:', error);
+
+    // Handle duplicate transaction number (shouldn't happen, but just in case)
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        error: 'Transaction number conflict. Please try again.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create document request'
+    });
+  }
+};

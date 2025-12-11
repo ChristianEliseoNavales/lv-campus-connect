@@ -38,7 +38,6 @@ const useGoogleAuth = () => {
       setIsLoading(true);
 
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-      console.log('Google Client ID configured:', clientId ? 'Yes' : 'No');
 
       if (!clientId || clientId === 'your_google_client_id_here') {
         reject(new Error('Google Client ID not configured. Please contact the administrator.'));
@@ -51,7 +50,6 @@ const useGoogleAuth = () => {
           client_id: clientId,
           callback: (response) => {
             setIsLoading(false);
-            console.log('Google sign-in response received:', response ? 'Success' : 'Failed');
 
             if (response.credential) {
               resolve(response.credential);
@@ -68,8 +66,6 @@ const useGoogleAuth = () => {
 
         // Prompt the user to sign in
         window.google.accounts.id.prompt((notification) => {
-          console.log('Google prompt notification:', notification);
-
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
             // Try alternative sign-in method with button
             const buttonElement = document.getElementById('google-signin-button');

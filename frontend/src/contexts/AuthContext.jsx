@@ -151,7 +151,6 @@ export const AuthProvider = ({ children }) => {
         errorMessage = error.message; // Use the detailed timeout message
       }
 
-      console.log('Setting error message:', errorMessage);
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {

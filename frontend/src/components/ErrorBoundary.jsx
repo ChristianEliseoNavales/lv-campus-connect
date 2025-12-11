@@ -1,9 +1,15 @@
 import React from 'react';
+import { logError } from '../utils/errorHandler';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: null
+    };
   }
 
   static getDerivedStateFromError(error) {
@@ -12,13 +18,37 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error to console and potentially to a logging service
-    console.error('Error caught by boundary:', error, errorInfo);
-    
+    // Generate unique error ID for tracking
+    const errorId = `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Log the error with context
+    logError(error, {
+      errorInfo,
+      errorId,
+      componentStack: errorInfo.componentStack,
+      errorBoundary: true
+    });
+
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo,
+      errorId: errorId
     });
+
+    // TODO: Report to error tracking service in production
+    // if (import.meta.env.PROD) {
+    //   errorReportingService.captureException(error, {
+    //     contexts: {
+    //       react: {
+    //         componentStack: errorInfo.componentStack
+    //       }
+    //     },
+    //     tags: {
+    //       errorBoundary: true,
+    //       errorId
+    //     }
+    // });
+    // }
   }
 
   handleReload = () => {
@@ -64,13 +94,26 @@ class ErrorBoundary extends React.Component {
                 </button>
               </div>
 
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {this.state.errorId && (
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                  <p className="text-sm text-blue-800">
+                    <strong>Error ID:</strong> {this.state.errorId}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Please include this ID when reporting the issue.
+                  </p>
+                </div>
+              )}
+
+              {(import.meta.env.DEV || import.meta.env.MODE === 'development') && this.state.error && (
                 <div className="bg-red-50 border border-red-200 p-6 rounded-2xl">
                   <h4 className="text-lg font-bold text-red-800 mb-3">Debug Information (Development Only)</h4>
                   <details className="text-sm">
                     <summary className="cursor-pointer text-red-700 font-semibold mb-2">Error Details</summary>
-                    <pre className="bg-red-100 p-4 rounded-xl overflow-auto text-red-800 whitespace-pre-wrap">{this.state.error.toString()}</pre>
-                    <pre className="bg-red-100 p-4 rounded-xl overflow-auto text-red-800 whitespace-pre-wrap mt-2">{this.state.errorInfo.componentStack}</pre>
+                    <pre className="bg-red-100 p-4 rounded-xl overflow-auto text-red-800 whitespace-pre-wrap max-h-64">{this.state.error.toString()}</pre>
+                    {this.state.errorInfo && (
+                      <pre className="bg-red-100 p-4 rounded-xl overflow-auto text-red-800 whitespace-pre-wrap mt-2 max-h-64">{this.state.errorInfo.componentStack}</pre>
+                    )}
                   </details>
                 </div>
               )}

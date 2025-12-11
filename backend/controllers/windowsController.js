@@ -138,7 +138,7 @@ async function createWindow(req, res, next) {
     }
 
     // Check if all services exist and belong to the same office
-    const services = await Service.find({ _id: { $in: serviceIds } });
+    const services = await Service.find({ _id: { $in: serviceIds } }).lean();
     if (services.length !== serviceIds.length) {
       return res.status(404).json({ error: 'One or more services not found' });
     }
@@ -336,7 +336,7 @@ async function updateWindow(req, res, next) {
       }
 
       if (serviceIds.length > 0) {
-        const services = await Service.find({ _id: { $in: serviceIds } });
+        const services = await Service.find({ _id: { $in: serviceIds } }).lean();
         if (services.length !== serviceIds.length) {
           return res.status(404).json({ error: 'One or more services not found' });
         }

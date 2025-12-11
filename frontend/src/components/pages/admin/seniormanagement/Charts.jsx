@@ -32,7 +32,6 @@ const Charts = () => {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    console.log('🔌 Senior Management Charts: Joining admin-seniormanagement room');
     joinRoom('admin-seniormanagement');
 
     return () => {

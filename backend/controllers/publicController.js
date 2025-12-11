@@ -9,21 +9,29 @@ const { generateTransactionNo } = require('../utils/transactionNoGenerator');
  * Handles special case for Enroll service without visitation form
  * @param {Object} queueEntry - Queue entry object (should be populated with visitationFormId)
  * @param {Object} serviceObj - Service object (optional, will be fetched if not provided)
+ * @param {boolean} skipQueryIfNotFound - If true, don't query database when serviceObj is undefined (prevents N+1 queries when services were batch-fetched)
  * @returns {Promise<string>} Display customer name
  */
-async function getDisplayCustomerName(queueEntry, serviceObj = null) {
+async function getDisplayCustomerName(queueEntry, serviceObj = null, skipQueryIfNotFound = false) {
   // If visitation form exists, use the customer name from it
   if (queueEntry.visitationFormId?.customerName) {
     return queueEntry.visitationFormId.customerName;
   }
 
   // For Enroll service without visitation form, use office-specific labels
-  // Fetch service if not provided
-  if (!serviceObj) {
-    serviceObj = await Service.findById(queueEntry.serviceId);
+  // Only fetch service if not provided AND serviceId exists AND we're not skipping queries
+  if (!serviceObj && queueEntry.serviceId && !skipQueryIfNotFound) {
+    // Query database only if services weren't batch-fetched (skipQueryIfNotFound = false)
+    serviceObj = await Service.findById(queueEntry.serviceId).lean();
   }
 
-  if (serviceObj && serviceObj.name === 'Enroll') {
+  // If serviceObj is still null/undefined, return fallback
+  // This handles cases where service was deleted, doesn't exist, or wasn't in batch-fetched map
+  if (!serviceObj) {
+    return 'Anonymous Customer';
+  }
+
+  if (serviceObj.name === 'Enroll') {
     if (queueEntry.office === 'registrar') {
       return 'Enrollee'; // Continuing students in Registrar's Office
     } else if (queueEntry.office === 'admissions') {
@@ -886,7 +894,8 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
         const service = serviceMap.get(queue.serviceId?.toString());
 
         // Get display customer name using helper function
-        const displayCustomerName = await getDisplayCustomerName(queue, service);
+        // Pass skipQueryIfNotFound=true since services were batch-fetched (prevents N+1 queries)
+        const displayCustomerName = await getDisplayCustomerName(queue, service, true);
 
         return {
           id: queue._id,
@@ -909,7 +918,8 @@ exports.getQueueDataForAdmin = async (req, res, next) => {
       const currentService = serviceMap.get(filteredCurrentlyServing.serviceId?.toString());
 
       // Get display customer name using helper function
-      const displayCustomerName = await getDisplayCustomerName(filteredCurrentlyServing, currentService);
+      // Pass skipQueryIfNotFound=true since services were batch-fetched (prevents N+1 queries)
+      const displayCustomerName = await getDisplayCustomerName(filteredCurrentlyServing, currentService, true);
 
       // Debug logging for idNumber
       logger('🔍 [BACKEND] currentlyServing object:', {
@@ -2477,18 +2487,43 @@ exports.getFAQs = async (req, res, next) => {
   }
 };
 
-// GET /api/public/office - Get all offices for directory display
+// GET /api/public/office - Get all offices for directory display (with optional pagination)
 exports.getOffices = async (req, res, next) => {
   try {
     const { Office } = require('../models');
-    const offices = await Office.find()
-      .sort({ name: 1 })
-      .lean();
+
+    // Optional pagination parameters
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 100)); // Default 100, max 100
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination metadata
+    const totalCount = await Office.countDocuments();
+
+    // Fetch offices with pagination (if limit is set to a reasonable value)
+    // For small datasets, if no pagination is requested, return all
+    const query = Office.find().sort({ name: 1 });
+
+    // Only apply pagination if explicitly requested or if dataset might be large
+    if (req.query.page || req.query.limit || totalCount > 100) {
+      query.skip(skip).limit(limit);
+    }
+
+    const offices = await query.lean();
+    const totalPages = Math.ceil(totalCount / limit);
 
     res.json({
       success: true,
       records: offices,
-      count: offices.length
+      count: offices.length,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
     });
   } catch (error) {
     console.error('Error fetching offices:', error);

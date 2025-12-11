@@ -74,7 +74,6 @@ const Directory = () => {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    console.log('🔌 Directory page: Joining kiosk-directory room');
     joinRoom('kiosk-directory');
 
     // Subscribe to chart updates

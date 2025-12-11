@@ -53,7 +53,6 @@ const TransactionLogs = () => {
     email: '',
     address: '',
     service: '',
-    specialRequest: false,
     priority: 'No',
     idNumber: '',
     role: 'Visitor',
@@ -65,6 +64,12 @@ const TransactionLogs = () => {
   const [serviceInput, setServiceInput] = useState('');
   const [filteredServices, setFilteredServices] = useState([]);
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+
+
+  // Role autocomplete state
+  const [roleInput, setRoleInput] = useState('');
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const predefinedRoles = ['Student', 'Teacher', 'Alumni', 'Visitor'];
 
   // Ref to track if we've shown an error for the current fetch attempt
   const errorShownRef = useRef(false);
@@ -269,7 +274,8 @@ const TransactionLogs = () => {
       const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/services/admissions`);
       if (response.ok) {
         const data = await response.json();
-        const activeServices = data.filter(service => service.isActive);
+        // Filter out Document Request service - it should not be in transaction logs
+        const activeServices = data.filter(service => service.isActive && service.name !== 'Document Request');
         setServices(activeServices);
         setFilteredServices(activeServices);
       } else {
@@ -290,6 +296,7 @@ const TransactionLogs = () => {
         service.name.toLowerCase().includes(serviceInput.toLowerCase())
       );
     }
+    // Show all services when input is empty (Document Request is already filtered out in fetchServices)
     return services;
   }, [serviceInput, services]);
 
@@ -353,7 +360,10 @@ const TransactionLogs = () => {
     // Service validation
     if (!formData.service || !formData.service.trim()) {
       errors.service = 'Service is required';
+    } else if (formData.service === 'Document Request') {
+      errors.service = 'Document Request cannot be added via Add Transaction. Use Add Request in Document Requests page instead.';
     }
+
 
     // ID Number validation (required if priority)
     if (formData.priority === 'Yes' && !formData.idNumber.trim()) {
@@ -398,13 +408,10 @@ const TransactionLogs = () => {
                 formData.status.toLowerCase()
       };
 
-      // Add service or special request
-      if (formData.specialRequest) {
-        payload.specialRequest = true;
-        payload.specialRequestName = formData.service.trim(); // Use service input as special request name
-      } else {
-        payload.service = formData.service;
-      }
+      // All admin-created transactions are automatically special requests
+      payload.specialRequest = true;
+      payload.specialRequestName = formData.service.trim();
+
 
       const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/admin/transactions/admissions`, {
         method: 'POST',
@@ -442,7 +449,6 @@ const TransactionLogs = () => {
       email: '',
       address: '',
       service: '',
-      specialRequest: false,
       priority: 'No',
       idNumber: '',
       role: 'Visitor',
@@ -452,12 +458,15 @@ const TransactionLogs = () => {
     setServiceInput('');
     setFilteredServices(services);
     setShowServiceDropdown(false);
+    setRoleInput('');
+    setShowRoleDropdown(false);
   };
 
   // Handle Add Transaction button click
   const handleAddTransaction = () => {
     setShowAddTransactionModal(true);
     setServiceInput('');
+    setRoleInput('');
     fetchServices();
   };
 
@@ -519,7 +528,7 @@ const TransactionLogs = () => {
                 type="number"
                 value={logsPerPage}
                 onChange={(e) => updateState('logsPerPage', Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                className="w-10 sm:w-12 px-1 sm:px-1.5 py-0.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] text-center"
                 min="5"
                 max="50"
               />
@@ -808,15 +817,15 @@ const TransactionLogs = () => {
           {/* Modal */}
           <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
             <div
-              className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all duration-300 scale-100 overflow-hidden"
+              className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all duration-300 scale-100"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button
                 onClick={handleCloseModal}
-                className="absolute top-3 right-3 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-colors"
+                className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-[#1F3463] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:ring-offset-1"
               >
-                <MdClose className="w-3 h-3" />
+                <MdClose className="w-3 h-3 transition-transform duration-200" />
               </button>
 
               {/* Header */}
@@ -908,14 +917,14 @@ const TransactionLogs = () => {
                         <input
                           type="text"
                           value={serviceInput}
-                          onChange={(e) => {
+                            onChange={(e) => {
                             const value = e.target.value;
                             setServiceInput(value);
                             handleFormChange('service', value);
-                            setShowServiceDropdown(value.trim().length > 0 && filteredServices.length > 0);
+                            setShowServiceDropdown(filteredServices.length > 0);
                           }}
                           onFocus={() => {
-                            if (serviceInput.trim() && filteredServices.length > 0) {
+                            if (filteredServices.length > 0) {
                               setShowServiceDropdown(true);
                             }
                           }}
@@ -947,6 +956,7 @@ const TransactionLogs = () => {
                         <p className="text-red-600 text-[10px] sm:text-xs mt-0.5">{formErrors.service}</p>
                       )}
                     </div>
+
                   </div>
 
                   {/* Column 2 */}
@@ -991,21 +1001,57 @@ const TransactionLogs = () => {
                       </div>
                     )}
 
-                    {/* Role */}
+                    {/* Role - Searchable Dropdown */}
                     <div>
                       <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1 sm:mb-1.5">
                         Role <span className="text-red-500">*</span>
                       </label>
-                      <select
-                        value={formData.role}
-                        onChange={(e) => handleFormChange('role', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
-                      >
-                        <option value="Visitor">Visitor</option>
-                        <option value="Student">Student</option>
-                        <option value="Teacher">Teacher</option>
-                        <option value="Alumni">Alumni</option>
-                      </select>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={roleInput || formData.role}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setRoleInput(value);
+                            handleFormChange('role', value);
+                            setShowRoleDropdown(value.trim().length > 0 && predefinedRoles.length > 0);
+                          }}
+                          onFocus={() => {
+                            if (roleInput.trim() || formData.role) {
+                              setShowRoleDropdown(true);
+                            }
+                          }}
+                          onBlur={() => {
+                            // Delay closing to allow option selection
+                            setTimeout(() => setShowRoleDropdown(false), 150);
+                          }}
+                          className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                          placeholder="Type or select role..."
+                        />
+                        {/* Dropdown */}
+                        {showRoleDropdown && predefinedRoles.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-0.5 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-20">
+                            {predefinedRoles
+                              .filter(role =>
+                                role.toLowerCase().includes((roleInput || formData.role || '').toLowerCase())
+                              )
+                              .map((role) => (
+                                <button
+                                  key={role}
+                                  type="button"
+                                  onClick={() => {
+                                    setRoleInput(role);
+                                    handleFormChange('role', role);
+                                    setShowRoleDropdown(false);
+                                  }}
+                                  className="w-full text-left px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors"
+                                >
+                                  {role}
+                                </button>
+                              ))}
+                          </div>
+                        )}
+                      </div>
                       {formErrors.role && (
                         <p className="text-red-600 text-[10px] sm:text-xs mt-0.5">{formErrors.role}</p>
                       )}
@@ -1032,21 +1078,6 @@ const TransactionLogs = () => {
                       )}
                     </div>
 
-                    {/* Special Request Checkbox */}
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="specialRequest"
-                        checked={formData.specialRequest}
-                        onChange={(e) => {
-                          handleFormChange('specialRequest', e.target.checked);
-                        }}
-                        className="w-4 h-4 text-[#1F3463] border-gray-300 rounded focus:ring-[#1F3463]"
-                      />
-                      <label htmlFor="specialRequest" className="ml-2 text-[10px] sm:text-xs font-medium text-gray-700">
-                        Special Request
-                      </label>
-                    </div>
                   </div>
                 </div>
 

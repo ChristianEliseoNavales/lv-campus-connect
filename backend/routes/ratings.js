@@ -3,6 +3,7 @@ const router = express.Router();
 const { query } = require('express-validator');
 const { verifyToken, requireSuperAdmin, checkApiAccess } = require('../middleware/authMiddleware');
 const ratingsController = require('../controllers/ratingsController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Note: requireSuperAdmin middleware is now imported from authMiddleware.js
 
@@ -16,19 +17,19 @@ router.get('/', verifyToken, checkApiAccess, [
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date'),
   query('ratingType').optional().isString().withMessage('Rating type must be a string')
-], ratingsController.getRatings);
+], asyncHandler(ratingsController.getRatings));
 
 // GET /api/ratings/stats - Get ratings statistics
 router.get('/stats', verifyToken, checkApiAccess, [
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date'),
   query('department').optional().isIn(['registrar', 'admissions']).withMessage('Invalid department')
-], ratingsController.getRatingsStats);
+], asyncHandler(ratingsController.getRatingsStats));
 
 // GET /api/ratings/department/:department - Get department-specific ratings summary
 router.get('/department/:department', verifyToken, checkApiAccess, [
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date')
-], ratingsController.getDepartmentRatingsSummary);
+], asyncHandler(ratingsController.getDepartmentRatingsSummary));
 
 module.exports = router;
