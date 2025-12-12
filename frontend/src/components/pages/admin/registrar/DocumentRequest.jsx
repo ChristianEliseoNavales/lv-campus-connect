@@ -26,6 +26,24 @@ const getDefaultSchoolYear = () => {
   return `${currentYear}-${currentYear + 1}`;
 };
 
+// Helper function to calculate claim date by adding business days to approval date (excluding weekends)
+const calculateClaimDate = (approvalDate, businessDays) => {
+  const claimDate = new Date(approvalDate);
+  let daysAdded = 0;
+
+  while (daysAdded < businessDays) {
+    claimDate.setDate(claimDate.getDate() + 1);
+
+    // Skip weekends (Saturday = 6, Sunday = 0)
+    const dayOfWeek = claimDate.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      daysAdded++;
+    }
+  }
+
+  return claimDate;
+};
+
 const DocumentRequest = () => {
   // URL-persisted state management
   const { state: urlState, updateState } = useURLState(INITIAL_URL_STATE);
@@ -48,7 +66,7 @@ const DocumentRequest = () => {
   const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
   const [showRejectConfirmModal, setShowRejectConfirmModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [businessDays, setBusinessDays] = useState(5);
+  const [claimDate, setClaimDate] = useState(null);
   const [rejectReasons, setRejectReasons] = useState([]);
   const [processing, setProcessing] = useState(false);
 
@@ -62,6 +80,7 @@ const DocumentRequest = () => {
     contactNumber: '',
     emailAddress: '',
     request: [],
+    claimDate: null,
     remarks: ''
   });
   const [formErrors, setFormErrors] = useState({});
@@ -220,7 +239,10 @@ const DocumentRequest = () => {
   // Handle Approve
   const handleApprove = (request) => {
     setSelectedRequest(request);
-    setBusinessDays(5); // Default to 5 days
+    // Set default claim date to approval date + 5 business days
+    const approvalDate = new Date();
+    const defaultClaimDate = calculateClaimDate(approvalDate, 5);
+    setClaimDate(defaultClaimDate);
     setShowViewModal(false); // Close view modal if open
     setShowApproveModal(true);
   };
@@ -243,7 +265,7 @@ const DocumentRequest = () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            businessDays: businessDays
+            claimDate: claimDate
           })
         }
       );
@@ -355,6 +377,9 @@ const DocumentRequest = () => {
 
   // Handle Add Request button click
   const handleAddRequest = () => {
+    // Set default claim date to approval date + 5 business days
+    const approvalDate = new Date();
+    const defaultClaimDate = calculateClaimDate(approvalDate, 5);
     setFormData({
       name: '',
       lastSYAttended: getDefaultSchoolYear(),
@@ -362,25 +387,85 @@ const DocumentRequest = () => {
       contactNumber: '',
       emailAddress: '',
       request: [],
+      claimDate: defaultClaimDate,
       remarks: ''
     });
     setFormErrors({});
     setShowAddRequestModal(true);
   };
 
-  // Handle form field changes
+  // Real-time validation function
+  const validateField = (field, value) => {
+    const errors = { ...formErrors };
+
+    switch (field) {
+      case 'name':
+        if (value.trim().length > 200) {
+          errors.name = 'Name must be 200 characters or less';
+        } else if (errors.name && value.trim().length <= 200) {
+          delete errors.name;
+        }
+        break;
+      case 'contactNumber':
+        if (value.trim() && !/^(\+63|0)[0-9]{10}$/.test(value.trim())) {
+          errors.contactNumber = 'Contact number must be a valid Philippine phone number (+63XXXXXXXXXX or 0XXXXXXXXXX)';
+        } else if (errors.contactNumber && (!value.trim() || /^(\+63|0)[0-9]{10}$/.test(value.trim()))) {
+          delete errors.contactNumber;
+        }
+        break;
+      case 'emailAddress':
+        if (value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+          errors.emailAddress = 'Email must be a valid email address';
+        } else if (errors.emailAddress && (!value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()))) {
+          delete errors.emailAddress;
+        }
+        break;
+      case 'programGradeStrand':
+        if (value.trim().length > 200) {
+          errors.programGradeStrand = 'Program/Grade/Strand must be 200 characters or less';
+        } else if (errors.programGradeStrand && value.trim().length <= 200) {
+          delete errors.programGradeStrand;
+        }
+        break;
+      case 'claimDate':
+        if (value) {
+          const approvalDate = new Date();
+          const claimDate = new Date(value);
+          if (isNaN(claimDate.getTime())) {
+            errors.claimDate = 'Invalid claim date';
+          } else if (claimDate < approvalDate) {
+            errors.claimDate = 'Claim date cannot be before approval date';
+          } else if (errors.claimDate) {
+            delete errors.claimDate;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+
+    setFormErrors(errors);
+  };
+
+  // Handle form field changes with real-time validation
   const handleFormChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-    // Clear error for this field when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+
+    // Real-time validation for format-sensitive fields
+    if (['name', 'contactNumber', 'emailAddress', 'programGradeStrand', 'claimDate'].includes(field)) {
+      validateField(field, value);
+    } else {
+      // Clear error for other fields when user starts typing
+      if (formErrors[field]) {
+        setFormErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -452,6 +537,19 @@ const DocumentRequest = () => {
       errors.request = 'At least one document must be selected';
     }
 
+    // Claim Date validation
+    if (!formData.claimDate) {
+      errors.claimDate = 'Claim date is required';
+    } else {
+      const approvalDate = new Date();
+      const claimDate = new Date(formData.claimDate);
+      if (isNaN(claimDate.getTime())) {
+        errors.claimDate = 'Invalid claim date';
+      } else if (claimDate < approvalDate) {
+        errors.claimDate = 'Claim date cannot be before approval date';
+      }
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -476,6 +574,7 @@ const DocumentRequest = () => {
           contactNumber: formData.contactNumber.trim(),
           emailAddress: formData.emailAddress.trim().toLowerCase(),
           request: formData.request,
+          claimDate: formData.claimDate,
           remarks: formData.remarks?.trim() || ''
         })
       });
@@ -502,6 +601,9 @@ const DocumentRequest = () => {
   // Handle modal close
   const handleCloseModal = () => {
     setShowAddRequestModal(false);
+    // Set default claim date to approval date + 5 business days
+    const approvalDate = new Date();
+    const defaultClaimDate = calculateClaimDate(approvalDate, 5);
     setFormData({
       name: '',
       lastSYAttended: getDefaultSchoolYear(),
@@ -509,6 +611,7 @@ const DocumentRequest = () => {
       contactNumber: '',
       emailAddress: '',
       request: [],
+      claimDate: defaultClaimDate,
       remarks: ''
     });
     setFormErrors({});
@@ -859,16 +962,18 @@ const DocumentRequest = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1 sm:mb-1.5">
-                      Business Days (3-5) <span className="text-red-500">*</span>
+                      Claim Date <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="number"
-                      min="3"
-                      max="5"
-                      value={businessDays}
-                      onChange={(e) => setBusinessDays(Math.max(3, Math.min(5, parseInt(e.target.value) || 5)))}
-                      className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] text-center"
+                    <DatePicker
+                      value={claimDate}
+                      onChange={(date) => setClaimDate(date)}
+                      placeholder="Select claim date"
+                      allowFutureDates={true}
+                      showAllDates={false}
                     />
+                    {!claimDate && (
+                      <p className="text-red-600 text-[10px] sm:text-xs mt-0.5">Claim date is required</p>
+                    )}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">
                     <p className="font-semibold mb-1">Request Details:</p>
@@ -1165,7 +1270,10 @@ const DocumentRequest = () => {
                         type="text"
                         value={formData.name}
                         onChange={(e) => handleFormChange('name', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                        onBlur={(e) => validateField('name', e.target.value)}
+                        className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                          formErrors.name ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="Enter full name"
                       />
                       {formErrors.name && (
@@ -1209,7 +1317,10 @@ const DocumentRequest = () => {
                         type="text"
                         value={formData.programGradeStrand}
                         onChange={(e) => handleFormChange('programGradeStrand', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                        onBlur={(e) => validateField('programGradeStrand', e.target.value)}
+                        className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                          formErrors.programGradeStrand ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="Enter program, grade, or strand"
                       />
                       {formErrors.programGradeStrand && (
@@ -1226,7 +1337,10 @@ const DocumentRequest = () => {
                         type="text"
                         value={formData.contactNumber}
                         onChange={(e) => handleFormChange('contactNumber', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                        onBlur={(e) => validateField('contactNumber', e.target.value)}
+                        className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                          formErrors.contactNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="+63XXXXXXXXXX or 0XXXXXXXXXX"
                       />
                       {formErrors.contactNumber && (
@@ -1243,7 +1357,10 @@ const DocumentRequest = () => {
                         type="email"
                         value={formData.emailAddress}
                         onChange={(e) => handleFormChange('emailAddress', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                        onBlur={(e) => validateField('emailAddress', e.target.value)}
+                        className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                          formErrors.emailAddress ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="your.email@example.com"
                       />
                       {formErrors.emailAddress && (
@@ -1275,6 +1392,25 @@ const DocumentRequest = () => {
                       </div>
                       {formErrors.request && (
                         <p className="text-red-600 text-[10px] sm:text-xs mt-0.5">{formErrors.request}</p>
+                      )}
+                    </div>
+
+                    {/* Claim Date */}
+                    <div>
+                      <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1 sm:mb-1.5">
+                        Claim Date <span className="text-red-500">*</span>
+                      </label>
+                      <div className={formErrors.claimDate ? 'border border-red-500 rounded-lg' : ''}>
+                        <DatePicker
+                          value={formData.claimDate}
+                          onChange={(date) => handleFormChange('claimDate', date)}
+                          placeholder="Select claim date"
+                          allowFutureDates={true}
+                          showAllDates={false}
+                        />
+                      </div>
+                      {formErrors.claimDate && (
+                        <p className="text-red-600 text-[10px] sm:text-xs mt-0.5">{formErrors.claimDate}</p>
                       )}
                     </div>
 

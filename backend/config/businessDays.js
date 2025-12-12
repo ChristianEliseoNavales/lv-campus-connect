@@ -60,6 +60,48 @@ function calculateClaimDate(approvalDate, businessDays) {
 }
 
 /**
+ * Calculate business days from approval date to claim date
+ * Excludes weekends (Saturday and Sunday)
+ * @param {Date} approvalDate - Date when request was approved
+ * @param {Date} claimDate - Date when document can be claimed
+ * @returns {number} Number of business days between the dates
+ */
+function calculateBusinessDays(approvalDate, claimDate) {
+  // Normalize dates to start of day for accurate comparison
+  const startDate = new Date(approvalDate);
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(claimDate);
+  endDate.setHours(0, 0, 0, 0);
+
+  // Validate that claim date is not before approval date
+  if (endDate < startDate) {
+    throw new Error('Claim date cannot be before approval date');
+  }
+
+  // If same day, return 0
+  if (endDate.getTime() === startDate.getTime()) {
+    return 0;
+  }
+
+  let businessDays = 0;
+  const currentDate = new Date(startDate);
+
+  // Count business days from approval date to claim date
+  while (currentDate < endDate) {
+    currentDate.setDate(currentDate.getDate() + 1);
+
+    // Skip weekends (Saturday = 6, Sunday = 0)
+    const dayOfWeek = currentDate.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      businessDays++;
+    }
+  }
+
+  return businessDays;
+}
+
+/**
  * Format claim date for display
  * @param {Date} claimDate - Claim date
  * @returns {string} Formatted date string
@@ -78,8 +120,13 @@ module.exports = {
   getBusinessDaysForRequestType,
   getBusinessDaysForRequestTypes,
   calculateClaimDate,
+  calculateBusinessDays,
   formatClaimDate
 };
+
+
+
+
 
 
 

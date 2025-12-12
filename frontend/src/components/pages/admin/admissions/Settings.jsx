@@ -367,7 +367,7 @@ const AddEditWindowModal = ({
                 </span>
               </label>
               <p className="mt-0.5 text-[10px] text-gray-500">
-                Priority windows automatically serve all services and handle PWD/Senior Citizen queues
+                Priority windows automatically handle services assigned to other windows and handle PWD/Senior Citizen queues
               </p>
             </div>
 
@@ -376,7 +376,7 @@ const AddEditWindowModal = ({
               <label className="block text-xs font-medium text-gray-900 mb-1.5">
                 Services <span className="text-red-500">*</span>
                 {windowFormData.isPriority && (
-                  <span className="ml-1.5 text-[10px] text-gray-500">(All services auto-assigned for Priority window)</span>
+                  <span className="ml-1.5 text-[10px] text-gray-500">(Services from other windows auto-assigned)</span>
                 )}
               </label>
               <div className={`border rounded-lg p-2.5 max-h-32 overflow-y-auto ${
@@ -388,8 +388,8 @@ const AddEditWindowModal = ({
               }`}>
                 {windowFormData.isPriority ? (
                   <div className="text-center py-3">
-                    <p className="text-xs text-gray-600 font-medium">All Services Assigned</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">Priority windows automatically handle all available services</p>
+                    <p className="text-xs text-gray-600 font-medium">Services from Other Windows Assigned</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Priority windows automatically handle services assigned to other windows</p>
                   </div>
                 ) : services.length === 0 ? (
                   <p className="text-gray-500 text-xs">No services available</p>
@@ -768,12 +768,13 @@ const Settings = () => {
       const response = await authFetch(`${API_CONFIG.getAdminUrl()}/api/services/admissions`);
       if (response.ok) {
         const data = await response.json();
-        // Filter out Special Request services as a safety measure (backend should already filter, but this ensures it)
+        // Filter out Special Request and Document Request services as a safety measure (backend should already filter, but this ensures it)
         // Also filter by name as a fallback in case isSpecialRequest field is not set
         const filteredData = data.filter(service => {
           const isSpecialRequest = service.isSpecialRequest === true ||
                                    service.name?.toLowerCase().includes('special request');
-          return !isSpecialRequest;
+          const isDocumentRequest = service.name?.toLowerCase() === 'document request';
+          return !isSpecialRequest && !isDocumentRequest;
         });
         setServices(filteredData);
         return filteredData; // Return data for initial state capture
@@ -1041,13 +1042,59 @@ const Settings = () => {
   const handleWindowFormChange = (field, value) => {
     if (field === 'isPriority') {
       if (value) {
-        // When priority is checked, set name to "Priority" and assign all services
-        const allServiceIds = services.map(service => service.id);
+        // When priority is checked, collect services only from other non-priority windows
+        // Filter windows: exclude current window (if editing) and Priority windows
+        const otherWindows = windows.filter(window => {
+          // Exclude current window if editing
+          if (editingWindow && window.id === editingWindow.id) return false;
+          // Exclude Priority windows
+          if (window.name === 'Priority') return false;
+          return true;
+        });
+
+        // Collect unique service IDs from other windows, excluding Special Request services
+        const assignedServiceIds = new Set();
+        otherWindows.forEach(window => {
+          if (window.serviceIds && Array.isArray(window.serviceIds)) {
+            window.serviceIds.forEach(service => {
+              const serviceId = service._id || service;
+              // Ensure serviceId is a string (convert ObjectId if needed)
+              const serviceIdString = typeof serviceId === 'string' ? serviceId : String(serviceId);
+
+              // Get service name from window data (populated service object)
+              // Service might be an object with _id and name, or just an ID string
+              const serviceName = (typeof service === 'object' && service.name) ? service.name : '';
+
+              // Check if this is a Special Request service by name first (most reliable)
+              const isSpecialRequestByName = serviceName.toLowerCase().includes('special request');
+
+              // Check if this is a Document Request service
+              const isDocumentRequestByName = serviceName.toLowerCase() === 'document request';
+
+              // Also check in services array if available
+              const serviceObj = services.find(s => s.id === serviceIdString);
+              const isSpecialRequestByFlag = serviceObj?.isSpecialRequest === true ||
+                                            serviceObj?.name?.toLowerCase().includes('special request');
+              const isDocumentRequestByFlag = serviceObj?.name?.toLowerCase() === 'document request';
+
+              // Exclude if it's a Special Request or Document Request service (by name or flag)
+              // If no name available and not in services array, exclude to be safe
+              // (services array excludes Special Requests and Document Request, so if it's there, it's safe)
+              if (!isSpecialRequestByName && !isSpecialRequestByFlag && !isDocumentRequestByName && !isDocumentRequestByFlag) {
+                // Only include if we have a name OR the service is in the services array
+                if (serviceName || serviceObj) {
+                  assignedServiceIds.add(serviceIdString);
+                }
+              }
+            });
+          }
+        });
+
         setWindowFormData(prev => ({
           ...prev,
           [field]: value,
           name: 'Priority',
-          serviceIds: allServiceIds
+          serviceIds: Array.from(assignedServiceIds)
         }));
       } else {
         // When priority is unchecked, clear name and services
@@ -1084,7 +1131,9 @@ const Settings = () => {
       errors.name = 'Window name is required';
     }
 
-    if (!windowFormData.serviceIds || windowFormData.serviceIds.length === 0) {
+    // Allow empty serviceIds for priority windows (they get services from other windows)
+    // If no other windows have services, priority window can be created with no services
+    if (!windowFormData.isPriority && (!windowFormData.serviceIds || windowFormData.serviceIds.length === 0)) {
       errors.serviceIds = 'Please select at least one service';
     }
 
@@ -1115,7 +1164,19 @@ const Settings = () => {
     // Clear any existing errors
     setWindowErrors({});
 
-    // No need to check for duplicate service assignments since each window has only one service
+    // Filter out Special Request and Document Request services before sending to backend
+    const filteredServiceIds = (Array.isArray(windowFormData.serviceIds) ? windowFormData.serviceIds : [])
+      .filter(serviceId => {
+        const serviceObj = services.find(s => s.id === serviceId);
+        if (serviceObj) {
+          const isSpecialRequest = serviceObj.isSpecialRequest === true ||
+                                   serviceObj.name?.toLowerCase().includes('special request');
+          const isDocumentRequest = serviceObj.name?.toLowerCase() === 'document request';
+          return !isSpecialRequest && !isDocumentRequest;
+        }
+        // If service not found in services array, exclude it to be safe
+        return false;
+      });
 
     try {
       if (editingWindow) {
@@ -1127,7 +1188,7 @@ const Settings = () => {
           },
           body: JSON.stringify({
             name: windowFormData.name.trim(),
-            serviceIds: windowFormData.serviceIds,
+            serviceIds: filteredServiceIds,
             assignedAdmin: windowFormData.assignedAdmin
           }),
         });
@@ -1139,7 +1200,8 @@ const Settings = () => {
           ));
           showSuccess('Window Updated', `${updatedWindow.name} has been updated successfully`);
         } else {
-          throw new Error('Failed to update window');
+          const errorData = await response.json().catch(() => ({ error: 'Failed to update window' }));
+          throw new Error(errorData.error || 'Failed to update window');
         }
       } else {
         // Add new window
@@ -1151,7 +1213,7 @@ const Settings = () => {
           body: JSON.stringify({
             name: windowFormData.name.trim(),
             office: 'admissions',
-            serviceIds: windowFormData.serviceIds,
+            serviceIds: filteredServiceIds,
             assignedAdmin: windowFormData.assignedAdmin
           }),
         });

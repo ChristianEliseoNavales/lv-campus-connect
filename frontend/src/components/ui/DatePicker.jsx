@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { HiCalendar, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { getPhilippineDate, isDateInFuture, isToday as isPhilippineToday } from '../../utils/philippineTimezone';
 
-const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates = true }) => {
+const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates = true, allowFutureDates = false }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Helper function to safely convert value to Date object
@@ -96,8 +96,8 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates
       return;
     }
 
-    // Prevent selection of future dates
-    if (isDateInFuture(date)) {
+    // Prevent selection of future dates only if allowFutureDates is false
+    if (!allowFutureDates && isDateInFuture(date)) {
       return; // Don't allow future date selection
     }
     onChange(date);
@@ -191,16 +191,17 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", showAllDates
           <div className="grid grid-cols-7 gap-0.5">
             {days.map((date, index) => {
               const isFutureDate = date && isDateInFuture(date);
+              const shouldDisable = !date || (!allowFutureDates && isFutureDate);
               return (
                 <button
                   key={index}
                   type="button"
-                  onClick={() => date && !isFutureDate && handleDateSelect(date)}
-                  disabled={!date || isFutureDate}
+                  onClick={() => date && !shouldDisable && handleDateSelect(date)}
+                  disabled={shouldDisable}
                   className={`
                     h-6 w-6 text-xs rounded transition-colors
                     ${!date ? 'invisible' : ''}
-                    ${isFutureDate
+                    ${shouldDisable
                       ? 'text-gray-300 cursor-not-allowed'
                       : isSelected(date)
                       ? 'bg-[#1F3463] text-white'

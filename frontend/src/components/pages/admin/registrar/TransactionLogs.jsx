@@ -310,19 +310,72 @@ const TransactionLogs = () => {
     setShowServiceDropdown(false);
   };
 
-  // Handle form field changes
+  // Real-time validation function
+  const validateField = (field, value) => {
+    const errors = { ...formErrors };
+
+    switch (field) {
+      case 'name':
+        if (value.trim().length > 200) {
+          errors.name = 'Name must be 200 characters or less';
+        } else if (errors.name && value.trim().length <= 200) {
+          delete errors.name;
+        }
+        break;
+      case 'contactNumber':
+        if (value.trim() && !/^(\+63|0)[0-9]{10}$/.test(value.trim())) {
+          errors.contactNumber = 'Contact number must be a valid Philippine phone number (+63XXXXXXXXXX or 0XXXXXXXXXX)';
+        } else if (errors.contactNumber && (!value.trim() || /^(\+63|0)[0-9]{10}$/.test(value.trim()))) {
+          delete errors.contactNumber;
+        }
+        break;
+      case 'email':
+        if (value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+          errors.email = 'Email must be a valid email address';
+        } else if (errors.email && (!value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()))) {
+          delete errors.email;
+        }
+        break;
+      case 'address':
+        if (value.trim() && value.trim().length > 500) {
+          errors.address = 'Address must be 500 characters or less';
+        } else if (errors.address && (!value.trim() || value.trim().length <= 500)) {
+          delete errors.address;
+        }
+        break;
+      case 'idNumber':
+        if (formData.priority === 'Yes' && value.trim().length > 50) {
+          errors.idNumber = 'ID Number must be 50 characters or less';
+        } else if (errors.idNumber && (!value.trim() || value.trim().length <= 50)) {
+          delete errors.idNumber;
+        }
+        break;
+      default:
+        break;
+    }
+
+    setFormErrors(errors);
+  };
+
+  // Handle form field changes with real-time validation
   const handleFormChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-    // Clear error for this field when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+
+    // Real-time validation for format-sensitive fields
+    if (['name', 'contactNumber', 'email', 'address', 'idNumber'].includes(field)) {
+      validateField(field, value);
+    } else {
+      // Clear error for other fields when user starts typing
+      if (formErrors[field]) {
+        setFormErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -883,7 +936,10 @@ const TransactionLogs = () => {
                         type="text"
                         value={formData.name}
                         onChange={(e) => handleFormChange('name', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                        onBlur={(e) => validateField('name', e.target.value)}
+                        className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                          formErrors.name ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="Enter customer name"
                       />
                       {formErrors.name && (
@@ -900,7 +956,10 @@ const TransactionLogs = () => {
                         type="text"
                         value={formData.contactNumber}
                         onChange={(e) => handleFormChange('contactNumber', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                        onBlur={(e) => validateField('contactNumber', e.target.value)}
+                        className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                          formErrors.contactNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="+63XXXXXXXXXX or 0XXXXXXXXXX"
                       />
                       {formErrors.contactNumber && (
@@ -917,7 +976,10 @@ const TransactionLogs = () => {
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleFormChange('email', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                        onBlur={(e) => validateField('email', e.target.value)}
+                        className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                          formErrors.email ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="customer@example.com"
                       />
                       {formErrors.email && (
@@ -934,7 +996,10 @@ const TransactionLogs = () => {
                         type="text"
                         value={formData.address}
                         onChange={(e) => handleFormChange('address', e.target.value)}
-                        className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                        onBlur={(e) => validateField('address', e.target.value)}
+                        className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                          formErrors.address ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="Enter address (optional)"
                       />
                       {formErrors.address && (
@@ -1006,6 +1071,17 @@ const TransactionLogs = () => {
                           handleFormChange('priority', e.target.value);
                           if (e.target.value === 'No') {
                             handleFormChange('idNumber', '');
+                            // Clear ID number error when priority is set to No
+                            if (formErrors.idNumber) {
+                              setFormErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.idNumber;
+                                return newErrors;
+                              });
+                            }
+                          } else {
+                            // Validate ID number when priority is set to Yes
+                            validateField('idNumber', formData.idNumber);
                           }
                         }}
                         className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
@@ -1025,7 +1101,10 @@ const TransactionLogs = () => {
                           type="text"
                           value={formData.idNumber}
                           onChange={(e) => handleFormChange('idNumber', e.target.value)}
-                          className="w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent"
+                          onBlur={(e) => validateField('idNumber', e.target.value)}
+                          className={`w-full px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3463] focus:border-transparent ${
+                            formErrors.idNumber ? 'border-red-500' : 'border-gray-300'
+                          }`}
                           placeholder="Enter ID number"
                         />
                         {formErrors.idNumber && (

@@ -50,7 +50,10 @@ async function getServicesByDepartment(req, res, next) {
     const services = await Service.find({
       office: department,
       isSpecialRequest: { $ne: true },
-      name: { $not: { $regex: /special request/i } } // Also filter by name as fallback
+      $and: [
+        { name: { $not: { $regex: /special request/i } } }, // Also filter by name as fallback
+        { name: { $ne: 'Document Request' } } // Exclude Document Request service
+      ]
     }).sort({ name: 1 }).lean();
     res.json(services.map(service => ({
       id: service._id,
@@ -81,7 +84,10 @@ async function getActiveServicesByDepartment(req, res, next) {
       office: department,
       isActive: true,
       isSpecialRequest: { $ne: true },
-      name: { $not: { $regex: /special request/i } } // Also filter by name as fallback
+      $and: [
+        { name: { $not: { $regex: /special request/i } } }, // Also filter by name as fallback
+        { name: { $ne: 'Document Request' } } // Exclude Document Request service
+      ]
     }).sort({ name: 1 }).lean();
 
     res.json(services.map(service => ({

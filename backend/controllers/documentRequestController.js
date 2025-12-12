@@ -1,6 +1,6 @@
 const DocumentRequest = require('../models/DocumentRequest');
 const { generateTransactionNo } = require('../utils/transactionNoGenerator');
-const { getBusinessDaysForRequestTypes, calculateClaimDate, formatClaimDate } = require('../config/businessDays');
+const { getBusinessDaysForRequestTypes, calculateClaimDate, calculateBusinessDays, formatClaimDate } = require('../config/businessDays');
 const emailService = require('../services/emailService');
 const {
   validateDateString,
@@ -258,7 +258,7 @@ exports.createDocumentRequest = async (req, res, next) => {
 exports.approveDocumentRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { businessDays } = req.body;
+    const { claimDate: claimDateInput } = req.body;
 
     const documentRequest = await DocumentRequest.findById(id);
 
@@ -276,20 +276,44 @@ exports.approveDocumentRequest = async (req, res, next) => {
       });
     }
 
-    // Calculate business days (use provided value or calculate from request types)
-    let finalBusinessDays = businessDays;
-    if (!finalBusinessDays) {
-      finalBusinessDays = getBusinessDaysForRequestTypes(documentRequest.request);
+    // Validate claim date is provided
+    if (!claimDateInput) {
+      return res.status(400).json({
+        success: false,
+        error: 'Claim date is required'
+      });
     }
 
-    // Ensure business days is within valid range
-    if (finalBusinessDays < 3 || finalBusinessDays > 5) {
-      finalBusinessDays = Math.max(3, Math.min(5, finalBusinessDays));
+    // Parse and validate claim date
+    const claimDate = new Date(claimDateInput);
+    if (isNaN(claimDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid claim date format'
+      });
     }
 
-    // Calculate claim date
+    // Set approval date
     const approvalDate = new Date();
-    const claimDate = calculateClaimDate(approvalDate, finalBusinessDays);
+
+    // Validate that claim date is not before approval date
+    if (claimDate < approvalDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'Claim date cannot be before approval date'
+      });
+    }
+
+    // Calculate business days from approval date to claim date
+    let finalBusinessDays;
+    try {
+      finalBusinessDays = calculateBusinessDays(approvalDate, claimDate);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        error: error.message || 'Invalid claim date'
+      });
+    }
 
     // Update document request
     documentRequest.status = 'approved';
@@ -424,6 +448,7 @@ exports.createAdminDocumentRequest = async (req, res, next) => {
       contactNumber,
       emailAddress,
       request,
+      claimDate: claimDateInput,
       remarks
     } = req.body;
 
@@ -463,10 +488,44 @@ exports.createAdminDocumentRequest = async (req, res, next) => {
     // Generate unique transaction number
     const transactionNo = await generateTransactionNo();
 
-    // Calculate business days and claim date for auto-approved requests
-    const finalBusinessDays = 5; // Default for admin-created requests
+    // Validate claim date is provided
+    if (!claimDateInput) {
+      return res.status(400).json({
+        success: false,
+        error: 'Claim date is required'
+      });
+    }
+
+    // Parse and validate claim date
+    const claimDate = new Date(claimDateInput);
+    if (isNaN(claimDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid claim date format'
+      });
+    }
+
+    // Set approval date
     const approvalDate = new Date();
-    const claimDate = calculateClaimDate(approvalDate, finalBusinessDays);
+
+    // Validate that claim date is not before approval date
+    if (claimDate < approvalDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'Claim date cannot be before approval date'
+      });
+    }
+
+    // Calculate business days from approval date to claim date
+    let finalBusinessDays;
+    try {
+      finalBusinessDays = calculateBusinessDays(approvalDate, claimDate);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        error: error.message || 'Invalid claim date'
+      });
+    }
 
     // Create document request - auto-approve admin-created requests
     const documentRequest = new DocumentRequest({
@@ -493,7 +552,9 @@ exports.createAdminDocumentRequest = async (req, res, next) => {
         name: documentRequest.name,
         emailAddress: documentRequest.emailAddress,
         request: documentRequest.request,
-        claimDate: formatClaimDate(claimDate),
+        businessDays: finalBusinessDays,
+        claimDate: claimDate,
+        formattedClaimDate: formatClaimDate(claimDate),
         lastSYAttended: documentRequest.lastSYAttended,
         programGradeStrand: documentRequest.programGradeStrand,
         contactNumber: documentRequest.contactNumber
